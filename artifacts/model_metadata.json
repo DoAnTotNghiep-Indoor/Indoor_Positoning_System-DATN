@@ -1,0 +1,118 @@
+{
+  "huan_luyen_luc": "2026-08-24T15:11:48",
+  "mo_hinh_active": "wknn",
+  "file_active": "model_wknn.pkl",
+  "so_dac_trung": 36,
+  "so_mau": {
+    "train": 547,
+    "validation": 117,
+    "test": 118
+  },
+  "luoi": "day_du",
+  "cac_mo_hinh": {
+    "knn": {
+      "ten": "kNN",
+      "tham_so": {
+        "n_neighbors": 3,
+        "metric": "manhattan"
+      },
+      "loi_validation": 5.014686634032093,
+      "giay_quet_luoi": 1.4,
+      "giay_huan_luyen": 0.0,
+      "mo_hinh": "kNN",
+      "so_mau": 118,
+      "loi_trung_binh": 5.783836033682532,
+      "loi_trung_vi": 0.0,
+      "loi_nho_nhat": 0.0,
+      "loi_lon_nhat": 52.347397260990924,
+      "loi_do_lech_chuan": 10.460204816506801,
+      "mae_x": 4.056497175141242,
+      "mae_y": 3.121468926553672,
+      "rmse_x": 8.026791297341264,
+      "rmse_y": 8.856594466087016,
+      "cdf_50": 0.0,
+      "cdf_75": 7.002313031443329,
+      "cdf_90": 18.047172579446805,
+      "thoi_gian_du_doan_ms": 1.5126299997791648
+    },
+    "wknn": {
+      "ten": "WKNN",
+      "tham_so": {
+        "n_neighbors": 3,
+        "metric": "manhattan"
+      },
+      "loi_validation": 4.908788572278413,
+      "giay_quet_luoi": 0.04,
+      "giay_huan_luyen": 0.001,
+      "mo_hinh": "WKNN",
+      "so_mau": 118,
+      "loi_trung_binh": 5.707411480365923,
+      "loi_trung_vi": 7.105427357601002e-15,
+      "loi_nho_nhat": 0.0,
+      "loi_lon_nhat": 52.347397260990924,
+      "loi_do_lech_chuan": 10.46907683460255,
+      "mae_x": 4.000825829649918,
+      "mae_y": 3.0828325183710046,
+      "rmse_x": 7.997697899576628,
+      "rmse_y": 8.843808222826413,
+      "cdf_50": 7.105427357601002e-15,
+      "cdf_75": 6.520951631677793,
+      "cdf_90": 18.52214336066551,
+      "thoi_gian_du_doan_ms": 2.7346280007623136
+    },
+    "random_forest": {
+      "ten": "Random Forest",
+      "tham_so": {
+        "n_estimators": 500,
+        "max_depth": null
+      },
+      "loi_validation": 10.558958837051438,
+      "giay_quet_luoi": 5.42,
+      "giay_huan_luyen": 1.142,
+      "mo_hinh": "Random Forest",
+      "so_mau": 118,
+      "loi_trung_binh": 8.505360521878034,
+      "loi_trung_vi": 6.102904103315689,
+      "loi_nho_nhat": 0.028284271247466325,
+      "loi_lon_nhat": 42.61424968247124,
+      "loi_do_lech_chuan": 8.171041896907285,
+      "mae_x": 5.904762711864406,
+      "mae_y": 5.0061864406779675,
+      "rmse_x": 8.718939336441238,
+      "rmse_y": 7.9427438669261665,
+      "cdf_50": 6.102904103315689,
+      "cdf_75": 11.289632166079684,
+      "cdf_90": 19.451041209197676,
+      "thoi_gian_du_doan_ms": 98.80220199935138
+    },
+    "xgboost_model": {
+      "ten": "XGBoost",
+      "tham_so": {
+        "n_estimators": 500,
+        "max_depth": 5,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 10
+      },
+      "loi_validation": 9.481716922198853,
+      "giay_quet_luoi": 292.67,
+      "giay_huan_luyen": 1.461,
+      "mo_hinh": "XGBoost",
+      "so_mau": 118,
+      "loi_trung_binh": 8.543622882018786,
+      "loi_trung_vi": 6.7428705105347575,
+      "loi_nho_nhat": 0.04341254961466386,
+      "loi_lon_nhat": 45.69104926173565,
+      "loi_do_lech_chuan": 7.4847407639503505,
+      "mae_x": 5.625092276198379,
+      "mae_y": 5.06662080689507,
+      "rmse_x": 7.85314373028188,
+      "rmse_y": 8.206276244754957,
+      "cdf_50": 6.7428705105347575,
+      "cdf_75": 11.934449398655381,
+      "cdf_90": 17.491407941534565,
+      "thoi_gian_du_doan_ms": 2.4272159999236465
+    }
+  }
+}
