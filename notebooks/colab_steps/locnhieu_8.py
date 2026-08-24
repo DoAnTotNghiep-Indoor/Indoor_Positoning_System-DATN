@@ -1,3 +1,19 @@
+# ==============================================================================
+# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
+#
+# Phần tính toán đã chuyển vào kho mã, gọi bằng:
+#   ml.preprocess.denoise.hampel_filter()
+#
+# Chạy toàn bộ pipeline:  python -m ml.pipeline
+# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
+#
+# Giữ lại file này làm tài liệu mô tả bước 8 cho báo cáo.
+#
+# LỖI ĐÃ SỬA: bản này chạy TRƯỚC khi chia tập, gây rò rỉ dữ liệu
+#   (trung vị tính trên cả mẫu test). Module mới chỉ lọc trên tập train,
+#   chạy sau bước 9. Ngoài ra đã vector hoá cho nhanh.
+# ==============================================================================
+
 # Bước 8: Lọc nhiễu RSSI bằng Hampel filter (dựa trên Median Absolute Deviation - MAD)
 # Với mỗi AP, trong từng nhóm cùng rp_id, thay các giá trị lệch quá k*MAD so với median
 # bằng chính median đó -> giảm nhiễu tức thời (đa đường, che khuất, người đi qua)

@@ -1,41 +1,40 @@
-﻿rp_id,x,y,description
-RP01,-16,0,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP02,0,0,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP03,16,0,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP04,-30,10,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP05,-8,10,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP06,8,10,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP07,30,0,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP08,-30,14,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP09,30,14,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP10,-15,18,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP11,0,18,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP12,-26,22,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP13,-13,22,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP14,13,22,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP15,26,22,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP16,-42,24,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP17,42,27,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP18,-13,33,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP19,0,33,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP20,-22,34,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP21,22,34,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP22,-43,35,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP23,-36,35,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP24,36,35,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP25,43,35,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP27,7,4.5,"CẢNH BÁO: tọa độ bất thường trong bảng gốc (lệch khỏi quy luật lưới) - PHẢI đo lại thực địa, không dùng trực tiếp"
-RP28,0,41,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP29,-22,45,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP30,-13,45,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP31,13,45,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP32,22,45,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP33,-30,52,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP34,-23,52,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP35,-15,52,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP36,0,52,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP37,9,52,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP38,14,52,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP39,22,52,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP40,29,52,Kế thừa Bảng 4 - đồ án CTK45 (cần xác minh lại thực địa)
-RP41,,,KHÔNG có trong bảng cũ (đồ án cũ chỉ có RP01-RP40) - PHẢI đo đạc mới hoàn toàn
+﻿rp_id,x,y
+RP01,-16,0
+RP02,0,0
+RP03,16,0
+RP04,-30,10
+RP05,-8,10
+RP06,8,10
+RP07,30,0
+RP08,-30,14
+RP09,30,14
+RP10,-15,18
+RP11,0,18
+RP12,-26,22
+RP13,-13,22
+RP14,13,22
+RP15,26,22
+RP16,-42,24
+RP17,42,27
+RP18,-13,33
+RP19,0,33
+RP20,-22,34
+RP21,22,34
+RP22,-43,35
+RP23,-36,35
+RP24,36,35
+RP25,43,35
+RP27,7,4.5
+RP28,0,41
+RP29,-22,45
+RP30,-13,45
+RP31,13,45
+RP32,22,45
+RP33,-30,52
+RP34,-23,52
+RP35,-15,52
+RP36,0,52
+RP37,9,52
+RP38,14,52
+RP39,22,52
+RP40,29,52

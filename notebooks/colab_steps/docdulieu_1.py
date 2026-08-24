@@ -1,3 +1,15 @@
+# ==============================================================================
+# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
+#
+# Phần tính toán đã chuyển vào kho mã, gọi bằng:
+#   ml.preprocess.load.load_raw()
+#
+# Chạy toàn bộ pipeline:  python -m ml.pipeline
+# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
+#
+# Giữ lại file này làm tài liệu mô tả bước 1 cho báo cáo.
+# ==============================================================================
+
 # Bước 1: Nạp dữ liệu thô vào Colab và kiểm tra nhanh
 
 # ---- CÁCH 1: Upload trực tiếp mỗi lần chạy ----

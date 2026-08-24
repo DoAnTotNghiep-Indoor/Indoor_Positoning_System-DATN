@@ -1,3 +1,18 @@
+# ==============================================================================
+# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
+#
+# Phần tính toán đã chuyển vào kho mã, gọi bằng:
+#   ml.preprocess.coords.attach_coordinates()
+#
+# Chạy toàn bộ pipeline:  python -m ml.pipeline
+# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
+#
+# Giữ lại file này làm tài liệu mô tả bước 4 cho báo cáo.
+#
+# LỖI ĐÃ SỬA: bản này im lặng bỏ qua khi thiếu toạ độ, và trên
+#   thực tế đã KHÔNG được chạy lần nào — dataset cũ không có cột x, y.
+# ==============================================================================
+
 # Bước 4: Ghép tọa độ thật (x, y) theo rp_id
 # combined_data.csv KHÔNG có tọa độ cục bộ (GPS thô trong nhà gần như không đổi, không dùng được).
 # Cần file reference_points.csv với 2 cột: rp_id,x,y (đơn vị mét), ví dụ:

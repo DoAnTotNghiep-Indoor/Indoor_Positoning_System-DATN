@@ -1,3 +1,15 @@
+# ==============================================================================
+# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
+#
+# Phần tính toán đã chuyển vào kho mã, gọi bằng:
+#   ml.pipeline.run()
+#
+# Chạy toàn bộ pipeline:  python -m ml.pipeline
+# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
+#
+# Giữ lại file này làm tài liệu mô tả bước 12 cho báo cáo.
+# ==============================================================================
+
 # Bước 12: Sắp xếp lại thứ tự cột đặc trưng (AP) và thứ tự dòng theo rp_id, tăng dần
 # Chạy sau khi đã có fingerprint_dataset.csv (kết quả bước 11 - xuatketqua_11.py)
 

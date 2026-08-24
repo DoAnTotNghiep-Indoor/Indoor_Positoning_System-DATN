@@ -1,3 +1,15 @@
+# ==============================================================================
+# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
+#
+# Phần tính toán đã chuyển vào kho mã, gọi bằng:
+#   ml.preprocess.filter.filter_access_points()
+#
+# Chạy toàn bộ pipeline:  python -m ml.pipeline
+# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
+#
+# Giữ lại file này làm tài liệu mô tả bước 5 cho báo cáo.
+# ==============================================================================
+
 # Bước 5: Lọc AP kém chất lượng (appearance rate thấp)
 # Loại AP xuất hiện trong dưới MIN_APPEAR_RATE số lần quét.
 # Khảo sát thực tế trên combined_data.csv: 48/89 AP xuất hiện dưới 10% số lần quét

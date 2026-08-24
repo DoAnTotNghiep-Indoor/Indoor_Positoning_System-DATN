@@ -1,3 +1,18 @@
+# ==============================================================================
+# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
+#
+# Phần tính toán đã chuyển vào kho mã, gọi bằng:
+#   ml.preprocess.pivot.build_scan_id() + build_scan_meta()
+#
+# Chạy toàn bộ pipeline:  python -m ml.pipeline
+# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
+#
+# Giữ lại file này làm tài liệu mô tả bước 2 cho báo cáo.
+#
+# LỖI ĐÃ SỬA: cột Orientation Azimuth ghi đơn vị độ nhưng giá trị
+#   thực là radian. Module mới tự đổi sang độ.
+# ==============================================================================
+
 # Bước 2: Gom dữ liệu theo từng lần quét (scan)
 # Lý do: "WiFi fingerprint serial number" chỉ lặp lại 1..N theo từng đợt, KHÔNG duy nhất
 # toàn cục. Cột "Time" đã kiểm chứng là duy nhất theo từng lần quét thực tế -> dùng làm scan_id.

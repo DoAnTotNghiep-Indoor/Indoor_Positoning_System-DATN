@@ -1,3 +1,15 @@
+# ==============================================================================
+# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
+#
+# Phần tính toán đã chuyển vào kho mã, gọi bằng:
+#   ml.preprocess.scale.scale_dataset()
+#
+# Chạy toàn bộ pipeline:  python -m ml.pipeline
+# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
+#
+# Giữ lại file này làm tài liệu mô tả bước 10 cho báo cáo.
+# ==============================================================================
+
 # Bước 10: Chuẩn hóa min-max — fit CHỈ trên train, transform lại cho val/test
 # Đây là quy tắc bắt buộc để tránh rò rỉ dữ liệu (data leakage):
 #   fit scaler chỉ trên train -> transform train/validation/test bằng scaler đó.

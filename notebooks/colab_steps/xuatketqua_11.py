@@ -1,3 +1,18 @@
+# ==============================================================================
+# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
+#
+# Phần tính toán đã chuyển vào kho mã, gọi bằng:
+#   ml.pipeline.run()
+#
+# Chạy toàn bộ pipeline:  python -m ml.pipeline
+# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
+#
+# Giữ lại file này làm tài liệu mô tả bước 11 cho báo cáo.
+#
+# LỖI ĐÃ SỬA: tải từng file rời nên lần chạy trước chỉ lấy được CSV,
+#   mất scaler.pkl và feature_list.json. Pipeline mới ghi thẳng vào artifacts/.
+# ==============================================================================
+
 # Bước 11: Xuất artifact cuối cùng (dataset + feature_list + train/val/test) và tải về
 
 import json

@@ -1,3 +1,15 @@
+# ==============================================================================
+# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
+#
+# Phần tính toán đã chuyển vào kho mã, gọi bằng:
+#   ml.preprocess.filter.filter_sparse_scans()
+#
+# Chạy toàn bộ pipeline:  python -m ml.pipeline
+# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
+#
+# Giữ lại file này làm tài liệu mô tả bước 6 cho báo cáo.
+# ==============================================================================
+
 # Bước 6: Loại bỏ mẫu quét (scan) có quá ít AP phát hiện được
 # Ngưỡng tối thiểu 6 AP/mẫu (theo tài liệu tham khảo và kế hoạch phân tích của nhóm).
 # Thực hiện SAU bước lọc AP (locAP_5) vì sau khi bỏ AP yếu, một số scan có thể

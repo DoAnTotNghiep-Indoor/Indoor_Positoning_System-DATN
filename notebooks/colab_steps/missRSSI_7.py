@@ -1,3 +1,15 @@
+# ==============================================================================
+# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
+#
+# Phần tính toán đã chuyển vào kho mã, gọi bằng:
+#   ml.preprocess.missing.fill_missing()
+#
+# Chạy toàn bộ pipeline:  python -m ml.pipeline
+# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
+#
+# Giữ lại file này làm tài liệu mô tả bước 7 cho báo cáo.
+# ==============================================================================
+
 # Bước 7: Xử lý giá trị RSSI thiếu (missing value) bằng hằng số ĐỘNG
 # Thay vì gán cố định -98 (cách phổ biến nhưng có thể trùng/gần tín hiệu yếu thật),
 # tính missing_value = min(RSSI toàn bộ dữ liệu) - 1.
