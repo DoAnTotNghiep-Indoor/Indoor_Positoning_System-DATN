@@ -1,0 +1,37 @@
+# Chuẩn hóa ký tự xuống dòng.
+# Nhóm code trên Windows nhưng pipeline chạy trên Google Colab (Linux),
+# không chuẩn hóa thì mỗi lần trao đổi file diff sẽ báo đổi toàn bộ dòng.
+# Trong kho luôn lưu LF; khi checkout Git tự đổi theo hệ điều hành.
+* text=auto eol=lf
+
+# Mã nguồn và tài liệu
+*.py    text eol=lf
+*.dart  text eol=lf
+*.js     text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.md    text eol=lf
+*.csv   text eol=lf
+*.json  text eol=lf
+*.yaml  text eol=lf
+*.kts   text eol=lf
+*.kt    text eol=lf
+*.xml   text eol=lf
+
+# Notebook: đánh dấu là text nhưng không diff theo dòng cho đỡ rối
+*.ipynb text eol=lf
+
+# Script shell phải giữ LF, nếu thành CRLF sẽ không chạy được trên Linux
+*.sh       text eol=lf
+gradlew    text eol=lf
+
+# File nhị phân - Git không được đụng vào
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.otf  binary
+*.ttf  binary
+*.jar  binary
+*.pkl  binary
+*.joblib binary
+*.apk  binary
