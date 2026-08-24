@@ -1,0 +1,22 @@
+name: ips_dlu
+description: Ứng dụng định vị trong nhà - Thư viện Đại học Đà Lạt (bản demo giao diện)
+publish_to: 'none'
+version: 0.1.0
+
+# Cần Dart >= 3.6 (Flutter >= 3.27) vì mã dùng Color.withValues().
+# Nếu dùng Flutter cũ hơn, thay toàn bộ .withValues(alpha: x) thành .withOpacity(x).
+environment:
+  sdk: '>=3.6.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+*.egg-info/
+
+# Bí mật — TUYỆT ĐỐI không commit
+.env
+*.key
+credentials.json
+
+# Dữ liệu sinh lại được bằng pipeline.
+# Dùng dạng "thư mục/*" thay vì "thư mục/" để còn re-include được file bên trong
+# (git không cho phép re-include file nếu thư mục cha đã bị loại trừ).
+data/processed/*
+!data/processed/.gitkeep
+!data/processed/fingerprint_dataset_sorted.csv
+data/splits/*
+!data/splits/.gitkeep
+
+# KHÔNG ignore data/raw/ và data/reference/:
+# đây là số liệu đo thực địa, không sinh lại được (README nguyên tắc 4).
+
+# Artifact model (nặng, sinh lại được).
+# feature_list.json / model_metadata.json không khớp pattern dưới nên vẫn được commit.
+artifacts/*.pkl
+artifacts/*.joblib
+
+# Node / build
+node_modules/
+dist/
+build/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Nén
+*.zip
+*.rar
