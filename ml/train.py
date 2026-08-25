@@ -1,10 +1,10 @@
-"""Huấn luyện và so sánh bốn mô hình định vị.
+"""Huấn luyện và so sánh năm mô hình định vị.
 
     python -m ml.train                 # đầy đủ, lưới tham số theo tài liệu
     python -m ml.train --nhanh         # lưới rút gọn, dùng lúc thử nghiệm
     python -m ml.train --mo-hinh knn wknn
 
-Quy trình cho cả bốn mô hình là một, để bảng so sánh có ý nghĩa:
+Quy trình cho cả năm mô hình là một, để bảng so sánh có ý nghĩa:
 
     1. Quét lưới tham số, chọn cấu hình có sai số thấp nhất trên tập VALIDATION
     2. Huấn luyện lại cấu hình đó trên train + validation
@@ -34,7 +34,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from ml import config, evaluate
+from ml import config, evaluate, postprocess
 from ml import models as goi_mo_hinh
 
 for _luong in (sys.stdout, sys.stderr):
@@ -223,7 +223,46 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
     print(f"\nĐiểm sai nhiều nhất: " + ", ".join(
         f"{r.rp_id} ({r.loi_trung_binh:.1f} m)" for r in theo_diem.head(3).itertuples()))
 
+    # Hậu xử lý: gộp các lần quét tại cùng một vị trí. Thiết bị quét mỗi 1-2 giây
+    # nên lúc chạy thật luôn có sẵn vài lần quét gần nhau về thời gian.
+    gop = _danh_gia_sau_khi_gop(tap["test"], tot_nhat["y_pred"])
+    print("\n" + "-" * 66)
+    print(f"Sau khi gộp {gop['so_lan_quet']} lần quét mỗi vị trí "
+          f"({postprocess.CUA_SO_MAC_DINH} là mặc định lúc chạy thật):")
+    print(f"  sai số trung bình {gop['loi_trung_binh']:.2f} m "
+          f"(một lần quét: {tot:.2f} m)")
+    print(f"  sai số lớn nhất   {gop['loi_lon_nhat']:.1f} m "
+          f"(một lần quét: {tot_nhat['ket_qua_test']['loi_lon_nhat']:.1f} m)")
+    print(f"  số vị trí còn sai {gop['so_vi_tri_sai']}/{gop['so_vi_tri']}")
+
+    metadata["hau_xu_ly_gop"] = gop
+    (config.ARTIFACTS_DIR / "model_metadata.json").write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
     return bang
+
+
+def _danh_gia_sau_khi_gop(tap_test: pd.DataFrame, y_pred: np.ndarray) -> dict:
+    """Gộp các lần quét tại cùng một điểm rồi đo lại sai số."""
+    ds, so_lan = [], []
+    y_that = tap_test[config.TARGET_COLS].to_numpy(dtype=float)
+
+    for _, nhom in tap_test.assign(_i=range(len(tap_test))).groupby("rp_id"):
+        idx = nhom["_i"].to_numpy()
+        so_lan.append(len(idx))
+        ds.append(float(np.linalg.norm(postprocess.gop(y_pred[idx]) - y_that[idx[0]])))
+
+    ds = np.array(ds)
+    return {
+        "cach_gop": "dong_thuan",
+        "so_lan_quet": int(np.median(so_lan)),
+        "so_vi_tri": int(len(ds)),
+        "so_vi_tri_sai": int((ds > 1).sum()),
+        "loi_trung_binh": float(ds.mean()),
+        "loi_trung_vi": float(np.median(ds)),
+        "loi_lon_nhat": float(ds.max()),
+    }
 
 
 def main() -> None:
