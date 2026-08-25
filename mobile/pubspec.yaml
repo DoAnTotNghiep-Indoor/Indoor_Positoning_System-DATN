@@ -12,6 +12,12 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  # Ghim cứng, không dùng ^: thư viện đang ở 0.30.x tức chưa 1.0 nên bản nhỏ
+  # vẫn có thể đổi API. Đồ án cần tái lập được kết quả nên khoá đúng một bản.
+  liquid_glass_widgets: 0.30.2
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.3
 
 dev_dependencies:
   flutter_test:
@@ -20,3 +26,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Bật sinh mã đa ngôn ngữ từ lib/l10n/*.arb theo cấu hình l10n.yaml
+  generate: true

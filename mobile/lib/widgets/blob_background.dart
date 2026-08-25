@@ -11,11 +11,14 @@ class Blob {
 
 /// Nền gradient kèm các khối màu mờ, tái hiện lớp nền trong frame thiết kế.
 /// Toạ độ blob dùng hệ 393x852 rồi được co giãn theo kích thước màn hình thật.
+///
+/// Đây là NỀN THUẦN, không bọc nội dung. Kính khúc xạ theo thứ nằm sau nó nên
+/// nền phải do `GlassScaffold` cấp qua tham số `background`, không để từng màn
+/// hình tự dựng — nếu không mỗi màn sẽ có lớp nền riêng và kính lấy mẫu sai.
 class BlobBackground extends StatelessWidget {
   final List<Blob> blobs;
-  final Widget child;
 
-  const BlobBackground({super.key, required this.blobs, required this.child});
+  const BlobBackground({super.key, required this.blobs});
 
   /// Bộ blob của màn Trang chủ.
   static const homeBlobs = <Blob>[
@@ -46,7 +49,7 @@ class BlobBackground extends StatelessWidget {
         final sx = c.maxWidth / 393.0;
         final sy = c.maxHeight / 852.0;
         return DecoratedBox(
-          decoration: const BoxDecoration(gradient: AppColors.bgGradient),
+          decoration: BoxDecoration(gradient: AppColors.bgGradientOf(context)),
           child: Stack(
             children: [
               // Lớp blob mờ
@@ -74,7 +77,6 @@ class BlobBackground extends StatelessWidget {
                   ),
                 ),
               ),
-              child,
             ],
           ),
         );

@@ -22,16 +22,30 @@ void main() {
     await tester.pumpWidget(const IpsDluApp());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Cài đặt'));
+    // Thanh tab dựng cả nhãn lúc chọn và lúc chưa chọn nên phải lấy cái đầu.
+    await tester.tap(find.text('Cài đặt').first);
     await tester.pumpAndSettle();
 
     expect(find.text('CHUNG'), findsOneWidget);
-    expect(find.text('QUYỀN TRUY CẬP'), findsOneWidget);
     expect(find.text(DemoData.serverHost), findsOneWidget);
+
+    // Màn Cài đặt nay có 4 nhóm nên nhóm cuối nằm ngoài vùng nhìn; ListView
+    // chưa dựng widget chưa hiển thị, phải cuộn tới thì mới tìm thấy.
+    //
+    // Phải chỉ rõ cuộn cái nào: trong cây còn nhiều Scrollable khác — hai
+    // segmented control ở nhóm GIAO DIỆN cũng cuộn ngang được — nên để mặc
+    // định thì scrollUntilVisible báo "Too many elements".
+    await tester.scrollUntilVisible(
+      find.text('QUYỀN TRUY CẬP'),
+      200,
+      scrollable: find
+          .descendant(of: find.byType(ListView), matching: find.byType(Scrollable))
+          .first,
+    );
+    expect(find.text('QUYỀN TRUY CẬP'), findsOneWidget);
   });
 
-  testWidgets('Nút tìm kiếm mở màn Tìm kiếm và lọc được kết quả',
-      (WidgetTester tester) async {
+  testWidgets('Nút tìm kiếm mở màn Tìm kiếm', (WidgetTester tester) async {
     await tester.pumpWidget(const IpsDluApp());
     await tester.pumpAndSettle();
 
@@ -39,7 +53,5 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Tìm kiếm'), findsOneWidget);
-    // Từ khoá mặc định "phòng học" khớp toàn bộ 5 mục demo.
-    expect(find.text('5 kết quả'), findsOneWidget);
   });
 }

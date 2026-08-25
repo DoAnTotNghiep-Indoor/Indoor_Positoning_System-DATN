@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+// Ẩn GlassCard của thư viện: file này dùng bản bọc trong widgets/glass_card.dart
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' hide GlassCard;
 import '../data/demo_data.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
-import '../widgets/blob_background.dart';
+import '../theme/app_metrics.dart';
 import '../widgets/floor_plan.dart';
 import '../widgets/glass_card.dart';
 
@@ -10,64 +13,72 @@ class MapScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlobBackground(
-      blobs: BlobBackground.mapBlobs,
-      child: SafeArea(
-        bottom: false,
-        // fit: expand — bắt buộc, nếu không Stack sẽ co theo con không-Positioned
-        // (header) và làm sơ đồ mặt bằng bị ép mất.
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Sơ đồ mặt bằng
-            const Positioned.fill(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(top: 116, bottom: 96),
-                child: FloorPlan(),
+    final t = L.of(context);
+    final chuaCho = AppMetrics.chuaChoThanhTab(context);
+
+    return SafeArea(
+      bottom: false,
+      // fit: expand — bắt buộc, nếu không Stack sẽ co theo con không-Positioned
+      // (header) và làm sơ đồ mặt bằng bị ép mất.
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Sơ đồ mặt bằng.
+          //
+          // Lề dưới phải chừa đủ chỗ cho thanh điều hướng, nếu không tường bao
+          // và ba phòng cuối toà nhà bị nó cắt mất — đúng lỗi của bản trước, khi
+          // lề này để cứng 96 trong khi thanh tab chiếm 84 cộng lề an toàn.
+          Positioned.fill(
+            child: Padding(
+              // Lề trên chỉ 8 chứ không phải 96: header là lớp nổi (Positioned
+              // top: 0) nên không chiếm chỗ bố cục, mà 96 đơn vị đầu của sơ đồ
+              // vốn là khoảng trống phía trên mái vòm lối vào — header phủ lên
+              // đúng chỗ trống đó. Bỏ luôn lề hai bên.
+              //
+              // Sơ đồ có tỉ lệ 393:852, cao và hẹp hơn vùng hiển thị còn lại,
+              // nên khi ép vừa chiều cao vẫn thừa lề hai bên. Cắt lề khung là
+              // cách duy nhất làm nó to thêm mà vẫn thấy trọn cả tầng.
+              padding: EdgeInsets.only(top: 8, bottom: chuaCho),
+              // InteractiveViewer để phóng to bằng hai ngón và kéo xem chi tiết.
+              // Mức 1 là toàn cảnh vừa màn hình, kéo lên tới 4 lần.
+              child: InteractiveViewer(
+                minScale: 1,
+                maxScale: 4,
+                child: const Center(child: FloorPlan()),
               ),
             ),
+          ),
 
-            // Header
-            const Positioned(
-              top: 0,
-              left: 16,
-              right: 16,
-              child: MapHeader(),
-            ),
+          // Header
+          const Positioned(
+            top: 0,
+            left: 16,
+            right: 16,
+            child: MapHeader(),
+          ),
 
-            // Nút định vị lại
-            Positioned(
-              right: 16,
-              bottom: 96,
-              child: GestureDetector(
-                onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Bản demo — chưa nối API định vị'),
-                    duration: Duration(seconds: 2),
-                  ),
-                ),
-                child: Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.62),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.ink.withValues(alpha: 0.07),
-                        offset: const Offset(0, 8),
-                        blurRadius: 18,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.navigation_outlined,
-                      size: 21, color: AppColors.accent),
-                ),
+          // Nút định vị lại.
+          //
+          // Phải nằm HẲN trên thanh điều hướng: nút tìm kiếm của thanh đó cũng
+          // ở mép phải, nên đặt thấp là hai nút tròn dính vào nhau. Bản trước để
+          // bottom: 96 và chúng chồng lên nhau đúng như vậy.
+          Positioned(
+            right: 16,
+            bottom: chuaCho,
+            // GlassIconButton thay cho vòng tròn tự vẽ: nền, viền và bóng
+            // trước đây phải tự canh, nay lấy theo lớp kính phía sau.
+            child: GlassIconButton(
+              icon: Icon(Icons.navigation_outlined,
+                  size: 21, color: AppColors.accentOf(context)),
+              size: 54,
+              onPressed: () => GlassToast.show(
+                context,
+                message: t.mapRelocateDemo,
+                type: GlassToastType.info,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -91,12 +102,12 @@ class MapHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   DemoData.buildingName,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
+                    color: AppColors.inkOf(context),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -104,7 +115,7 @@ class MapHeader extends StatelessWidget {
                   DemoData.areaCountLabel,
                   style: TextStyle(
                     fontSize: 11.5,
-                    color: AppColors.ink.withValues(alpha: 0.55),
+                    color: AppColors.inkOf(context).withValues(alpha: 0.55),
                   ),
                 ),
               ],
@@ -120,14 +131,14 @@ class MapHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.place_outlined,
-                    size: 13, color: AppColors.ink.withValues(alpha: 0.7)),
+                    size: 13, color: AppColors.inkOf(context).withValues(alpha: 0.7)),
                 const SizedBox(width: 4),
                 Text(
                   DemoData.floorLabel,
                   style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.ink.withValues(alpha: 0.85),
+                    color: AppColors.inkOf(context).withValues(alpha: 0.85),
                   ),
                 ),
               ],

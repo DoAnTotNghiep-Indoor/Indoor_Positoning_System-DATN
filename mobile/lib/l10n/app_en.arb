@@ -1,0 +1,57 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "IPS DLU",
+
+  "tabHome": "Home",
+  "tabMap": "Map",
+  "tabSettings": "Settings",
+  "searchHint": "Search rooms, areas…",
+
+  "homeYouAreAt": "You are at",
+  "homeAccuracy": "Accuracy ±{met} m",
+  "homeQuickAccess": "Quick access",
+  "homeNearby": "Near you",
+
+  "mapTitle": "Map",
+  "mapFloorOne": "Floor 1",
+  "mapRelocateDemo": "Demo build — positioning API not connected yet",
+
+  "searchTitle": "Search",
+  "searchResultCount": "{count} results",
+  "searchEmpty": "No matching areas found",
+
+  "detailGoHere": "Go here",
+  "detailRouteDemo": "Demo build — routing comes in a later stage",
+
+  "settingsTitle": "Settings",
+  "settingsGroupGeneral": "GENERAL",
+  "settingsGroupAppearance": "APPEARANCE",
+  "settingsGroupPositioning": "POSITIONING",
+  "settingsGroupPermissions": "PERMISSIONS",
+
+  "settingsAppInfo": "App version",
+  "settingsServer": "Positioning server",
+
+  "settingsTheme": "Theme",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+
+  "settingsLanguage": "Language",
+  "settingsLanguageVi": "Tiếng Việt",
+  "settingsLanguageEn": "English",
+
+  "settingsAutoUpdate": "Auto-update position",
+  "settingsAutoUpdateSub": "Rescan every 2 seconds",
+  "settingsKeepAwake": "Keep screen on",
+  "settingsKeepAwakeSub": "While viewing the map",
+
+  "settingsPermission": "Location and WiFi",
+  "settingsPermissionSub": "Required for positioning",
+  "settingsPermissionGranted": "Granted",
+
+  "settingsFootnote": "More options will be added in the next version.",
+
+  "distanceMeters": "{met} m"
+}

@@ -1,50 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lg;
 
-/// Thẻ nền trắng bán trong suốt có viền sáng — kiểu "glass" dùng xuyên suốt app.
+/// Thẻ kính dùng xuyên suốt app.
+///
+/// Trước đây đây là thẻ tự vẽ: nền trắng `alpha 0.55` cộng viền sáng, tức là
+/// *giả* hiệu ứng kính bằng độ trong suốt. Nay uỷ quyền cho
+/// `liquid_glass_widgets`, nơi làm mờ nền bằng fragment shader thật nên thẻ
+/// thực sự khúc xạ những gì nằm phía sau, có highlight và sai sắc theo mép.
+///
+/// Giữ nguyên tên và tham số cũ (`radius`, `padding`, `onTap`) để năm màn hình
+/// không phải sửa gì. Riêng `opacity` và `shadow` không còn tác dụng vì độ trong
+/// và bóng nay do thư viện tự tính theo nền phía sau — giữ lại để mã cũ vẫn
+/// biên dịch được, và đánh dấu deprecated để lần dọn sau gỡ đi.
 class GlassCard extends StatelessWidget {
   final Widget child;
   final double radius;
-  final double opacity;
   final EdgeInsetsGeometry? padding;
-  final bool shadow;
   final VoidCallback? onTap;
+
+  @Deprecated('Độ trong nay do shader tự tính theo nền phía sau.')
+  final double opacity;
+
+  @Deprecated('Bóng nay do thư viện tự tính theo ánh sáng của lớp kính.')
+  final bool shadow;
 
   const GlassCard({
     super.key,
     required this.child,
     this.radius = 24,
-    this.opacity = 0.55,
     this.padding,
-    this.shadow = false,
     this.onTap,
+    // ignore: deprecated_member_use_from_same_package
+    this.opacity = 0.55,
+    // ignore: deprecated_member_use_from_same_package
+    this.shadow = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: opacity),
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
-        boxShadow: shadow
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF0D1A30).withValues(alpha: 0.07),
-                  offset: const Offset(0, 8),
-                  blurRadius: 18,
-                ),
-              ]
-            : null,
-      ),
+    final the = lg.GlassCard(
+      padding: padding ?? EdgeInsets.zero,
+      shape: lg.LiquidRoundedSuperellipse(borderRadius: radius),
       child: child,
     );
 
-    if (onTap == null) return content;
-    return InkWell(
+    if (onTap == null) return the;
+
+    // Dùng GestureDetector chứ không dùng InkWell: gợn mực của Material vẽ đè
+    // lên mặt kính và làm hỏng highlight, trong khi thư viện đã có phản hồi
+    // chạm riêng dạng biến dạng jelly.
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(radius),
-      child: content,
+      behavior: HitTestBehavior.opaque,
+      child: the,
     );
   }
 }

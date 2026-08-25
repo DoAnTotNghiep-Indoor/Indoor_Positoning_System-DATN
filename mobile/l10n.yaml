@@ -1,0 +1,8 @@
+# Tiếng Việt là ngôn ngữ chính: app_vi.arb là tệp mẫu, mọi khoá và mô tả khai
+# báo ở đó trước, app_en.arb chỉ dịch lại. Đặt ngược lại sẽ khiến chuỗi tiếng
+# Việt trở thành bản dịch của tiếng Anh, sai với thực tế của đồ án.
+arb-dir: lib/l10n
+template-arb-file: app_vi.arb
+output-localization-file: app_localizations.dart
+output-class: L
+nullable-getter: false
