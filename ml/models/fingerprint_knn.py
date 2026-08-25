@@ -120,3 +120,15 @@ def build(
     top: int | None = None,
 ) -> DinhViPhanLop:
     return DinhViPhanLop(beta=beta, n_neighbors=n_neighbors, power=power, top=top)
+
+
+def tuong_duong(tham_so: dict) -> tuple:
+    """Khoá nhận dạng các bộ tham số cho ra mô hình y hệt nhau.
+
+    Khi chỉ lấy một láng giềng thì trọng số `power` không được dùng tới, nên
+    (beta=2, k=1, power=1) và (beta=2, k=1, power=8) là cùng một mô hình. Không
+    khử thì lưới 36 tổ hợp có 8 tổ hợp chạy thừa.
+    """
+    if tham_so.get("n_neighbors") == 1:
+        return (tham_so.get("beta"), 1, tham_so.get("top"))
+    return tuple(sorted(tham_so.items()))

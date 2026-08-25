@@ -24,6 +24,7 @@ Sinh ra:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import time
@@ -65,18 +66,35 @@ def nap_du_lieu() -> tuple[dict, list[str]]:
     return tap, ap_cols
 
 
-def _to_hop(luoi: dict) -> list[dict]:
-    """Bung dict lưới thành danh sách các bộ tham số cụ thể."""
+def _to_hop(luoi: dict, module=None) -> list[dict]:
+    """Bung dict lưới thành danh sách các bộ tham số cụ thể.
+
+    Bỏ tổ hợp trùng lặp nếu module khai báo hàm `tuong_duong`. Ví dụ với kNN vân
+    tay, khi n_neighbors=1 thì tham số power không có tác dụng nên ba giá trị
+    power khác nhau cho ra ba mô hình y hệt.
+    """
     if not luoi:
         return [{}]
     ten = list(luoi)
-    return [dict(zip(ten, gt)) for gt in product(*(luoi[k] for k in ten))]
+    tat_ca = [dict(zip(ten, gt)) for gt in product(*(luoi[k] for k in ten))]
+
+    rut_gon = getattr(module, "tuong_duong", None)
+    if rut_gon is None:
+        return tat_ca
+
+    da_thay, ket_qua = set(), []
+    for ts in tat_ca:
+        khoa = rut_gon(ts)
+        if khoa not in da_thay:
+            da_thay.add(khoa)
+            ket_qua.append(ts)
+    return ket_qua
 
 
 def quet_luoi(module, X_tr, y_tr, X_va, y_va, nhanh: bool = False) -> tuple[dict, float]:
     """Thử mọi tổ hợp, trả về (tham số tốt nhất, sai số trung bình trên validation)."""
     luoi = getattr(module, "LUOI_NHANH", module.LUOI_THAM_SO) if nhanh else module.LUOI_THAM_SO
-    to_hop = _to_hop(luoi)
+    to_hop = _to_hop(luoi, module)
 
     tot_nhat, loi_tot_nhat = None, float("inf")
     for i, tham_so in enumerate(to_hop, 1):
@@ -173,10 +191,25 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
         joblib.dump(r["model"], config.ARTIFACTS_DIR / f"model_{khoa}.pkl")
 
     khoa_tot_nhat = tot_nhat["module"].__name__.rsplit(".", 1)[-1]
+    hop_dong = json.loads(
+        (config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON).read_text(encoding="utf-8")
+    )
     metadata = {
         "huan_luyen_luc": bat_dau.isoformat(timespec="seconds"),
         "mo_hinh_active": khoa_tot_nhat,
         "file_active": f"model_{khoa_tot_nhat}.pkl",
+        # Dấu vân của hợp đồng dữ liệu lúc huấn luyện. Backend phải đối chiếu ba
+        # trường này với feature_list.json đang nạp; lệch nghĩa là model và hợp
+        # đồng sinh ra từ hai lần chạy pipeline khác nhau, dự đoán sẽ sai âm thầm.
+        # missing_rssi_value đặc biệt nguy hiểm vì nó bằng min(RSSI) - 1 nên đổi
+        # theo dữ liệu: thêm một lần quét yếu hơn -95 dBm là giá trị này đổi.
+        "hop_dong_du_lieu": {
+            "missing_rssi_value": hop_dong["missing_rssi_value"],
+            "feature_count": hop_dong["feature_count"],
+            "ap_columns_sha1": hashlib.sha1(
+                "\n".join(hop_dong["ap_columns"]).encode("utf-8")
+            ).hexdigest(),
+        },
         "so_dac_trung": len(ap_cols),
         "so_mau": {k: len(v) for k, v in tap.items()},
         "luoi": "rut_gon" if nhanh else "day_du",
