@@ -16,10 +16,12 @@ kNN, WKNN và Random Forest nhận thẳng y hai cột. XGBoost thì không, nê
 model_y đúng như thiết kế ở mục 2.4.
 """
 
-from ml.models import knn, random_forest, wknn, xgboost_model
+from ml.models import fingerprint_knn, knn, random_forest, wknn, xgboost_model
 
 # Thứ tự này là thứ tự chạy: hai mô hình cơ sở trước để có mốc đối chứng,
 # rồi mới tới các mô hình mạnh hơn.
-DANH_SACH = [knn, wknn, random_forest, xgboost_model]
+DANH_SACH = [knn, wknn, random_forest, xgboost_model, fingerprint_knn]
 
-__all__ = ["knn", "wknn", "random_forest", "xgboost_model", "DANH_SACH"]
+__all__ = [
+    "knn", "wknn", "random_forest", "xgboost_model", "fingerprint_knn", "DANH_SACH",
+]
