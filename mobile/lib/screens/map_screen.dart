@@ -41,10 +41,21 @@ class MapScreen extends StatelessWidget {
               padding: EdgeInsets.only(top: 8, bottom: chuaCho),
               // InteractiveViewer để phóng to bằng hai ngón và kéo xem chi tiết.
               // Mức 1 là toàn cảnh vừa màn hình, kéo lên tới 4 lần.
-              child: InteractiveViewer(
-                minScale: 1,
-                maxScale: 4,
-                child: const Center(child: FloorPlan()),
+              //
+              // Semantics bao ngoài: sơ đồ vẽ bằng CustomPaint nên trình đọc màn
+              // hình chỉ thấy một mớ nhãn phòng rời rạc, không biết đang đứng
+              // trước cái gì và cũng không đoán ra là chụm ngón được. Giữ
+              // `explicitChildNodes` để tên từng phòng vẫn đọc được.
+              child: Semantics(
+                container: true,
+                explicitChildNodes: true,
+                label: t.mapFloorPlanLabel,
+                hint: t.mapFloorPlanHint,
+                child: InteractiveViewer(
+                  minScale: 1,
+                  maxScale: 4,
+                  child: const Center(child: FloorPlan()),
+                ),
               ),
             ),
           ),
@@ -71,6 +82,9 @@ class MapScreen extends StatelessWidget {
               icon: Icon(Icons.navigation_outlined,
                   size: 21, color: AppColors.accentOf(context)),
               size: 54,
+              // Nút chỉ có mỗi biểu tượng mũi tên: không có nhãn thì trình đọc
+              // màn hình đọc thành "nút" trống, người dùng không biết bấm để làm gì.
+              semanticLabel: t.mapRelocate,
               onPressed: () => GlassToast.show(
                 context,
                 message: t.mapRelocateDemo,
@@ -90,61 +104,83 @@ class MapHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = L.of(context);
+    final muc = AppColors.inkOf(context);
+    final toi = Theme.of(context).brightness == Brightness.dark;
+
     return GlassCard(
       radius: 26,
       opacity: 0.6,
       shadow: true,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  DemoData.buildingName,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkOf(context),
+      child: MergeSemantics(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    theoNgonNgu(context, DemoData.buildingName,
+                        DemoData.buildingNameEn),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: muc,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  DemoData.areaCountLabel,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: AppColors.inkOf(context).withValues(alpha: 0.55),
+                  const SizedBox(height: 2),
+                  Text(
+                    t.mapAreaSummary(
+                        DemoData.areaCount, DemoData.updatedSecondsAgo),
+                    // Thẻ này nằm đè lên sơ đồ nên chiều cao phải đoán trước
+                    // được; để dòng phụ tự xuống hàng trên máy hẹp sẽ đẩy thẻ
+                    // cao thêm và che mất hàng phòng đầu tiên.
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: muc.withValues(alpha: 0.55),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.place_outlined,
-                    size: 13, color: AppColors.inkOf(context).withValues(alpha: 0.7)),
-                const SizedBox(width: 4),
-                Text(
-                  DemoData.floorLabel,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.inkOf(context).withValues(alpha: 0.85),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                // Ở chế độ tối, nền trắng 60% cộng chữ `inkOf` (gần trắng) là
+                // chữ sáng trên nền sáng — đo được tương phản khoảng 1,2:1, tức
+                // không đọc được. Chế độ sáng giữ nguyên đúng thiết kế gốc, chế
+                // độ tối hạ xuống một lớp phủ trắng mỏng để viên nhãn vẫn tách
+                // khỏi mặt kính mà chữ sáng vẫn nổi.
+                color: Colors.white.withValues(alpha: toi ? 0.12 : 0.6),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.place_outlined,
+                      size: 13, color: muc.withValues(alpha: 0.7)),
+                  const SizedBox(width: 4),
+                  Text(
+                    t.mapFloorOne,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: muc.withValues(alpha: 0.85),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

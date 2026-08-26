@@ -47,6 +47,21 @@ class LVi extends L {
   String get mapRelocateDemo => 'Bản demo — chưa nối API định vị';
 
   @override
+  String get mapRelocate => 'Định vị lại';
+
+  @override
+  String mapAreaSummary(int count, int giay) {
+    return '$count khu vực · cập nhật $giay giây trước';
+  }
+
+  @override
+  String get mapFloorPlanLabel => 'Sơ đồ mặt bằng tầng 1';
+
+  @override
+  String get mapFloorPlanHint =>
+      'Chụm hai ngón để phóng to, kéo để xem chi tiết';
+
+  @override
   String get searchTitle => 'Tìm kiếm';
 
   @override
@@ -58,11 +73,33 @@ class LVi extends L {
   String get searchEmpty => 'Không tìm thấy khu vực nào phù hợp';
 
   @override
+  String get searchEmptyHint =>
+      'Thử một từ khoá khác, hoặc bỏ bộ lọc đang bật.';
+
+  @override
+  String get searchClearFilter => 'Bỏ bộ lọc';
+
+  @override
+  String get searchFilterAll => 'Tất cả';
+
+  @override
+  String get searchFilterStudy => 'Học tập';
+
+  @override
+  String get searchFilterFacility => 'Tiện ích';
+
+  @override
+  String get searchFilterInternal => 'Nội bộ';
+
+  @override
   String get detailGoHere => 'Đi tới đây';
 
   @override
   String get detailRouteDemo =>
       'Bản demo — chức năng chỉ đường làm ở giai đoạn sau';
+
+  @override
+  String get detailImagePlaceholder => 'Ảnh khu vực';
 
   @override
   String get settingsTitle => 'Cài đặt';
@@ -135,4 +172,15 @@ class LVi extends L {
   String distanceMeters(int met) {
     return '$met m';
   }
+
+  @override
+  String get commonBack => 'Quay lại';
+
+  @override
+  String a11yAreaRow(String ten, int met) {
+    return '$ten, cách $met mét';
+  }
+
+  @override
+  String get a11yOpenArea => 'Mở chi tiết khu vực';
 }

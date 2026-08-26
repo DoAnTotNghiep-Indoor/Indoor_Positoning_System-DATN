@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lg;
 
+import 'tap_feedback.dart';
+
 /// Thẻ kính dùng xuyên suốt app.
 ///
 /// Trước đây đây là thẻ tự vẽ: nền trắng `alpha 0.55` cộng viền sáng, tức là
@@ -18,6 +20,10 @@ class GlassCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
+  /// Nhãn và gợi ý cho trình đọc màn hình, chỉ dùng khi có [onTap].
+  final String? semanticLabel;
+  final String? semanticHint;
+
   @Deprecated('Độ trong nay do shader tự tính theo nền phía sau.')
   final double opacity;
 
@@ -30,6 +36,8 @@ class GlassCard extends StatelessWidget {
     this.radius = 24,
     this.padding,
     this.onTap,
+    this.semanticLabel,
+    this.semanticHint,
     // ignore: deprecated_member_use_from_same_package
     this.opacity = 0.55,
     // ignore: deprecated_member_use_from_same_package
@@ -46,12 +54,15 @@ class GlassCard extends StatelessWidget {
 
     if (onTap == null) return the;
 
-    // Dùng GestureDetector chứ không dùng InkWell: gợn mực của Material vẽ đè
-    // lên mặt kính và làm hỏng highlight, trong khi thư viện đã có phản hồi
-    // chạm riêng dạng biến dạng jelly.
-    return GestureDetector(
+    // Trước đây chỗ này là `GestureDetector` trần, kèm ghi chú rằng thư viện đã
+    // tự lo phản hồi chạm. Ghi chú đó sai: `lg.GlassCard` 0.30.2 không nhận
+    // `onTap` nên cũng không có trạng thái "đang bấm" nào để hiển thị — chạm vào
+    // thẻ không thấy gì đổi. `TapFeedback` bù đúng phần thiếu đó, đồng thời khai
+    // báo ngữ nghĩa nút cho trình đọc màn hình.
+    return TapFeedback(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+      semanticLabel: semanticLabel,
+      semanticHint: semanticHint,
       child: the,
     );
   }

@@ -48,6 +48,20 @@ class LEn extends L {
       'Demo build — positioning API not connected yet';
 
   @override
+  String get mapRelocate => 'Recentre on me';
+
+  @override
+  String mapAreaSummary(int count, int giay) {
+    return '$count areas · updated ${giay}s ago';
+  }
+
+  @override
+  String get mapFloorPlanLabel => 'Floor 1 plan';
+
+  @override
+  String get mapFloorPlanHint => 'Pinch to zoom, drag to pan';
+
+  @override
   String get searchTitle => 'Search';
 
   @override
@@ -59,10 +73,32 @@ class LEn extends L {
   String get searchEmpty => 'No matching areas found';
 
   @override
+  String get searchEmptyHint =>
+      'Try a different keyword, or clear the active filter.';
+
+  @override
+  String get searchClearFilter => 'Clear filter';
+
+  @override
+  String get searchFilterAll => 'All';
+
+  @override
+  String get searchFilterStudy => 'Study';
+
+  @override
+  String get searchFilterFacility => 'Facilities';
+
+  @override
+  String get searchFilterInternal => 'Staff only';
+
+  @override
   String get detailGoHere => 'Go here';
 
   @override
   String get detailRouteDemo => 'Demo build — routing comes in a later stage';
+
+  @override
+  String get detailImagePlaceholder => 'Area photo';
 
   @override
   String get settingsTitle => 'Settings';
@@ -135,4 +171,15 @@ class LEn extends L {
   String distanceMeters(int met) {
     return '$met m';
   }
+
+  @override
+  String get commonBack => 'Back';
+
+  @override
+  String a11yAreaRow(String ten, int met) {
+    return '$ten, $met metres away';
+  }
+
+  @override
+  String get a11yOpenArea => 'Open area details';
 }

@@ -16,13 +16,24 @@
   "mapTitle": "Map",
   "mapFloorOne": "Floor 1",
   "mapRelocateDemo": "Demo build — positioning API not connected yet",
+  "mapRelocate": "Recentre on me",
+  "mapAreaSummary": "{count} areas · updated {giay}s ago",
+  "mapFloorPlanLabel": "Floor 1 plan",
+  "mapFloorPlanHint": "Pinch to zoom, drag to pan",
 
   "searchTitle": "Search",
   "searchResultCount": "{count} results",
   "searchEmpty": "No matching areas found",
+  "searchEmptyHint": "Try a different keyword, or clear the active filter.",
+  "searchClearFilter": "Clear filter",
+  "searchFilterAll": "All",
+  "searchFilterStudy": "Study",
+  "searchFilterFacility": "Facilities",
+  "searchFilterInternal": "Staff only",
 
   "detailGoHere": "Go here",
   "detailRouteDemo": "Demo build — routing comes in a later stage",
+  "detailImagePlaceholder": "Area photo",
 
   "settingsTitle": "Settings",
   "settingsGroupGeneral": "GENERAL",
@@ -53,5 +64,9 @@
 
   "settingsFootnote": "More options will be added in the next version.",
 
-  "distanceMeters": "{met} m"
+  "distanceMeters": "{met} m",
+
+  "commonBack": "Back",
+  "a11yAreaRow": "{ten}, {met} metres away",
+  "a11yOpenArea": "Open area details"
 }

@@ -22,6 +22,20 @@
   "mapTitle": "Bản đồ",
   "mapFloorOne": "Tầng 1",
   "mapRelocateDemo": "Bản demo — chưa nối API định vị",
+  "mapRelocate": "Định vị lại",
+  "@mapRelocate": { "description": "Nhãn trợ năng của nút định vị lại trên màn Bản đồ" },
+  "mapAreaSummary": "{count} khu vực · cập nhật {giay} giây trước",
+  "@mapAreaSummary": {
+    "description": "Dòng phụ trên thẻ header của màn Bản đồ",
+    "placeholders": {
+      "count": { "type": "int" },
+      "giay": { "type": "int" }
+    }
+  },
+  "mapFloorPlanLabel": "Sơ đồ mặt bằng tầng 1",
+  "@mapFloorPlanLabel": { "description": "Nhãn trợ năng cho cả sơ đồ mặt bằng" },
+  "mapFloorPlanHint": "Chụm hai ngón để phóng to, kéo để xem chi tiết",
+  "@mapFloorPlanHint": { "description": "Gợi ý trợ năng cho thao tác trên sơ đồ" },
 
   "searchTitle": "Tìm kiếm",
   "searchResultCount": "{count} kết quả",
@@ -30,9 +44,19 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "searchEmpty": "Không tìm thấy khu vực nào phù hợp",
+  "searchEmptyHint": "Thử một từ khoá khác, hoặc bỏ bộ lọc đang bật.",
+  "@searchEmptyHint": { "description": "Câu gợi ý cách xử lý khi không có kết quả" },
+  "searchClearFilter": "Bỏ bộ lọc",
+  "@searchClearFilter": { "description": "Nút đưa bộ lọc về \"Tất cả\"" },
+  "searchFilterAll": "Tất cả",
+  "searchFilterStudy": "Học tập",
+  "searchFilterFacility": "Tiện ích",
+  "searchFilterInternal": "Nội bộ",
 
   "detailGoHere": "Đi tới đây",
   "detailRouteDemo": "Bản demo — chức năng chỉ đường làm ở giai đoạn sau",
+  "detailImagePlaceholder": "Ảnh khu vực",
+  "@detailImagePlaceholder": { "description": "Chữ trong ô ảnh giữ chỗ ở màn Chi tiết" },
 
   "settingsTitle": "Cài đặt",
   "settingsGroupGeneral": "CHUNG",
@@ -67,5 +91,18 @@
   "@distanceMeters": {
     "description": "Khoảng cách tính bằng mét",
     "placeholders": { "met": { "type": "int" } }
-  }
+  },
+
+  "commonBack": "Quay lại",
+  "@commonBack": { "description": "Nhãn trợ năng của nút quay lại" },
+  "a11yAreaRow": "{ten}, cách {met} mét",
+  "@a11yAreaRow": {
+    "description": "Nhãn trợ năng cho một dòng khu vực trong danh sách",
+    "placeholders": {
+      "ten": { "type": "String" },
+      "met": { "type": "int" }
+    }
+  },
+  "a11yOpenArea": "Mở chi tiết khu vực",
+  "@a11yOpenArea": { "description": "Gợi ý trợ năng khi chạm vào một khu vực" }
 }

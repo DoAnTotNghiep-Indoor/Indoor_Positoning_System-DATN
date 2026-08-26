@@ -46,8 +46,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: Text(t.settingsTitle,
-                style: Theme.of(context).textTheme.headlineLarge),
+            child: Semantics(
+              header: true,
+              child: Text(t.settingsTitle,
+                  style: Theme.of(context).textTheme.headlineLarge),
+            ),
           ),
           const SizedBox(height: 30),
 
@@ -62,7 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               GlassListTile(
                 leading: const Icon(Icons.dns_outlined),
                 title: Text(t.settingsServer),
-                trailing: const _GiaTri(DemoData.serverHost),
+                trailing: const SizedBox(width: 120, child: _GiaTri(DemoData.serverHost)),
               ),
             ],
           ),
@@ -79,6 +82,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: t.settingsTheme,
                 // GlassSegmentedControl làm việc theo CHỈ SỐ chứ không theo
                 // giá trị, nên phải tự ánh xạ qua lại với ThemeMode.
+                //
+                // Hàm dựng mặc định chứ không phải .scrollable: bản scrollable
+                // dành cho 6 mục trở lên, nó co từng mục theo độ dài chữ rồi
+                // dồn về trái, để thừa một mảng rãnh xám bên phải. Bản mặc
+                // định chia đều các mục kín chiều ngang.
                 child: GlassSegmentedControl(
                   selectedIndex: _cheDoTheoThuTu.indexOf(tuyChon.cheDo),
                   segments: [
@@ -246,6 +254,8 @@ class _GiaTri extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
       style: TextStyle(
         fontSize: 14,
         color: AppColors.inkOf(context).withValues(alpha: 0.5),

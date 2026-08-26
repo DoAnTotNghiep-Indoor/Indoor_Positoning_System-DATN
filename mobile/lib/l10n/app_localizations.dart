@@ -169,6 +169,30 @@ abstract class L {
   /// **'Bản demo — chưa nối API định vị'**
   String get mapRelocateDemo;
 
+  /// Nhãn trợ năng của nút định vị lại trên màn Bản đồ
+  ///
+  /// In vi, this message translates to:
+  /// **'Định vị lại'**
+  String get mapRelocate;
+
+  /// Dòng phụ trên thẻ header của màn Bản đồ
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} khu vực · cập nhật {giay} giây trước'**
+  String mapAreaSummary(int count, int giay);
+
+  /// Nhãn trợ năng cho cả sơ đồ mặt bằng
+  ///
+  /// In vi, this message translates to:
+  /// **'Sơ đồ mặt bằng tầng 1'**
+  String get mapFloorPlanLabel;
+
+  /// Gợi ý trợ năng cho thao tác trên sơ đồ
+  ///
+  /// In vi, this message translates to:
+  /// **'Chụm hai ngón để phóng to, kéo để xem chi tiết'**
+  String get mapFloorPlanHint;
+
   /// No description provided for @searchTitle.
   ///
   /// In vi, this message translates to:
@@ -187,6 +211,42 @@ abstract class L {
   /// **'Không tìm thấy khu vực nào phù hợp'**
   String get searchEmpty;
 
+  /// Câu gợi ý cách xử lý khi không có kết quả
+  ///
+  /// In vi, this message translates to:
+  /// **'Thử một từ khoá khác, hoặc bỏ bộ lọc đang bật.'**
+  String get searchEmptyHint;
+
+  /// Nút đưa bộ lọc về "Tất cả"
+  ///
+  /// In vi, this message translates to:
+  /// **'Bỏ bộ lọc'**
+  String get searchClearFilter;
+
+  /// No description provided for @searchFilterAll.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get searchFilterAll;
+
+  /// No description provided for @searchFilterStudy.
+  ///
+  /// In vi, this message translates to:
+  /// **'Học tập'**
+  String get searchFilterStudy;
+
+  /// No description provided for @searchFilterFacility.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiện ích'**
+  String get searchFilterFacility;
+
+  /// No description provided for @searchFilterInternal.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nội bộ'**
+  String get searchFilterInternal;
+
   /// No description provided for @detailGoHere.
   ///
   /// In vi, this message translates to:
@@ -198,6 +258,12 @@ abstract class L {
   /// In vi, this message translates to:
   /// **'Bản demo — chức năng chỉ đường làm ở giai đoạn sau'**
   String get detailRouteDemo;
+
+  /// Chữ trong ô ảnh giữ chỗ ở màn Chi tiết
+  ///
+  /// In vi, this message translates to:
+  /// **'Ảnh khu vực'**
+  String get detailImagePlaceholder;
 
   /// No description provided for @settingsTitle.
   ///
@@ -336,6 +402,24 @@ abstract class L {
   /// In vi, this message translates to:
   /// **'{met} m'**
   String distanceMeters(int met);
+
+  /// Nhãn trợ năng của nút quay lại
+  ///
+  /// In vi, this message translates to:
+  /// **'Quay lại'**
+  String get commonBack;
+
+  /// Nhãn trợ năng cho một dòng khu vực trong danh sách
+  ///
+  /// In vi, this message translates to:
+  /// **'{ten}, cách {met} mét'**
+  String a11yAreaRow(String ten, int met);
+
+  /// Gợi ý trợ năng khi chạm vào một khu vực
+  ///
+  /// In vi, this message translates to:
+  /// **'Mở chi tiết khu vực'**
+  String get a11yOpenArea;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
