@@ -1,14 +1,13 @@
 {
-  "chay_luc": "2026-08-25T09:44:47",
-  "thoi_gian_giay": 0.24,
+  "chay_luc": "2026-08-28T15:30:23",
+  "thoi_gian_giay": 0.22,
   "tham_so": {
     "min_appear_rate": 0.2,
     "min_ap_per_scan": 6,
     "hampel_k": 3.0,
     "hampel_chi_tren_train": true,
     "chien_luoc_chia": "random",
-    "random_state": 42,
-    "chinh_sach_thieu_toa_do": "drop"
+    "random_state": 42
   },
   "du_lieu_tho": {
     "so_dong": 25712,
@@ -27,8 +26,7 @@
     "scan_bi_bo": 20,
     "rp_chua_do": [
       "RP41"
-    ],
-    "chinh_sach": "drop"
+    ]
   },
   "loc_mau": {
     "nguong_ap_toi_thieu": 6,
