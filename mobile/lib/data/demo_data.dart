@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'floor_map.dart';
 
 /// DỮ LIỆU DEMO TĨNH.
 ///
@@ -41,9 +42,18 @@ class Area {
   final String nameEn;
   final int distanceM;
   final IconData icon;
-  final Rect rect;
-  final Color fill;
-  final Color stroke;
+
+  /// Vùng tương ứng trên sơ đồ mặt bằng.
+  ///
+  /// Giữ THAM CHIẾU chứ không chép lại `rect`/`fill`/`stroke`: sáu phòng từng
+  /// có cùng toạ độ và cùng màu khai báo trùng ở cả đây lẫn floor_plan.dart,
+  /// nên đổi sơ đồ là phải nhớ sửa hai chỗ.
+  ///
+  /// Truyền một đối tượng `const` làm tham số thì hợp lệ trong biểu thức hằng;
+  /// chỉ ĐỌC thuộc tính của nó lúc biên dịch mới không được, nên ba trường dưới
+  /// là getter chứ không phải trường.
+  final PhongSoDo phong;
+
   final String category;
 
   const Area({
@@ -52,11 +62,13 @@ class Area {
     required this.nameEn,
     required this.distanceM,
     required this.icon,
-    required this.rect,
-    required this.fill,
-    required this.stroke,
+    required this.phong,
     this.category = AreaCategory.study,
   });
+
+  Rect get rect => phong.r;
+  Color get fill => phong.fill;
+  Color get stroke => phong.stroke;
 
   /// Tên hiển thị ở dòng đầu, theo ngôn ngữ đang bật.
   String tenChinh(BuildContext context) => theoNgonNgu(context, nameVi, nameEn);
@@ -95,7 +107,13 @@ class DemoData {
 
   /// Tách khỏi chuỗi `'16 khu vực · cập nhật 2 giây trước'` cũ: chuỗi ghép sẵn
   /// không dịch được, và trật tự "số + danh từ" mỗi ngôn ngữ một khác.
-  static const areaCount = 16;
+  ///
+  /// Đếm thẳng từ [FloorMap] chứ không viết cứng: bản trước ghi 16 trong khi sơ
+  /// đồ chỉ có 13 khu vực, nên header bản đồ nói một đằng còn hình bên dưới một
+  /// nẻo. Cộng 1 là quầy hướng dẫn — nó có vùng và có tên nhưng không nằm trong
+  /// [FloorMap.phong] vì sơ đồ không vẽ nó thành ô.
+  static int get areaCount => FloorMap.phong.length + 1;
+
   static const updatedSecondsAgo = 2;
 
   static const quickAccess = <QuickAccess>[
@@ -112,9 +130,7 @@ class DemoData {
       nameEn: 'Information desk',
       distanceM: 18,
       icon: Icons.place_outlined,
-      rect: Rect.fromLTWH(160, 300, 72, 40),
-      fill: AppColors.roomBlue,
-      stroke: AppColors.strokeGreen,
+      phong: FloorMap.quayHuongDan,
       category: AreaCategory.facility,
     ),
     Area(
@@ -123,9 +139,7 @@ class DemoData {
       nameEn: 'Periodicals room',
       distanceM: 34,
       icon: Icons.article_outlined,
-      rect: Rect.fromLTWH(276, 112, 90, 150),
-      fill: AppColors.roomMint,
-      stroke: AppColors.strokeBrown,
+      phong: FloorMap.baoTapChi,
     ),
     Area(
       id: 'it-centre',
@@ -133,9 +147,7 @@ class DemoData {
       nameEn: 'IT centre',
       distanceM: 52,
       icon: Icons.desktop_windows_outlined,
-      rect: Rect.fromLTWH(22, 640, 150, 62),
-      fill: AppColors.roomLilac,
-      stroke: AppColors.strokeViolet,
+      phong: FloorMap.trungTamCntt,
       category: AreaCategory.internal,
     ),
   ];
@@ -148,9 +160,7 @@ class DemoData {
       nameEn: 'Group study room',
       distanceM: 28,
       icon: Icons.groups_outlined,
-      rect: Rect.fromLTWH(126, 112, 120, 74),
-      fill: AppColors.roomBlue,
-      stroke: AppColors.strokeGreen,
+      phong: FloorMap.phongHocNhom,
     ),
     Area(
       id: 'meeting',
@@ -158,9 +168,7 @@ class DemoData {
       nameEn: 'Meeting room',
       distanceM: 34,
       icon: Icons.calendar_month_outlined,
-      rect: Rect.fromLTWH(22, 296, 104, 72),
-      fill: AppColors.roomSand,
-      stroke: AppColors.strokeNavy,
+      phong: FloorMap.phongHop,
       category: AreaCategory.internal,
     ),
     Area(
@@ -169,9 +177,7 @@ class DemoData {
       nameEn: 'Postgraduate room',
       distanceM: 41,
       icon: Icons.menu_book_outlined,
-      rect: Rect.fromLTWH(276, 272, 90, 96),
-      fill: AppColors.roomBlue,
-      stroke: AppColors.strokeViolet,
+      phong: FloorMap.docSauDaiHoc,
     ),
     Area(
       id: 'conference',
@@ -179,9 +185,7 @@ class DemoData {
       nameEn: 'Conference room',
       distanceM: 63,
       icon: Icons.co_present_outlined,
-      rect: Rect.fromLTWH(214, 672, 152, 30),
-      fill: AppColors.roomLilac,
-      stroke: AppColors.strokeGrey,
+      phong: FloorMap.hoiThao,
     ),
     Area(
       id: 'periodicals-2',
@@ -189,9 +193,7 @@ class DemoData {
       nameEn: 'Periodicals room',
       distanceM: 34,
       icon: Icons.article_outlined,
-      rect: Rect.fromLTWH(276, 112, 90, 150),
-      fill: AppColors.roomMint,
-      stroke: AppColors.strokeBrown,
+      phong: FloorMap.baoTapChi,
     ),
   ];
 

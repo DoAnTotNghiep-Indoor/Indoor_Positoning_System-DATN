@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../data/demo_data.dart';
+import '../data/floor_map.dart';
 
 /// Sơ đồ mặt bằng tầng 1, dựng theo đúng toạ độ trong frame thiết kế (hệ 393x852)
 /// rồi co giãn theo bề rộng màn hình thật.
@@ -9,27 +10,8 @@ class FloorPlan extends StatelessWidget {
   final bool showUser;
   const FloorPlan({super.key, this.showUser = true});
 
-  static const _rooms = <({
-    Rect r,
-    Color fill,
-    Color stroke,
-    List<String> vi,
-    String? en,
-    double fs
-  })>[
-    (r: Rect.fromLTWH(22, 112, 96, 150), fill: AppColors.roomSand, stroke: AppColors.strokeNavy, vi: ['Phòng', 'nghiệp vụ 1'], en: 'Technical dept. 1', fs: 9.5),
-    (r: Rect.fromLTWH(126, 112, 120, 74), fill: AppColors.roomBlue, stroke: AppColors.strokeGreen, vi: ['Phòng học nhóm'], en: 'Group study', fs: 9.5),
-    (r: Rect.fromLTWH(276, 112, 90, 150), fill: AppColors.roomMint, stroke: AppColors.strokeBrown, vi: ['Phòng báo', '& tạp chí'], en: 'Periodicals', fs: 9.5),
-    (r: Rect.fromLTWH(172, 196, 96, 66), fill: AppColors.roomSand, stroke: AppColors.strokeBrown, vi: ['Phòng', 'nghiệp vụ 2'], en: null, fs: 9.5),
-    (r: Rect.fromLTWH(22, 296, 104, 72), fill: AppColors.roomSand, stroke: AppColors.strokeNavy, vi: ['Phòng họp'], en: 'Meeting room', fs: 9.5),
-    (r: Rect.fromLTWH(276, 272, 90, 96), fill: AppColors.roomBlue, stroke: AppColors.strokeViolet, vi: ['Phòng đọc', 'sau đại học'], en: 'Postgraduate', fs: 9.5),
-    (r: Rect.fromLTWH(90, 266, 30, 28), fill: AppColors.roomStone, stroke: AppColors.strokeGreen, vi: ['TM'], en: null, fs: 9),
-    (r: Rect.fromLTWH(22, 608, 52, 26), fill: AppColors.roomMint, stroke: AppColors.strokeGreen, vi: ['WC'], en: null, fs: 9),
-    (r: Rect.fromLTWH(314, 608, 52, 26), fill: AppColors.roomMint, stroke: AppColors.strokeGreen, vi: ['WC'], en: null, fs: 9),
-    (r: Rect.fromLTWH(22, 640, 150, 62), fill: AppColors.roomLilac, stroke: AppColors.strokeViolet, vi: ['Trung tâm', 'Công nghệ thông tin'], en: 'IT centre', fs: 9.5),
-    (r: Rect.fromLTWH(214, 640, 152, 30), fill: AppColors.roomMint, stroke: AppColors.strokeBrown, vi: ['Căng tin · Canteen'], en: null, fs: 9.5),
-    (r: Rect.fromLTWH(214, 672, 152, 30), fill: AppColors.roomLilac, stroke: AppColors.strokeGrey, vi: ['Phòng hội thảo'], en: null, fs: 9.5),
-  ];
+  // Hình học các phòng nay ở data/floor_map.dart — xem ghi chú ở đó về lý do
+  // gộp: sáu phòng từng được khai báo trùng ở cả widget này lẫn demo_data.dart.
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +50,7 @@ class FloorPlan extends StatelessWidget {
               ),
 
               // Các phòng
-              for (final room in _rooms)
+              for (final room in FloorMap.phong)
                 Positioned(
                   left: room.r.left * s,
                   top: room.r.top * s,
@@ -77,28 +59,21 @@ class FloorPlan extends StatelessWidget {
                   child: _RoomBox(
                     fill: room.fill,
                     stroke: room.stroke,
-                    vi: room.vi,
-                    en: room.en,
+                    dong: room.nhan(context),
                     fs: room.fs * s,
                     scale: s,
                   ),
                 ),
 
-              // Nhãn không thuộc phòng cụ thể
-              _label('KHÔNG GIAN ĐỌC', 112, 494, 9.5, AppColors.strokeNavy, s, bold: true),
-              _label('Reading space', 112, 506, 8.5, AppColors.strokeNavy, s, opacity: .75),
-              _label('KHÔNG GIAN ĐỌC', 280, 494, 9.5, AppColors.strokeNavy, s, bold: true),
-              _label('Reading space', 280, 506, 8.5, AppColors.strokeNavy, s, opacity: .75),
-              _label('QUẦY HƯỚNG DẪN', 196, 320, 8.5, AppColors.strokeGreen, s,
-                  bold: true, trenNen: true, toi: toi),
-              _label('Information desk', 196, 331, 7.5, AppColors.strokeBrown, s,
-                  opacity: .8, trenNen: true, toi: toi),
-              _label('Cầu thang', 74, 373, 8, AppColors.strokeGrey, s,
-                  opacity: .8, trenNen: true, toi: toi),
-              _label('Cầu thang', 314, 373, 8, AppColors.strokeGrey, s,
-                  opacity: .8, trenNen: true, toi: toi),
-              _label('Sảnh chính', 196, 413, 8.5, AppColors.strokeGrey, s,
-                  opacity: .75, trenNen: true, toi: toi),
+              // Nhãn không thuộc ô phòng nào — nội dung ở data/floor_map.dart.
+              //
+              // Bản cũ viết cứng 8 lời gọi _label, mỗi khu hai dòng chồng nhau
+              // một Việt một Anh, còn hai nhãn cầu thang và nhãn sảnh chính thì
+              // chỉ có tiếng Việt — chuyển giao diện sang English chúng vẫn là
+              // tiếng Việt. Nay mỗi nhãn một dòng, chọn theo ngôn ngữ đang bật.
+              for (final n in FloorMap.nhan)
+                _label(n.chu(context), n.cx, n.top, n.size, n.color, s,
+                    bold: n.bold, opacity: n.opacity, trenNen: n.trenNen, toi: toi),
 
               // Marker vị trí người dùng
               if (showUser) ...[
@@ -170,15 +145,16 @@ class FloorPlan extends StatelessWidget {
 
 class _RoomBox extends StatelessWidget {
   final Color fill, stroke;
-  final List<String> vi;
-  final String? en;
+
+  /// Nhãn đã chọn theo ngôn ngữ, mỗi phần tử một dòng.
+  final List<String> dong;
+
   final double fs, scale;
 
   const _RoomBox({
     required this.fill,
     required this.stroke,
-    required this.vi,
-    required this.en,
+    required this.dong,
     required this.fs,
     required this.scale,
   });
@@ -204,30 +180,20 @@ class _RoomBox extends StatelessWidget {
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final line in vi)
-            Text(
-              line,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: fs,
-                height: 1.25,
-                fontWeight: FontWeight.w600,
-                color: stroke,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final line in dong)
+              Text(
+                line,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: fs,
+                  height: 1.25,
+                  fontWeight: FontWeight.w600,
+                  color: stroke,
+                ),
               ),
-            ),
-          if (en != null)
-            Text(
-              en!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: fs * 0.79,
-                height: 1.3,
-                color: stroke.withValues(alpha: 0.75),
-              ),
-            ),
-        ],
+          ],
         ),
       ),
     );
