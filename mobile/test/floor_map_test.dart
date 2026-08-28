@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,6 +17,19 @@ import 'package:ips_dlu/main.dart';
 ///    chúng vẫn là tiếng Việt.
 /// 2. Hình học phòng chỉ được khai báo một lần. Bản cũ chép `Rect` và màu của
 ///    sáu phòng sang cả `demo_data.dart`, đổi sơ đồ là phải sửa tay hai chỗ.
+
+/// Độ sáng tương đối theo WCAG 2.1.
+double _doSang(Color c) {
+  double kenh(double v) =>
+      v <= 0.03928 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+  return 0.2126 * kenh(c.r) + 0.7152 * kenh(c.g) + 0.0722 * kenh(c.b);
+}
+
+/// Tỉ lệ tương phản giữa hai màu đục, theo WCAG 2.1.
+double _tuongPhan(Color a, Color b) {
+  final la = _doSang(a), lb = _doSang(b);
+  return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+}
 
 /// Mở màn Bản đồ, tuỳ chọn đổi sang tiếng Anh trước nếu cần.
 Future<void> _moBanDo(WidgetTester tester, {bool tiengAnh = false}) async {
@@ -104,6 +119,61 @@ void main() {
       // Tràn bố cục làm bài test đỏ ngay, kèm đúng widget gây ra.
       expect(tester.takeException(), isNull);
     }
+  });
+
+  test('Chữ trong ô phòng đủ tương phản khi ô được vẽ đục', () {
+    // Sơ đồ ở chế độ tối là "tờ bản đồ giấy" đặt trên nền tối: ô phòng vẽ đục
+    // bằng màu pastel, chữ giữ màu `stroke` tối. Bài test khoá đúng điều kiện
+    // làm cách đó đứng vững — mỗi cặp (fill, stroke) phải đạt 4,5:1 của WCAG AA
+    // cho chữ nhỏ.
+    //
+    // Bài này khoá phần CHỌN MÀU. Phần vẽ đục do bài kế tiếp khoá — cần cả hai,
+    // vì cặp màu đẹp mà vẽ trong suốt thì vẫn mờ.
+    for (final p in [...FloorMap.phong, FloorMap.quayHuongDan]) {
+      final ty = _tuongPhan(p.fill, p.stroke);
+      expect(ty, greaterThanOrEqualTo(4.5),
+          reason: '${p.id}: chữ trên nền phòng chỉ đạt ${ty.toStringAsFixed(2)}:1');
+    }
+  });
+
+  testWidgets('Ô phòng vẽ ĐỤC ở chế độ tối', (WidgetTester tester) async {
+    // Đây là bài bắt đúng lỗi đã đo được trên máy thật.
+    //
+    // Bản trước vẽ ô ở `alpha: 0.55` cho cả hai chế độ. Nền sáng là trắng nên
+    // pastel vẫn ra pastel; nền tối là 0xFF1B2942 nên 45% màu navy xuyên qua,
+    // kéo pastel xuống xám giữa trong khi chữ giữ màu `stroke` tối — đo trên
+    // Xiaomi M2012K11C chỉ còn 2,99–3,42:1, dưới ngưỡng 4,5:1 của WCAG AA.
+    //
+    // Kiểm tra thẳng alpha của widget đã dựng, không kiểm tra bảng màu: chỉ có
+    // cách này mới đỏ khi ai đó hạ alpha xuống lần nữa.
+    await tester.pumpWidget(const IpsDluApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cài đặt').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tối'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bản đồ').first);
+    await tester.pumpAndSettle();
+
+    final mauPhong = {for (final p in FloorMap.phong) p.fill.toARGB32()};
+    var daKiemTra = 0;
+
+    for (final hop in tester.widgetList<Container>(find.byType(Container))) {
+      final trangTri = hop.decoration;
+      if (trangTri is! BoxDecoration) continue;
+      final mau = trangTri.color;
+      if (mau == null) continue;
+      if (!mauPhong.contains(mau.withValues(alpha: 1).toARGB32())) continue;
+
+      expect(mau.a, 1.0,
+          reason: 'Ô phòng ở chế độ tối phải đục hoàn toàn, '
+              'đang là alpha ${mau.a.toStringAsFixed(2)}');
+      daKiemTra++;
+    }
+
+    expect(daKiemTra, FloorMap.phong.length,
+        reason: 'Phải soi đủ ${FloorMap.phong.length} ô phòng, '
+            'chỉ thấy $daKiemTra — bài test không còn tìm đúng widget nữa');
   });
 
   test('Không có phòng nào trùng vùng với phòng khác', () {

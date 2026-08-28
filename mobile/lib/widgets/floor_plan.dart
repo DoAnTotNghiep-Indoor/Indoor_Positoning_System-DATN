@@ -62,6 +62,7 @@ class FloorPlan extends StatelessWidget {
                     dong: room.nhan(context),
                     fs: room.fs * s,
                     scale: s,
+                    toi: toi,
                   ),
                 ),
 
@@ -150,6 +151,7 @@ class _RoomBox extends StatelessWidget {
   final List<String> dong;
 
   final double fs, scale;
+  final bool toi;
 
   const _RoomBox({
     required this.fill,
@@ -157,6 +159,7 @@ class _RoomBox extends StatelessWidget {
     required this.dong,
     required this.fs,
     required this.scale,
+    required this.toi,
   });
 
   @override
@@ -164,9 +167,16 @@ class _RoomBox extends StatelessWidget {
     // Ở chế độ tối, ô phòng giữ nguyên màu pastel sáng và chữ màu tối như bản
     // in giấy: sơ đồ là một "tờ bản đồ" đặt trên nền tối, đọc dễ hơn hẳn so với
     // việc đảo màu từng ô — đảo màu sẽ làm mất luôn ý nghĩa phân loại theo màu.
+    //
+    // Nhưng "tờ giấy" chỉ thành thật khi ô ĐỤC HẲN. Bản trước để alpha 0.55 ở
+    // cả hai chế độ: nền sáng là trắng nên pastel vẫn ra pastel, còn nền tối là
+    // 0xFF1B2942 nên 45% màu navy xuyên qua kéo pastel xuống thành xám giữa,
+    // trong khi chữ vẫn giữ màu `stroke` tối. Đo trên máy thật: 2,99–3,42:1,
+    // dưới ngưỡng 4,5:1 của WCAG AA cho chữ nhỏ. Để đục thì cả sáu cặp màu
+    // đang dùng lên 7,7–8,9:1, ngang đúng mức của chế độ sáng.
     return Container(
       decoration: BoxDecoration(
-        color: fill.withValues(alpha: 0.55),
+        color: fill.withValues(alpha: toi ? 1 : 0.55),
         border: Border.all(color: stroke.withValues(alpha: 0.85), width: 1.2),
       ),
       alignment: Alignment.center,
