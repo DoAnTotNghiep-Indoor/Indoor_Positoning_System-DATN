@@ -129,29 +129,27 @@ System_Indoor/                           # gốc dự án (git repository)
 │
 ├── notebooks/                           # chạy trên Google Colab
 │   ├── 01_data_exploration.ipynb
-│   ├── 02_preprocessing.ipynb
+│   ├── 02_preprocessing_colab.ipynb
 │   ├── 03_model_training.ipynb
-│   └── 04_evaluation.ipynb
+│   ├── 04_evaluation.ipynb
+│   └── colab_steps/                     # 12 file "từng cell copy vào Colab"
 │
 ├── ml/                                  # mã nguồn ML tái sử dụng được
 │   ├── __init__.py
-│   ├── config.py                        # MIN_AP_PER_SCAN, MIN_APPEAR_RATE, ALPHA...
-│   ├── preprocess/
-│   │   ├── __init__.py
-│   │   ├── load.py                      # bước 1–2: đọc & gom scan
-│   │   ├── pivot.py                     # bước 3–4: pivot & ghép tọa độ
-│   │   ├── filter.py                    # bước 5–6: lọc AP & lọc mẫu
-│   │   ├── missing.py                   # bước 7: missing value động
-│   │   ├── denoise.py                   # bước 8: Hampel filter (MAD)
-│   │   ├── split.py                     # bước 9: chia train/val/test
-│   │   └── scale.py                     # bước 10–11: chuẩn hóa & xuất
+│   ├── config.py                        # MIN_AP_PER_SCAN, MIN_APPEAR_RATE, HAMPEL_K...
+│   ├── preprocess.py                    # cả 12 bước, xếp theo thứ tự pipeline gọi
 │   ├── models/
 │   │   ├── knn.py                       # baseline
 │   │   ├── wknn.py                      # baseline
 │   │   ├── random_forest.py             # so sánh
-│   │   └── xgboost_model.py             # mô hình chính
+│   │   ├── xgboost_model.py             # mô hình chính
+│   │   └── fingerprint_knn.py           # kNN vân tay Bray-Curtis
 │   ├── evaluate.py                      # mean/median error, CDF 50/75/90
-│   └── pipeline.py                      # chạy toàn bộ bằng 1 lệnh
+│   ├── postprocess.py                   # gộp nhiều lần quét, loại lần quét lạc
+│   ├── audit.py                         # rà soát dữ liệu trước khi huấn luyện
+│   ├── report.py                        # sinh biểu đồ cho báo cáo
+│   ├── train.py                         # huấn luyện & so sánh mô hình
+│   └── pipeline.py                      # chạy toàn bộ tiền xử lý bằng 1 lệnh
 │
 ├── backend/
 │   ├── main.py                          # chỉ khởi tạo app + đăng ký router
@@ -398,6 +396,14 @@ pytest==8.3.3
 httpx==0.27.2
 ```
 
+> **Đã lỗi thời — xem `requirements.txt` mới là bản đúng.** Khối trên là bản dự
+> kiến lúc thiết kế. Máy thật chạy Python 3.14.7, mà các bản trên không có wheel
+> cho 3.14 nên phải nâng: `numpy 2.5.2`, `pandas 3.0.5`, `scikit-learn 1.9.0`,
+> `joblib 1.5.3`, `xgboost 3.4.1`, `matplotlib 3.11.1`, `pytest 9.1.1`.
+> `seaborn` đã gỡ hẳn — rà lại toàn bộ mã nguồn thì không nơi nào import nó.
+> Riêng `xgboost` phải khớp đúng 3.4.1 vì `model_xgboost_model.pkl` sinh ra từ
+> bản đó.
+
 > Ghi chú: đồ án cũ để `requirements.txt` không ghim phiên bản (`fastapi`, `tensorflow`, `numpy`...). Khi thư viện cập nhật, dự án có thể chạy sai hoặc không chạy được nữa — rủi ro thật khi bảo vệ đồ án cách thời điểm code vài tháng.
 
 ### 4.4. `README.md` (khung)
@@ -430,30 +436,33 @@ Các file bạn đã làm sẽ chuyển vào đâu:
 |---|---|
 | `D:\Nam5\DATN\combined_data.csv` | `data/raw/combined_data.csv` |
 | `D:\Nam5\DATN\fingerprint_dataset.csv` | `data/processed/fingerprint_dataset.csv` |
-| `System_Indoor\preprocess_steps\docdulieu_1.py` → `gomscan_2.py` | `ml/preprocess/load.py` |
-| `pivotdulieu_3.py` → `ghepToaDo_4.py` | `ml/preprocess/pivot.py` |
-| `locAP_5.py` → `loaibomau_6.py` | `ml/preprocess/filter.py` |
-| `missRSSI_7.py` | `ml/preprocess/missing.py` |
-| `locnhieu_8.py` | `ml/preprocess/denoise.py` |
-| `chiadulieu_9.py` | `ml/preprocess/split.py` |
-| `chuanhoa_10.py` → `xuatketqua_11.py` → `sapxep_12.py` | `ml/preprocess/scale.py` |
-| `01_preprocess_colab.ipynb` | `notebooks/02_preprocessing.ipynb` |
+| `System_Indoor\preprocess_steps\docdulieu_1.py` → `gomscan_2.py` | `ml/preprocess.py` — `load_raw`, `build_scan_id`, `build_scan_meta` |
+| `pivotdulieu_3.py` → `ghepToaDo_4.py` | `ml/preprocess.py` — `to_wide`, `attach_coordinates` |
+| `locAP_5.py` → `loaibomau_6.py` | `ml/preprocess.py` — `filter_access_points`, `filter_sparse_scans` |
+| `missRSSI_7.py` | `ml/preprocess.py` — `fill_missing` |
+| `locnhieu_8.py` | `ml/preprocess.py` — `hampel_filter` |
+| `chiadulieu_9.py` | `ml/preprocess.py` — `split_dataset` |
+| `chuanhoa_10.py` → `xuatketqua_11.py` → `sapxep_12.py` | `ml/preprocess.py` — `scale_dataset`, phần ghi artifact nằm ở `ml/pipeline.py` |
+| `01_preprocess_colab.ipynb` | `notebooks/02_preprocessing_colab.ipynb` |
 | `reference_points_template.csv` | `data/reference/reference_points.csv` (sau khi điền đủ) |
 | `layout_tool_click_toado.py` | `notebooks/tools/` hoặc `ml/tools/` |
 | `Phan_Tich_Thiet_Ke_He_Thong.md` | `docs/` |
 | `Phan_Tich_Ky_Thuat_DoAnCu_va_Cai_Tien.md` | `docs/` |
 
-> **Lưu ý về nhóm file `preprocess_steps/`**: các file này được viết theo dạng "từng cell copy vào Colab" nên dùng biến toàn cục (`df`, `fingerprint`, `ap_cols_selected`) chảy qua các bước. Khi chuyển sang `ml/preprocess/`, cần bọc lại thành hàm có tham số vào/ra rõ ràng để test được, ví dụ:
+> **Lưu ý về nhóm file `colab_steps/`**: các file này được viết theo dạng "từng cell copy vào Colab" nên dùng biến toàn cục (`df`, `fingerprint`, `ap_cols_selected`) chảy qua các bước. Khi chuyển sang `ml/preprocess.py`, mỗi bước được bọc lại thành hàm có tham số vào/ra rõ ràng để test được, ví dụ:
 >
 > ```python
-> # ml/preprocess/denoise.py
+> # ml/preprocess.py — bước 8
 > def hampel_filter(df: pd.DataFrame, ap_cols: list[str],
->                   group_col: str = "rp_id", k: float = 3.0) -> pd.DataFrame:
+>                   group_col: str = "rp_id", k: float | None = None,
+>                   ) -> tuple[pd.DataFrame, int]:
 >     ...
->     return df
+>     return ket_qua, so_o_bi_thay
 > ```
 >
 > Giữ nguyên bản Colab để chạy thử nhanh, đồng thời có bản module hóa để đưa vào dự án — không mâu thuẫn nhau.
+>
+> **Cập nhật 28/08/2026**: ban đầu 12 bước được tách thành gói `ml/preprocess/` với 8 tệp con (`load.py`, `pivot.py`, `filter.py`, `missing.py`, `denoise.py`, `split.py`, `scale.py`, `coords.py`). Nay gộp lại thành **một tệp `ml/preprocess.py`** xếp theo đúng thứ tự pipeline gọi, để đọc một mạch từ trên xuống là ra trình tự 12 bước. Tên hàm giữ nguyên nên chỗ gọi chỉ đổi cách import.
 
 ---
 
@@ -463,7 +472,7 @@ Không cần tạo hết ngay từ đầu. Theo đúng tiến độ trong đề 
 
 | Giai đoạn | Tạo | Mốc đề cương |
 |---|---|---|
-| 1 | `data/`, `notebooks/`, `ml/preprocess/`, `artifacts/` | 20/08 – 31/08 (tiền xử lý) |
+| 1 | `data/`, `notebooks/`, `ml/preprocess.py`, `artifacts/` | 20/08 – 31/08 (tiền xử lý) |
 | 2 | `ml/models/`, `ml/evaluate.py`, `reports/` | 01/09 – 15/10 (huấn luyện & đánh giá) |
 | 3 | `backend/` toàn bộ, `tests/` | 16/10 – 31/10 (backend) |
 | 4 | `frontend/` | 01/11 – 10/11 (dashboard) |

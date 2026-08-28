@@ -20,21 +20,56 @@ Mô hình chính: **XGBoost Regression**. Mô hình cơ sở đối chứng: kNN
 python -m venv venv
 venv\Scripts\activate           # Windows
 pip install -r requirements.txt
-copy .env.example .env          # rồi điền thông tin thật
-alembic upgrade head
 ```
 
-## Chạy
+## Chạy phần máy học
 
 ```bash
-# Backend
-uvicorn backend.main:app --reload
-
-# Frontend
-python -m http.server 5500 --directory frontend
-
-# Pipeline tiền xử lý dữ liệu
+# 1. Tiền xử lý 12 bước -> artifacts/ + data/splits/
 python -m ml.pipeline
+
+# 2. Rà soát dữ liệu trước khi huấn luyện (rò rỉ, độ ổn định, chất lượng buổi thu)
+python -m ml.audit
+
+# 3. Huấn luyện và so sánh 5 mô hình -> artifacts/*.pkl + reports/tables/
+python -m ml.train
+python -m ml.train --nhanh              # lưới tham số rút gọn, dùng lúc thử
+python -m ml.train --mo-hinh knn wknn   # chỉ chạy một số mô hình
+
+# 4. Sinh biểu đồ cho báo cáo -> reports/figures/
+python -m ml.report
+
+# Kiểm thử
+python -m pytest tests/ -q
+```
+
+Chạy đúng thứ tự trên: `ml.train` cần artifact do `ml.pipeline` sinh ra, và
+`ml.report` đọc kết quả của `ml.train`.
+
+## Chạy ứng dụng di động
+
+```bash
+cd mobile
+flutter pub get
+flutter run          # cần máy Android thật hoặc máy ảo đang bật
+flutter test
+flutter analyze
+```
+
+Ứng dụng hiện chạy trên **dữ liệu demo tĩnh** trong `mobile/lib/data/`, chưa nối
+API. Giao diện đủ 5 màn hình, hai ngôn ngữ Việt/Anh và chế độ sáng/tối.
+
+## Chưa chạy được — giai đoạn 3 chưa làm
+
+Các lệnh dưới đây nằm trong thiết kế nhưng **sẽ báo lỗi nếu chạy bây giờ**:
+`backend/main.py` mới là khung rỗng, và chưa có `alembic.ini` lẫn
+`backend/migrations/`.
+
+```bash
+copy .env.example .env          # rồi điền thông tin thật
+alembic upgrade head
+uvicorn backend.main:app --reload
+python -m http.server 5500 --directory frontend
 ```
 
 ## Cấu trúc thư mục
@@ -45,8 +80,9 @@ python -m ml.pipeline
 | `artifacts/` | **Hợp đồng giữa ML và Backend**: `feature_list.json`, `scaler.pkl`, model |
 | `notebooks/` | Notebook chạy trên Google Colab |
 | `ml/` | Mã nguồn tiền xử lý và huấn luyện, tái sử dụng được |
-| `backend/` | FastAPI + WebSocket + PostgreSQL |
-| `frontend/` | Web Dashboard (HTML5 + Tailwind CSS) |
+| `mobile/` | Ứng dụng Flutter — 5 màn hình, song ngữ, sáng/tối |
+| `backend/` | FastAPI + WebSocket + PostgreSQL *(giai đoạn 3, mới là khung)* |
+| `frontend/` | Web Dashboard (HTML5 + Tailwind CSS) *(giai đoạn 3)* |
 | `tests/` | Kiểm thử tự động |
 | `reports/` | Biểu đồ và bảng phục vụ viết báo cáo |
 | `docs/` | Tài liệu phân tích, thiết kế |

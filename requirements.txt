@@ -1,8 +1,29 @@
-# Máy đang dùng Python 3.14.7. Các phiên bản dưới đây đã chạy thật và pass test,
-# không phải bản ghim từ tài liệu — bản cũ (numpy 2.1.3, pandas 2.2.3,
-# scikit-learn 1.5.2) không có wheel cho Python 3.14 nên cài sẽ hỏng.
+# Máy đang dùng Python 3.14.7.
+#
+# Khối "đã kiểm chứng" là phiên bản ĐANG CÀI THẬT trên máy, đã chạy trọn
+# pipeline + huấn luyện + kiểm thử. Không ghim theo tài liệu: bản cũ
+# (numpy 2.1.3, pandas 2.2.3, scikit-learn 1.5.2) không có wheel cho Python 3.14.
+#
+# Khối backend chưa cài vì giai đoạn 3 chưa bắt đầu — các số dưới đây là dự kiến,
+# phải kiểm lại khi thực sự dựng máy chủ.
 
-# Backend
+# --- Machine Learning — đã kiểm chứng ---
+numpy==2.5.2
+pandas==3.0.5
+scikit-learn==1.9.0
+joblib==1.5.3
+
+# Mô hình chính. PHẢI khớp phiên bản này: model_xgboost_model.pkl được sinh ra
+# bằng 3.4.1, nạp lại bằng bản 2.x có thể lỗi định dạng.
+xgboost==3.4.1
+
+# Vẽ biểu đồ báo cáo (ml/report.py). Không dùng seaborn — đã gỡ khỏi danh sách.
+matplotlib==3.11.1
+
+# --- Kiểm thử — đã kiểm chứng ---
+pytest==9.1.1
+
+# --- Backend (giai đoạn 3) — CHƯA CÀI, số phiên bản là dự kiến ---
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
 pydantic==2.9.2
@@ -11,20 +32,4 @@ sqlalchemy==2.0.36
 asyncpg==0.30.0
 alembic==1.14.0
 websockets==13.1
-
-# Machine Learning — đã cài và kiểm chứng
-numpy==2.5.2
-pandas==3.0.5
-scikit-learn==1.9.0
-joblib==1.5.3
-
-# Mô hình chính, cài khi bắt đầu giai đoạn 2
-xgboost==2.1.2
-
-# Trực quan hóa (dùng khi viết báo cáo)
-matplotlib==3.9.2
-seaborn==0.13.2
-
-# Kiểm thử — đã cài và kiểm chứng
-pytest==9.1.1
 httpx==0.27.2
