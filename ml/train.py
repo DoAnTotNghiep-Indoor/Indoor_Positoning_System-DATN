@@ -14,6 +14,10 @@ Bước 3 chỉ chạy đúng một lần cho mỗi mô hình. Chọn tham số 
 báo cáo kết quả trên chính tập đó là tự lừa mình — con số đẹp nhưng không nói
 được gì về hiệu năng thực tế.
 
+Quy tắc này áp cho MỌI quyết định, không riêng tham số: mô hình nào thành active,
+mô hình cơ sở nào đem ra so sánh — tất cả đều chọn theo validation. Sai số test
+chỉ được đọc ở bước cuối để in ra và ghi vào báo cáo. Xem `chon_theo_validation`.
+
 Sinh ra:
     artifacts/model_<ten>.pkl          mô hình đã huấn luyện
     artifacts/model_metadata.json      tham số tốt nhất + chỉ số + mô hình active
@@ -158,6 +162,26 @@ def huan_luyen_mot(module, tap: dict, ap_cols: list[str], nhanh: bool) -> dict:
     }
 
 
+def chon_theo_validation(ket_qua: list[dict], loc=None) -> dict | None:
+    """Chọn mô hình tốt nhất theo sai số VALIDATION, không bao giờ theo test.
+
+    Tách thành hàm riêng để bất biến này kiểm thử được — xem tests/test_train.py.
+    Trước đây phép chọn nằm inline và dùng `ket_qua_test`, tức chọn trên chính
+    tập dùng để công bố kết quả, đúng thứ mà docstring đầu tệp gọi là "tự lừa
+    mình". Với bộ dữ liệu hiện tại hai cách cho cùng người thắng nên con số đã
+    công bố không đổi, nhưng lập luận thì hỏng và sẽ âm thầm sai khi thêm dữ
+    liệu hoặc thêm mô hình.
+
+    `loc` lọc bớt ứng viên, ví dụ chỉ lấy hai mô hình cơ sở. Trả về None khi
+    không còn ứng viên nào — người gọi phải tự xử lý, vì `min()` trên chuỗi rỗng
+    ném ValueError.
+    """
+    ung_vien = [r for r in ket_qua if loc is None or loc(r)]
+    if not ung_vien:
+        return None
+    return min(ung_vien, key=lambda r: r["loi_validation"])
+
+
 def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFrame:
     bat_dau = datetime.now()
     tap, ap_cols = nap_du_lieu()
@@ -183,8 +207,9 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
     bang = evaluate.bang_so_sanh([r["ket_qua_test"] for r in tat_ca])
     bang.to_csv(config.REPORTS_DIR / "tables" / "model_comparison.csv", index=False)
 
-    # Mô hình tốt nhất -> active
-    tot_nhat = min(tat_ca, key=lambda r: r["ket_qua_test"]["loi_trung_binh"])
+    # Mô hình active chọn theo VALIDATION. Sai số test bên dưới chỉ dùng để báo
+    # cáo, không được tham gia vào bất kỳ quyết định nào.
+    tot_nhat = chon_theo_validation(tat_ca)
 
     for r in tat_ca:
         khoa = r["module"].__name__.rsplit(".", 1)[-1]
@@ -244,8 +269,14 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
                  "cdf_75", "cdf_90", "loi_lon_nhat", "thoi_gian_du_doan_ms"]]
     print(hien.to_string(index=False, float_format=lambda v: f"{v:7.3f}"))
 
-    co_so = min(r["ket_qua_test"]["loi_trung_binh"]
-                for r in tat_ca if r["module"].TEN in ("kNN", "WKNN"))
+    # Mô hình cơ sở cũng chọn theo validation: lấy cái tốt hơn trên test rồi so
+    # với nó là lại chọn trên tập công bố, chỉ ở quy mô nhỏ hơn.
+    #
+    # r_co_so là None khi chạy --mo-hinh không kèm kNN/WKNN. Bản trước gọi thẳng
+    # min() trên chuỗi rỗng nên ném ValueError ngay tại đây, tức sập sau khi đã
+    # huấn luyện xong toàn bộ và người dùng mất trắng công chạy.
+    r_co_so = chon_theo_validation(tat_ca, lambda r: r["module"].TEN in ("kNN", "WKNN"))
+    co_so = r_co_so["ket_qua_test"]["loi_trung_binh"] if r_co_so else 0.0
     tot = tot_nhat["ket_qua_test"]["loi_trung_binh"]
     print(f"\nTốt nhất: {tot_nhat['module'].TEN} — {tot:.3f} m")
     if co_so > 0:
