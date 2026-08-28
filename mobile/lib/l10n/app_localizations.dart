@@ -151,12 +151,6 @@ abstract class L {
   /// **'Gần bạn'**
   String get homeNearby;
 
-  /// No description provided for @mapTitle.
-  ///
-  /// In vi, this message translates to:
-  /// **'Bản đồ'**
-  String get mapTitle;
-
   /// No description provided for @mapFloorOne.
   ///
   /// In vi, this message translates to:

@@ -288,7 +288,6 @@ class _ResultCard extends StatelessWidget {
 
     return GlassCard(
       radius: 24,
-      opacity: 0.5,
       semanticLabel: t.a11yAreaRow(area.tenChinh(context), area.distanceM),
       semanticHint: t.a11yOpenArea,
       onTap: () => Navigator.of(context).push(

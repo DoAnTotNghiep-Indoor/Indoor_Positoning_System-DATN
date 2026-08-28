@@ -11,9 +11,9 @@ import 'tap_feedback.dart';
 /// thực sự khúc xạ những gì nằm phía sau, có highlight và sai sắc theo mép.
 ///
 /// Giữ nguyên tên và tham số cũ (`radius`, `padding`, `onTap`) để năm màn hình
-/// không phải sửa gì. Riêng `opacity` và `shadow` không còn tác dụng vì độ trong
-/// và bóng nay do thư viện tự tính theo nền phía sau — giữ lại để mã cũ vẫn
-/// biên dịch được, và đánh dấu deprecated để lần dọn sau gỡ đi.
+/// không phải sửa gì. Hai tham số `opacity` và `shadow` đã được gỡ hẳn: độ trong
+/// và bóng nay do shader tự tính theo nền phía sau, nên `build()` không đọc tới
+/// chúng — để lại chỉ khiến chỗ gọi tưởng mình đang chỉnh được thứ gì đó.
 class GlassCard extends StatelessWidget {
   final Widget child;
   final double radius;
@@ -24,12 +24,6 @@ class GlassCard extends StatelessWidget {
   final String? semanticLabel;
   final String? semanticHint;
 
-  @Deprecated('Độ trong nay do shader tự tính theo nền phía sau.')
-  final double opacity;
-
-  @Deprecated('Bóng nay do thư viện tự tính theo ánh sáng của lớp kính.')
-  final bool shadow;
-
   const GlassCard({
     super.key,
     required this.child,
@@ -38,10 +32,6 @@ class GlassCard extends StatelessWidget {
     this.onTap,
     this.semanticLabel,
     this.semanticHint,
-    // ignore: deprecated_member_use_from_same_package
-    this.opacity = 0.55,
-    // ignore: deprecated_member_use_from_same_package
-    this.shadow = false,
   });
 
   @override

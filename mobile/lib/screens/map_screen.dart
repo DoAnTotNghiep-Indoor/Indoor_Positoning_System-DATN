@@ -110,8 +110,6 @@ class MapHeader extends StatelessWidget {
 
     return GlassCard(
       radius: 26,
-      opacity: 0.6,
-      shadow: true,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
       child: MergeSemantics(
         child: Row(

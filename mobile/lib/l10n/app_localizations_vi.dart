@@ -38,9 +38,6 @@ class LVi extends L {
   String get homeNearby => 'Gần bạn';
 
   @override
-  String get mapTitle => 'Bản đồ';
-
-  @override
   String get mapFloorOne => 'Tầng 1';
 
   @override

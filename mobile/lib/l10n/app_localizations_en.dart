@@ -38,9 +38,6 @@ class LEn extends L {
   String get homeNearby => 'Near you';
 
   @override
-  String get mapTitle => 'Map';
-
-  @override
   String get mapFloorOne => 'Floor 1';
 
   @override
