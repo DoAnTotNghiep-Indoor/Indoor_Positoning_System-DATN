@@ -5,9 +5,9 @@ lần quét dị thường lẻ loi**, không phải sai lệch có hệ thống
 ba lần quét tại RP39 (22, 52) cho ra RP39, RP40 (cách 7 m) và RP11 (0, 18) —
 tận đầu kia toà nhà.
 
-Thiết bị quét WiFi mỗi 1-2 giây, nên trong lúc người dùng đứng yên hoặc đi chậm
-luôn có sẵn vài lần quét gần nhau về thời gian. Gộp chúng lại loại được lần quét
-dị thường mà không cần thêm dữ liệu huấn luyện nào.
+Thiết bị quét WiFi mỗi 1-2 giây nên lúc chạy thật luôn có sẵn vài lần quét gần
+nhau về thời gian. Gộp chúng lại loại được lần quét dị thường mà không cần thêm
+dữ liệu huấn luyện nào.
 
 Đo trên tập test, gộp 3 lần quét:
 
@@ -25,18 +25,12 @@ from __future__ import annotations
 
 import numpy as np
 
-# Số lần quét gộp mặc định. Ba là đủ để loại một lần quét dị thường mà vẫn giữ
-# độ trễ thấp: thiết bị quét mỗi 1-2 giây nên cửa sổ 3 mẫu tương ứng 3-6 giây.
+# Ba lần quét là đủ để loại một lần dị thường mà vẫn giữ độ trễ thấp: thiết bị
+# quét mỗi 1-2 giây nên cửa sổ 3 mẫu tương ứng 3-6 giây.
 CUA_SO_MAC_DINH = 3
 
 
 def trung_vi_toa_do(du_doan: np.ndarray) -> np.ndarray:
-    """Trung vị theo từng trục.
-
-    Rẻ nhất và đủ tốt. Nhược điểm nhỏ: kết quả có thể là một điểm không nằm
-    trong danh sách dự đoán gốc, ví dụ trung vị của (0,0), (10,0), (0,10) là
-    (0, 0) nhưng của (0,0), (10,10), (0,10) là (0, 10).
-    """
     return np.median(np.asarray(du_doan, dtype=float), axis=0)
 
 
@@ -62,12 +56,7 @@ CACH_GOP = {
 
 def gop(du_doan: np.ndarray, cach: str = "dong_thuan") -> np.ndarray:
     """Gộp một cửa sổ dự đoán thành một toạ độ."""
-    P = np.atleast_2d(np.asarray(du_doan, dtype=float))
-    if len(P) == 0:
-        raise ValueError("Không có dự đoán nào để gộp.")
-    if cach not in CACH_GOP:
-        raise ValueError(f"Cách gộp không hợp lệ: '{cach}'. Chọn: {list(CACH_GOP)}")
-    return CACH_GOP[cach](P)
+    return CACH_GOP[cach](np.atleast_2d(np.asarray(du_doan, dtype=float)))
 
 
 def gop_cua_so_truot(
@@ -77,8 +66,8 @@ def gop_cua_so_truot(
 ) -> np.ndarray:
     """Áp dụng cho một chuỗi dự đoán theo thời gian.
 
-    Mỗi thời điểm gộp `cua_so` dự đoán gần nhất. Những dự đoán đầu chuỗi dùng
-    ít mẫu hơn thay vì bị bỏ, để hệ thống có toạ độ ngay từ lần quét đầu.
+    Mỗi thời điểm gộp `cua_so` dự đoán gần nhất. Những dự đoán đầu chuỗi dùng ít
+    mẫu hơn thay vì bị bỏ, để hệ thống có toạ độ ngay từ lần quét đầu.
     """
     P = np.asarray(du_doan, dtype=float)
     return np.array([gop(P[max(0, i - cua_so + 1) : i + 1], cach) for i in range(len(P))])

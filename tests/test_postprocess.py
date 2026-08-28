@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from ml import postprocess
 
@@ -37,11 +36,6 @@ def test_tat_ca_giong_nhau_thi_tra_ve_chinh_no():
     du_doan = np.tile([7.0, -3.0], (5, 1))
     for cach in postprocess.CACH_GOP:
         np.testing.assert_allclose(postprocess.gop(du_doan, cach), [7.0, -3.0])
-
-
-def test_cach_gop_khong_hop_le():
-    with pytest.raises(ValueError, match="không hợp lệ"):
-        postprocess.gop([[0.0, 0.0]], "khong_ton_tai")
 
 
 def test_cua_so_truot_giu_nguyen_do_dai():

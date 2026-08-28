@@ -36,7 +36,6 @@ COL_COLLECTOR = "Student ID"
 COL_TOTAL_AP = "Total number of AP scanned"
 COL_AZIMUTH = "Orientation Azimuth (°)"
 
-# Cột bắt buộc phải có trong file thô — thiếu là dừng ngay, không chạy tiếp
 REQUIRED_RAW_COLS = [
     COL_TIME, COL_BSSID, COL_RSSI, COL_RP,
     COL_DEVICE, COL_COLLECTOR, COL_TOTAL_AP, COL_AZIMUTH,
@@ -83,18 +82,6 @@ HAMPEL_ON_TRAIN_ONLY = True
 TEST_SIZE = 0.15
 VALIDATION_SIZE = 0.15
 RANDOM_STATE = 42
-
-# Cách chia tập:
-#   "random"         - ngẫu nhiên, phân tầng theo rp_id (mặc định)
-#   "device_holdout" - để riêng 1 thiết bị làm test (cần >= 2 device_id)
-#   "time_holdout"   - để riêng khoảng thời gian cuối làm test
-SPLIT_STRATEGY = "random"
-HOLDOUT_DEVICE = None  # tên thiết bị dùng làm test khi SPLIT_STRATEGY="device_holdout"
-
-# Xử lý điểm tham chiếu chưa có toạ độ đo đạc (hiện tại: RP41):
-#   "drop"  - bỏ các mẫu đó, vẫn chạy được (mặc định)
-#   "error" - dừng pipeline, dùng khi đã đo đủ và muốn chặn thiếu sót
-MISSING_COORD_POLICY = "drop"
 
 # --- Hậu xử lý vị trí (backend dùng lại qua biến môi trường) ---
 SMOOTHING_ALPHA = 0.3

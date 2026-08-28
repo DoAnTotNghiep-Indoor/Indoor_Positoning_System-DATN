@@ -2,27 +2,21 @@
 
 Xuất phát từ một quan sát về chính bộ dữ liệu: 782 mẫu nhưng chỉ có 39 toạ độ
 khác nhau, vì dữ liệu được thu ĐÚNG TẠI các điểm tham chiếu chứ không có mẫu nào
-ở giữa. Nhãn (x, y) vì thế bị lượng tử hoá theo lưới khoảng 7 mét.
-
-Với cấu trúc đó, hồi quy liên tục làm việc thừa: nó cố đoán những toạ độ không
-hề tồn tại trong dữ liệu. Bài toán thực chất gần với phân lớp 39 điểm hơn. Mô
-hình này làm đúng thế — chọn điểm tham chiếu, rồi trả về toạ độ của điểm đó.
+ở giữa. Nhãn (x, y) vì thế bị lượng tử hoá theo lưới khoảng 7 mét, nên bài toán
+thực chất gần với phân lớp 39 điểm hơn là hồi quy liên tục. Mô hình này làm đúng
+thế — chọn điểm tham chiếu, rồi trả về toạ độ của điểm đó.
 
 Hai lựa chọn kỹ thuật đem lại phần lớn cải thiện:
 
-**Bray-Curtis thay cho Euclid.** Khoảng cách Bray-Curtis là L1 đã chuẩn hoá theo
-tổng cường độ: `sum|a-b| / sum(a+b)`. Nó so sánh *hình dạng* của vân tay chứ
-không so sánh độ mạnh tuyệt đối, nên bớt nhạy với việc cùng một vị trí nhưng
-thiết bị khác hoặc hướng cầm máy khác cho ra mức tín hiệu chung cao thấp khác
-nhau. Đo trên validation: đúng điểm 82,9% so với 70,1% của Euclid.
+**Bray-Curtis thay cho Euclid.** Bray-Curtis là L1 đã chuẩn hoá theo tổng cường
+độ: `sum|a-b| / sum(a+b)`. Nó so sánh *hình dạng* của vân tay chứ không so sánh
+độ mạnh tuyệt đối, nên bớt nhạy với việc cùng một vị trí nhưng thiết bị khác
+hoặc hướng cầm máy khác cho ra mức tín hiệu chung cao thấp khác nhau. Đo trên
+validation: đúng điểm 82,9% so với 70,1% của Euclid.
 
 **Biểu diễn powed.** Nâng giá trị đã chuẩn hoá lên luỹ thừa beta làm giãn khoảng
-cách giữa các AP mạnh và nén phần AP yếu. AP yếu chủ yếu là nhiễu, nên giảm ảnh
-hưởng của chúng giúp ích. Cách biểu diễn này lấy từ tài liệu về UJIIndoorLoc.
-
-Trọng số `1/d^power` với `top` lớp có xác suất cao nhất cho phép chuyển mượt giữa
-hai thái cực: `n_neighbors=1` là chọn cứng một điểm, `n_neighbors` lớn với
-`power` nhỏ là trung bình mềm nhiều điểm.
+cách giữa các AP mạnh và nén phần AP yếu. AP yếu chủ yếu là nhiễu. Cách biểu
+diễn này lấy từ tài liệu về UJIIndoorLoc.
 """
 
 from __future__ import annotations
@@ -50,9 +44,9 @@ def bieu_dien_powed(X: np.ndarray, beta: float) -> np.ndarray:
     """Nâng đặc trưng đã chuẩn hoá lên luỹ thừa beta.
 
     Phải cắt ngưỡng dưới ở 0 trước khi nâng luỹ thừa: scaler fit trên tập train
-    nên mẫu validation/test có thể mang giá trị âm (đo được thấp nhất -0,333), mà
-    số âm mũ 1,75 cho ra NaN. Cắt ở 0 nghĩa là "yếu hơn mọi mẫu từng thấy lúc
-    huấn luyện" — đúng ý nghĩa cần biểu đạt.
+    nên mẫu validation/test có thể mang giá trị âm (thấp nhất -0,333), mà số âm
+    mũ 1,75 cho ra NaN. Cắt ở 0 nghĩa là "yếu hơn mọi mẫu từng thấy lúc huấn
+    luyện" — đúng ý nghĩa cần biểu đạt.
     """
     return np.clip(np.asarray(X, dtype=float), 0.0, None) ** beta
 
@@ -61,8 +55,7 @@ class DinhViPhanLop(BaseEstimator, RegressorMixin):
     """Phân lớp điểm tham chiếu rồi trả về toạ độ, nhưng vẫn nhận y hai cột.
 
     Giữ nguyên giao diện `fit(X, y_2_cot)` như ba mô hình hồi quy còn lại, để
-    `ml/train.py` đối xử với mọi mô hình theo cùng một quy trình. Nhãn lớp được
-    suy ra từ chính các dòng toạ độ duy nhất trong y.
+    `ml/train.py` đối xử với mọi mô hình theo cùng một quy trình.
     """
 
     def __init__(
@@ -70,13 +63,11 @@ class DinhViPhanLop(BaseEstimator, RegressorMixin):
         beta: float = 1.75,
         n_neighbors: int = 1,
         power: float = 1.0,
-        top: int | None = None,
         metric: str = "braycurtis",
     ):
         self.beta = beta
         self.n_neighbors = n_neighbors
         self.power = power
-        self.top = top
         self.metric = metric
 
     def _trong_so(self, khoang_cach):
@@ -98,13 +89,6 @@ class DinhViPhanLop(BaseEstimator, RegressorMixin):
 
     def predict(self, X):
         xac_suat = self.clf_.predict_proba(bieu_dien_powed(X, self.beta))
-
-        if self.top:
-            xac_suat = xac_suat.copy()
-            nguong = np.sort(xac_suat, axis=1)[:, -self.top][:, None]
-            xac_suat[xac_suat < nguong] = 0.0
-            xac_suat /= xac_suat.sum(axis=1, keepdims=True)
-
         # Lớp mà classifier biết, theo đúng thứ tự của predict_proba
         return xac_suat @ self.toa_do_[self.clf_.classes_]
 
@@ -117,18 +101,5 @@ def build(
     beta: float = 1.75,
     n_neighbors: int = 1,
     power: float = 1.0,
-    top: int | None = None,
 ) -> DinhViPhanLop:
-    return DinhViPhanLop(beta=beta, n_neighbors=n_neighbors, power=power, top=top)
-
-
-def tuong_duong(tham_so: dict) -> tuple:
-    """Khoá nhận dạng các bộ tham số cho ra mô hình y hệt nhau.
-
-    Khi chỉ lấy một láng giềng thì trọng số `power` không được dùng tới, nên
-    (beta=2, k=1, power=1) và (beta=2, k=1, power=8) là cùng một mô hình. Không
-    khử thì lưới 36 tổ hợp có 8 tổ hợp chạy thừa.
-    """
-    if tham_so.get("n_neighbors") == 1:
-        return (tham_so.get("beta"), 1, tham_so.get("top"))
-    return tuple(sorted(tham_so.items()))
+    return DinhViPhanLop(beta=beta, n_neighbors=n_neighbors, power=power)

@@ -23,12 +23,8 @@ LUOI_THAM_SO = {
 
 
 def trong_so_nghich_dao(khoang_cach: np.ndarray) -> np.ndarray:
-    """Trọng số 1/(d + eps).
-
-    Phải là hàm đặt tên ở cấp module, KHÔNG được dùng lambda: joblib không
-    pickle được lambda, mà backend cần nạp lại mô hình từ file .pkl lúc khởi
-    động. Dùng lambda thì train xong không triển khai được.
-    """
+    # Phải là hàm đặt tên ở cấp module, KHÔNG dùng lambda: joblib không pickle
+    # được lambda, mà backend cần nạp lại mô hình từ .pkl lúc khởi động.
     return 1.0 / (np.asarray(khoang_cach, dtype=float) + EPS)
 
 

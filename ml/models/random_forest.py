@@ -4,9 +4,6 @@ Có lý do cụ thể để đưa mô hình này vào: đồ án CTK45 báo cáo
 97,16% với sai số 6,02 m ở bài toán phân lớp điểm tham chiếu. Giữ nó lại cho
 phép so sánh trực tiếp với số liệu đã công bố của nhóm trước, dù bài toán đã
 chuyển từ phân lớp sang hồi quy.
-
-`n_jobs=-1` dùng hết lõi CPU. Trên Colab thường là 2 lõi, trên máy để bàn nhiều
-hơn — đây là chỗ hiếm hoi trong đồ án mà phần cứng thực sự tạo khác biệt.
 """
 
 from __future__ import annotations

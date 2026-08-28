@@ -53,52 +53,24 @@ for _luong in (sys.stdout, sys.stderr):
 def nap_du_lieu() -> tuple[dict, list[str]]:
     """Đọc ba tập đã chia và danh sách đặc trưng từ hợp đồng dữ liệu."""
     duong_dan = config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON
-    if not duong_dan.exists():
-        raise FileNotFoundError(
-            f"Chưa có {duong_dan}. Chạy `python -m ml.pipeline` trước."
-        )
-
     ap_cols = json.loads(duong_dan.read_text(encoding="utf-8"))["ap_columns"]
-
-    tap = {}
-    for ten in ("train", "validation", "test"):
-        p = config.SPLITS_DIR / f"{ten}.csv"
-        if not p.exists():
-            raise FileNotFoundError(f"Thiếu {p}. Chạy `python -m ml.pipeline` trước.")
-        tap[ten] = pd.read_csv(p)
-
+    tap = {
+        ten: pd.read_csv(config.SPLITS_DIR / f"{ten}.csv")
+        for ten in ("train", "validation", "test")
+    }
     return tap, ap_cols
 
 
-def _to_hop(luoi: dict, module=None) -> list[dict]:
-    """Bung dict lưới thành danh sách các bộ tham số cụ thể.
-
-    Bỏ tổ hợp trùng lặp nếu module khai báo hàm `tuong_duong`. Ví dụ với kNN vân
-    tay, khi n_neighbors=1 thì tham số power không có tác dụng nên ba giá trị
-    power khác nhau cho ra ba mô hình y hệt.
-    """
-    if not luoi:
-        return [{}]
+def _to_hop(luoi: dict) -> list[dict]:
+    """Bung dict lưới thành danh sách các bộ tham số cụ thể."""
     ten = list(luoi)
-    tat_ca = [dict(zip(ten, gt)) for gt in product(*(luoi[k] for k in ten))]
-
-    rut_gon = getattr(module, "tuong_duong", None)
-    if rut_gon is None:
-        return tat_ca
-
-    da_thay, ket_qua = set(), []
-    for ts in tat_ca:
-        khoa = rut_gon(ts)
-        if khoa not in da_thay:
-            da_thay.add(khoa)
-            ket_qua.append(ts)
-    return ket_qua
+    return [dict(zip(ten, gt)) for gt in product(*(luoi[k] for k in ten))] or [{}]
 
 
 def quet_luoi(module, X_tr, y_tr, X_va, y_va, nhanh: bool = False) -> tuple[dict, float]:
     """Thử mọi tổ hợp, trả về (tham số tốt nhất, sai số trung bình trên validation)."""
     luoi = getattr(module, "LUOI_NHANH", module.LUOI_THAM_SO) if nhanh else module.LUOI_THAM_SO
-    to_hop = _to_hop(luoi, module)
+    to_hop = _to_hop(luoi)
 
     tot_nhat, loi_tot_nhat = None, float("inf")
     for i, tham_so in enumerate(to_hop, 1):
@@ -173,8 +145,7 @@ def chon_theo_validation(ket_qua: list[dict], loc=None) -> dict | None:
     liệu hoặc thêm mô hình.
 
     `loc` lọc bớt ứng viên, ví dụ chỉ lấy hai mô hình cơ sở. Trả về None khi
-    không còn ứng viên nào — người gọi phải tự xử lý, vì `min()` trên chuỗi rỗng
-    ném ValueError.
+    không còn ứng viên nào.
     """
     ung_vien = [r for r in ket_qua if loc is None or loc(r)]
     if not ung_vien:
@@ -195,8 +166,6 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
         muon = {t.lower() for t in ten_mo_hinh}
         chon = [m for m in chon if m.__name__.rsplit(".", 1)[-1].lower() in muon
                 or m.TEN.lower() in muon]
-        if not chon:
-            raise ValueError(f"Không nhận ra mô hình: {ten_mo_hinh}")
 
     tat_ca = [huan_luyen_mot(m, tap, ap_cols, nhanh) for m in chon]
 
@@ -269,12 +238,8 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
                  "cdf_75", "cdf_90", "loi_lon_nhat", "thoi_gian_du_doan_ms"]]
     print(hien.to_string(index=False, float_format=lambda v: f"{v:7.3f}"))
 
-    # Mô hình cơ sở cũng chọn theo validation: lấy cái tốt hơn trên test rồi so
-    # với nó là lại chọn trên tập công bố, chỉ ở quy mô nhỏ hơn.
-    #
-    # r_co_so là None khi chạy --mo-hinh không kèm kNN/WKNN. Bản trước gọi thẳng
-    # min() trên chuỗi rỗng nên ném ValueError ngay tại đây, tức sập sau khi đã
-    # huấn luyện xong toàn bộ và người dùng mất trắng công chạy.
+    # Mô hình cơ sở cũng chọn theo validation. None khi chạy --mo-hinh không kèm
+    # kNN/WKNN.
     r_co_so = chon_theo_validation(tat_ca, lambda r: r["module"].TEN in ("kNN", "WKNN"))
     co_so = r_co_so["ket_qua_test"]["loi_trung_binh"] if r_co_so else 0.0
     tot = tot_nhat["ket_qua_test"]["loi_trung_binh"]

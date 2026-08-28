@@ -2,8 +2,6 @@
 
     python -m ml.pipeline
     python -m ml.pipeline --min-appear-rate 0.10      # thí nghiệm so sánh ngưỡng
-    python -m ml.pipeline --split device_holdout      # khi đã có máy thứ hai
-    python -m ml.pipeline --strict-coords             # chặn nếu còn RP chưa đo
 
 Sinh ra đầy đủ artifact, không phụ thuộc Google Colab:
 
@@ -29,10 +27,9 @@ import joblib
 import pandas as pd
 
 from ml import config
-from ml.preprocess import coords, denoise, filter as ap_filter, load, missing, pivot, scale, split
+from ml import preprocess as pre
 
-# Console Windows mặc định dùng cp1252, không in được tiếng Việt có dấu.
-# Ép UTF-8 để log đọc được trên cả PowerShell, cmd và terminal Linux.
+# Console Windows mặc định cp1252, không in được tiếng Việt có dấu.
 for _luong in (sys.stdout, sys.stderr):
     if hasattr(_luong, "reconfigure"):
         try:
@@ -47,60 +44,56 @@ def _log(buoc: str, noi_dung: str) -> None:
 
 def run(
     min_appear_rate: float | None = None,
-    split_strategy: str | None = None,
-    coord_policy: str | None = None,
     hampel_train_only: bool | None = None,
 ) -> dict:
     """Chạy 12 bước, ghi artifact, trả về nhật ký lần chạy."""
     bat_dau = datetime.now()
     ty_le_ap = min_appear_rate if min_appear_rate is not None else config.MIN_APPEAR_RATE
-    cach_chia = split_strategy or config.SPLIT_STRATEGY
-    chinh_sach = coord_policy or config.MISSING_COORD_POLICY
     hampel_rieng = config.HAMPEL_ON_TRAIN_ONLY if hampel_train_only is None else hampel_train_only
 
     for thu_muc in (config.PROCESSED_DIR, config.SPLITS_DIR, config.ARTIFACTS_DIR):
         thu_muc.mkdir(parents=True, exist_ok=True)
 
     # --- Bước 1: nạp dữ liệu thô ---
-    df = load.load_raw()
-    mo_ta = load.describe_raw(df)
+    df = pre.load_raw()
+    mo_ta = pre.describe_raw(df)
     _log("1", f"{mo_ta['so_dong']:,} dòng · {mo_ta['so_lan_quet']} lần quét · "
               f"{mo_ta['so_rp']} điểm · {mo_ta['so_bssid']} BSSID · "
               f"RSSI {mo_ta['rssi_min']:.0f}…{mo_ta['rssi_max']:.0f} dBm")
 
     # --- Bước 2: gom theo lần quét ---
-    df = pivot.build_scan_id(df)
-    scan_meta = pivot.build_scan_meta(df)
+    df = pre.build_scan_id(df)
+    scan_meta = pre.build_scan_meta(df)
     _log("2", f"{len(scan_meta)} lần quét · {mo_ta['so_thiet_bi']} thiết bị")
 
     # --- Bước 3: pivot sang bảng vân tay ---
-    fingerprint, ap_cols = pivot.to_wide(df, scan_meta)
+    fingerprint, ap_cols = pre.to_wide(df, scan_meta)
     _log("3", f"bảng vân tay {fingerprint.shape[0]} × {len(ap_cols)} cột AP")
 
     # --- Bước 4: ghép toạ độ thật ---
-    fingerprint, tk_toa_do = coords.attach_coordinates(fingerprint, policy=chinh_sach)
+    fingerprint, tk_toa_do = pre.attach_coordinates(fingerprint)
     _log("4", f"{tk_toa_do['scan_co_toa_do']}/{tk_toa_do['scan_truoc_khi_ghep']} lần quét có toạ độ"
               + (f" · bỏ {tk_toa_do['scan_bi_bo']} mẫu của {tk_toa_do['rp_chua_do']}"
                  if tk_toa_do["scan_bi_bo"] else ""))
 
     # --- Bước 5: lọc AP hiếm gặp ---
-    fingerprint, ap_cols, ty_le_xuat_hien = ap_filter.filter_access_points(
+    fingerprint, ap_cols, ty_le_xuat_hien = pre.filter_access_points(
         fingerprint, ap_cols, min_appear_rate=ty_le_ap
     )
     _log("5", f"giữ {len(ap_cols)}/{len(ty_le_xuat_hien)} AP (ngưỡng ≥ {ty_le_ap:.0%})")
 
     # --- Bước 6: loại mẫu quét quá nghèo ---
-    fingerprint, tk_scan = ap_filter.filter_sparse_scans(fingerprint, ap_cols)
+    fingerprint, tk_scan = pre.filter_sparse_scans(fingerprint, ap_cols)
     _log("6", f"loại {tk_scan['scan_bi_loai']} mẫu · còn {tk_scan['scan_sau']} · "
               f"AP mỗi mẫu: min {tk_scan['ap_moi_scan_min']}, "
               f"trung vị {tk_scan['ap_moi_scan_trung_vi']:.0f}")
 
     # --- Bước 7: điền RSSI thiếu ---
-    fingerprint, gia_tri_thieu, so_o_trong = missing.fill_missing(fingerprint, ap_cols)
+    fingerprint, gia_tri_thieu, so_o_trong = pre.fill_missing(fingerprint, ap_cols)
     _log("7", f"điền {so_o_trong:,} ô trống bằng {gia_tri_thieu:.0f} dBm")
 
     # --- Bước 9 trước bước 8 khi lọc nhiễu riêng cho tập train ---
-    fingerprint, tk_chia = split.split_dataset(fingerprint, strategy=cach_chia)
+    fingerprint, tk_chia = pre.split_dataset(fingerprint)
     _log("9", f"{tk_chia['chien_luoc']} · " +
               " · ".join(f"{k} {v}" for k, v in tk_chia["so_mau"].items()))
     if "canh_bao" in tk_chia:
@@ -109,11 +102,11 @@ def run(
     # --- Bước 8: lọc nhiễu Hampel ---
     if hampel_rieng:
         la_train = fingerprint["split"] == "train"
-        da_loc, so_ngoai_lai = denoise.hampel_filter(fingerprint.loc[la_train], ap_cols)
+        da_loc, so_ngoai_lai = pre.hampel_filter(fingerprint.loc[la_train], ap_cols)
         fingerprint = pd.concat([da_loc, fingerprint.loc[~la_train]], ignore_index=True)
         _log("8", f"thay {so_ngoai_lai:,} giá trị ngoại lai — chỉ trên tập train")
     else:
-        fingerprint, so_ngoai_lai = denoise.hampel_filter(fingerprint, ap_cols)
+        fingerprint, so_ngoai_lai = pre.hampel_filter(fingerprint, ap_cols)
         _log("8", f"thay {so_ngoai_lai:,} giá trị ngoại lai — trên toàn bộ dữ liệu")
 
     # Lưu bản chưa chuẩn hoá TRƯỚC khi scale — không có bản này thì mất đơn vị dBm.
@@ -123,7 +116,7 @@ def run(
     fingerprint.sort_values("rp_id", kind="stable").to_csv(duong_dan_raw, index=False)
 
     # --- Bước 10: chuẩn hoá min-max ---
-    fingerprint, scaler, tk_scale = scale.scale_dataset(fingerprint, ap_cols)
+    fingerprint, scaler, tk_scale = pre.scale_dataset(fingerprint, ap_cols)
     _log("10", f"fit trên train · khoảng giá trị {tk_scale['nho_nhat']:.3f} → {tk_scale['lon_nhat']:.3f}")
 
     # --- Bước 12: sắp xếp cột và dòng ---
@@ -167,9 +160,8 @@ def run(
             "min_ap_per_scan": config.MIN_AP_PER_SCAN,
             "hampel_k": config.HAMPEL_K,
             "hampel_chi_tren_train": hampel_rieng,
-            "chien_luoc_chia": cach_chia,
+            "chien_luoc_chia": tk_chia["chien_luoc"],
             "random_state": config.RANDOM_STATE,
-            "chinh_sach_thieu_toa_do": chinh_sach,
         },
         "du_lieu_tho": mo_ta,
         "ghep_toa_do": tk_toa_do,
@@ -198,19 +190,12 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Pipeline tiền xử lý dữ liệu WiFi fingerprinting")
     p.add_argument("--min-appear-rate", type=float, default=None,
                    help="ngưỡng lọc AP, mặc định %(default)s (thử 0.0 / 0.10 / 0.20)")
-    p.add_argument("--split", dest="split_strategy", default=None,
-                   choices=["random", "device_holdout", "time_holdout"],
-                   help="cách chia tập")
-    p.add_argument("--strict-coords", action="store_true",
-                   help="dừng lại nếu còn điểm tham chiếu chưa đo toạ độ")
     p.add_argument("--hampel-all", action="store_true",
                    help="lọc nhiễu trên toàn bộ dữ liệu như bản Colab cũ (không khuyến nghị)")
     a = p.parse_args()
 
     run(
         min_appear_rate=a.min_appear_rate,
-        split_strategy=a.split_strategy,
-        coord_policy="error" if a.strict_coords else None,
         hampel_train_only=False if a.hampel_all else None,
     )
 
