@@ -8,9 +8,9 @@ và trả về toạ độ sai hoàn toàn, không một cảnh báo nào.
 Cách chặn: `artifacts/feature_list.json` là nguồn sự thật duy nhất về thứ tự cột.
 Mọi phía đều phải ánh xạ theo BSSID, không bao giờ theo vị trí trong mảng.
 
-`map_scan_to_vector` dưới đây là bản tham chiếu của phép ánh xạ. Khi
-`backend/services/preprocessing_service.py` được viết, nó phải cho ra kết quả
-y hệt — lúc đó thay lời gọi trong test này bằng lời gọi vào service thật.
+`map_scan_to_vector` dưới đây từng là bản tham chiếu của phép ánh xạ. Nay
+`backend/services/preprocessing_service.py` đã được viết, nên bài test gọi vào
+service thật; bản tham chiếu giữ lại để đối chiếu hai bên cho ra kết quả y hệt.
 """
 
 from __future__ import annotations
@@ -34,19 +34,66 @@ def hop_dong() -> dict:
     return json.loads(duong_dan.read_text(encoding="utf-8"))
 
 
+@pytest.fixture(scope="module")
+def mapper():
+    """Service thật của backend."""
+    from backend.services.preprocessing_service import FeatureMapper
+
+    return FeatureMapper()
+
+
 def map_scan_to_vector(scan: list[dict], hop_dong: dict) -> np.ndarray:
-    """Dựng vector đặc trưng từ một lần quét, ánh xạ THEO BSSID.
-
-    scan: [{"bssid": "88:dc:...", "rssi": -67}, ...]
-
-    BSSID lạ (AP mới lắp, hotspot điện thoại) bị bỏ qua.
-    BSSID có trong hợp đồng nhưng không bắt được lần này thì điền giá trị thiếu.
-    """
+    """Bản tham chiếu, viết độc lập với service để còn đối chiếu được."""
     thu_tu = hop_dong["ap_columns"]
     gia_tri_thieu = hop_dong["missing_rssi_value"]
 
     do_manh = {muc["bssid"]: float(muc["rssi"]) for muc in scan}
     return np.array([do_manh.get(bssid, gia_tri_thieu) for bssid in thu_tu], dtype=float)
+
+
+def test_service_cho_ket_qua_y_het_ban_tham_chieu(mapper, hop_dong):
+    """Bài test nối hai bên: backend và bản tham chiếu phải trùng khít.
+
+    Kiểm ba tình huống cùng lúc — quét đủ AP, quét thiếu, và quét lẫn BSSID lạ.
+    """
+    thu_tu = hop_dong["ap_columns"]
+    for scan in (
+        [{"bssid": b, "rssi": -50 - i} for i, b in enumerate(thu_tu)],
+        [{"bssid": thu_tu[0], "rssi": -55}],
+        [{"bssid": thu_tu[2], "rssi": -61}, {"bssid": "00:11:22:33:44:55", "rssi": -40}],
+        [],
+    ):
+        np.testing.assert_array_equal(
+            mapper.map_scan_to_vector(scan),
+            map_scan_to_vector(scan, hop_dong),
+        )
+
+
+def test_service_dao_thu_tu_van_ra_ket_qua_giong_het(mapper, hop_dong):
+    """Bản dành cho service của bài test quan trọng nhất trong tệp này."""
+    thu_tu = hop_dong["ap_columns"]
+    scan = [{"bssid": b, "rssi": -50 - i} for i, b in enumerate(thu_tu)]
+
+    np.testing.assert_array_equal(
+        mapper.map_scan_to_vector(scan),
+        mapper.map_scan_to_vector(list(reversed(scan))),
+    )
+
+
+def test_dau_van_hop_dong_khop_model_metadata(mapper):
+    """Model và hợp đồng phải sinh ra từ cùng một lần chạy pipeline.
+
+    Lệch thì mọi toạ độ sai mà không có cảnh báo nào — Predictor từ chối khởi
+    động trong trường hợp đó.
+    """
+    import json
+
+    duong_dan = config.ARTIFACTS_DIR / "model_metadata.json"
+    if not duong_dan.exists():
+        pytest.skip("chưa huấn luyện mô hình")
+
+    metadata = json.loads(duong_dan.read_text(encoding="utf-8"))
+    assert mapper.dau_van() == metadata["hop_dong_du_lieu"]
 
 
 # --- Tính toàn vẹn của chính bản hợp đồng ---
