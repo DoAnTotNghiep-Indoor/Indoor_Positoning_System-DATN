@@ -20,6 +20,10 @@ data/processed/*
 data/splits/*
 !data/splits/.gitkeep
 
+# CSDL SQLite sinh ra lúc chạy backend
+data/*.db
+data/*.db-journal
+
 # KHÔNG ignore data/raw/ và data/reference/:
 # đây là số liệu đo thực địa, không sinh lại được (README nguyên tắc 4).
 

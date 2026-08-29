@@ -1,13 +1,10 @@
 # Máy đang dùng Python 3.14.7.
 #
-# Khối "đã kiểm chứng" là phiên bản ĐANG CÀI THẬT trên máy, đã chạy trọn
-# pipeline + huấn luyện + kiểm thử. Không ghim theo tài liệu: bản cũ
+# Mọi phiên bản dưới đây là bản ĐANG CÀI THẬT trên máy, đã chạy trọn pipeline,
+# huấn luyện, backend và toàn bộ kiểm thử. Không ghim theo tài liệu: bản cũ
 # (numpy 2.1.3, pandas 2.2.3, scikit-learn 1.5.2) không có wheel cho Python 3.14.
-#
-# Khối backend chưa cài vì giai đoạn 3 chưa bắt đầu — các số dưới đây là dự kiến,
-# phải kiểm lại khi thực sự dựng máy chủ.
 
-# --- Machine Learning — đã kiểm chứng ---
+# --- Machine Learning ---
 numpy==2.5.2
 pandas==3.0.5
 scikit-learn==1.9.0
@@ -17,19 +14,20 @@ joblib==1.5.3
 # bằng 3.4.1, nạp lại bằng bản 2.x có thể lỗi định dạng.
 xgboost==3.4.1
 
-# Vẽ biểu đồ báo cáo (ml/report.py). Không dùng seaborn — đã gỡ khỏi danh sách.
+# Vẽ biểu đồ báo cáo (ml/report.py). Không dùng seaborn.
 matplotlib==3.11.1
 
-# --- Kiểm thử — đã kiểm chứng ---
-pytest==9.1.1
+# --- Backend ---
+# CSDL là SQLite qua aiosqlite: không cần cài server, chạy được ngay trên máy
+# chấm. Đã bỏ hẳn PostgreSQL (asyncpg, alembic) — schema viết tránh cú pháp
+# riêng của engine nên đổi engine chỉ phải đổi DATABASE_URL.
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+pydantic==2.13.4
+pydantic-settings==2.15.0
+sqlalchemy==2.0.52
+aiosqlite==0.22.1
 
-# --- Backend (giai đoạn 3) — CHƯA CÀI, số phiên bản là dự kiến ---
-fastapi==0.115.0
-uvicorn[standard]==0.32.0
-pydantic==2.9.2
-pydantic-settings==2.6.0
-sqlalchemy==2.0.36
-asyncpg==0.30.0
-alembic==1.14.0
-websockets==13.1
-httpx==0.27.2
+# --- Kiểm thử ---
+pytest==9.1.1
+httpx==0.28.1
