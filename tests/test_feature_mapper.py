@@ -36,7 +36,11 @@ def hop_dong() -> dict:
 
 @pytest.fixture(scope="module")
 def mapper():
-    """Service thật của backend."""
+    """Service thật của backend. Cần scaler.pkl, vốn không nằm trong git."""
+    from tests.conftest import bo_qua_neu_chua_huan_luyen
+
+    bo_qua_neu_chua_huan_luyen()
+
     from backend.services.preprocessing_service import FeatureMapper
 
     return FeatureMapper()

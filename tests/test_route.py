@@ -7,7 +7,6 @@ import math
 import pytest
 
 from backend.services.routing_service import DoThiDiLai
-from tests.test_api import client  # noqa: F401  — dùng lại fixture đã dựng CSDL tạm
 
 
 @pytest.fixture(scope="module")

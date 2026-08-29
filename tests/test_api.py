@@ -1,7 +1,6 @@
 """Kiểm thử API định vị — chạy thẳng qua ASGI, không cần bật server.
 
-Dùng CSDL tạm trong thư mục pytest cấp, để chạy test không đụng vào data/ips.db
-thật và mỗi lần chạy đều bắt đầu từ bảng rỗng.
+Fixture `client` và chốt chặn "chưa huấn luyện" nằm ở tests/conftest.py.
 """
 
 from __future__ import annotations
@@ -12,41 +11,11 @@ import pytest
 
 from ml import config
 
-pytestmark = pytest.mark.skipif(
-    not (config.ARTIFACTS_DIR / "model_metadata.json").exists(),
-    reason="chưa có mô hình — chạy `python -m ml.pipeline` rồi `python -m ml.train`",
-)
-
 
 @pytest.fixture(scope="module")
 def ap_cols() -> list[str]:
     duong_dan = config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON
     return json.loads(duong_dan.read_text(encoding="utf-8"))["ap_columns"]
-
-
-@pytest.fixture(scope="module")
-def client(tmp_path_factory):
-    """TestClient chứ không phải ASGITransport trần.
-
-    ASGITransport không chạy sự kiện lifespan, mà toàn bộ việc nạp mô hình và
-    tạo bảng nằm trong đó — dùng nó thì `_predictor` là None và CSDL không có
-    bảng nào. TestClient dùng như context manager sẽ chạy lifespan đầy đủ.
-    """
-    from fastapi.testclient import TestClient
-
-    from backend import database
-    from backend.config import settings
-
-    settings.database_url = f"sqlite+aiosqlite:///{tmp_path_factory.mktemp('db') / 't.db'}"
-    database.engine = database.create_async_engine(settings.database_url)
-    database.TaoSession = database.async_sessionmaker(
-        database.engine, class_=database.AsyncSession, expire_on_commit=False
-    )
-
-    from backend.main import app
-
-    with TestClient(app) as c:
-        yield c
 
 
 def test_health_bao_model_da_nap(client):
