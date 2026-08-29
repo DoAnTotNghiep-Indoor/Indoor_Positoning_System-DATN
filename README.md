@@ -59,18 +59,43 @@ flutter analyze
 Ứng dụng hiện chạy trên **dữ liệu demo tĩnh** trong `mobile/lib/data/`, chưa nối
 API. Giao diện đủ 5 màn hình, hai ngôn ngữ Việt/Anh và chế độ sáng/tối.
 
-## Chưa chạy được — giai đoạn 3 chưa làm
-
-Các lệnh dưới đây nằm trong thiết kế nhưng **sẽ báo lỗi nếu chạy bây giờ**:
-`backend/main.py` mới là khung rỗng, và chưa có `alembic.ini` lẫn
-`backend/migrations/`.
+## Chạy backend
 
 ```bash
-copy .env.example .env          # rồi điền thông tin thật
-alembic upgrade head
 uvicorn backend.main:app --reload
-python -m http.server 5500 --directory frontend
 ```
+
+Mở `http://127.0.0.1:8000/docs` để thử API bằng giao diện Swagger.
+
+| Endpoint | Việc |
+|---|---|
+| `GET /health` | Xác nhận mô hình đã nạp và hợp đồng dữ liệu khớp |
+| `POST /predict` | Nhận `{device_id, scan:[{bssid, rssi}]}` → trả `{x, y, x_smooth, y_smooth, …}` |
+| `GET /predictions` | Lịch sử vị trí đã lưu |
+| `WS /ws/location` | Kênh thời gian thực: gửi lần quét, nhận toạ độ; dashboard chỉ xem thì nhận toạ độ của mọi thiết bị |
+| `GET /map` | Toàn bộ dữ liệu không gian trong một response: phạm vi, 40 điểm tham chiếu, thống kê đồ thị |
+| `GET /graph` | Danh sách cạnh của đồ thị đi lại |
+| `POST /route` | Chỉ đường giữa hai điểm tham chiếu (Dijkstra), điểm đầu cho bằng `tu_rp` hoặc toạ độ mét |
+
+`WS /ws/location` và `POST /predict` đi chung một đường xử lý, nên toạ độ gửi
+bằng cách nào cũng được ghi CSDL và phát cho dashboard giống hệt nhau.
+
+CSDL là **SQLite**, tự tạo tại `data/ips.db` lúc khởi động — không cần cài
+server, không cần migration. Đã bỏ hẳn PostgreSQL; schema viết tránh cú pháp
+riêng của engine nên đổi engine chỉ phải đổi `DATABASE_URL` trong `.env`.
+
+Bước quan trọng nhất là `POST /predict` phải nhận **`{bssid, rssi}` kèm cặp**,
+không nhận mảng số trần. Đây là chỗ đồ án CTK45 sai: client gửi đủ số lượng
+nhưng sai thứ tự thì mô hình vẫn chạy trơn và trả toạ độ sai không cảnh báo.
+`artifacts/feature_list.json` là nguồn sự thật duy nhất về thứ tự cột.
+
+## Chưa chạy được — còn lại của giai đoạn 3
+
+```bash
+python -m http.server 5500 --directory frontend   # dashboard mới là khung rỗng
+```
+
+Dashboard web chưa viết. Ứng dụng Flutter cũng chưa nối API — xem mục trên.
 
 ## Cấu trúc thư mục
 
@@ -81,7 +106,7 @@ python -m http.server 5500 --directory frontend
 | `notebooks/` | Notebook chạy trên Google Colab |
 | `ml/` | Mã nguồn tiền xử lý và huấn luyện, tái sử dụng được |
 | `mobile/` | Ứng dụng Flutter — 5 màn hình, song ngữ, sáng/tối |
-| `backend/` | FastAPI + WebSocket + PostgreSQL *(giai đoạn 3, mới là khung)* |
+| `backend/` | FastAPI + WebSocket + SQLite — 7 endpoint, đã chạy |
 | `frontend/` | Web Dashboard (HTML5 + Tailwind CSS) *(giai đoạn 3)* |
 | `tests/` | Kiểm thử tự động |
 | `reports/` | Biểu đồ và bảng phục vụ viết báo cáo |
