@@ -200,6 +200,24 @@ Mỗi lần dự đoán là độc lập → marker nhảy loạn khi RSSI dao �
 | V11 | Commit rác | `.gitignore` chuẩn Python | 🟡 |
 | V12 | Sai số lượng tử hóa | Hồi quy tọa độ liên tục | ✅ Đã có trong đề cương |
 
+**Tình trạng tới 30/08/2026.** Bảng trên là đề xuất ban đầu, giữ nguyên làm dấu
+vết. Đã làm xong V1–V6, V9, V10, V11. V8 chưa làm — phần quản lý phiên bản mô
+hình nằm ngoài phạm vi giai đoạn 3.
+
+Riêng **V7 đã làm khác đề xuất**: thay EMA bằng đồng thuận không gian. Lý do là
+các ca sai nặng gần như luôn là một lần quét dị thường lẻ loi, mà EMA kéo trung
+bình nên vẫn bị điểm lạc lôi đi; đồng thuận không gian chọn dự đoán có tổng
+khoảng cách tới các dự đoán còn lại nhỏ nhất nên tự loại được điểm lạc và luôn
+trả về một điểm tham chiếu có thật. Đo trên tập test: 1,92 m xuống 0,38 m, số
+điểm sai từ 13/39 xuống 1/39. Chi tiết ở mục 2.4.1 của
+`Phan_Tich_Thiet_Ke_He_Thong.md`.
+
+V12 cũng khác: bài toán vẫn là hồi quy toạ độ, nhưng mô hình tốt nhất
+(`kNN vân tay Bray-Curtis`) thực chất phân lớp 39 điểm tham chiếu rồi trả về toạ
+độ của điểm được chọn. Dữ liệu chỉ có 39 toạ độ khác nhau vì thu đúng tại các
+điểm tham chiếu, nên cách này khớp bản chất dữ liệu hơn — 1,92 m so với 6,48 m
+của XGBoost hồi quy liên tục.
+
 ### 3.2. Cải tiến then chốt #1 — Hợp đồng dữ liệu có BSSID (sửa V2 + V3)
 
 Đây là cải tiến **quan trọng nhất**, vừa sửa lỗi kiến trúc cũ vừa là điểm mạnh để trình bày trong báo cáo.

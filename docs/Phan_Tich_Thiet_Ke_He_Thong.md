@@ -165,6 +165,56 @@ sequenceDiagram
 
 ---
 
+## 2.4.1. Đối chiếu với bản đã thực hiện
+
+Mục 2.4 ở trên là **thiết kế ban đầu**, giữ nguyên làm dấu vết quá trình. Sau khi
+chạy thực nghiệm có năm chỗ khác đi. Mọi số liệu dưới đây đo trên tập test 118
+mẫu, chọn mô hình chỉ dựa trên validation.
+
+**1. Hậu xử lý: EMA thay bằng đồng thuận không gian.**
+
+Thiết kế chọn EMA `x_smooth = α·x_new + (1-α)·x_old`. Thực nghiệm cho thấy các ca
+sai nặng gần như luôn là *một* lần quét dị thường lẻ loi chứ không phải dao động
+đều, mà EMA thì kéo trung bình nên vẫn bị điểm lạc lôi đi. Đồng thuận không gian
+chọn dự đoán có tổng khoảng cách tới các dự đoán còn lại nhỏ nhất, nên luôn trả
+về một điểm tham chiếu có thật và tự loại điểm lạc.
+
+Đo trên tập test, gộp 3 lần quét:
+
+| Cách gộp | Sai số trung bình | Lớn nhất | Số điểm sai |
+|---|---|---|---|
+| Một lần quét, không gộp | 1,92 m | 37,6 m | 13/39 |
+| Bình chọn đa số | 0,59 m | 18,0 m | 2/39 |
+| Trung vị toạ độ | 0,38 m | 15,0 m | 1/39 |
+| **Đồng thuận không gian** | **0,38 m** | **15,0 m** | **1/39** |
+
+Hai tham số `α` và giới hạn bước nhảy vì thế không còn, thay bằng `cua_so_gop`
+(số lần quét gộp, mặc định 3) và `reset_after_seconds`.
+
+**2. Thêm mô hình thứ năm không có trong thiết kế.** Dữ liệu chỉ có 39 toạ độ
+khác nhau vì thu đúng tại các điểm tham chiếu, nên bài toán gần với phân lớp hơn
+hồi quy. `kNN vân tay (Bray-Curtis)` khai thác đúng tính chất đó và cho 1,92 m,
+so với 5,15 m của cơ sở tốt nhất và 6,48 m của XGBoost.
+
+**3. Giá trị điền thiếu: −98 thành −96.** Không đặt cứng nữa mà tính từ dữ liệu:
+`min(RSSI) − 1`. Dữ liệu thu được có RSSI thấp nhất −95 dBm.
+
+**4. Lưới tham số mở rộng.** Ba lưới trong mục 2.4 có tối ưu rơi đúng vào biên —
+`beta` cận trên, `n_neighbors` cận dưới, `reg_lambda` cận dưới — nên đã nới cho
+tới khi cực trị nằm hẳn bên trong. Riêng lưới XGBoost giữ đúng 6 tham số như
+thiết kế, chỉ thêm giá trị `reg_lambda = 0,5` và `colsample_bytree = 0,6`.
+
+**5. `device_holdout` và `time_holdout` không thực hiện được.** Toàn bộ dữ liệu
+thu bằng một máy Samsung SM-S908E, nên `device_holdout` không có gì để tách. Với
+`time_holdout` thì vướng hơn: mỗi điểm tham chiếu chỉ được đo trong đúng một
+buổi (13/01 đo RP27–RP40, 21/01 đo RP08–RP25, 24/01 đo RP01–RP17), nên tách theo
+thời gian đồng nghĩa với tách theo vị trí — tập test sẽ chứa những điểm mà tập
+train chưa từng thấy, và bài toán vân tay không trả lời được. Đây là hạn chế của
+cách thu dữ liệu, cần khắc phục bằng một đợt đo lại có lặp điểm qua nhiều buổi và
+nhiều máy.
+
+---
+
 ## 2.5. Thiết kế cơ sở dữ liệu
 
 **Khuyến nghị: PostgreSQL** (không phải SQLite như đề cương hiện ghi), vì hệ thống cần lưu **nhiều phiên bản dataset/model để tái lập thực nghiệm**, JSONB cho `hyperparameters`/`metadata`, và dễ mở rộng đa tầng/đa tòa nhà về sau mà không phải đổi DB engine giữa chừng. Nếu nhóm muốn đơn giản hóa triển khai giai đoạn đầu, có thể dùng SQLite **nhưng thiết kế schema y hệt PostgreSQL** (tránh cú pháp riêng của Postgres như JSONB thật) để chuyển đổi dễ dàng — quan trọng là **chọn một và sửa đề cương cho khớp**.

@@ -96,6 +96,19 @@ BACKEND/
 
 Dự án mới khác đồ án cũ ở chỗ: **Web Dashboard** thay cho mobile app, **PostgreSQL** thay cho MongoDB, và có **tầng ML độc lập** cần quản lý phiên bản.
 
+> **Đối chiếu với bản đã dựng.** Cây thư mục dưới đây là bản đề xuất, giữ nguyên
+> làm dấu vết quá trình. Bảy chỗ đã làm khác đi:
+>
+> | Đề xuất | Đã dựng | Vì sao |
+> |---|---|---|
+> | `artifacts/model_x.pkl`, `model_y.pkl` | 5 tệp `model_<tên>.pkl` + `pipeline_manifest.json` | Mỗi mô hình một tệp để so sánh được. XGBoost vẫn huấn luyện riêng hai trục, nhưng `MultiOutputRegressor` gói cả hai vào một tệp |
+> | PostgreSQL + `db_models/` 5 tệp | SQLite + `database.py` + `repository.py` | Không cần cài server, chạy được ngay trên máy chấm. Chỉ dựng 2 bảng thật cần thay vì 16 |
+> | `routers/models.py`, `routers/datasets.py` | đã xoá | Thuộc phần quản lý phiên bản mô hình, chưa làm |
+> | `map.py` — `GET /map/{floor_id}` | `GET /map`, `GET /graph`, `POST /route` | Chỉ có một tầng; thêm đồ thị đi lại và chỉ đường |
+> | `smoothing_service.py` — `PositionSmoother` (EMA) | `BoGop` (đồng thuận không gian) | Xem mục 2.4.1 của tài liệu thiết kế: 0,38 m thay vì kéo trung bình theo điểm lạc |
+> | `ml/preprocess/` gói 8 tệp | `ml/preprocess.py` một tệp 358 dòng | 12 bước gọi tuần tự đúng một lần, tách tệp chỉ thêm chỗ phải nhảy qua lại |
+> | `.env`: `API_KEY`, `SMOOTHING_ALPHA`, `MAX_JUMP_DISTANCE_M` | bỏ cả ba; thêm `CUA_SO_GOP` | API_KEY chưa dùng tới; hai tham số kia thuộc thiết kế EMA đã bỏ |
+
 ```
 System_Indoor/                           # gốc dự án (git repository)
 │
@@ -123,9 +136,9 @@ System_Indoor/                           # gốc dự án (git repository)
 ├── artifacts/                           # ★ HỢP ĐỒNG giữa ML và Backend
 │   ├── feature_list.json                # thứ tự cột AP + missing_value
 │   ├── scaler.pkl                       # scaler đã fit trên train
-│   ├── model_x.pkl                      # XGBoost dự đoán x
-│   ├── model_y.pkl                      # XGBoost dự đoán y
-│   └── model_metadata.json              # tham số, ngày train, dataset nguồn
+│   ├── model_<tên>.pkl                  # 5 mô hình đã huấn luyện
+│   ├── model_metadata.json              # tham số, ngày train, dataset nguồn
+│   └── pipeline_manifest.json           # tham số và thống kê của lần chạy pipeline
 │
 ├── notebooks/                           # chạy trên Google Colab
 │   ├── 01_data_exploration.ipynb
@@ -165,7 +178,7 @@ System_Indoor/                           # gốc dự án (git repository)
 │   ├── services/
 │   │   ├── preprocessing_service.py     # FeatureMapper (ánh xạ BSSID)
 │   │   ├── prediction_service.py        # Predictor (load model 1 lần)
-│   │   ├── smoothing_service.py         # PositionSmoother (EMA)
+│   │   ├── smoothing_service.py         # BoGop (đồng thuận không gian)
 │   │   └── websocket_service.py         # ConnectionManager
 │   ├── db_models/                       # SQLAlchemy ORM
 │   │   ├── spatial.py                   # buildings, floors, floor_maps, reference_points
@@ -362,8 +375,7 @@ ALLOWED_ORIGINS=["http://localhost:5173","http://127.0.0.1:5500"]
 MODEL_DIR=artifacts
 
 # Tham số hậu xử lý
-SMOOTHING_ALPHA=0.3
-MAX_JUMP_DISTANCE_M=5.0
+CUA_SO_GOP=3
 RESET_AFTER_SECONDS=30
 ```
 

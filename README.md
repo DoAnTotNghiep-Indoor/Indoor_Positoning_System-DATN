@@ -12,7 +12,14 @@ Web Dashboard hiển thị vị trí người dùng theo thời gian thực.
 - **Output**: tọa độ người dùng `(x, y)` theo đơn vị mét
 - **Đánh giá**: `error = sqrt((x_pred - x_true)² + (y_pred - y_true)²)`
 
-Mô hình chính: **XGBoost Regression**. Mô hình cơ sở đối chứng: kNN, WKNN.
+Mô hình chính của đề tài: **XGBoost Regression**. Mô hình cơ sở đối chứng: kNN,
+WKNN, Random Forest.
+
+Mô hình **đang được triển khai** thì chọn theo sai số trên tập validation, và
+hiện là `kNN vân tay (Bray-Curtis)` — 1,92 m so với 6,48 m của XGBoost. Lý do:
+dữ liệu chỉ có 39 toạ độ khác nhau vì thu đúng tại các điểm tham chiếu, nên bài
+toán gần với phân lớp hơn hồi quy. Xem `docs/Phan_Tich_Thiet_Ke_He_Thong.md`
+§2.4.1. `GET /health` luôn cho biết mô hình nào đang chạy.
 
 ## Cài đặt
 
@@ -56,8 +63,16 @@ flutter test
 flutter analyze
 ```
 
-Ứng dụng hiện chạy trên **dữ liệu demo tĩnh** trong `mobile/lib/data/`, chưa nối
-API. Giao diện đủ 5 màn hình, hai ngôn ngữ Việt/Anh và chế độ sáng/tối.
+Ứng dụng **quét WiFi thật** và gọi `POST /predict` mỗi 5 giây (chu kỳ này bị
+Android chặn ở 4 lần quét mỗi 2 phút, nhanh hơn chỉ tốn pin). Tab Bản đồ vẽ sơ
+đồ mặt bằng đã số hoá kèm chấm vị trí; màn Chi tiết khu vực hiện ảnh thật và mô
+tả lấy từ `GET /map`.
+
+Địa chỉ máy chủ sửa được trong Cài đặt — mặc định `http://10.0.2.2:8000` là lối
+tắt máy ảo Android gọi về máy đang chạy nó, điện thoại thật phải đổi sang IP nội
+bộ. Danh sách "Gần bạn" và kết quả tìm kiếm vẫn là dữ liệu demo.
+
+Giao diện đủ 5 màn hình, hai ngôn ngữ Việt/Anh và chế độ sáng/tối.
 
 ## Chạy backend
 
@@ -75,7 +90,9 @@ Mở `http://127.0.0.1:8000/docs` để thử API bằng giao diện Swagger.
 | `WS /ws/location` | Kênh thời gian thực: gửi lần quét, nhận toạ độ; dashboard chỉ xem thì nhận toạ độ của mọi thiết bị |
 | `GET /map` | Toàn bộ dữ liệu không gian trong một response: phạm vi, 40 điểm tham chiếu, thống kê đồ thị |
 | `GET /graph` | Danh sách cạnh của đồ thị đi lại |
-| `POST /route` | Chỉ đường giữa hai điểm tham chiếu (Dijkstra), điểm đầu cho bằng `tu_rp` hoặc toạ độ mét |
+| `POST /route` | Chỉ đường giữa hai điểm tham chiếu (Dijkstra), điểm đầu cho bằng `tu_rp` hoặc toạ độ mét. Trả kèm `chi_dan` — từng bước "đi thẳng / rẽ trái / rẽ phải" và số mét |
+| `GET /map/so-do.png` | Ảnh sơ đồ mặt bằng, phục vụ thẳng từ `data/reference/Map.png` |
+| `GET /` | Web Dashboard (xem mục dưới) |
 
 `WS /ws/location` và `POST /predict` đi chung một đường xử lý, nên toạ độ gửi
 bằng cách nào cũng được ghi CSDL và phát cho dashboard giống hệt nhau.
@@ -89,25 +106,38 @@ không nhận mảng số trần. Đây là chỗ đồ án CTK45 sai: client g�
 nhưng sai thứ tự thì mô hình vẫn chạy trơn và trả toạ độ sai không cảnh báo.
 `artifacts/feature_list.json` là nguồn sự thật duy nhất về thứ tự cột.
 
-## Chưa chạy được — còn lại của giai đoạn 3
+## Web Dashboard
+
+Không cần máy chủ tĩnh riêng: chính `uvicorn` ở trên phục vụ luôn giao diện.
 
 ```bash
-python -m http.server 5500 --directory frontend   # dashboard mới là khung rỗng
+uvicorn backend.main:app      # rồi mở http://127.0.0.1:8000
 ```
 
-Dashboard web chưa viết. Ứng dụng Flutter cũng chưa nối API — xem mục trên.
+Trang hiển thị sơ đồ mặt bằng với 40 điểm tham chiếu và marker của thiết bị đang
+định vị kèm vệt đường đã đi, bảng thiết bị đang kết nối, hộp chỉ đường, biểu đồ
+hiệu quả bước gộp, và lịch sử định vị.
+
+Viết bằng HTML + CSS + JavaScript thuần, **không nạp thư viện ngoài** — thêm một
+gói CDN là thêm một thứ phải có mạng mới chạy. Dùng ES module nên bắt buộc mở
+qua `http://`; mở thẳng tệp bằng `file://` sẽ bị trình duyệt chặn.
+
+Phép đổi mét ↔ pixel của sơ đồ nằm ở ba nơi (Python, Dart, JavaScript) và
+`tests/test_dashboard.py` đối chiếu cả ba với `data/reference/ban_do_tang1.json`:
+lệch nhau thì cùng một toạ độ hiện ở hai chỗ khác nhau trên hai màn hình.
 
 ## Cấu trúc thư mục
 
 | Thư mục | Nội dung |
 |---|---|
-| `data/` | Dữ liệu thô, đã xử lý, tập chia, và số liệu đo đạc tham chiếu |
+| `data/` | Dữ liệu thô, đã xử lý, tập chia, số liệu đo đạc tham chiếu, sơ đồ mặt bằng |
 | `artifacts/` | **Hợp đồng giữa ML và Backend**: `feature_list.json`, `scaler.pkl`, model |
 | `notebooks/` | Notebook chạy trên Google Colab |
 | `ml/` | Mã nguồn tiền xử lý và huấn luyện, tái sử dụng được |
-| `mobile/` | Ứng dụng Flutter — 5 màn hình, song ngữ, sáng/tối |
-| `backend/` | FastAPI + WebSocket + SQLite — 7 endpoint, đã chạy |
-| `frontend/` | Web Dashboard (HTML5 + Tailwind CSS) *(giai đoạn 3)* |
+| `mobile/` | Ứng dụng Flutter — 5 màn hình, song ngữ, sáng/tối, quét WiFi thật |
+| `backend/` | FastAPI + WebSocket + SQLite — 9 endpoint, đã chạy |
+| `frontend/` | Web Dashboard — HTML/CSS/JS thuần, không thư viện ngoài |
+| `tools/` | Công cụ chạy một lần rồi commit kết quả (trích hình học từ sơ đồ) |
 | `tests/` | Kiểm thử tự động |
 | `reports/` | Biểu đồ và bảng phục vụ viết báo cáo |
 | `docs/` | Tài liệu phân tích, thiết kế |
@@ -123,6 +153,11 @@ Chi tiết đầy đủ: `docs/Cau_Truc_Thu_Muc_Du_An.md`
 3. **Không commit thông tin nhạy cảm**. Mọi cấu hình đọc từ biến môi trường qua `.env`.
 4. **Chỉ commit dữ liệu không sinh lại được** — `data/reference/reference_points.csv`
    là số liệu đo đạc thực tế nên phải commit; `train.csv` sinh ra từ pipeline thì không.
+5. **`data/reference/` là nguồn sự thật duy nhất về không gian.** Toạ độ điểm
+   tham chiếu, sơ đồ `Map.png` và hình học suy ra từ nó (`ban_do_tang1.json`)
+   đều nằm ở đây. Backend, ứng dụng di động và Dashboard đọc lại từ đó chứ không
+   tự giữ bản riêng — trừ ảnh sơ đồ trong `mobile/assets/`, vì Flutter chỉ đóng
+   gói được asset nằm trong `mobile/`.
 
 ## Tài liệu
 
