@@ -113,7 +113,8 @@ def run(
     cot_meta = [c for c in config.META_COLS if c in fingerprint.columns]
     fingerprint = fingerprint[cot_meta + ap_cols]
     duong_dan_raw = config.PROCESSED_DIR / "fingerprint_dataset_raw.csv"
-    fingerprint.sort_values("rp_id", kind="stable").to_csv(duong_dan_raw, index=False)
+    config.ghi_csv(fingerprint.sort_values("rp_id", kind="stable"),
+                   duong_dan_raw, index=False)
 
     # --- Bước 10: chuẩn hoá min-max ---
     fingerprint, scaler, tk_scale = pre.scale_dataset(fingerprint, ap_cols)
@@ -133,24 +134,21 @@ def run(
         "scaler_file": config.SCALER_PKL,
         "created_at": bat_dau.isoformat(timespec="seconds"),
     }
-    (config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON).write_text(
-        json.dumps(feature_list, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    config.ghi_json(config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON, feature_list)
     joblib.dump(scaler, config.ARTIFACTS_DIR / config.SCALER_PKL)
 
     duong_dan_sorted = config.PROCESSED_DIR / "fingerprint_dataset_sorted.csv"
-    fingerprint.to_csv(duong_dan_sorted, index=False)
+    config.ghi_csv(fingerprint, duong_dan_sorted, index=False)
     for ten in ("train", "validation", "test"):
-        fingerprint[fingerprint["split"] == ten].to_csv(
-            config.SPLITS_DIR / f"{ten}.csv", index=False
-        )
+        config.ghi_csv(fingerprint[fingerprint["split"] == ten],
+                       config.SPLITS_DIR / f"{ten}.csv", index=False)
 
     # Tỉ lệ xuất hiện của AP — dùng vẽ biểu đồ biện minh ngưỡng trong báo cáo.
     config.REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     (config.REPORTS_DIR / "tables").mkdir(parents=True, exist_ok=True)
-    ty_le_xuat_hien.rename("ty_le_xuat_hien").to_csv(
-        config.REPORTS_DIR / "tables" / "ap_appearance_rate.csv", header=True
-    )
+    config.ghi_csv(ty_le_xuat_hien.rename("ty_le_xuat_hien"),
+                   config.REPORTS_DIR / "tables" / "ap_appearance_rate.csv",
+                   header=True)
 
     manifest = {
         "chay_luc": bat_dau.isoformat(timespec="seconds"),
@@ -173,9 +171,7 @@ def run(
         "so_ngoai_lai_hampel": so_ngoai_lai,
         "kich_thuoc_cuoi": list(fingerprint.shape),
     }
-    (config.ARTIFACTS_DIR / config.MANIFEST_JSON).write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    config.ghi_json(config.ARTIFACTS_DIR / config.MANIFEST_JSON, manifest)
 
     _log("11", f"ghi {config.FEATURE_LIST_JSON}, {config.SCALER_PKL}, "
                f"{config.MANIFEST_JSON} và 3 tệp split")

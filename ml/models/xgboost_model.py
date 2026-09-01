@@ -24,8 +24,8 @@ LUOI_THAM_SO = {
     "max_depth": [3, 5, 7],
     "learning_rate": [0.03, 0.05, 0.1],
     "subsample": [0.8, 1.0],
-    "colsample_bytree": [0.8, 1.0],
-    "reg_lambda": [1, 5, 10],
+    "colsample_bytree": [0.6, 0.8, 1.0],
+    "reg_lambda": [0.5, 1, 5, 10],
 }
 
 # Lưới rút gọn cho lúc thử nghiệm nhanh — 2 x 2 x 2 = 8 tổ hợp

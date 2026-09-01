@@ -14,8 +14,9 @@ from sklearn.neighbors import KNeighborsRegressor
 
 TEN = "kNN"
 
+# Có cả k=1 và k=2: lưới cũ bắt đầu từ 3 và tối ưu rơi đúng vào biên dưới đó.
 LUOI_THAM_SO = {
-    "n_neighbors": [3, 5, 7, 9, 11],
+    "n_neighbors": [1, 2, 3, 5, 7, 9, 11],
     "metric": ["euclidean", "manhattan"],
 }
 

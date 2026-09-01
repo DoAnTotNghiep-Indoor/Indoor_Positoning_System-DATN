@@ -263,6 +263,64 @@ def do_quan_trong(ap: list[str]) -> str | None:
     return _luu(fig, "feature_importance.png")
 
 
+# ---------------------------------------------------------------- hình 6
+def phan_bo_sai_so(loi: dict, thu_tu: list[str]) -> str:
+    """Histogram sai số từng mô hình. Bảng so sánh chỉ cho một con số trung bình,
+    hình này cho thấy con số đó đến từ phân bố như thế nào."""
+    n = len(thu_tu)
+    cao_nhat = max(np.histogram(loi[t], bins=20)[0].max() for t in thu_tu)
+    xa_nhat = max(loi[t].max() for t in thu_tu)
+
+    fig, trucs = plt.subplots(1, n, figsize=(2.7 * n, 3.4), sharey=True)
+    for ax, ten, mau in zip(trucs, thu_tu, SERIES):
+        _khung(ax)
+        ax.hist(loi[ten], bins=20, range=(0, xa_nhat), color=mau, zorder=3)
+        tb = loi[ten].mean()
+        ax.axvline(tb, color=MUC_CHINH, linestyle="--", linewidth=1.2, zorder=4)
+        ax.set_title(f"{ten}\ntrung bình {tb:.2f} m",
+                     color=MUC_CHINH, fontsize=9.5, pad=8)
+        ax.set_xlabel("Sai số (m)", color=MUC_PHU, fontsize=9)
+        ax.set_ylim(0, cao_nhat * 1.08)
+
+    trucs[0].set_ylabel("Số mẫu", color=MUC_PHU, fontsize=9.5)
+    fig.suptitle("Phân bố sai số — đường đứt là giá trị trung bình",
+                 color=MUC_CHINH, fontsize=11.5, fontweight="bold", x=0.5, y=1.06)
+    return _luu(fig, "error_distribution.png")
+
+
+# ---------------------------------------------------------------- hình 7
+def ti_le_xuat_hien_ap() -> str | None:
+    """Biện minh cho ngưỡng lọc AP: đường cong dốc đứng ngay tại ngưỡng đã chọn.
+
+    Đọc bảng do ml/pipeline.py ghi ra chứ không tự tính lại, để hình luôn khớp
+    đúng lần chạy pipeline hiện tại.
+    """
+    tep = config.REPORTS_DIR / "tables" / "ap_appearance_rate.csv"
+    if not tep.exists():
+        return None
+
+    ty_le = pd.read_csv(tep, index_col=0)["ty_le_xuat_hien"].sort_values() * 100
+    nguong = config.MIN_APPEAR_RATE * 100
+    giu = ty_le >= nguong
+
+    fig, ax = plt.subplots(figsize=(8.4, 3.8))
+    _khung(ax)
+    vt = np.arange(len(ty_le))
+    ax.bar(vt[~giu], ty_le[~giu], 1.0, color=SERIES[1], label=f"loại ({(~giu).sum()} AP)", zorder=3)
+    ax.bar(vt[giu], ty_le[giu], 1.0, color=SERIES[0], label=f"giữ ({giu.sum()} AP)", zorder=3)
+    ax.axhline(nguong, color=MUC_CHINH, linestyle="--", linewidth=1.2, zorder=4)
+    ax.text(0, nguong + 2.5, f"ngưỡng {nguong:.0f}%", color=MUC_CHINH, fontsize=9)
+
+    ax.set_xlabel("Access point, xếp theo tỉ lệ xuất hiện", color=MUC_PHU, fontsize=9.5)
+    ax.set_ylabel("Tỉ lệ xuất hiện (%)", color=MUC_PHU, fontsize=9.5)
+    ax.set_xlim(-1, len(ty_le))
+    ax.set_ylim(0, 104)
+    ax.set_title("Tỉ lệ xuất hiện của access point — cơ sở chọn ngưỡng lọc",
+                 color=MUC_CHINH, fontsize=11.5, fontweight="bold", loc="left", pad=12)
+    ax.legend(frameon=False, fontsize=9, labelcolor=MUC_PHU, loc="upper left")
+    return _luu(fig, "ap_appearance_rate.png")
+
+
 def chay() -> None:
     meta, te, ap, loi, du_doan, thu_tu = nap()
     print(f"Huấn luyện lúc {meta['huan_luyen_luc']} · {len(thu_tu)} mô hình · "
@@ -274,6 +332,8 @@ def chay() -> None:
         hieu_qua_gop(te, du_doan, thu_tu),
         ban_do_loi(te, du_doan, thu_tu),
         do_quan_trong(ap),
+        phan_bo_sai_so(loi, thu_tu),
+        ti_le_xuat_hien_ap(),
     ]
     for d in ket_qua:
         if d:

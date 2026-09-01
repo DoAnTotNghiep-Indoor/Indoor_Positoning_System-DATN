@@ -1,10 +1,9 @@
 """kNN vân tay dùng khoảng cách Bray-Curtis — mô hình tối ưu cho dữ liệu hiện có.
 
-Xuất phát từ một quan sát về chính bộ dữ liệu: 782 mẫu nhưng chỉ có 39 toạ độ
-khác nhau, vì dữ liệu được thu ĐÚNG TẠI các điểm tham chiếu chứ không có mẫu nào
-ở giữa. Nhãn (x, y) vì thế bị lượng tử hoá theo lưới khoảng 7 mét, nên bài toán
-thực chất gần với phân lớp 39 điểm hơn là hồi quy liên tục. Mô hình này làm đúng
-thế — chọn điểm tham chiếu, rồi trả về toạ độ của điểm đó.
+782 mẫu nhưng chỉ 39 toạ độ khác nhau, vì dữ liệu thu ĐÚNG TẠI các điểm tham
+chiếu chứ không có mẫu nào ở giữa. Nhãn (x, y) vì thế bị lượng tử hoá theo lưới
+~7 mét, nên bài toán gần với phân lớp 39 điểm hơn là hồi quy liên tục — và mô
+hình này làm đúng thế.
 
 Hai lựa chọn kỹ thuật đem lại phần lớn cải thiện:
 
@@ -12,7 +11,7 @@ Hai lựa chọn kỹ thuật đem lại phần lớn cải thiện:
 độ: `sum|a-b| / sum(a+b)`. Nó so sánh *hình dạng* của vân tay chứ không so sánh
 độ mạnh tuyệt đối, nên bớt nhạy với việc cùng một vị trí nhưng thiết bị khác
 hoặc hướng cầm máy khác cho ra mức tín hiệu chung cao thấp khác nhau. Đo trên
-validation: đúng điểm 82,9% so với 70,1% của Euclid.
+validation: đúng điểm 84,6% so với 73,5% của Euclid.
 
 **Biểu diễn powed.** Nâng giá trị đã chuẩn hoá lên luỹ thừa beta làm giãn khoảng
 cách giữa các AP mạnh và nén phần AP yếu. AP yếu chủ yếu là nhiễu. Cách biểu
@@ -27,17 +26,26 @@ from sklearn.neighbors import KNeighborsClassifier
 
 TEN = "kNN vân tay (Bray-Curtis)"
 
+# beta quét tới 3,5. Lưới cũ dừng ở 2,0 và tối ưu rơi đúng vào biên trên đó —
+# dấu hiệu điểm tốt hơn nằm ngoài lưới. Quét rộng cho thấy cực trị thật ở
+# 2,75-3,0, sai số validation tăng trở lại từ 3,5 nên lưới này đã bao trọn.
 LUOI_THAM_SO = {
-    "beta": [1.25, 1.5, 1.75, 2.0],
+    "beta": [1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.5],
     "n_neighbors": [1, 3, 5],
     "power": [1, 4, 8],
 }
 
 LUOI_NHANH = {
-    "beta": [1.5, 1.75],
+    "beta": [2.0, 2.75],
     "n_neighbors": [1, 3],
     "power": [1, 8],
 }
+
+
+def to_hop_trung(tham_so: dict) -> bool:
+    """Với k=1 chỉ có một láng giềng nên trọng số không tác dụng: mọi power cho
+    ra cùng kết quả. Giữ lại đúng một bộ thay vì huấn luyện lại ba lần."""
+    return tham_so["n_neighbors"] == 1 and tham_so["power"] != 1
 
 
 def bieu_dien_powed(X: np.ndarray, beta: float) -> np.ndarray:
@@ -91,10 +99,6 @@ class DinhViPhanLop(BaseEstimator, RegressorMixin):
         xac_suat = self.clf_.predict_proba(bieu_dien_powed(X, self.beta))
         # Lớp mà classifier biết, theo đúng thứ tự của predict_proba
         return xac_suat @ self.toa_do_[self.clf_.classes_]
-
-    def du_doan_diem(self, X) -> np.ndarray:
-        """Chỉ số điểm tham chiếu được chọn — dùng để đo độ chính xác phân lớp."""
-        return self.clf_.predict(bieu_dien_powed(X, self.beta))
 
 
 def build(

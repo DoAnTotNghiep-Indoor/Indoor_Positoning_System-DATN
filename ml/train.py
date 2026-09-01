@@ -10,13 +10,10 @@ Quy trình cho cả năm mô hình là một, để bảng so sánh có ý nghĩ
     2. Huấn luyện lại cấu hình đó trên train + validation
     3. Đánh giá MỘT LẦN trên tập TEST
 
-Bước 3 chỉ chạy đúng một lần cho mỗi mô hình. Chọn tham số dựa trên tập test rồi
-báo cáo kết quả trên chính tập đó là tự lừa mình — con số đẹp nhưng không nói
-được gì về hiệu năng thực tế.
-
-Quy tắc này áp cho MỌI quyết định, không riêng tham số: mô hình nào thành active,
-mô hình cơ sở nào đem ra so sánh — tất cả đều chọn theo validation. Sai số test
-chỉ được đọc ở bước cuối để in ra và ghi vào báo cáo. Xem `chon_theo_validation`.
+Tập test chỉ được chạm đúng một lần, ở bước 3. Quy tắc này áp cho MỌI quyết
+định chứ không riêng tham số: mô hình nào thành active, mô hình cơ sở nào đem
+ra so sánh — tất cả chọn theo validation, sai số test chỉ đọc để in báo cáo.
+Xem `chon_theo_validation`.
 
 Sinh ra:
     artifacts/model_<ten>.pkl          mô hình đã huấn luyện
@@ -61,16 +58,20 @@ def nap_du_lieu() -> tuple[dict, list[str]]:
     return tap, ap_cols
 
 
-def _to_hop(luoi: dict) -> list[dict]:
-    """Bung dict lưới thành danh sách các bộ tham số cụ thể."""
+def _to_hop(luoi: dict, bo_qua=None) -> list[dict]:
+    """Bung dict lưới thành danh sách các bộ tham số cụ thể.
+
+    `bo_qua` cho mô hình tự loại những tổ hợp mà nó biết là trùng kết quả.
+    """
     ten = list(luoi)
-    return [dict(zip(ten, gt)) for gt in product(*(luoi[k] for k in ten))] or [{}]
+    ds = [dict(zip(ten, gt)) for gt in product(*(luoi[k] for k in ten))] or [{}]
+    return [t for t in ds if not (bo_qua and bo_qua(t))] or [{}]
 
 
 def quet_luoi(module, X_tr, y_tr, X_va, y_va, nhanh: bool = False) -> tuple[dict, float]:
     """Thử mọi tổ hợp, trả về (tham số tốt nhất, sai số trung bình trên validation)."""
     luoi = getattr(module, "LUOI_NHANH", module.LUOI_THAM_SO) if nhanh else module.LUOI_THAM_SO
-    to_hop = _to_hop(luoi)
+    to_hop = _to_hop(luoi, getattr(module, "to_hop_trung", None))
 
     tot_nhat, loi_tot_nhat = None, float("inf")
     for i, tham_so in enumerate(to_hop, 1):
@@ -174,7 +175,8 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
 
     # Bảng so sánh
     bang = evaluate.bang_so_sanh([r["ket_qua_test"] for r in tat_ca])
-    bang.to_csv(config.REPORTS_DIR / "tables" / "model_comparison.csv", index=False)
+    config.ghi_csv(bang, config.REPORTS_DIR / "tables" / "model_comparison.csv",
+                   index=False)
 
     # Mô hình active chọn theo VALIDATION. Sai số test bên dưới chỉ dùng để báo
     # cáo, không được tham gia vào bất kỳ quyết định nào.
@@ -219,9 +221,7 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
             for r in tat_ca
         },
     }
-    (config.ARTIFACTS_DIR / "model_metadata.json").write_text(
-        json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    config.ghi_json(config.ARTIFACTS_DIR / "model_metadata.json", metadata)
 
     # Sai số theo từng điểm tham chiếu, cho mô hình tốt nhất
     theo_diem = evaluate.loi_theo_diem(
@@ -229,7 +229,9 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
         tap["test"][config.TARGET_COLS].to_numpy(dtype=float),
         tot_nhat["y_pred"],
     )
-    theo_diem.to_csv(config.REPORTS_DIR / "tables" / "error_by_reference_point.csv", index=False)
+    config.ghi_csv(theo_diem,
+                   config.REPORTS_DIR / "tables" / "error_by_reference_point.csv",
+                   index=False)
 
     print("\n" + "=" * 66)
     print("BẢNG SO SÁNH — sai số trên tập test, đơn vị mét")
@@ -265,9 +267,7 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
     print(f"  số vị trí còn sai {gop['so_vi_tri_sai']}/{gop['so_vi_tri']}")
 
     metadata["hau_xu_ly_gop"] = gop
-    (config.ARTIFACTS_DIR / "model_metadata.json").write_text(
-        json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    config.ghi_json(config.ARTIFACTS_DIR / "model_metadata.json", metadata)
 
     return bang
 

@@ -1,24 +1,24 @@
 """Hậu xử lý vị trí — gộp nhiều lần quét trước khi trả về toạ độ.
 
-Xuất phát từ một quan sát trên tập test: các ca sai nặng gần như luôn là **một
-lần quét dị thường lẻ loi**, không phải sai lệch có hệ thống. Ví dụ rõ nhất là
-ba lần quét tại RP39 (22, 52) cho ra RP39, RP40 (cách 7 m) và RP11 (0, 18) —
-tận đầu kia toà nhà.
-
-Thiết bị quét WiFi mỗi 1-2 giây nên lúc chạy thật luôn có sẵn vài lần quét gần
-nhau về thời gian. Gộp chúng lại loại được lần quét dị thường mà không cần thêm
-dữ liệu huấn luyện nào.
+Các ca sai nặng trên tập test gần như luôn là **một lần quét dị thường lẻ
+loi**, không phải sai lệch có hệ thống: ba lần quét tại RP39 (22, 52) cho ra
+RP39, RP40 và RP21 (22, 34) — cách 18 m. Thiết bị quét mỗi 1-2 giây nên lúc
+chạy thật luôn có sẵn vài lần quét gần nhau để gộp, không cần thêm dữ liệu
+huấn luyện nào.
 
 Đo trên tập test, gộp 3 lần quét:
 
-    một lần quét            2,56 m · lớn nhất 56,2 m · 12/39 điểm sai
-    bình chọn đa số         1,52 m · lớn nhất 40,5 m ·  3/39 điểm sai
-    trung vị toạ độ         0,73 m · lớn nhất 15,0 m ·  2/39 điểm sai
-    đồng thuận không gian   0,73 m · lớn nhất 15,0 m ·  2/39 điểm sai
+    một lần quét            1,92 m · lớn nhất 37,6 m · 13/39 điểm sai
+    bình chọn đa số         0,59 m · lớn nhất 18,0 m ·  2/39 điểm sai
+    trung vị toạ độ         0,38 m · lớn nhất 15,0 m ·  1/39 điểm sai
+    đồng thuận không gian   0,38 m · lớn nhất 15,0 m ·  1/39 điểm sai
 
-Bình chọn đa số kém hơn hẳn vì khi ba lần quét cho ba kết quả khác nhau thì
-không có đa số nào cả, và việc xử lý hoà rơi vào ngẫu nhiên — đúng tình huống
-của RP39. Hai cách còn lại đều dựa trên khoảng cách nên tự loại được điểm lạc.
+Bình chọn đa số kém hơn vì ba lần quét cho ba kết quả khác nhau thì không có
+đa số nào, và xử lý hoà rơi vào ngẫu nhiên; hai cách còn lại dựa trên khoảng
+cách nên tự loại được điểm lạc.
+
+Điểm duy nhất còn sai là RP35: hai trong ba lần quét đã nhầm sang RP36 và RP37
+nên gộp kiểu nào cũng không cứu được.
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ def dong_thuan_khong_gian(du_doan: np.ndarray) -> np.ndarray:
 
     Khác trung vị ở chỗ luôn trả về một trong các toạ độ đã dự đoán, nên kết quả
     luôn rơi đúng vào một điểm tham chiếu có thật. Với RP39: tổng khoảng cách của
-    RP39 là 47,5 m, RP40 là 54 m, RP11 là 87,5 m — điểm lạc bị loại.
+    RP39 là 25,0 m, RP40 là 26,3 m, RP21 là 37,3 m — điểm lạc bị loại.
     """
     P = np.asarray(du_doan, dtype=float)
     if len(P) == 1:
