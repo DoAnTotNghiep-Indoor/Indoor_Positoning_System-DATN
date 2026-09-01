@@ -20,7 +20,6 @@ class BlobBackground extends StatelessWidget {
 
   const BlobBackground({super.key, required this.blobs});
 
-  /// Bộ blob của màn Trang chủ.
   static const homeBlobs = <Blob>[
     Blob(30, 20, 140, AppColors.blobA, 0.50),
     Blob(370, 270, 115, AppColors.blobB, 0.35),
@@ -28,14 +27,12 @@ class BlobBackground extends StatelessWidget {
     Blob(330, 820, 120, AppColors.blobD, 0.35),
   ];
 
-  /// Bộ blob của màn Bản đồ và Chi tiết.
   static const mapBlobs = <Blob>[
     Blob(20, 10, 145, AppColors.blobA, 0.45),
     Blob(380, 700, 120, AppColors.blobB, 0.35),
     Blob(30, 500, 110, AppColors.blobC, 0.30),
   ];
 
-  /// Bộ blob của màn Tìm kiếm và Cài đặt.
   static const listBlobs = <Blob>[
     Blob(360, 60, 130, AppColors.blobA, 0.42),
     Blob(20, 380, 130, AppColors.blobB, 0.34),

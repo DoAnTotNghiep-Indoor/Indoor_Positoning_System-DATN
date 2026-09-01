@@ -92,7 +92,6 @@ class AreaDetailScreen extends StatelessWidget {
               ),
             ),
 
-            // Bottom sheet thông tin
             Positioned(
               left: 0,
               right: 0,

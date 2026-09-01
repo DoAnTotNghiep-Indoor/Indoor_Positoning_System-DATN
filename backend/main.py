@@ -64,13 +64,11 @@ async def health() -> schemas.TrangThai:
     )
 
 
-# Dashboard web phục vụ ngay từ máy chủ API. Mount ĐẶT CUỐI TỆP vì nó nhận mọi
-# đường dẫn còn lại: đăng ký trước thì nó nuốt luôn /health, /map và /predict.
+# Dashboard web phục vụ ngay từ máy chủ API, nên một lệnh `uvicorn` là có cả
+# API lẫn giao diện, không vướng CORS.
 #
-# Nhờ vậy một lệnh `uvicorn backend.main:app` là có cả API lẫn giao diện, không
-# phải dựng thêm máy chủ tĩnh và cũng không vướng CORS. Dashboard viết bằng ES
-# module nên bắt buộc mở qua http://; mở thẳng tệp bằng file:// sẽ bị trình
-# duyệt chặn vì chính sách cùng nguồn.
+# Mount ĐẶT CUỐI TỆP vì nó nhận mọi đường dẫn còn lại: đăng ký trước thì nó nuốt
+# luôn /health, /map và /predict.
 if settings.frontend_dir.is_dir():
     app.mount(
         "/",

@@ -136,7 +136,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
           const SizedBox(height: 18),
 
-          // --- Dòng trạng thái: số kết quả + bộ lọc đang bật ---
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
@@ -165,7 +164,6 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(height: 10),
 
-          // --- Danh sách kết quả ---
           Expanded(
             child: results.isEmpty
                 ? _KhongCoKetQua(

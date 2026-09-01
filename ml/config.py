@@ -8,7 +8,6 @@ pipeline — backend đọc lại từ đó, KHÔNG đọc trực tiếp file n�
 import json
 from pathlib import Path
 
-# --- Đường dẫn ---
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
 RAW_DIR = DATA_DIR / "raw"
@@ -26,7 +25,6 @@ FEATURE_LIST_JSON = "feature_list.json"
 SCALER_PKL = "scaler.pkl"
 MANIFEST_JSON = "pipeline_manifest.json"
 
-# --- Cột trong dữ liệu thô ---
 COL_TIME = "Time"
 COL_BSSID = "WiFi BSSID"
 COL_RSSI = "WiFi RSSI (dBm)"
@@ -46,7 +44,6 @@ META_COLS = [
     "total_ap_scanned", "azimuth_deg", "x", "y", "split",
 ]
 
-# Cột nhãn cho bài toán hồi quy
 TARGET_COLS = ["x", "y"]
 
 # LƯU Ý: cột "Orientation Azimuth (°)" trong file thô ghi đơn vị là độ nhưng giá

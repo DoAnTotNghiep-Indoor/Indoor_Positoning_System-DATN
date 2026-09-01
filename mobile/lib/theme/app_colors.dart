@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Nền
   static const bgTop = Color(0xFFEEF4FF);
   static const bgMid = Color(0xFFDDE8FB);
   static const bgBottom = Color(0xFFCFDFF8);
@@ -15,11 +14,9 @@ class AppColors {
   static const blobC = Color(0xFF6B9BFF);
   static const blobD = Color(0xFF4A7EF5);
 
-  // Chữ
   static const ink = Color(0xFF0D1A30);
   static const navInk = Color(0xFF1A1A1A);
 
-  // Nhấn
   static const accent = Color(0xFF2C5BD8);
   static const accentLight = Color(0xFF4A7EF5);
 
@@ -52,14 +49,9 @@ class AppColors {
     colors: [accent, accentLight],
   );
 
-  // ===========================================================================
-  // Chế độ tối
-  // ===========================================================================
-  //
-  // Không lấy màu sáng rồi đảo ngược. Nền tối phải đủ tối để lớp kính nổi lên
-  // được — kính hoạt động bằng cách khúc xạ thứ phía sau, nền xám nhạt sẽ khiến
-  // nó trông đục chứ không trong. Blob giữ nguyên tông xanh nhưng hạ độ sáng và
-  // giảm độ bão hoà, nếu để nguyên màu sáng chúng sẽ chói gắt trên nền tối.
+  // Chế độ tối không lấy màu sáng đảo ngược. Nền phải đủ tối để lớp kính nổi
+  // lên: kính khúc xạ thứ phía sau, nền xám nhạt làm nó đục chứ không trong.
+  // Blob hạ sáng và giảm bão hoà, giữ nguyên thì chói gắt trên nền tối.
 
   static const bgTopDark = Color(0xFF0A1020);
   static const bgMidDark = Color(0xFF0E1830);

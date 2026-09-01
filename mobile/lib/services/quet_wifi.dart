@@ -1,6 +1,5 @@
 import 'package:wifi_scan/wifi_scan.dart';
 
-/// Một access point bắt được trong một lần quét.
 class DiemTruyCap {
   final String bssid;
   final int rssi;

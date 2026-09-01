@@ -93,7 +93,6 @@ def nap():
     return meta, te, ap, loi, du_doan, thu_tu
 
 
-# ---------------------------------------------------------------- hình 1
 def so_sanh_mo_hinh(loi: dict, thu_tu: list[str]) -> str:
     """Cột ngang: sai số trung bình và CDF90. Cùng đơn vị mét nên chung một trục."""
     tb = [loi[t].mean() for t in thu_tu]
@@ -124,7 +123,6 @@ def so_sanh_mo_hinh(loi: dict, thu_tu: list[str]) -> str:
     return _luu(fig, "model_comparison.png")
 
 
-# ---------------------------------------------------------------- hình 2
 def cdf(loi: dict, thu_tu: list[str]) -> str:
     """Đường CDF. Kiểu nét khác nhau để đọc được cả khi in đen trắng."""
     fig, ax = plt.subplots(figsize=(8, 4.8))
@@ -148,7 +146,6 @@ def cdf(loi: dict, thu_tu: list[str]) -> str:
     return _luu(fig, "cdf_error.png")
 
 
-# ---------------------------------------------------------------- hình 3
 def hieu_qua_gop(te: pd.DataFrame, du_doan: dict, thu_tu: list[str]) -> str:
     """Bốn cách gộp lần quét, so trên sai số trung bình và lớn nhất."""
     p = du_doan[thu_tu[0]]
@@ -198,7 +195,6 @@ def hieu_qua_gop(te: pd.DataFrame, du_doan: dict, thu_tu: list[str]) -> str:
     return _luu(fig, "aggregation_effect.png")
 
 
-# ---------------------------------------------------------------- hình 4
 def ban_do_loi(te: pd.DataFrame, du_doan: dict, thu_tu: list[str]) -> str:
     """Sai số theo vị trí. Độ lớn liên tục nên dùng ramp một sắc."""
     theo_diem = evaluate.loi_theo_diem(
@@ -231,7 +227,6 @@ def ban_do_loi(te: pd.DataFrame, du_doan: dict, thu_tu: list[str]) -> str:
     return _luu(fig, "error_heatmap.png")
 
 
-# ---------------------------------------------------------------- hình 5
 def do_quan_trong(ap: list[str]) -> str | None:
     """Độ quan trọng đặc trưng của XGBoost, tách theo trục x và y."""
     tep = config.ARTIFACTS_DIR / "model_xgboost_model.pkl"
@@ -263,7 +258,6 @@ def do_quan_trong(ap: list[str]) -> str | None:
     return _luu(fig, "feature_importance.png")
 
 
-# ---------------------------------------------------------------- hình 6
 def phan_bo_sai_so(loi: dict, thu_tu: list[str]) -> str:
     """Histogram sai số từng mô hình. Bảng so sánh chỉ cho một con số trung bình,
     hình này cho thấy con số đó đến từ phân bố như thế nào."""
@@ -288,7 +282,6 @@ def phan_bo_sai_so(loi: dict, thu_tu: list[str]) -> str:
     return _luu(fig, "error_distribution.png")
 
 
-# ---------------------------------------------------------------- hình 7
 def ti_le_xuat_hien_ap() -> str | None:
     """Biện minh cho ngưỡng lọc AP: đường cong dốc đứng ngay tại ngưỡng đã chọn.
 

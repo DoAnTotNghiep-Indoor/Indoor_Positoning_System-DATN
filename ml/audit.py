@@ -50,7 +50,6 @@ def chay() -> int:
 
     print(f"{len(d)} mẫu · {len(ap)} đặc trưng · {d['rp_id'].nunique()} điểm")
 
-    # --- 1. Rò rỉ giữa các tập ---
     print("\n1. RÒ RỈ GIỮA CÁC TẬP")
     la_tr = (d["split"] == "train").to_numpy()
     la_te = (d["split"] == "test").to_numpy()
@@ -75,7 +74,6 @@ def chay() -> int:
     else:
         print(f"  [ok] Mẫu train gần nhất cách ít nhất {chenh.min():.0f} giây")
 
-    # --- 2. Độ ổn định từng vị trí ---
     print("\n2. ĐỘ ỔN ĐỊNH CỦA TỪNG VỊ TRÍ")
     phan_tan = raw.groupby("rp_id")[ap].apply(
         lambda x: float(np.linalg.norm(
@@ -89,7 +87,6 @@ def chay() -> int:
     for ten, v in bat_on.items():
         print(f"    {ten}  {v:.1f}  ({v / trung_vi:.1f}x trung vị) — nên kiểm tra thực địa")
 
-    # --- 3. So sánh giữa các buổi thu ---
     print("\n3. SO SÁNH GIỮA CÁC BUỔI THU")
     ngay = pd.to_datetime(raw["scan_id"], format="%Y:%m:%d:%H:%M:%S").dt.date
     buoi = pd.DataFrame({

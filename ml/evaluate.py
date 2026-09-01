@@ -71,7 +71,6 @@ def danh_gia(
         "loi_nho_nhat": float(loi.min()),
         "loi_lon_nhat": float(loi.max()),
         "loi_do_lech_chuan": float(loi.std()),
-        # MAE / RMSE theo từng trục
         "mae_x": float(np.abs(lech[:, 0]).mean()),
         "mae_y": float(np.abs(lech[:, 1]).mean()),
         "rmse_x": float(np.sqrt((lech[:, 0] ** 2).mean())),

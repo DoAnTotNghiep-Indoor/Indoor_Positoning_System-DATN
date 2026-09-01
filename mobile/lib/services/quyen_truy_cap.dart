@@ -28,7 +28,6 @@ class QuyenTruyCap {
       _gop(await Permission.locationWhenInUse.status,
           await Permission.nearbyWifiDevices.status);
 
-  /// Hỏi người dùng. Trả về trạng thái sau khi họ trả lời.
   Future<TrangThaiQuyen> xin() async {
     final ds = await [
       Permission.locationWhenInUse,
