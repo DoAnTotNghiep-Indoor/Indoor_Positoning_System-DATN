@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import (APIRouter, Depends, HTTPException, WebSocket,
+                     WebSocketDisconnect)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend import database, repository, schemas
 from backend.database import lay_session
 from backend.dependencies import lay_bo_gop, lay_predictor
+from backend.services.prediction_service import KhongDuAp
 from backend.services.websocket_service import manager
 
 router = APIRouter(tags=["predict"])
@@ -25,6 +27,13 @@ async def _mot_lan_quet(device_id: str, scan: list[dict]) -> dict:
     bo_gop = lay_bo_gop()
 
     x, y, so_ap, do_tre = predictor.du_doan(scan)
+
+    # Chặn TRƯỚC khi gộp và trước khi ghi CSDL: một toạ độ không dựa trên dữ
+    # liệu nào thì không đáng nằm trong lịch sử, và nó còn kéo lệch cửa sổ gộp
+    # của những lần quét đúng ngay sau đó.
+    if so_ap < predictor.so_ap_toi_thieu:
+        raise KhongDuAp(so_ap, predictor.so_ap_toi_thieu)
+
     x_gop, y_gop = bo_gop.them(device_id, x, y)
 
     # database.TaoSession chứ không phải TaoSession import sẵn: `from ...
@@ -54,10 +63,19 @@ async def _mot_lan_quet(device_id: str, scan: list[dict]) -> dict:
 
 @router.post("/predict", response_model=schemas.KetQuaDuDoan)
 async def predict(yeu_cau: schemas.YeuCauDuDoan) -> schemas.KetQuaDuDoan:
-    ket_qua = await _mot_lan_quet(
-        yeu_cau.device_id,
-        [{"bssid": m.bssid, "rssi": m.rssi} for m in yeu_cau.scan],
-    )
+    try:
+        ket_qua = await _mot_lan_quet(
+            yeu_cau.device_id,
+            [{"bssid": m.bssid, "rssi": m.rssi} for m in yeu_cau.scan],
+        )
+    except KhongDuAp as e:
+        # 422 chứ không 400: yêu cầu đúng cú pháp, chỉ là nội dung không đủ để
+        # xử lý. Trả kèm con số để client nói được "khớp 2/6" thay vì một câu
+        # lỗi chung chung.
+        raise HTTPException(
+            422,
+            {"loi": "khong_du_ap", "so_ap": e.so_ap, "toi_thieu": e.toi_thieu},
+        ) from e
     await manager.phat(ket_qua)
     return schemas.KetQuaDuDoan(**ket_qua)
 
@@ -90,7 +108,15 @@ async def ws_location(ws: WebSocket) -> None:
                 await ws.send_json({"loi": "thiếu device_id"})
                 continue
 
-            ket_qua = await _mot_lan_quet(device_id, goi.get("scan", []))
+            try:
+                ket_qua = await _mot_lan_quet(device_id, goi.get("scan", []))
+            except KhongDuAp as e:
+                await ws.send_json(
+                    {"loi": "khong_du_ap", "so_ap": e.so_ap,
+                     "toi_thieu": e.toi_thieu}
+                )
+                continue
+
             await ws.send_json(ket_qua)
             await manager.phat(ket_qua, tru=ws)
     except WebSocketDisconnect:

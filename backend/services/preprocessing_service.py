@@ -32,6 +32,11 @@ class FeatureMapper:
         self.ap_columns: list[str] = hop_dong["ap_columns"]
         self.feature_count: int = hop_dong["feature_count"]
         self.missing_rssi_value: float = float(hop_dong["missing_rssi_value"])
+
+        # Số AP tối thiểu một lần quét phải bắt được. Chính quy tắc đã dùng để
+        # loại mẫu huấn luyện ở bước 6 của pipeline, nên lúc chạy thật và lúc
+        # huấn luyện chịu chung một chuẩn.
+        self.min_ap_per_scan: int = int(hop_dong["min_ap_per_scan"])
         self.scaler = joblib.load(thu_muc / "scaler.pkl")
 
         # Tra vị trí một lần lúc khởi động thay vì quét lại danh sách mỗi request.

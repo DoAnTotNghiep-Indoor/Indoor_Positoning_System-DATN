@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from backend import dependencies, schemas
 from backend.config import settings
@@ -60,4 +61,19 @@ async def health() -> schemas.TrangThai:
         so_dac_trung=p.mapper.feature_count,
         gia_tri_dien_thieu=p.mapper.missing_rssi_value,
         cua_so_gop=settings.cua_so_gop,
+    )
+
+
+# Dashboard web phục vụ ngay từ máy chủ API. Mount ĐẶT CUỐI TỆP vì nó nhận mọi
+# đường dẫn còn lại: đăng ký trước thì nó nuốt luôn /health, /map và /predict.
+#
+# Nhờ vậy một lệnh `uvicorn backend.main:app` là có cả API lẫn giao diện, không
+# phải dựng thêm máy chủ tĩnh và cũng không vướng CORS. Dashboard viết bằng ES
+# module nên bắt buộc mở qua http://; mở thẳng tệp bằng file:// sẽ bị trình
+# duyệt chặn vì chính sách cùng nguồn.
+if settings.frontend_dir.is_dir():
+    app.mount(
+        "/",
+        StaticFiles(directory=settings.frontend_dir, html=True),
+        name="dashboard",
     )

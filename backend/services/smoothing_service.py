@@ -1,13 +1,8 @@
 """Gộp nhiều lần quét gần nhau về thời gian trước khi trả toạ độ.
 
-Đây là tầng đưa sai số trung bình từ 2,56 m xuống 0,73 m trên tập test, và số
-vị trí sai từ 12/39 xuống 2/39. Phép gộp không tự viết lại — gọi thẳng
-`ml.postprocess.gop` để backend và bảng số liệu trong báo cáo dùng đúng một
-thuật toán.
-
-Lý do gộp hiệu quả: các ca sai nặng gần như luôn là MỘT lần quét dị thường lẻ
-loi chứ không phải sai lệch có hệ thống. Thiết bị quét mỗi 1-2 giây nên lúc chạy
-thật luôn có sẵn vài lần quét gần nhau để loại điểm lạc.
+Tầng này đưa sai số trung bình từ 1,92 m xuống 0,38 m trên tập test, và số vị
+trí sai từ 13/39 xuống 1/39. Gọi thẳng `ml.postprocess.gop` để backend và bảng
+số liệu trong báo cáo dùng chung một thuật toán; lý do chọn phép gộp nằm ở đó.
 """
 
 from __future__ import annotations

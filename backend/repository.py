@@ -7,25 +7,41 @@ dưới là SQLite hay gì khác.
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.config import settings
 from backend.database import DuDoanViTri, PhienDinhVi, bay_gio
 
 
 async def lay_hoac_tao_phien(session: AsyncSession, device_id: str) -> PhienDinhVi:
+    """Phiên đang mở của thiết bị, hoặc phiên mới nếu nó vừa vắng mặt quá lâu.
+
+    Ngưỡng dùng chung `reset_after_seconds` với bộ gộp: im lặng quá ngần ấy
+    giây thì `BoGop` đã coi như người dùng đi chỗ khác rồi quay lại và xoá lịch
+    sử gộp. Không mở phiên mới ở đây thì hai tầng hiểu "phiên" khác nhau —
+    `bat_dau` trở thành lần đầu thiết bị từng xuất hiện, và bảng
+    `positioning_sessions` không phân định được lượt ghé nào với lượt nào.
+    """
     phien = await session.scalar(
         select(PhienDinhVi)
         .where(PhienDinhVi.device_id == device_id)
         .order_by(PhienDinhVi.lan_cuoi.desc())
         .limit(1)
     )
-    if phien is None:
-        phien = PhienDinhVi(device_id=device_id)
+    luc = bay_gio()
+    da_cu = phien is not None and (
+        luc - phien.lan_cuoi > timedelta(seconds=settings.reset_after_seconds)
+    )
+
+    if phien is None or da_cu:
+        phien = PhienDinhVi(device_id=device_id, bat_dau=luc, lan_cuoi=luc)
         session.add(phien)
         await session.flush()
     else:
-        phien.lan_cuoi = bay_gio()
+        phien.lan_cuoi = luc
     return phien
 
 

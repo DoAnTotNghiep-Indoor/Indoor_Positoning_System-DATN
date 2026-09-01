@@ -15,6 +15,10 @@ import asyncio
 
 from fastapi import WebSocket
 
+# Hạn gửi cho mỗi client. Đủ rộng cho một kết nối chậm bình thường, đủ ngắn để
+# một client kẹt không giữ chân cả vòng phát quá một nhịp quét.
+HAN_GUI_GIAY = 2.0
+
 
 class ConnectionManager:
     def __init__(self) -> None:
@@ -33,8 +37,8 @@ class ConnectionManager:
     async def phat(self, du_lieu: dict, tru: WebSocket | None = None) -> None:
         """Gửi cho mọi client đang xem, trừ chính client vừa gửi lần quét.
 
-        Client nào rớt giữa chừng thì bỏ khỏi danh sách chứ không để vòng lặp
-        vỡ — một dashboard đóng tab không được làm dừng cả kênh.
+        Client nào rớt hoặc treo thì bỏ khỏi danh sách chứ không để vòng lặp
+        vỡ hay đứng lại.
         """
         async with self._khoa:
             dang_mo = list(self._xem)
@@ -44,8 +48,12 @@ class ConnectionManager:
             if ws is tru:
                 continue
             try:
-                await ws.send_json(du_lieu)
-            except Exception:
+                # Có hạn thời gian chứ không await trần: một client còn mở
+                # nhưng không đọc nữa sẽ làm bộ đệm gửi đầy, và `send_json`
+                # treo vô hạn — lúc đó MỘT dashboard kẹt đóng băng luồng vị
+                # trí của mọi thiết bị. Quá hạn thì coi như đã rớt.
+                await asyncio.wait_for(ws.send_json(du_lieu), HAN_GUI_GIAY)
+            except (Exception, asyncio.TimeoutError):
                 hong.append(ws)
 
         if hong:

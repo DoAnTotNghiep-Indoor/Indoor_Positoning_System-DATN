@@ -5,6 +5,8 @@ Fixture `client` và chốt chặn "chưa huấn luyện" nằm ở tests/confte
 
 from __future__ import annotations
 
+import math
+
 import json
 
 import pytest
@@ -56,15 +58,23 @@ def test_predict_bo_qua_bssid_la(client, ap_cols):
     assert a["matched_ap"] == b["matched_ap"] == 8
 
 
-def test_quet_rong_van_tra_ve_toa_do(client):
-    """Không bắt được AP nào thì vector toàn giá trị điền thiếu, vẫn phải chạy."""
-    r = client.post("/predict", json={"device_id": "rong", "scan": []})
-    assert r.status_code == 200
-    assert r.json()["matched_ap"] == 0
+def test_quet_rong_khong_lam_sap_tang_tien_xu_ly(client):
+    """Vector toàn giá trị điền thiếu vẫn phải chạy trơn qua scaler và model.
+
+    Bài này từng khẳng định `/predict` trả 200 cho lần quét rỗng — tức khoá lại
+    đúng hành vi mà cả đồ án lấy làm điểm phê phán CTK45. Nay tầng tính toán
+    vẫn phải chạy được, nhưng endpoint thì từ chối; xem các bài ở cuối tệp.
+    """
+    from backend.dependencies import lay_predictor
+
+    x, y, so_ap, do_tre = lay_predictor().du_doan([])
+    assert so_ap == 0
+    assert math.isfinite(x) and math.isfinite(y)
+    assert do_tre >= 0
 
 
 def test_gop_cua_so_truot_dap_tat_lan_quet_lac(client, ap_cols):
-    """Đây là bài test cho tầng đưa sai số từ 2,56 m xuống 0,73 m.
+    """Đây là bài test cho tầng đưa sai số từ 1,92 m xuống 0,38 m.
 
     Gửi hai lần quét giống nhau rồi một lần quét lạc. Toạ độ thô của lần thứ ba
     đi theo lần quét lạc, nhưng toạ độ đã gộp phải bị hai lần trước áp đảo.
@@ -131,3 +141,69 @@ def test_doc_thiet_bi_la_khong_tao_khoa_moi():
     bo_gop = BoGop()
     assert bo_gop.so_mau_dang_giu("chua-tung-thay") == 0
     assert bo_gop._lich_su == {}
+
+
+# --- Chặn lần quét không đủ AP (đo được trên máy thật) ---
+
+def _bssid_that(so: int) -> list[dict]:
+    import json
+    from ml import config
+    cot = json.loads(
+        (config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON).read_text(encoding="utf-8")
+    )["ap_columns"]
+    return [{"bssid": b, "rssi": -55.0} for b in cot[:so]]
+
+
+def test_quet_rong_bi_tu_choi(client):
+    """Chạy thật ngoài thư viện: điện thoại thấy 23 AP, khớp 0, mà mô hình vẫn
+    khẳng định người dùng đứng ở RP01 trong thư viện Đại học Đà Lạt. Đúng họ lỗi
+    mà cả đồ án lấy làm điểm cải tiến so với CTK45."""
+    tra = client.post("/predict", json={"device_id": "trong", "scan": []})
+    assert tra.status_code == 422
+    assert tra.json()["detail"]["loi"] == "khong_du_ap"
+    assert tra.json()["detail"]["so_ap"] == 0
+
+
+def test_toan_ap_la_cung_bi_tu_choi(client):
+    """Quét được nhiều AP nhưng không cái nào quen — tình huống thật ở ngoài
+    thư viện, khác hẳn với quét rỗng."""
+    la = [{"bssid": f"aa:bb:cc:dd:ee:{i:02x}", "rssi": -55.0} for i in range(20)]
+    tra = client.post("/predict", json={"device_id": "la", "scan": la})
+    assert tra.status_code == 422
+    assert tra.json()["detail"]["so_ap"] == 0
+
+
+def test_nguong_lay_tu_hop_dong_du_lieu(client):
+    """Ngưỡng phải là `min_ap_per_scan` trong feature_list.json — chính quy tắc
+    đã loại mẫu huấn luyện ở bước 6, chứ không phải một con số mới đặt ra."""
+    import json
+    from ml import config
+    can = json.loads(
+        (config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON).read_text(encoding="utf-8")
+    )["min_ap_per_scan"]
+
+    tra = client.post("/predict", json={"device_id": "duoi", "scan": _bssid_that(can - 1)})
+    assert tra.status_code == 422
+    assert tra.json()["detail"]["toi_thieu"] == can
+
+    tra = client.post("/predict", json={"device_id": "vua", "scan": _bssid_that(can)})
+    assert tra.status_code == 200, tra.text
+    assert tra.json()["matched_ap"] == can
+
+
+def test_lan_quet_bi_tu_choi_khong_duoc_ghi_vao_lich_su(client):
+    """Toạ độ không dựa trên dữ liệu nào thì không đáng nằm trong lịch sử, và
+    nó còn kéo lệch cửa sổ gộp của những lần quét đúng ngay sau đó."""
+    truoc = len(client.get("/predictions?gioi_han=200").json())
+    client.post("/predict", json={"device_id": "khong-ghi", "scan": []})
+    assert len(client.get("/predictions?gioi_han=200").json()) == truoc
+
+
+def test_ws_bao_loi_thay_vi_tra_toa_do_bia(client):
+    with client.websocket_connect("/ws/location") as ws:
+        ws.send_json({"device_id": "ws-trong", "scan": []})
+        goi = ws.receive_json()
+    assert goi["loi"] == "khong_du_ap"
+    assert goi["toi_thieu"] > 0
+    assert "x" not in goi
+

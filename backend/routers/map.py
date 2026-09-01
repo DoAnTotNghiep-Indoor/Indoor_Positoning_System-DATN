@@ -16,11 +16,19 @@ from __future__ import annotations
 from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 
 from backend import schemas
+from backend.config import settings
 from backend.dependencies import lay_do_thi
 
 router = APIRouter(tags=["map"])
+
+# Sơ đồ mặt bằng đã số hoá. Phục vụ thẳng từ data/reference/ thay vì chép một
+# bản vào frontend/: ứng dụng Flutter buộc phải giữ bản sao riêng (Flutter chỉ
+# đóng gói được asset nằm trong mobile/), nhưng Dashboard thì không — thêm bản
+# thứ ba là thêm một chỗ nữa để quên đồng bộ.
+SO_DO_PNG = settings.reference_dir / "Map.png"
 
 
 @lru_cache(maxsize=1)
@@ -37,7 +45,7 @@ def _du_lieu_ban_do() -> dict:
             "y_min": min(ys), "y_max": max(ys),
         },
         "diem_tham_chieu": [
-            {"rp_id": k, "x": x, "y": y} for k, (x, y) in sorted(do_thi.toa_do.items())
+            do_thi.mo_ta_diem(k, day_du=True) for k in sorted(do_thi.toa_do)
         ],
         "do_thi": do_thi.thong_ke(),
     }
@@ -46,6 +54,13 @@ def _du_lieu_ban_do() -> dict:
 @router.get("/map", response_model=schemas.BanDo)
 async def ban_do() -> schemas.BanDo:
     return schemas.BanDo(**_du_lieu_ban_do())
+
+
+@router.get("/map/so-do.png", include_in_schema=False)
+async def so_do_png() -> FileResponse:
+    if not SO_DO_PNG.exists():
+        raise HTTPException(404, "Chưa có data/reference/Map.png")
+    return FileResponse(SO_DO_PNG, media_type="image/png")
 
 
 @router.get("/graph", response_model=schemas.DoThi)
@@ -86,4 +101,5 @@ async def chi_duong(yeu_cau: schemas.YeuCauChiDuong) -> schemas.KetQuaChiDuong:
         quang_duong_m=round(quang_duong, 2),
         so_chang=len(duong) - 1,
         duong_di=g.toa_do_duong(duong),
+        chi_dan=g.chi_dan(duong),
     )

@@ -23,6 +23,26 @@ class HopDongLech(RuntimeError):
     """Model và feature_list.json sinh ra từ hai lần chạy pipeline khác nhau."""
 
 
+class KhongDuAp(ValueError):
+    """Lần quét bắt được quá ít AP quen để định vị.
+
+    Mô hình vẫn cho ra một toạ độ với mọi vector đầu vào, kể cả vector toàn giá
+    trị điền-khi-thiếu — và toạ độ đó cố định, không mang thông tin gì. Đo trên
+    máy thật ngoài thư viện: điện thoại thấy 23 AP, khớp 0, mô hình vẫn khẳng
+    định người dùng đang đứng ở RP01 "TV3,4" trong thư viện Đại học Đà Lạt.
+
+    Đúng họ lỗi mà cả đồ án lấy làm điểm cải tiến so với CTK45 — nhận thiếu dữ
+    liệu mà vẫn trả kết quả tự tin. Nên chặn ở đây thay vì để giao diện tự đoán.
+    """
+
+    def __init__(self, so_ap: int, toi_thieu: int):
+        super().__init__(
+            f"Chỉ khớp {so_ap} access point, cần ít nhất {toi_thieu} để định vị"
+        )
+        self.so_ap = so_ap
+        self.toi_thieu = toi_thieu
+
+
 class Predictor:
     def __init__(self, model_dir: Path | None = None):
         thu_muc = Path(model_dir) if model_dir else settings.model_dir
@@ -52,8 +72,17 @@ class Predictor:
         # vượt hẳn ngưỡng 200 ms của yêu cầu phi chức năng.
         self.du_doan([])
 
+    @property
+    def so_ap_toi_thieu(self) -> int:
+        return self.mapper.min_ap_per_scan
+
     def du_doan(self, scan: list[dict]) -> tuple[float, float, int, float]:
-        """Trả về (x, y, số AP khớp hợp đồng, độ trễ mili giây)."""
+        """Trả về (x, y, số AP khớp hợp đồng, độ trễ mili giây).
+
+        KHÔNG tự chặn khi quá ít AP: bước chạy nóng ở `__init__` gọi hàm này với
+        danh sách rỗng. Việc chặn nằm ở `_mot_lan_quet`, chỗ REST và WebSocket
+        dùng chung.
+        """
         bat_dau = time.perf_counter()
 
         vector = self.mapper.map_scan_to_vector(scan)

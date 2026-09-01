@@ -21,9 +21,11 @@ class Settings(BaseSettings):
 
     database_url: str = f"sqlite+aiosqlite:///{ROOT_DIR / 'data' / 'ips.db'}"
     model_dir: Path = ROOT_DIR / "artifacts"
+    reference_dir: Path = ROOT_DIR / "data" / "reference"
+    frontend_dir: Path = ROOT_DIR / "frontend"
 
-    # Số lần quét gộp lại trước khi trả toạ độ. Đây là tham số đưa sai số từ
-    # 2,56 m xuống 0,73 m trên tập test, xem ml/postprocess.py.
+    # Số lần quét gộp lại trước khi trả toạ độ: 1,92 m xuống 0,38 m trên tập
+    # test, xem ml/postprocess.py.
     cua_so_gop: int = 3
 
     # Quá khoảng này coi như người dùng đã rời đi, bắt đầu lại cửa sổ gộp.

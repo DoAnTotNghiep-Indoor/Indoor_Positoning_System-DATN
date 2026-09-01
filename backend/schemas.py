@@ -66,9 +66,27 @@ class TrangThai(BaseModel):
 
 
 class DiemThamChieu(BaseModel):
+    """Một điểm tham chiếu kèm nhãn, đủ để hiển thị mà không cần tra thêm."""
+
     rp_id: str
     x: float
     y: float
+    ten: str = ""
+    nhom: str = ""
+
+
+class DiemThamChieuDayDu(DiemThamChieu):
+    """Thêm mô tả và thư mục ảnh — chỉ `GET /map` trả về, đường đi thì không."""
+
+    mo_ta: str = ""
+
+    # Đoạn dài lấy từ `information.dart` của CTK45: có số chỗ ngồi, số cửa, số
+    # cầu thang. `mo_ta` một dòng dùng cho danh sách, đoạn này cho màn chi tiết.
+    # Lối đi (cầu thang, hành lang) không có — CTK45 cố ý bỏ vì đó không phải
+    # điểm đến.
+    mo_ta_chi_tiet: str = ""
+
+    thu_muc_anh: str = ""
 
 
 class PhamVi(BaseModel):
@@ -95,7 +113,7 @@ class BanDo(BaseModel):
 
     don_vi: str
     pham_vi: PhamVi
-    diem_tham_chieu: list[DiemThamChieu]
+    diem_tham_chieu: list[DiemThamChieuDayDu]
     do_thi: ThongKeDoThi
 
 
@@ -131,9 +149,28 @@ class YeuCauChiDuong(BaseModel):
         return self
 
 
+class BuocChiDan(BaseModel):
+    """Một bước "đi thẳng / rẽ trái / rẽ phải" kèm số mét.
+
+    Không có câu chữ dựng sẵn — xem lý do ở `DoThiDiLai.chi_dan`. `huong` là
+    một trong: bat_dau, di_thang, chech_trai, chech_phai, re_trai, re_phai,
+    quay_dau. `goc_do` dương là rẽ trái.
+    """
+
+    tu_rp: str
+    den_rp: str
+    den_ten: str = ""
+    huong: str
+    goc_do: float
+    khoang_cach_m: float
+
+
 class KetQuaChiDuong(BaseModel):
     tu: str
     den: str
     quang_duong_m: float
     so_chang: int
     duong_di: list[DiemThamChieu]
+
+    # Các bước đã gộp chặng đi thẳng liên tiếp, nên thường ít hơn `so_chang`.
+    chi_dan: list[BuocChiDan] = []
