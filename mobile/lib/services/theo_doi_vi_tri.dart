@@ -45,11 +45,38 @@ class TheoDoiViTri extends ChangeNotifier {
   int? _soApKhop;
   int? _soApToiThieu;
 
+  /// Lúc nhận được toạ độ gần nhất. Null khi chưa từng định vị trong phiên này.
+  DateTime? _lucCapNhat;
+
   List<DiemThamChieu> _banDo = const [];
+
+  /// Tuyến đang hiện trên sơ đồ, null khi chưa chỉ đường hoặc đã xoá.
+  ///
+  /// Giữ ở đây chứ không ở màn Chi tiết vì tuyến phải sống sót lúc người dùng
+  /// thoát màn đó quay về sơ đồ — đấy mới là chỗ họ nhìn khi đang đi.
+  ///
+  /// Tuyến neo ở điểm xuất phát lúc bấm và KHÔNG tự tính lại khi người dùng đi
+  /// tiếp: chấm vị trí vẫn chạy theo thời gian thực nên họ tự thấy mình đang ở
+  /// đâu trên tuyến. Tính lại mỗi 5 giây là thêm một lượt gọi mạng mỗi vòng
+  /// quét, mà tuyến sẽ nhảy mỗi khi mô hình đổi điểm tham chiếu gần nhất.
+  KetQuaChiDuong? _tuyen;
+  KhuVuc? _dichTuyen;
 
   TrangThai get trangThai => _trangThai;
   ViTri? get viTri => _viTri;
   List<DiemThamChieu> get banDo => _banDo;
+  KetQuaChiDuong? get tuyen => _tuyen;
+  KhuVuc? get dichTuyen => _dichTuyen;
+
+  /// Số giây kể từ lần có toạ độ gần nhất, null nếu chưa có lần nào.
+  ///
+  /// Giao diện phải hỏi giá trị này chứ không được viết cứng một con số: header
+  /// màn Bản đồ trước đây luôn ghi "cập nhật 2 giây trước", kể cả khi định vị
+  /// đang tắt và chưa hề có toạ độ nào.
+  int? get giayTuCapNhat {
+    final luc = _lucCapNhat;
+    return luc == null ? null : DateTime.now().difference(luc).inSeconds;
+  }
 
   /// Khu vực của thư viện, sắp theo khoảng cách tới vị trí đang đứng.
   ///
@@ -124,7 +151,18 @@ class TheoDoiViTri extends ChangeNotifier {
     }
     if (den == null) throw const NgoaiLeApi(LoiApi.saiDinhDang);
 
-    return _api.chiDuong(tuX: vt.xGop, tuY: vt.yGop, denRp: den);
+    final kq = await _api.chiDuong(tuX: vt.xGop, tuY: vt.yGop, denRp: den);
+    _tuyen = kq;
+    _dichTuyen = k;
+    _bao();
+    return kq;
+  }
+
+  void xoaTuyen() {
+    if (_tuyen == null) return;
+    _tuyen = null;
+    _dichTuyen = null;
+    _bao();
   }
 
   void batDau() {
@@ -188,6 +226,7 @@ class TheoDoiViTri extends ChangeNotifier {
       final vt = await _api.duDoan(deviceId: deviceId, quet: quet);
       if (luot != _luot) return;
       _viTri = vt;
+      _lucCapNhat = DateTime.now();
       _loiQuet = null;
       _loiApi = null;
       _trangThai = TrangThai.dangChay;
@@ -206,8 +245,13 @@ class TheoDoiViTri extends ChangeNotifier {
       _trangThai = TrangThai.loi;
 
       // Toạ độ cũ không còn đáng tin khi lần quét mới không đủ dữ liệu: giữ lại
-      // thì giao diện vẫn hiện tên phòng cũ như thể người dùng còn đứng đó.
-      if (e.loai == LoiApi.khongDuAp) _viTri = null;
+      // thì giao diện vẫn hiện tên phòng cũ như thể người dùng còn đứng đó. Xoá
+      // luôn mốc thời gian, vì "cập nhật 3 giây trước" mà không có toạ độ nào
+      // cũng là một lời khẳng định sai.
+      if (e.loai == LoiApi.khongDuAp) {
+        _viTri = null;
+        _lucCapNhat = null;
+      }
     } catch (_) {
       if (luot != _luot) return;
       // Chủ yếu là PlatformException từ wifi_scan. Thiếu nhánh này thì lỗi

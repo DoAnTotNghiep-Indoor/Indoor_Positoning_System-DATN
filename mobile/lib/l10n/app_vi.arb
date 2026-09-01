@@ -15,19 +15,27 @@
   "homeQuickAccess": "Truy cập nhanh",
   "homeNearby": "Gần bạn",
   "mapFloorOne": "Tầng 1",
-  "mapRelocateDemo": "Bản demo — chưa nối API định vị",
   "mapRelocate": "Định vị lại",
   "@mapRelocate": {
     "description": "Nhãn trợ năng của nút định vị lại trên màn Bản đồ"
   },
   "mapAreaSummary": "{count} khu vực · cập nhật {giay} giây trước",
   "@mapAreaSummary": {
-    "description": "Dòng phụ trên thẻ header của màn Bản đồ",
+    "description": "Dòng phụ trên thẻ header của màn Bản đồ, khi đã có toạ độ",
     "placeholders": {
       "count": {
         "type": "int"
       },
       "giay": {
+        "type": "int"
+      }
+    }
+  },
+  "mapAreaCount": "{count} khu vực",
+  "@mapAreaCount": {
+    "description": "Dòng phụ màn Bản đồ khi chưa định vị lần nào — không có mốc thời gian để nói 'cập nhật bao lâu trước'",
+    "placeholders": {
+      "count": {
         "type": "int"
       }
     }
@@ -64,7 +72,6 @@
   "searchFilterFacility": "Tiện ích",
   "searchFilterInternal": "Nội bộ",
   "detailGoHere": "Đi tới đây",
-  "detailRouteDemo": "Bản demo — chức năng chỉ đường làm ở giai đoạn sau",
   "detailImagePlaceholder": "Ảnh khu vực",
   "@detailImagePlaceholder": {
     "description": "Chữ trong ô ảnh giữ chỗ ở màn Chi tiết"
@@ -92,18 +99,16 @@
   "settingsLanguage": "Ngôn ngữ",
   "settingsLanguageVi": "Tiếng Việt",
   "settingsLanguageEn": "English",
-  "settingsAutoUpdate": "Tự động cập nhật vị trí",
-  "settingsAutoUpdateSub": "Quét lại mỗi {giay} giây",
-  "@settingsAutoUpdateSub": {
-    "description": "Chu kỳ quét, lấy từ TheoDoiViTri.chuKy chứ không viết cứng",
+  "settingsScanCycle": "Chu kỳ quét",
+  "settingsScanCycleSub": "Mỗi {giay} giây — mức Android cho phép",
+  "@settingsScanCycleSub": {
+    "description": "Chu kỳ quét, lấy từ TheoDoiViTri.chuKy chứ không viết cứng. Là dòng thông tin chứ không phải tuỳ chọn: Android chặn ứng dụng nền trước ở 4 lần quét mỗi 2 phút nên chu kỳ này không đổi được",
     "placeholders": {
       "giay": {
         "type": "int"
       }
     }
   },
-  "settingsKeepAwake": "Giữ màn hình sáng",
-  "settingsKeepAwakeSub": "Khi đang xem bản đồ",
   "settingsPermission": "Vị trí và WiFi",
   "settingsPermissionSub": "Cần thiết để định vị",
   "settingsPermissionGranted": "Đã cấp",
@@ -126,18 +131,6 @@
   "@commonBack": {
     "description": "Nhãn trợ năng của nút quay lại"
   },
-  "a11yAreaRow": "{ten}, cách {met} mét",
-  "@a11yAreaRow": {
-    "description": "Nhãn trợ năng cho một dòng khu vực trong danh sách",
-    "placeholders": {
-      "ten": {
-        "type": "String"
-      },
-      "met": {
-        "type": "int"
-      }
-    }
-  },
   "a11yOpenArea": "Mở chi tiết khu vực",
   "@a11yOpenArea": {
     "description": "Gợi ý trợ năng khi chạm vào một khu vực"
@@ -145,7 +138,11 @@
   "liveStart": "Bắt đầu định vị",
   "liveStop": "Dừng định vị",
   "liveScanning": "Đang quét WiFi…",
-  "liveDemo": "Đang hiển thị dữ liệu demo",
+  "liveIdle": "Chưa bật định vị",
+  "liveUnknown": "Chưa xác định vị trí",
+  "@liveUnknown": {
+    "description": "Dòng tiêu đề màn Trang chủ khi chưa có toạ độ. Trước đây chỗ này hiện một tên phòng có sẵn, khiến ứng dụng trông như đã biết người dùng đang ở đâu trong khi chưa quét lần nào"
+  },
   "liveCoords": "x {x} m · y {y} m",
   "@liveCoords": {
     "placeholders": {
@@ -281,5 +278,19 @@
   "stepLeft": "Rẽ trái",
   "stepRight": "Rẽ phải",
   "stepUTurn": "Quay đầu",
-  "mapOpenDetail": "Mở chi tiết khu vực"
+  "mapOpenDetail": "Mở chi tiết khu vực",
+  "mapFilterAll": "Tất cả",
+  "mapFilterHint": "Lọc sơ đồ theo loại khu vực",
+  "mapRouteChip": "{met} m tới {noi}",
+  "@mapRouteChip": {
+    "placeholders": {
+      "met": {
+        "type": "String"
+      },
+      "noi": {
+        "type": "String"
+      }
+    }
+  },
+  "mapClearRoute": "Xoá tuyến đường"
 }

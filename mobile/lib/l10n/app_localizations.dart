@@ -151,23 +151,23 @@ abstract class L {
   /// **'Tầng 1'**
   String get mapFloorOne;
 
-  /// No description provided for @mapRelocateDemo.
-  ///
-  /// In vi, this message translates to:
-  /// **'Bản demo — chưa nối API định vị'**
-  String get mapRelocateDemo;
-
   /// Nhãn trợ năng của nút định vị lại trên màn Bản đồ
   ///
   /// In vi, this message translates to:
   /// **'Định vị lại'**
   String get mapRelocate;
 
-  /// Dòng phụ trên thẻ header của màn Bản đồ
+  /// Dòng phụ trên thẻ header của màn Bản đồ, khi đã có toạ độ
   ///
   /// In vi, this message translates to:
   /// **'{count} khu vực · cập nhật {giay} giây trước'**
   String mapAreaSummary(int count, int giay);
+
+  /// Dòng phụ màn Bản đồ khi chưa định vị lần nào — không có mốc thời gian để nói 'cập nhật bao lâu trước'
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} khu vực'**
+  String mapAreaCount(int count);
 
   /// Nhãn trợ năng cho cả sơ đồ mặt bằng
   ///
@@ -240,12 +240,6 @@ abstract class L {
   /// In vi, this message translates to:
   /// **'Đi tới đây'**
   String get detailGoHere;
-
-  /// No description provided for @detailRouteDemo.
-  ///
-  /// In vi, this message translates to:
-  /// **'Bản demo — chức năng chỉ đường làm ở giai đoạn sau'**
-  String get detailRouteDemo;
 
   /// Chữ trong ô ảnh giữ chỗ ở màn Chi tiết
   ///
@@ -343,29 +337,17 @@ abstract class L {
   /// **'English'**
   String get settingsLanguageEn;
 
-  /// No description provided for @settingsAutoUpdate.
+  /// No description provided for @settingsScanCycle.
   ///
   /// In vi, this message translates to:
-  /// **'Tự động cập nhật vị trí'**
-  String get settingsAutoUpdate;
+  /// **'Chu kỳ quét'**
+  String get settingsScanCycle;
 
-  /// Chu kỳ quét, lấy từ TheoDoiViTri.chuKy chứ không viết cứng
+  /// Chu kỳ quét, lấy từ TheoDoiViTri.chuKy chứ không viết cứng. Là dòng thông tin chứ không phải tuỳ chọn: Android chặn ứng dụng nền trước ở 4 lần quét mỗi 2 phút nên chu kỳ này không đổi được
   ///
   /// In vi, this message translates to:
-  /// **'Quét lại mỗi {giay} giây'**
-  String settingsAutoUpdateSub(int giay);
-
-  /// No description provided for @settingsKeepAwake.
-  ///
-  /// In vi, this message translates to:
-  /// **'Giữ màn hình sáng'**
-  String get settingsKeepAwake;
-
-  /// No description provided for @settingsKeepAwakeSub.
-  ///
-  /// In vi, this message translates to:
-  /// **'Khi đang xem bản đồ'**
-  String get settingsKeepAwakeSub;
+  /// **'Mỗi {giay} giây — mức Android cho phép'**
+  String settingsScanCycleSub(int giay);
 
   /// No description provided for @settingsPermission.
   ///
@@ -433,12 +415,6 @@ abstract class L {
   /// **'Quay lại'**
   String get commonBack;
 
-  /// Nhãn trợ năng cho một dòng khu vực trong danh sách
-  ///
-  /// In vi, this message translates to:
-  /// **'{ten}, cách {met} mét'**
-  String a11yAreaRow(String ten, int met);
-
   /// Gợi ý trợ năng khi chạm vào một khu vực
   ///
   /// In vi, this message translates to:
@@ -463,11 +439,17 @@ abstract class L {
   /// **'Đang quét WiFi…'**
   String get liveScanning;
 
-  /// No description provided for @liveDemo.
+  /// No description provided for @liveIdle.
   ///
   /// In vi, this message translates to:
-  /// **'Đang hiển thị dữ liệu demo'**
-  String get liveDemo;
+  /// **'Chưa bật định vị'**
+  String get liveIdle;
+
+  /// Dòng tiêu đề màn Trang chủ khi chưa có toạ độ. Trước đây chỗ này hiện một tên phòng có sẵn, khiến ứng dụng trông như đã biết người dùng đang ở đâu trong khi chưa quét lần nào
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa xác định vị trí'**
+  String get liveUnknown;
 
   /// No description provided for @liveCoords.
   ///
@@ -660,6 +642,30 @@ abstract class L {
   /// In vi, this message translates to:
   /// **'Mở chi tiết khu vực'**
   String get mapOpenDetail;
+
+  /// No description provided for @mapFilterAll.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get mapFilterAll;
+
+  /// No description provided for @mapFilterHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lọc sơ đồ theo loại khu vực'**
+  String get mapFilterHint;
+
+  /// No description provided for @mapRouteChip.
+  ///
+  /// In vi, this message translates to:
+  /// **'{met} m tới {noi}'**
+  String mapRouteChip(String met, String noi);
+
+  /// No description provided for @mapClearRoute.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xoá tuyến đường'**
+  String get mapClearRoute;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

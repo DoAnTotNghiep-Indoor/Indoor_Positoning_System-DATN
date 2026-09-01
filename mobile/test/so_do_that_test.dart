@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import 'package:ips_dlu/data/floor_map.dart';
+import 'package:ips_dlu/data/khu_vuc.dart';
+import 'package:ips_dlu/data/khu_vuc_thu_vien.dart';
 import 'package:ips_dlu/services/api_dinh_vi.dart';
 import 'package:ips_dlu/services/quet_wifi.dart';
 import 'package:ips_dlu/services/theo_doi_vi_tri.dart';
@@ -130,5 +132,50 @@ void main() {
     expect(find.text('Căn tin'), findsOneWidget);
 
     td.dispose();
+  });
+
+  test('Mọi tâm cụm đều nằm sát một điểm thật của chính nhóm đó', () {
+    // Bất biến của nhãn trên sơ đồ: nhãn phải chỉ vào chỗ có thật. Đặt nhãn ở
+    // trọng tâm cả nhóm thì 5 trong 11 nhóm vi phạm điều này.
+    for (final k in KhuVucThuVien.tatCa) {
+      for (final t in k.tamCum) {
+        expect(k.khoangCach(t.dx, t.dy), lessThanOrEqualTo(KhuVuc.nguongCumM),
+            reason: 'nhãn "${k.nhom}" tại $t rơi ra chỗ trống');
+      }
+    }
+  });
+
+  test('Hành lang tách thành hai cụm ở hai đầu nhà', () {
+    final k = KhuVucThuVien.tatCa.firstWhere((k) => k.nhom == 'Hành lang');
+
+    // Hai điểm cách nhau 84 m, tức gần trọn bề ngang 86 m của khu khảo sát.
+    expect(k.diem.length, 2);
+    expect((k.diem[0] - k.diem[1]).distance, closeTo(84, 0.5));
+
+    // Mỗi điểm một cụm; trung bình của chúng cách CẢ HAI điểm 42 m nên nhãn cũ
+    // hạ đúng giữa sảnh, chỗ không có hành lang nào.
+    expect(k.tamCum.length, 2);
+    final tb = (k.diem[0] + k.diem[1]) / 2;
+    expect(k.khoangCach(tb.dx, tb.dy), closeTo(42, 0.5));
+  });
+
+  test('Bán kính quầng bằng nửa trung vị khoảng cách tới điểm gần nhất', () {
+    // Chốt 3,5 m vào chính dữ liệu khảo sát chứ không để nó là số chọn cho đẹp.
+    // Đo lại từ 40 điểm nhúng sẵn: trung vị khoảng cách tới điểm gần nhất là
+    // 7,0 m, nên quầng vừa chạm nhau chứ không nuốt điểm bên cạnh.
+    final diem = [for (final k in KhuVucThuVien.tatCa) ...k.diem];
+    expect(diem.length, 40);
+
+    final gan = [
+      for (final a in diem)
+        diem
+            .where((b) => b != a)
+            .map((b) => (a - b).distance)
+            .reduce((x, y) => x < y ? x : y),
+    ]..sort();
+    final trungVi = (gan[diem.length ~/ 2 - 1] + gan[diem.length ~/ 2]) / 2;
+
+    expect(trungVi, closeTo(7.0, 0.01));
+    expect(SoDoThat.banKinhQuangM, closeTo(trungVi / 2, 0.01));
   });
 }

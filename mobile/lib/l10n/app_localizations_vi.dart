@@ -36,14 +36,16 @@ class LVi extends L {
   String get mapFloorOne => 'Tầng 1';
 
   @override
-  String get mapRelocateDemo => 'Bản demo — chưa nối API định vị';
-
-  @override
   String get mapRelocate => 'Định vị lại';
 
   @override
   String mapAreaSummary(int count, int giay) {
     return '$count khu vực · cập nhật $giay giây trước';
+  }
+
+  @override
+  String mapAreaCount(int count) {
+    return '$count khu vực';
   }
 
   @override
@@ -85,10 +87,6 @@ class LVi extends L {
 
   @override
   String get detailGoHere => 'Đi tới đây';
-
-  @override
-  String get detailRouteDemo =>
-      'Bản demo — chức năng chỉ đường làm ở giai đoạn sau';
 
   @override
   String get detailImagePlaceholder => 'Ảnh khu vực';
@@ -146,18 +144,12 @@ class LVi extends L {
   String get settingsLanguageEn => 'English';
 
   @override
-  String get settingsAutoUpdate => 'Tự động cập nhật vị trí';
+  String get settingsScanCycle => 'Chu kỳ quét';
 
   @override
-  String settingsAutoUpdateSub(int giay) {
-    return 'Quét lại mỗi $giay giây';
+  String settingsScanCycleSub(int giay) {
+    return 'Mỗi $giay giây — mức Android cho phép';
   }
-
-  @override
-  String get settingsKeepAwake => 'Giữ màn hình sáng';
-
-  @override
-  String get settingsKeepAwakeSub => 'Khi đang xem bản đồ';
 
   @override
   String get settingsPermission => 'Vị trí và WiFi';
@@ -196,11 +188,6 @@ class LVi extends L {
   String get commonBack => 'Quay lại';
 
   @override
-  String a11yAreaRow(String ten, int met) {
-    return '$ten, cách $met mét';
-  }
-
-  @override
   String get a11yOpenArea => 'Mở chi tiết khu vực';
 
   @override
@@ -213,7 +200,10 @@ class LVi extends L {
   String get liveScanning => 'Đang quét WiFi…';
 
   @override
-  String get liveDemo => 'Đang hiển thị dữ liệu demo';
+  String get liveIdle => 'Chưa bật định vị';
+
+  @override
+  String get liveUnknown => 'Chưa xác định vị trí';
 
   @override
   String liveCoords(String x, String y) {
@@ -338,4 +328,18 @@ class LVi extends L {
 
   @override
   String get mapOpenDetail => 'Mở chi tiết khu vực';
+
+  @override
+  String get mapFilterAll => 'Tất cả';
+
+  @override
+  String get mapFilterHint => 'Lọc sơ đồ theo loại khu vực';
+
+  @override
+  String mapRouteChip(String met, String noi) {
+    return '$met m tới $noi';
+  }
+
+  @override
+  String get mapClearRoute => 'Xoá tuyến đường';
 }

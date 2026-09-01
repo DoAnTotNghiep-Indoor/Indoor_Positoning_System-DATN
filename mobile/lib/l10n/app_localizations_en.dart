@@ -36,15 +36,16 @@ class LEn extends L {
   String get mapFloorOne => 'Floor 1';
 
   @override
-  String get mapRelocateDemo =>
-      'Demo build — positioning API not connected yet';
-
-  @override
   String get mapRelocate => 'Recentre on me';
 
   @override
   String mapAreaSummary(int count, int giay) {
     return '$count areas · updated ${giay}s ago';
+  }
+
+  @override
+  String mapAreaCount(int count) {
+    return '$count areas';
   }
 
   @override
@@ -85,9 +86,6 @@ class LEn extends L {
 
   @override
   String get detailGoHere => 'Go here';
-
-  @override
-  String get detailRouteDemo => 'Demo build — routing comes in a later stage';
 
   @override
   String get detailImagePlaceholder => 'Area photo';
@@ -146,18 +144,12 @@ class LEn extends L {
   String get settingsLanguageEn => 'English';
 
   @override
-  String get settingsAutoUpdate => 'Auto-update position';
+  String get settingsScanCycle => 'Scan interval';
 
   @override
-  String settingsAutoUpdateSub(int giay) {
-    return 'Rescan every $giay seconds';
+  String settingsScanCycleSub(int giay) {
+    return 'Every $giay seconds — the rate Android allows';
   }
-
-  @override
-  String get settingsKeepAwake => 'Keep screen on';
-
-  @override
-  String get settingsKeepAwakeSub => 'While viewing the map';
 
   @override
   String get settingsPermission => 'Location and WiFi';
@@ -196,11 +188,6 @@ class LEn extends L {
   String get commonBack => 'Back';
 
   @override
-  String a11yAreaRow(String ten, int met) {
-    return '$ten, $met metres away';
-  }
-
-  @override
   String get a11yOpenArea => 'Open area details';
 
   @override
@@ -213,7 +200,10 @@ class LEn extends L {
   String get liveScanning => 'Scanning WiFi…';
 
   @override
-  String get liveDemo => 'Showing demo data';
+  String get liveIdle => 'Tracking is off';
+
+  @override
+  String get liveUnknown => 'Location unknown';
 
   @override
   String liveCoords(String x, String y) {
@@ -338,5 +328,19 @@ class LEn extends L {
   String get stepUTurn => 'Turn around';
 
   @override
-  String get mapOpenDetail => 'Open area details';
+  String get mapOpenDetail => 'Open area detail';
+
+  @override
+  String get mapFilterAll => 'All';
+
+  @override
+  String get mapFilterHint => 'Filter the floor plan by area type';
+
+  @override
+  String mapRouteChip(String met, String noi) {
+    return '$met m to $noi';
+  }
+
+  @override
+  String get mapClearRoute => 'Clear route';
 }

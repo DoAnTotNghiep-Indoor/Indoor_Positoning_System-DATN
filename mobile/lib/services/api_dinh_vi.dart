@@ -114,10 +114,16 @@ class KetQuaChiDuong {
   final int soChang;
   final List<BuocChiDan> buoc;
 
+  /// Toạ độ mét của từng nút trên tuyến, theo đúng thứ tự đi. Dùng để vẽ tuyến
+  /// lên sơ đồ; `chi_dan` không thay thế được vì nó đã gộp các chặng đi thẳng
+  /// nên thiếu điểm giữa, vẽ theo nó sẽ ra đường cắt góc xuyên tường.
+  final List<DiemThamChieu> duongDi;
+
   const KetQuaChiDuong({
     required this.quangDuongM,
     required this.soChang,
     required this.buoc,
+    this.duongDi = const [],
   });
 
   factory KetQuaChiDuong.tuJson(Map<String, dynamic> j) => KetQuaChiDuong(
@@ -126,6 +132,10 @@ class KetQuaChiDuong {
         buoc: [
           for (final b in j['chi_dan'] as List)
             BuocChiDan.tuJson(b as Map<String, dynamic>),
+        ],
+        duongDi: [
+          for (final d in (j['duong_di'] ?? const []) as List)
+            DiemThamChieu.tuJson(d as Map<String, dynamic>),
         ],
       );
 }
@@ -157,14 +167,11 @@ class ApiDinhVi {
 
   /// Dựng URL và chặn sớm địa chỉ không dùng được.
   ///
-  /// `http` ném `ArgumentError` khi URI thiếu host — mà `ArgumentError` là
-  /// `Error` chứ không phải `Exception`, nên `on Exception` để lọt và vòng quét
-  /// bắt nhầm thành "quét WiFi thất bại". Người dùng vừa gõ sai địa chỉ lại đi
-  /// kiểm tra quyền và WiFi.
-  ///
-  /// Bốn cách gõ đều rơi vào đây: `192.168.1.5`, `localhost:8000`, `may-chu`,
-  /// `http://`. Chính chú thích trong `AppSettings` bảo người dùng nhập IP nội
-  /// bộ, nên thiếu scheme là chuyện sẽ xảy ra thật.
+  /// `http` ném `ArgumentError` khi URI thiếu host, mà `ArgumentError` là
+  /// `Error` chứ không phải `Exception` nên `on Exception` để lọt và vòng quét
+  /// báo nhầm thành "quét WiFi thất bại" — gõ sai địa chỉ lại đi kiểm tra quyền
+  /// và WiFi. Thiếu scheme (`192.168.1.5`, `localhost:8000`) là chuyện xảy ra
+  /// thật vì màn Cài đặt bảo người dùng nhập IP nội bộ.
   Uri _url(String duong) {
     final u = Uri.tryParse('$diaChi$duong');
     if (u == null ||

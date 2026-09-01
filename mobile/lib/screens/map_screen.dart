@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 // Ẩn GlassCard của thư viện: file này dùng bản bọc trong widgets/glass_card.dart
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' hide GlassCard;
+import 'package:intl/intl.dart' as intl;
+
 import '../data/demo_data.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
@@ -8,9 +10,19 @@ import '../theme/app_metrics.dart';
 import '../widgets/so_do_that.dart';
 import '../services/theo_doi_vi_tri.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/tap_feedback.dart';
 
-class MapScreen extends StatelessWidget {
+class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
+
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  /// Nhóm đang lọc, null là hiện tất cả. Trạng thái thuần giao diện nên giữ ở
+  /// màn này, không đẩy xuống TheoDoiViTri cùng chỗ với dữ liệu định vị.
+  String? _loc;
 
   @override
   Widget build(BuildContext context) {
@@ -40,18 +52,34 @@ class MapScreen extends StatelessWidget {
                 child: InteractiveViewer(
                   minScale: 1,
                   maxScale: 5,
-                  child: const Center(child: SoDoMatBang()),
+                  child: Center(child: SoDoMatBang(loc: _loc)),
                 ),
               ),
             ),
           ),
 
-          // Header
-          const Positioned(
+          // Header, hàng chip lọc và thẻ tuyến xếp chồng thành một cột nổi.
+          // Chúng nằm NGOÀI InteractiveViewer: phóng to sơ đồ mà chip cũng to
+          // theo thì bấm không trúng, và thẻ quãng đường sẽ trôi khỏi màn hình.
+          Positioned(
             top: 0,
-            left: 16,
-            right: 16,
-            child: MapHeader(),
+            left: 0,
+            right: 0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: MapHeader(),
+                ),
+                const SizedBox(height: 8),
+                _HangChip(
+                  chon: _loc,
+                  doi: (v) => setState(() => _loc = v),
+                ),
+                const _TheTuyen(),
+              ],
+            ),
           ),
 
           // Nút định vị phải nằm HẲN trên thanh điều hướng: nút tìm kiếm của
@@ -83,6 +111,19 @@ class MapScreen extends StatelessWidget {
 class MapHeader extends StatelessWidget {
   const MapHeader({super.key});
 
+  /// Dòng phụ của thẻ header: số khu vực, kèm mốc cập nhật nếu đã định vị.
+  ///
+  /// Chưa có toạ độ nào thì bỏ hẳn vế thời gian thay vì điền một con số cho có
+  /// — chuỗi cũ viết cứng "cập nhật 2 giây trước" nên nó đúng hai giây trong cả
+  /// vòng đời ứng dụng, kể cả lúc định vị đang tắt.
+  String _tomTat(BuildContext context) {
+    final theoDoi = TheoDoiViTriScope.of(context);
+    final so = theoDoi.khuVuc.length;
+    final giay = theoDoi.giayTuCapNhat;
+    final t = L.of(context);
+    return giay == null ? t.mapAreaCount(so) : t.mapAreaSummary(so, giay);
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = L.of(context);
@@ -113,9 +154,7 @@ class MapHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    t.mapAreaSummary(
-                        TheoDoiViTriScope.of(context).khuVuc.length,
-                        DemoData.updatedSecondsAgo),
+                    _tomTat(context),
                     // Thẻ này nằm đè lên sơ đồ nên chiều cao phải đoán trước
                     // được; để dòng phụ tự xuống hàng trên máy hẹp sẽ đẩy thẻ
                     // cao thêm và che mất hàng phòng đầu tiên.
@@ -159,6 +198,139 @@ class MapHeader extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Hàng chip lọc loại khu vực, cuộn ngang.
+///
+/// Nhãn chip lấy thẳng từ `nhom` của dữ liệu khảo sát, không có bảng loại viết
+/// riêng. CTK45 giữ một `CategoryModel` tách rời nên chuỗi trong bảng đó trôi
+/// khỏi chuỗi trong dữ liệu — có mục thừa một dấu cách ở cuối và không bao giờ
+/// khớp được cái gì. Ở đây chỉ có một nguồn nên không có gì để lệch.
+class _HangChip extends StatelessWidget {
+  final String? chon;
+  final ValueChanged<String?> doi;
+
+  const _HangChip({required this.chon, required this.doi});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = L.of(context);
+    final theoDoi = TheoDoiViTriScope.of(context);
+
+    return AnimatedBuilder(
+      animation: theoDoi,
+      builder: (context, _) {
+        // Sắp theo tên để thứ tự chip đứng yên; danh sách khu vực vốn sắp theo
+        // khoảng cách nên nó đảo chỗ mỗi lần người dùng bước đi.
+        final nhom = [for (final k in theoDoi.khuVuc) k.nhom]..sort();
+
+        return Semantics(
+          label: t.mapFilterHint,
+          child: SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _chip(context, t.mapFilterAll, chon == null, () => doi(null)),
+                for (final n in nhom)
+                  _chip(context, n, chon == n, () => doi(chon == n ? null : n)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _chip(BuildContext context, String chu, bool bat, VoidCallback cham) {
+    final mau = AppColors.accentOf(context);
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: TapFeedback(
+        semanticLabel: chu,
+        onTap: cham,
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: bat
+                ? mau
+                : Theme.of(context).colorScheme.surface.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: mau.withValues(alpha: bat ? 1 : 0.28)),
+          ),
+          child: Text(
+            chu,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: bat ? Colors.white : AppColors.inkOf(context),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Thẻ tổng quãng đường của tuyến đang hiện, kèm nút xoá.
+///
+/// Số mét ở đây là quãng đường Dijkstra cộng dồn trên các cạnh ĐÃ LỌC TƯỜNG,
+/// tính trong hệ mét đo thực địa — khác với thẻ "Tổng khoảng cách" của CTK45
+/// vốn cộng trên hình học GeoJSON vẽ tay, nơi một cặp điểm cách nhau 12,8 m
+/// thật được ghi thành 7,3 m.
+class _TheTuyen extends StatelessWidget {
+  const _TheTuyen();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = L.of(context);
+    final theoDoi = TheoDoiViTriScope.of(context);
+
+    return AnimatedBuilder(
+      animation: theoDoi,
+      builder: (context, _) {
+        final tuyen = theoDoi.tuyen;
+        final dich = theoDoi.dichTuyen;
+        if (tuyen == null || dich == null) return const SizedBox.shrink();
+
+        final so = intl.NumberFormat('#0.#', t.localeName);
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: GlassCard(
+            radius: 20,
+            padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
+            child: MergeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.turn_right_rounded,
+                      size: 18, color: AppColors.accentOf(context)),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      t.mapRouteChip(so.format(tuyen.quangDuongM), dich.nhom),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    tooltip: t.mapClearRoute,
+                    onPressed: theoDoi.xoaTuyen,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
