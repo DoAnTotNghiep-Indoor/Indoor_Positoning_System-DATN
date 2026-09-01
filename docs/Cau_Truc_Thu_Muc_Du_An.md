@@ -94,15 +94,16 @@ BACKEND/
 
 ## PHẦN 2 — CẤU TRÚC ĐỀ XUẤT CHO DỰ ÁN MỚI
 
-Dự án mới khác đồ án cũ ở chỗ: **Web Dashboard** thay cho mobile app, **PostgreSQL** thay cho MongoDB, và có **tầng ML độc lập** cần quản lý phiên bản.
+Dự án mới khác đồ án cũ ở chỗ: thêm **Web Dashboard** bên cạnh app di động, đổi **MongoDB Atlas** sang CSDL quan hệ, và có **tầng ML độc lập** cần quản lý phiên bản.
 
 > **Đối chiếu với bản đã dựng.** Cây thư mục dưới đây là bản đề xuất, giữ nguyên
-> làm dấu vết quá trình. Bảy chỗ đã làm khác đi:
+> làm dấu vết quá trình. Tám chỗ đã làm khác đi:
 >
 > | Đề xuất | Đã dựng | Vì sao |
 > |---|---|---|
 > | `artifacts/model_x.pkl`, `model_y.pkl` | 5 tệp `model_<tên>.pkl` + `pipeline_manifest.json` | Mỗi mô hình một tệp để so sánh được. XGBoost vẫn huấn luyện riêng hai trục, nhưng `MultiOutputRegressor` gói cả hai vào một tệp |
-> | PostgreSQL + `db_models/` 5 tệp | SQLite + `database.py` + `repository.py` | Không cần cài server, chạy được ngay trên máy chấm. Chỉ dựng 2 bảng thật cần thay vì 16 |
+> | PostgreSQL + `db_models/` 5 tệp | SQLite + `database.py` + `repository.py` | Không cần cài server, chạy được ngay trên máy chấm. Chỉ dựng 2 bảng thật cần thay vì 16. Kéo theo: bỏ `docker-compose.yml` và `migrations/` |
+> | `frontend/` HTML5 + Tailwind, 7 trang | một `index.html`, JS thuần không thư viện ngoài | Bảy trang kia không trang nào có nội dung, mà dữ liệu chúng định hiện thì máy chủ chưa có endpoint. Bỏ CDN vì phòng bảo vệ có thể không ra được Internet |
 > | `routers/models.py`, `routers/datasets.py` | đã xoá | Thuộc phần quản lý phiên bản mô hình, chưa làm |
 > | `map.py` — `GET /map/{floor_id}` | `GET /map`, `GET /graph`, `POST /route` | Chỉ có một tầng; thêm đồ thị đi lại và chỉ đường |
 > | `smoothing_service.py` — `PositionSmoother` (EMA) | `BoGop` (đồng thuận không gian) | Xem mục 2.4.1 của tài liệu thiết kế: 0,38 m thay vì kéo trung bình theo điểm lạc |
@@ -117,14 +118,14 @@ System_Indoor/                           # gốc dự án (git repository)
 ├── .env.example                         # mẫu biến môi trường (commit được)
 ├── .env                                 # cấu hình thật (KHÔNG commit)
 ├── requirements.txt
-├── docker-compose.yml                   # (tùy chọn) PostgreSQL chạy local
+├── docker-compose.yml                   # (tùy chọn) CSDL chạy local — đã bỏ, xem bảng đối chiếu
 │
 ├── data/                                # dữ liệu — KHÔNG commit file lớn
 │   ├── raw/
 │   │   └── combined_data.csv            # dữ liệu thô 25.712 dòng
 │   ├── processed/
-│   │   ├── fingerprint_dataset.csv
-│   │   └── fingerprint_dataset_sorted.csv
+│   │   ├── fingerprint_dataset_raw.csv    # trước chuẩn hoá, còn đơn vị dBm
+│   │   └── fingerprint_dataset_sorted.csv # sau chuẩn hoá, đã sắp cột và dòng
 │   ├── splits/
 │   │   ├── train.csv
 │   │   ├── validation.csv
@@ -167,7 +168,7 @@ System_Indoor/                           # gốc dự án (git repository)
 ├── backend/
 │   ├── main.py                          # chỉ khởi tạo app + đăng ký router
 │   ├── config.py                        # Settings đọc từ biến môi trường
-│   ├── database.py                      # kết nối PostgreSQL
+│   ├── database.py                      # kết nối CSDL (đã dựng: SQLite)
 │   ├── schemas.py                       # Pydantic request/response
 │   ├── dependencies.py                  # xác thực API key, DI
 │   ├── routers/
@@ -188,7 +189,7 @@ System_Indoor/                           # gốc dự án (git repository)
 │   │   └── positioning.py               # sessions, predictions
 │   └── migrations/                      # Alembic
 │
-├── frontend/                            # Web Dashboard (HTML5 + Tailwind)
+├── frontend/                            # Web Dashboard (đã dựng: JS thuần)
 │   ├── index.html
 │   ├── pages/
 │   │   ├── dashboard.html               # màn hình chính - realtime
@@ -229,6 +230,71 @@ System_Indoor/                           # gốc dự án (git repository)
     ├── Phan_Tich_Ky_Thuat_DoAnCu_va_Cai_Tien.md
     └── Cau_Truc_Thu_Muc_Du_An.md
 ```
+
+### Cây thư mục THỰC TẾ (tính tới 01/09/2026)
+
+Đây là những gì git đang theo dõi — 224 tệp, khoảng 11 MB.
+
+```
+System_Indoor/
+├── README.md  .gitignore  .gitattributes  .env.example  requirements.txt
+│
+├── data/
+│   ├── raw/combined_data.csv            # 25.712 dòng RSSI thô, KHÔNG sinh lại được
+│   ├── processed/fingerprint_dataset_sorted.csv
+│   ├── splits/                          # sinh bằng pipeline, không commit
+│   └── reference/
+│       ├── reference_points.csv         # 40 điểm, 10 cột (toạ độ + nhãn + mô tả)
+│       ├── reference_points_template.csv
+│       ├── Map.png                      # sơ đồ mặt bằng do CTK45 số hoá
+│       └── ban_do_tang1.json            # hình học trích từ Map.png
+│
+├── artifacts/                           # ★ HỢP ĐỒNG giữa ML và Backend
+│   ├── feature_list.json  model_metadata.json  pipeline_manifest.json
+│   └── (scaler.pkl, model_*.pkl — sinh lại được nên không commit)
+│
+├── notebooks/                           # Colab: 4 notebook + 12 bước tiền xử lý
+│
+├── ml/
+│   ├── config.py  preprocess.py  pipeline.py  train.py
+│   ├── evaluate.py  postprocess.py  report.py  audit.py
+│   └── models/  knn.py  wknn.py  xgboost_model.py  random_forest.py
+│                fingerprint_knn.py
+│
+├── backend/
+│   ├── main.py  config.py  database.py  repository.py  schemas.py
+│   ├── dependencies.py
+│   ├── routers/    predict.py  map.py
+│   └── services/   preprocessing_service.py  prediction_service.py
+│                   smoothing_service.py  routing_service.py
+│                   websocket_service.py
+│
+├── frontend/                            # Web Dashboard, JS thuần
+│   ├── index.html
+│   └── src/  js/{api,websocket,map-renderer,coordinate,charts,dashboard}.js
+│             css/style.css
+│             components/{status-badge,metric-card,data-table}.js
+│
+├── mobile/                              # NGOÀI đề cương — xem mobile/README.md
+│   ├── lib/  services/  data/  screens/  widgets/  theme/  l10n/
+│   ├── assets/  map/Map.png  images/ (38 ảnh, 11 khu vực)
+│   └── test/                            # 65 bài
+│
+├── tools/                               # chạy một lần rồi commit kết quả
+│   ├── trich_ban_do.py                  # Map.png → ban_do_tang1.json
+│   └── sinh_khu_vuc.py                  # CSV → khu_vuc_thu_vien.dart
+│
+├── tests/                               # 128 bài
+│   ├── test_preprocess.py  test_feature_mapper.py  test_postprocess.py
+│   ├── test_train.py  test_api.py  test_route.py
+│   └── test_luu_tru.py  test_dashboard.py  test_khu_vuc.py
+│
+├── reports/  figures/ (7 biểu đồ)  tables/ (3 bảng)
+└── docs/     3 tài liệu .md + frame thiết kế
+```
+
+Hai thư mục rỗng còn lại từ thiết kế cũ: `backend/migrations/` (Alembic, bỏ cùng
+PostgreSQL) và `frontend/assets/icons/` (Dashboard không dùng tệp icon nào).
 
 ---
 
@@ -447,7 +513,7 @@ Các file bạn đã làm sẽ chuyển vào đâu:
 | File hiện tại | Vị trí mới |
 |---|---|
 | `D:\Nam5\DATN\combined_data.csv` | `data/raw/combined_data.csv` |
-| `D:\Nam5\DATN\fingerprint_dataset.csv` | `data/processed/fingerprint_dataset.csv` |
+| `D:\Nam5\DATN\fingerprint_dataset.csv` | `data/processed/fingerprint_dataset_sorted.csv` |
 | `System_Indoor\preprocess_steps\docdulieu_1.py` → `gomscan_2.py` | `ml/preprocess.py` — `load_raw`, `build_scan_id`, `build_scan_meta` |
 | `pivotdulieu_3.py` → `ghepToaDo_4.py` | `ml/preprocess.py` — `to_wide`, `attach_coordinates` |
 | `locAP_5.py` → `loaibomau_6.py` | `ml/preprocess.py` — `filter_access_points`, `filter_sparse_scans` |

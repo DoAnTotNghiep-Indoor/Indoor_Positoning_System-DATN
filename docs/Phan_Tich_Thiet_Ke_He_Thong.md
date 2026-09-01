@@ -14,14 +14,26 @@ Bản phân tích & thiết kế hệ thống tổng hợp từ: đề cương c
 | Mô hình | KNN, WKNN, Random Forest, CNN (Conv1D 16-32-64 + Dense) phân lớp | KNN, WKNN (baseline) + **XGBoost Regression** (2 mô hình con cho x, y) là mô hình chính; Random Forest là phương án so sánh nếu còn thời gian |
 | Kết quả đã có (để trích dẫn/so sánh) | Phòng thí nghiệm: RF 97.16%/6.02 m, KNN 89.5%/9 m, WKNN 88.7%/8 m, CNN 92%/5 m. Thực tế: RF 5–8 m, KNN 7–12 m, WKNN 6–11 m, CNN 0–8 m | Mục tiêu: sai số trung bình thấp hơn KNN/WKNN 10–20%, CDF90 giảm rõ rệt so với baseline |
 | Dữ liệu | 40 RP, cách nhau ~7 m, 3200 mẫu (80 mẫu/RP × 4 hướng), 13 trường thô, rút gọn còn 37/8 đặc trưng AP, RSSI thiếu = -98 | Kế thừa đúng quy ước: RSSI thiếu = -98, ngưỡng tối thiểu 6 AP/mẫu, 30–80 mẫu/RP; bổ sung 3 cấu hình lựa chọn AP (toàn bộ / ≥20% xuất hiện / top 10–15) và quy tắc chống rò rỉ dữ liệu (fit scaler chỉ trên train) |
-| Sản phẩm đầu ra | App di động Flutter, chỉ đường bằng giọng nói, AR/3D (một phần là mở rộng lý thuyết, chưa chắc đã cài đặt) | **Web Dashboard** (không phải mobile), hiển thị vị trí **realtime qua WebSocket** trên sơ đồ mặt bằng |
-| Backend/CSDL | FastAPI (REST) + MongoDB Atlas | FastAPI + WebSocket + **PostgreSQL** (xem ghi chú mâu thuẫn bên dưới) |
+| Sản phẩm đầu ra | App di động Flutter, chỉ đường bằng giọng nói, AR/3D (một phần là mở rộng lý thuyết, chưa chắc đã cài đặt) | **Web Dashboard** (không phải mobile), hiển thị vị trí **realtime qua WebSocket** trên sơ đồ mặt bằng — *đã dựng cả app di động, xem bảng dưới* |
+| Backend/CSDL | FastAPI (REST) + MongoDB Atlas | FastAPI + WebSocket + **PostgreSQL** — *đã chốt lại là SQLite, xem bảng dưới* |
 | Hậu xử lý vị trí | Không đề cập | **EMA smoothing** (alpha = 0.3) để giảm dao động marker |
 | Phạm vi | Toàn bộ tầng 1 thư viện, có định hướng mở sang AR/đa nền tảng | Giữ nguyên phạm vi 2D một tầng, **chủ động không** làm đa tầng/GPS/BLE/CNN để tập trung chất lượng mô hình |
 
 **Cách viết "điểm mới" trong báo cáo** (đã đúng hướng theo file kế hoạch): nhấn mạnh **hồi quy tọa độ trực tiếp** thay vì phân lớp RP, **XGBoost** khai thác tốt dữ liệu bảng RSSI, đánh giá bằng **sai số mét chuẩn hóa (CDF)** thay vì accuracy phân lớp, và triển khai **realtime Web Dashboard**. Không nêu "xây dựng app định vị" làm điểm mới vì đồ án cũ đã làm.
 
-⚠️ **Mâu thuẫn cần xử lý trước khi nộp báo cáo chính thức:** đề cương (`Nhom15_DeCuong_DATN_edited.docx`, mục V) ghi **SQLite**, nhưng tài liệu thiết kế CSDL riêng lại đề xuất **PostgreSQL**. Hai tài liệu này không khớp nhau. Bên dưới khuyến nghị chọn PostgreSQL làm quyết định cuối cùng (lý do ở mục 2.5), nhưng nhóm cần **sửa lại mục V của đề cương** cho khớp — hội đồng rất hay bắt lỗi loại này.
+✅ **Đã chốt sau khi triển khai.** Bảng trên là ĐỀ XUẤT ban đầu, giữ nguyên làm dấu vết quá trình. Bốn dòng đã đi khác:
+
+| Dòng trong bảng | Đề xuất | Đã dựng | Xem thêm |
+|---|---|---|---|
+| Backend/CSDL | PostgreSQL | **SQLite** qua `aiosqlite` | mục 2.5 |
+| Sản phẩm đầu ra | Web Dashboard, không làm mobile | **cả hai**: app Flutter quét WiFi thật, và Dashboard web | mục 2.6, 2.7 |
+| Hậu xử lý vị trí | EMA `alpha = 0.3` | **đồng thuận không gian** trên 3 lần quét | mục 2.4.1 |
+| Web Dashboard | HTML5 + Tailwind CSS | HTML/CSS/JS thuần, **không thư viện ngoài** — phòng bảo vệ có thể không ra được Internet | mục 2.7 |
+| Mô hình | XGBoost là mô hình chính | XGBoost **vẫn là mô hình chính của đề tài**; mô hình *đang triển khai* chọn theo validation và hiện là kNN vân tay | mục 2.4.1 |
+
+Mâu thuẫn SQLite ↔ PostgreSQL giữa đề cương (`Nhom15_DeCuong_DATN_edited.docx`, mục V) và tài liệu thiết kế CSDL riêng nay đã hết: chốt **SQLite**, đúng như đề cương ghi. Không cần sửa mục V nữa.
+
+Mọi sơ đồ và bảng phía dưới vẫn là bản thiết kế ban đầu. Chỗ nào đã dựng khác thì có mục đối chiếu riêng chỉ ra.
 
 ---
 
@@ -83,6 +95,16 @@ flowchart LR
 | Khả dụng | Nếu mất kết nối WebSocket, Dashboard phải hiển thị rõ trạng thái "Disconnected", không đứng hình marker cũ mà không cảnh báo |
 | Bảo mật (mức tối thiểu cho đồ án) | Endpoint ghi dữ liệu training/cấu hình nên có xác thực đơn giản (API key/basic auth); endpoint đọc công khai cho Dashboard |
 
+**Đo được trên bản đã dựng:**
+
+| Yêu cầu | Kết quả |
+|---|---|
+| Độ trễ < 200 ms | Đạt rất thoải mái: 0,85 ms mỗi mẫu cho mô hình đang chạy, mô hình chậm nhất là Random Forest ở 35,9 ms. Có bước chạy nóng lúc khởi động vì lần `predict` đầu tiên của scikit-learn tốn hơn hẳn |
+| XGBoost thấp hơn baseline 10–20% | **Không đạt** — cao hơn 25,8%. Xem mục 2.4.1 |
+| Tái lập được | Đạt: `random_state=42`, và hai lần chạy pipeline cho ra dataset giống hệt **từng byte** |
+| Dashboard báo mất kết nối | Đạt: huy hiệu trạng thái đổi ngay khi WebSocket đóng, tự nối lại với thời gian chờ tăng dần |
+| Xác thực | **Chưa làm** — không có endpoint ghi dữ liệu training, nhưng Dashboard và WebSocket cũng đang mở hoàn toàn. Ghi trong phần hạn chế đã biết của README |
+
 ---
 
 ## 2.2. Kiến trúc hệ thống tổng thể
@@ -114,10 +136,12 @@ flowchart TB
   A2 & A4 & A7 & B6 -.-> DB
 ```
 
+*Sơ đồ thiết kế ban đầu. Bản đã dựng dùng SQLite thay PostgreSQL và đồng thuận không gian thay EMA — xem bảng "Đã chốt" ở đầu tài liệu.*
+
 **Giải thích các thành phần:**
 
 - **Data Collection**: script/ứng dụng nhỏ (web form hoặc CLI) ghi RSSI thô kèm `rp_id, x, y, device_id, direction, bssid, rssi`.
-- **Preprocessing pipeline** (`ml/preprocess.py`): chuẩn hóa AP theo BSSID, xử lý thiếu, lọc mẫu/AP kém, scaling (fit trên train only), xuất `fingerprint_dataset.csv`, `feature_list.json`.
+- **Preprocessing pipeline** (`ml/preprocess.py`): chuẩn hóa AP theo BSSID, xử lý thiếu, lọc mẫu/AP kém, scaling (fit trên train only), xuất `fingerprint_dataset_sorted.csv`, `feature_list.json`.
 - **Training pipeline**: huấn luyện song song kNN/WKNN (baseline) và XGBoost (2 mô hình con `model_x`, `model_y`); lưu artifact + `model_metadata.json`.
 - **Backend FastAPI**: expose REST (`/predict`, `/map`, CRUD dữ liệu) + WebSocket (`/ws/location`); load model **một lần lúc start** để đảm bảo độ trễ thấp.
 - **Smoothing Service**: EMA theo từng `device_id`/`session`, có rule reset nếu mất tín hiệu lâu, giới hạn bước nhảy tối đa.
@@ -135,7 +159,7 @@ sequenceDiagram
   participant WS as WebSocket /ws/location
   participant P as Prediction Service
   participant S as Smoothing Service
-  participant DB as PostgreSQL
+  participant DB as SQLite
   participant D as Web Dashboard
 
   C->>WS: scan {device_id, [{bssid, rssi}, ...]}
@@ -156,7 +180,7 @@ sequenceDiagram
 
 - **Phát biểu bài toán**: Input = vector RSSI `[AP_1, ..., AP_n]` (thiếu → -98); Output = `(x, y)` mét. Loss/đánh giá chính: `error = sqrt((x_pred-x_true)² + (y_pred-y_true)²)`.
 - **Baseline 1 – kNN**: trung bình tọa độ của k mẫu train gần nhất; thử k ∈ {3,5,7,9,11}, distance ∈ {euclidean, manhattan}.
-- **Baseline 2 – WKNN**: trọng số `1/(distance+ε)`, ε=1e-6, cùng dải k.
+- **Baseline 2 – WKNN**: trọng số `1/(distance+ε)`, ε=1e-6. Dải k bắt đầu từ 2 chứ không phải 1 như kNN: với một láng giềng duy nhất thì trọng số không có gì để cân, WKNN ở k=1 chính là kNN ở k=1 và bảng so sánh mất một mô hình cơ sở.
 - **(Tùy thời gian) Random Forest**: `n_estimators` ∈ {100,200,500}, dùng làm mốc so sánh thêm với XGBoost — có sẵn số liệu đối chứng từ đồ án cũ (RF đạt 97.16%/6.02m trong bài toán phân lớp, nên kỳ vọng RF cũng là baseline mạnh trong bài toán hồi quy).
 - **Mô hình chính – XGBoost Regression**: train riêng `model_x`, `model_y`; tham số thử `n_estimators∈{100,300,500}`, `max_depth∈{3,5,7}`, `learning_rate∈{0.03,0.05,0.1}`, `subsample/colsample_bytree∈{0.8,1.0}`, `reg_lambda∈{1,5,10}`, `random_state=42`.
 - **Chỉ số đánh giá**: Mean/Median/Min/Max/Std error (m), CDF tại 50/75/90%, MAE/RMSE theo từng trục x, y, thời gian dự đoán (ms). Biểu đồ: CDF sai số, so sánh mean error giữa model, heatmap lỗi theo bản đồ, feature importance của XGBoost, sai số theo từng RP.
@@ -165,7 +189,7 @@ sequenceDiagram
 
 ---
 
-## 2.4.1. Đối chiếu với bản đã thực hiện
+### 2.4.1. Đối chiếu với bản đã thực hiện
 
 Mục 2.4 ở trên là **thiết kế ban đầu**, giữ nguyên làm dấu vết quá trình. Sau khi
 chạy thực nghiệm có năm chỗ khác đi. Mọi số liệu dưới đây đo trên tập test 118
@@ -196,8 +220,34 @@ khác nhau vì thu đúng tại các điểm tham chiếu, nên bài toán gần
 hồi quy. `kNN vân tay (Bray-Curtis)` khai thác đúng tính chất đó và cho 1,92 m,
 so với 5,15 m của cơ sở tốt nhất và 6,48 m của XGBoost.
 
-**3. Giá trị điền thiếu: −98 thành −96.** Không đặt cứng nữa mà tính từ dữ liệu:
-`min(RSSI) − 1`. Dữ liệu thu được có RSSI thấp nhất −95 dBm.
+Kèm theo đó là một kết quả ngược với giả thiết ban đầu, cần nói thẳng trong báo
+cáo: **XGBoost không đạt mục tiêu ở mục 2.1** — thay vì thấp hơn baseline
+10–20%, nó cao hơn 25,8%. Nguyên nhân là tính chất dữ liệu nêu trên chứ không
+phải thiếu tinh chỉnh: lưới tham số đã nới tới khi cực trị nằm hẳn bên trong.
+XGBoost vẫn là mô hình chính của đề tài và vẫn được huấn luyện, đánh giá đầy đủ
+trong bảng so sánh; mô hình *đang triển khai* thì chọn theo sai số validation,
+và `GET /health` luôn cho biết mô hình nào đang chạy.
+
+**3. Giá trị điền thiếu: −98 thành −96, và nó chuyển vào hợp đồng dữ liệu.**
+Không đặt cứng nữa mà tính từ dữ liệu: `min(RSSI) − 1`. Dữ liệu thu được có RSSI
+thấp nhất −95 dBm.
+
+Điều quan trọng hơn con số là **nó được ghi ở đâu**. Giá trị này nay nằm trong
+`artifacts/feature_list.json` do pipeline sinh ra, và backend đọc lại từ đó lúc
+khởi động — một nguồn duy nhất cho cả lúc huấn luyện lẫn lúc chạy thật.
+
+Đồ án CTK45 cho thấy đúng cái giá của việc không làm vậy. Báo cáo của họ trang 42
+ghi *"giá trị RSS = −98 được đặt mặc định với các AP không phát hiện được"*, còn
+mã nguồn ứng dụng (`wifi_service.dart`, dòng 59) lại điền `?? -100`. Huấn luyện
+bằng −98, chạy thật bằng −100: lệch hệ thống trên **mọi** AP vắng mặt của **mọi**
+lần quét. Không có gì báo lỗi, vì cả hai đều là số hợp lệ — chỉ có sai số định vị
+âm thầm lớn hơn nó đáng phải có.
+
+Hai con số đó nằm ở hai kho mã khác nhau, do hai người viết, cách nhau nhiều
+tháng. Đấy chính là lý do dự án này không cho phép bất kỳ tham số tiền xử lý nào
+tồn tại ở hai nơi: `missing_rssi_value`, `min_ap_per_scan` và thứ tự 36 cột AP
+đều chỉ có một bản trong `feature_list.json`, kèm `ap_columns_sha1` để backend từ
+chối khởi động nếu mô hình và hợp đồng đến từ hai lần chạy pipeline khác nhau.
 
 **4. Lưới tham số mở rộng.** Ba lưới trong mục 2.4 có tối ưu rơi đúng vào biên —
 `beta` cận trên, `n_neighbors` cận dưới, `reg_lambda` cận dưới — nên đã nới cho
@@ -217,7 +267,13 @@ nhiều máy.
 
 ## 2.5. Thiết kế cơ sở dữ liệu
 
-**Khuyến nghị: PostgreSQL** (không phải SQLite như đề cương hiện ghi), vì hệ thống cần lưu **nhiều phiên bản dataset/model để tái lập thực nghiệm**, JSONB cho `hyperparameters`/`metadata`, và dễ mở rộng đa tầng/đa tòa nhà về sau mà không phải đổi DB engine giữa chừng. Nếu nhóm muốn đơn giản hóa triển khai giai đoạn đầu, có thể dùng SQLite **nhưng thiết kế schema y hệt PostgreSQL** (tránh cú pháp riêng của Postgres như JSONB thật) để chuyển đổi dễ dàng — quan trọng là **chọn một và sửa đề cương cho khớp**.
+**Đã chốt: SQLite.** Bản thiết kế ban đầu khuyến nghị PostgreSQL với ba lý do — lưu nhiều phiên bản dataset/model để tái lập thực nghiệm, JSONB cho `hyperparameters`/`metadata`, và dễ mở rộng đa tầng/đa toà nhà. Thực tế triển khai cho thấy cả ba đều chưa cần đến:
+
+- Việc tái lập thực nghiệm giải quyết bằng `artifacts/pipeline_manifest.json` và `model_metadata.json` — hai lần chạy pipeline cho ra tệp giống hệt từng byte, không cần bảng phiên bản trong CSDL.
+- `hyperparameters` chỉ được đọc để in báo cáo chứ không truy vấn theo trường, nên JSONB không đem lại gì so với một chuỗi JSON.
+- Phạm vi đề tài đã chủ động giới hạn ở một tầng.
+
+Đổi lại, SQLite bỏ được cả một dịch vụ phải cài đặt, nên máy chấm chỉ cần `pip install -r requirements.txt` là chạy. Schema vẫn viết tránh cú pháp riêng của mọi engine, và toàn bộ truy cập CSDL đi qua `backend/repository.py`, nên đổi sang PostgreSQL về sau chỉ phải đổi `DATABASE_URL`. Thực tế hệ thống chỉ dựng **2 bảng** thật cần (`positioning_sessions`, `position_predictions`) trong số 16 bảng của ERD dưới đây.
 
 ERD rút gọn (nhóm theo 6 miền dữ liệu, chi tiết từng trường đã có sẵn trong tài liệu thiết kế CSDL của nhóm — đây chỉ tổng hợp quan hệ):
 
@@ -265,6 +321,98 @@ Ràng buộc quan trọng cần giữ: `wifi_access_points.bssid` UNIQUE (SSID k
 
 ---
 
+### 2.5.1. Dữ liệu không gian: sơ đồ mặt bằng và đồ thị đi lại
+
+Mục 2.5 nói về CSDL quan hệ. Hệ thống còn một kho dữ liệu thứ hai không nằm
+trong CSDL: **hình học của toà nhà**. Phần này ghi lại nó đến từ đâu và vì sao
+không lấy sẵn của đồ án kế thừa.
+
+#### Vì sao không kế thừa GeoJSON của CTK45
+
+Đồ án CTK45 dựng bản đồ Mapbox từ bảy tệp GeoJSON vẽ tay: `POI`, `Room`,
+`Hallways`, `Stair`, `Paths`, `Doors`, `Wall`. Cả bảy đều còn trên kho mã của họ
+và tải về được. Trước khi dùng, nhóm khớp 40 điểm trong `POI.geojson` của họ với
+40 toạ độ nhóm đã đo:
+
+| Phép đo | Kết quả |
+|---|---|
+| Hộp bao 40 điểm POI của họ, quy ra mét thật | 30,5 × 34,4 m |
+| Hộp bao thật của khu khảo sát | **86 × 52 m** |
+| Khớp Procrustes (quay + co giãn đều + tịnh tiến) | RMS 5,99 m |
+| Khớp affine đầy đủ (hai trục co khác nhau) | RMS **5,08 m**, lệch lớn nhất 28,55 m |
+| 780 cặp điểm: khoảng cách trong GeoJSON so với khoảng cách thật | trung vị **0,40×** |
+| 143 cặp cách nhau dưới 20 m | sai số tuyệt đối trung bình **7,5 m** |
+
+Phép affine đầy đủ đã cho phép hai trục co giãn khác nhau và trượt tự do, mà vẫn
+còn lệch trung bình 5 m. Nghĩa là biến dạng **không tuyến tính**: toạ độ đặt bằng
+tay chứ không theo một phép chiếu nào. Không có phép biến đổi nào sửa được.
+
+Hệ quả trực tiếp: mọi khoảng cách đo trên bản đồ ấy đều sai. Thẻ *"Tổng khoảng
+cách: 18.43 mét"* trong ứng dụng của họ là con số tính trên hình học này — ba
+cặp điểm có khoảng cách thật 16 m, 12,8 m và 18 m thì GeoJSON cho ra 14,1 m,
+7,3 m và 9,3 m.
+
+Vì vậy nhóm **không** dùng lại `Room`, `Hallways`, `Stair` dù chúng có sẵn sáu đa
+giác phòng, năm hành lang và tám khối cầu thang. Vẽ chúng lên sẽ ra một bản đồ
+đẹp mà mọi thứ lệch chỗ 5 m. `POI.geojson` chỉ được dùng cho hai việc không cần
+đúng tỉ lệ: lấy **tên và mô tả** của 40 điểm, và xét **chiều trục x** bằng phép
+quay-co-tịnh tiến.
+
+#### Nguồn hình học thay thế
+
+Nhóm trích hình học từ chính `Map.png` — sơ đồ mặt bằng tầng 1 do CTK45 số hoá,
+là thứ duy nhất của họ có tỉ lệ đúng. Công cụ `tools/trich_ban_do.py` chạy một
+lần rồi commit kết quả vào `data/reference/ban_do_tang1.json`, nên backend chỉ
+đọc JSON và không cần thư viện xử lý ảnh lúc chạy thật.
+
+**Phép biến đổi mét ↔ pixel được kiểm bằng hai phép đo độc lập.** Lưới chấm trong
+ảnh trải đúng 1000 px ngang và 605 px dọc, trong khi hộp bao 40 điểm tham chiếu
+là 86 m × 52 m — cho 11,628 và 11,635 px/m. Hai trục tính riêng mà khớp tới 4 chữ
+số có nghĩa; đó là căn cứ khẳng định lưới chấm chính là hệ toạ độ mét của bộ dữ
+liệu, không phải một quy ước tự đặt.
+
+**Chiều trục cũng chốt bằng bằng chứng, không bằng quy ước.** Trục y hướng lên:
+toà nhà thắt eo ở giữa, theo chiều này đoạn eo ứng với y ∈ [6,4; 21,3] m và cả 8
+điểm trong khoảng đó đều có |x| ≤ 30 m — vừa lọt; chiều ngược lại buộc đoạn eo
+phải chứa hai điểm ở |x| = 43 m, rộng hơn cả eo. Trục x không lật: khớp 39 điểm
+với GPS trong `POI.geojson` cho RMS 3,15 m khi không lật và 13,84 m khi lật.
+
+#### Đồ thị đi lại
+
+Nút của đồ thị là chính 40 điểm tham chiếu, vì **RP nằm trên chỗ đi được theo
+định nghĩa**: phải có người đứng đúng đó cầm máy quét mới đo ra được toạ độ.
+
+Cạnh thì cần thêm sơ đồ, vì hai điểm gần nhau vẫn có thể có tường ở giữa. Công cụ
+dựng mặt nạ tường từ `Map.png` rồi **gán nhãn vùng liên thông**: hai điểm cùng
+một vùng thì đi được, khác vùng thì không. Cách này không có tham số ngưỡng nào
+phải chỉnh tay. Kết quả: 103 cặp điểm trong bán kính 25 m bị loại, cạnh dài nhất
+giảm từ 21,0 m xuống 17,2 m.
+
+`Map.png` vẽ tường nhưng **không vẽ cửa**, nên chặn hết cạnh cắt tường thì đồ thị
+vỡ thành 7 mảnh rời. Công cụ nối lại bằng số cạnh ít nhất, mỗi lần chọn cạnh ngắn
+nhất giữa hai mảnh — chỗ nhiều khả năng có cửa nhất. Sáu cạnh ấy ghi riêng vào
+khoá `cua_gia_dinh`, **không trộn** vào phần suy ra được từ ảnh, để ra thực địa
+còn biết cái nào cần đối chiếu. Đây là hạn chế đã biết, nêu trong README.
+
+Đối lập với CTK45 ở đúng chỗ này: mã của họ nạp `Paths.geojson` — tức hành lang
+**đi được** — vào biến `walls` rồi dùng làm vật cản, nên phép kiểm chặn hoạt động
+ngược với ý định. Chi tiết ở mục 2b.2 của
+`Phan_Tich_Ky_Thuat_DoAnCu_va_Cai_Tien.md`.
+
+#### Một phép biến đổi, ba ngôn ngữ
+
+Cùng phép đổi mét ↔ pixel được dùng ở Python (backend và công cụ), Dart (ứng dụng
+di động) và JavaScript (Dashboard). Lệch một hằng số ở một nơi thì cùng một toạ
+độ hiện ra hai chỗ khác nhau trên hai màn hình, mà triệu chứng nhìn y hệt "mô
+hình đoán sai" nên rất khó lần ra.
+
+`tests/test_dashboard.py` đối chiếu cả ba với `ban_do_tang1.json`, gồm cả số hạng
+dịch trục — số hạng này từng viết trần ở cả ba nơi mà không tệp nào khai nó, nên
+không bài test nào so được. Nay nó có tên (`goc_met_x`) và được neo vào chính giá
+trị `x` nhỏ nhất trong bảng toạ độ đã đo.
+
+---
+
 ## 2.6. Thiết kế API & giao thức realtime
 
 | Method | Endpoint | Mô tả |
@@ -281,6 +429,19 @@ Ràng buộc quan trọng cần giữ: `wifi_access_points.bssid` UNIQUE (SSID k
 | GET | `/graph?floor_id=` , POST `/route` | (Mở rộng) chỉ đường |
 
 Định dạng JSON response `/predict` giữ nguyên như trong tài liệu kế hoạch của nhóm — đây là hợp đồng dữ liệu giữa model và frontend, nên khóa cứng sớm để không phải sửa lại Dashboard nhiều lần.
+
+### 2.6.1. Đối chiếu với bản đã dựng
+
+Đã dựng 9 endpoint. Bốn nhóm trong bảng trên chưa làm, và đều có lý do:
+
+| Endpoint đề xuất | Tình trạng |
+|---|---|
+| `POST /predict`, `WS /ws/location`, `GET /map`, `GET /predictions` | Đã dựng, đúng hợp đồng dữ liệu ở trên |
+| `GET /graph`, `POST /route` | Đã dựng, dù bảng ghi là "mở rộng". `/route` trả kèm `chi_dan` — chỉ dẫn rẽ từng chặng |
+| `GET /health`, `GET /map/so-do.png`, `GET /` | Thêm mới: trạng thái mô hình, ảnh sơ đồ, và trang Dashboard phục vụ ngay từ uvicorn |
+| `POST /wifi-scans/training` | Không làm. Dữ liệu khảo sát kế thừa từ CTK45, nhóm không tổ chức đợt thu mới nên không cần đường ghi dữ liệu huấn luyện qua API |
+| `GET /floors/{id}/reference-points` | Không làm. Chỉ có một tầng, `GET /map` trả luôn cả 40 điểm |
+| `GET /models`, `/models/active`, `POST /models/{id}/activate`, `GET /model-evaluations` | Không làm. Thuộc phần quản lý phiên bản mô hình qua giao diện; mô hình active chọn lúc huấn luyện và ghi vào `model_metadata.json` |
 
 ---
 
@@ -303,6 +464,43 @@ Theo đúng cấu trúc module trong file Figma đã phác thảo — hệ thố
 
 Bố cục chung: sidebar trái (điều hướng module) + top bar (trạng thái hệ thống) + main content + right panel (log/metrics realtime) — giữ nguyên theo thiết kế Figma đã có, việc này đã khá hoàn chỉnh, không cần chỉnh sửa nhiều.
 
+### 2.7.1. Đối chiếu với bản đã dựng
+
+**Dashboard gộp thành một trang, không chia bảy màn.** Bảy tệp HTML từng được
+tạo theo bảy module ở trên nhưng không tệp nào có nội dung, mà dữ liệu chúng
+định hiển thị thì máy chủ chưa có endpoint tương ứng — giữ lại chỉ là giữ bảy
+đường dẫn 404 có tiêu đề. Trang hiện tại gồm: sơ đồ mặt bằng với 40 điểm tham
+chiếu và marker thiết bị kèm vệt đã đi, bảng thiết bị đang kết nối, hộp chỉ
+đường, biểu đồ hiệu quả bước gộp, và bảng lịch sử định vị. Tức là phần MVP và
+hai màn Evaluation, History đã có mặt dưới dạng khối trong một trang.
+
+**Data Collection, Dataset Management, Model Training chưa làm** — cùng lý do với
+các endpoint tương ứng ở mục 2.6.1.
+
+**Không dùng Tailwind CSS** như mục V đề cương ghi: trang viết bằng HTML/CSS/JS
+thuần. Tailwind qua CDN cần Internet mà phòng bảo vệ có thể không ra được mạng
+ngoài; bản build tại chỗ thì phải thêm Node vào một dự án còn lại thuần Python.
+Giao diện chỉ có một trang nên phần tiện lợi của Tailwind cũng không còn nhiều.
+
+**Ngoài đề cương: ứng dụng di động Flutter** 5 màn hình (Trang chủ, Bản đồ, Chi
+tiết khu vực, Tìm kiếm, Cài đặt), song ngữ Việt/Anh, sáng/tối. Đây là nguồn quét
+WiFi thật cho hệ thống và là cách kiểm thử thực địa. Xem `mobile/README.md`.
+
+Màn Bản đồ dựng theo bố cục CTK45 ở mục 4.4.3 — hàng chip lọc loại khu vực trên
+sơ đồ mặt bằng — nhưng khác họ ở hai chỗ. Nhãn chip lấy thẳng từ trường `nhom`
+của dữ liệu khảo sát chứ không từ một bảng loại viết riêng, nên không thể trôi
+khỏi dữ liệu như `CategoryModel` của họ. Và chip ngoài nhóm đang chọn thì làm
+mờ chứ không tô đậm thêm: cách của họ chỉ đổi nền các nhãn cùng loại nên màn
+hình càng dày đặc hơn sau khi lọc.
+
+Tuyến đường vẽ bằng chuỗi chấm cách đều 1,2 m theo `duong_di` — danh sách nút
+đầy đủ, không phải `chi_dan` vốn đã gộp các chặng đi thẳng — kèm thẻ tổng quãng
+đường. Con số trên thẻ là tổng độ dài các cạnh **đã lọc tường** trong hệ mét đo
+thực địa, khác thẻ "Tổng khoảng cách" của CTK45 vốn cộng trên hình học GeoJSON
+vẽ tay (mục 2.5.1). Tuyến neo ở điểm xuất phát lúc bấm và không tự tính lại khi
+người dùng đi tiếp; chấm vị trí vẫn chạy thời gian thực nên vẫn thấy mình đang
+ở đâu trên tuyến.
+
 ---
 
 ## 2.8. Rủi ro & giải pháp (tổng hợp, ưu tiên theo mức ảnh hưởng)
@@ -315,13 +513,44 @@ Bố cục chung: sidebar trái (điều hướng module) + top bar (trạng th�
 | Web realtime bị trễ | Load model 1 lần lúc start, không load mỗi request; giới hạn tần suất gửi RSSI |
 | Lệch thứ tự cột feature giữa lúc train và lúc predict | `dataset_features.feature_index` là nguồn sự thật duy nhất, backend luôn map theo `feature_list.json` gắn với model đang active |
 
+### 2.8.1. Rủi ro đã xảy ra thật, và thêm một rủi ro không lường trước
+
+| Rủi ro | Thực tế |
+|---|---|
+| RSSI dao động → marker nhảy | Xảy ra đúng như dự đoán, nhưng dạng khác: không phải dao động đều mà là **một lần quét dị thường lẻ loi**. EMA không xử lý được vì nó kéo trung bình; đồng thuận không gian mới loại được. Xem mục 2.4.1 |
+| `device_holdout` / `time_holdout` | **Không thực hiện được** với bộ dữ liệu kế thừa — một máy đo, mỗi điểm chỉ đo một buổi. Đây là hạn chế phải nêu trong báo cáo, không phải việc bỏ sót |
+| Đánh giá lúc đông/vắng người (mục 4.3 đề cương) | Chưa làm được: bộ dữ liệu không ghi số người có mặt lúc đo |
+| Lệch thứ tự cột feature | Đã chặn bằng `ap_columns_sha1` trong `model_metadata.json`; lệch là backend không khởi động được chứ không chạy tiếp rồi trả toạ độ sai |
+| **Không lường trước:** quét thiếu AP mà mô hình vẫn trả toạ độ tự tin | Mô hình cho ra toạ độ với mọi vector đầu vào, kể cả vector toàn giá trị điền-khi-thiếu. Đo thực địa: 23 AP nhìn thấy, khớp 0, hệ thống vẫn khẳng định người dùng đứng trong thư viện. Đã chặn bằng ngưỡng `min_ap_per_scan`, trả 422 |
+
 ---
 
 ## 2.9. Ánh xạ vào lộ trình 12 mốc trong đề cương (Aug–Nov 2026)
 
-| Mốc đề cương | Nội dung kỹ thuật tương ứng |
-|---|---|
-| 12/08–19/08: Phân tích đề tài | Chốt schema DB (SQLite hay PostgreSQL), chốt kiến trúc ở mục 2.2 |
+Cột "Mốc" chép đúng mục VII của đề cương. Cột cuối là tình trạng tính tới
+01/09/2026.
+
+| # | Mốc đề cương | Thời gian | Nội dung kỹ thuật tương ứng | Tình trạng |
+|---|---|---|---|---|
+| 1 | Phân tích đề tài, khảo sát tài liệu | 12/08–19/08 | Chốt schema DB (SQLite, mục 2.5), chốt kiến trúc mục 2.2 | Xong |
+| 2 | Tìm hiểu dữ liệu RSSI, thống kê và tiền xử lý | 20/08–31/08 | `ml/preprocess.py`, 12 bước, `feature_list.json` | Xong |
+| 3 | Mô hình cơ sở kNN, WKNN | 01/09–08/09 | `ml/models/knn.py`, `wknn.py`, `evaluate.py` | Xong |
+| 4 | XGBoost và tinh chỉnh siêu tham số | 09/09–20/09 | `ml/models/xgboost_model.py`, quét lưới 648 tổ hợp | Xong |
+| 5 | Báo cáo tiến độ lần 1 | 25/09–30/09 | Bảng so sánh 5 mô hình + biểu đồ CDF | Sẵn sàng |
+| 6 | Thực nghiệm, so sánh và đánh giá | 01/10–15/10 | Heatmap lỗi theo điểm, phân bố sai số, hậu xử lý gộp | Xong phần đo; còn mục 4.3 (mật độ người) chưa làm được |
+| 7 | Back-end FastAPI, tích hợp mô hình và WebSocket | 16/10–31/10 | 9 endpoint, `/ws/location`, `BoGop` | Xong |
+| 8 | Front-end Web Dashboard và ghép nối | 01/11–10/11 | `frontend/index.html`, phục vụ ngay từ uvicorn | Xong |
+| 9 | Kiểm thử, hoàn thiện và viết báo cáo | 11/11–15/11 | 128 test Python, 65 test Flutter | Đang làm |
+| 10 | Báo cáo tiến độ lần 2 | 16/11–18/11 | — | Chưa tới |
+| 11 | Sửa chữa, hoàn thiện đồ án | 19/11–24/11 | — | Chưa tới |
+| 12 | Báo cáo bảo vệ trước hội đồng | 25/11–30/11 | Demo Dashboard realtime + bảng so sánh mô hình | Chưa tới |
+
+Các mốc 7 và 8 đã làm xong sớm hơn kế hoạch. Phần làm thêm ngoài đề cương — ứng
+dụng di động Flutter, đồ thị đi lại và chỉ đường — không thay thế mốc nào, và
+được ghi riêng để không lẫn với phạm vi đề cương.
+
+---|---|
+| 12/08–19/08: Phân tích đề tài | Chốt schema DB (đã chốt SQLite, mục 2.5), chốt kiến trúc ở mục 2.2 |
 | 20/08–31/08: Thống kê/tiền xử lý dữ liệu | Triển khai bảng "Giai đoạn 1 – Lõi định vị", pipeline `preprocess.py` |
 | 01/09–08/09: Baseline kNN/WKNN | Cài `train_knn.py`, `train_wknn.py`, `evaluate.py` |
 | 09/09–20/09: XGBoost | `train_xgboost.py` + tuning theo bảng tham số ở mục 2.4 |
@@ -337,5 +566,5 @@ Bố cục chung: sidebar trái (điều hướng module) + top bar (trạng th�
 ## Việc tiếp theo có thể làm
 
 1. Vẽ các sơ đồ trên (use-case, kiến trúc, sequence, ERD) thành hình ảnh/artifact để chèn trực tiếp vào Word thay vì mã Mermaid.
-2. Viết chi tiết SQL DDL cho PostgreSQL theo schema đã thống nhất.
+2. Viết chi tiết SQL DDL theo schema đã thống nhất, nếu báo cáo cần trình bày đầy đủ 16 bảng của ERD.
 3. Viết code khung dự án (`project/` structure đã đề xuất) để nhóm code luôn.

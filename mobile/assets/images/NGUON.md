@@ -29,6 +29,6 @@ lại để lần sau ai thêm ảnh còn biết phải kiểm.
 
 ## Đánh số
 
-Đổi tên thành `1.jpg`, `2.jpg`, … theo thứ tự tệp gốc. `data/anh_khu_vuc.dart`
+Đổi tên thành `1.jpg`, `2.jpg`, … theo thứ tự tệp gốc. `lib/data/anh_khu_vuc.dart`
 giữ số lượng ảnh mỗi thư mục và dựng đường dẫn từ đó; `test/anh_khu_vuc_test.dart`
 đối chiếu con số ấy với `AssetManifest` để hai nơi không lệch nhau.

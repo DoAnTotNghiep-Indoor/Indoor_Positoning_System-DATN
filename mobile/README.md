@@ -1,119 +1,133 @@
-# IPS DLU — Ứng dụng di động (bản demo giao diện)
+# IPS DLU — Ứng dụng di động
 
-Ứng dụng Flutter dựng lại 5 màn hình trong frame thiết kế `ips-dlu-screens-v4.svg`,
-giữ nguyên bố cục, bảng màu và toạ độ gốc.
+Ứng dụng Flutter quét WiFi thật, gửi lên máy chủ và hiển thị vị trí người dùng
+trên sơ đồ mặt bằng tầng 1 Thư viện Đại học Đà Lạt.
 
-> **Bản demo giao diện — chưa nối API.** Toàn bộ dữ liệu là hằng số tĩnh trong
-> `lib/data/demo_data.dart`. Phần backend (`POST /predict`, `WS /ws/location`,
-> `GET /map`) sẽ làm ở giai đoạn sau theo đúng kế hoạch trong đề cương.
+Bố cục và bảng màu dựng theo frame thiết kế `ips-dlu-screens-v4.svg`; dữ liệu
+hiển thị thì lấy từ `GET /map` và `POST /predict`.
+
+> **Ngoài phạm vi đề cương.** Đề cương (mục I và chương 5) chỉ yêu cầu ứng dụng
+> **Web**. Ứng dụng di động là phần làm thêm, dùng làm nguồn quét WiFi cho hệ
+> thống và để kiểm thử thực địa — không thay thế Web Dashboard.
 
 ## Yêu cầu
 
-- Flutter **>= 3.27** (Dart >= 3.6) — vì mã dùng `Color.withValues()`.
-  Nếu dùng bản cũ hơn, thay toàn bộ `.withValues(alpha: x)` thành `.withOpacity(x)`.
+- Flutter **>= 3.27** (Dart >= 3.6) vì mã dùng `Color.withValues()`.
+- Máy Android thật hoặc máy ảo. Web chỉ dựng được giao diện: `wifi_scan` không
+  có bản cho trình duyệt.
 
-Máy đang cài **Flutter 3.47.1 stable** tại `D:\flutter` (Dart 3.13.1).
+Đã kiểm chứng trên **Flutter 3.47.1 stable** (Dart 3.13.1) tại `D:\flutter`,
+Android SDK 36.0.0.
 
 ## Chạy
-
-Khung nền tảng `web/` và `android/` đã được sinh sẵn.
 
 ```bash
 cd D:\Nam5\DATN\System_Indoor\mobile
 flutter pub get
-flutter run -d chrome        # chạy nhanh trên trình duyệt
 flutter run                  # chọn thiết bị Android
-```
-
-Kiểm tra chất lượng mã:
-
-```bash
 flutter analyze
 flutter test
 ```
+
+Máy chủ phải chạy trước (`uvicorn backend.main:app --host 0.0.0.0` ở thư mục
+gốc). Địa chỉ sửa trong màn **Cài đặt**, mặc định `http://10.0.2.2:8000` là lối
+tắt máy ảo Android gọi về máy đang chạy nó. Điện thoại thật thì đổi sang IP nội
+bộ của máy chủ, hoặc nối USB rồi `adb reverse tcp:8000 tcp:8000` để dùng luôn
+`http://127.0.0.1:8000`.
+
+Địa chỉ, ngôn ngữ và chế độ sáng/tối được nhớ giữa hai lần mở app.
 
 ## Cấu trúc
 
 ```
 lib/
-├── main.dart                     # điểm vào, khung AppShell + bottom nav
+├── main.dart                     # điểm vào, AppShell + bottom nav + hai Scope
 ├── theme/
-│   ├── app_colors.dart           # bảng màu lấy trực tiếp từ frame thiết kế
-│   └── app_theme.dart            # ThemeData, thang chữ
+│   ├── app_colors.dart           # bảng màu lấy từ frame thiết kế
+│   ├── app_theme.dart            # ThemeData, thang chữ
+│   ├── app_metrics.dart          # số đo co giãn theo cỡ chữ hệ thống
+│   └── app_settings.dart         # tuỳ chọn người dùng, lưu bằng shared_preferences
+├── services/
+│   ├── quet_wifi.dart            # gọi wifi_scan, phân loại lý do không quét được
+│   ├── quyen_truy_cap.dart       # quyền vị trí / NEARBY_WIFI_DEVICES
+│   ├── api_dinh_vi.dart          # POST /predict, GET /map, POST /route
+│   └── theo_doi_vi_tri.dart      # vòng lặp quét 5 giây, giữ trạng thái cho UI
 ├── data/
-│   └── demo_data.dart            # DỮ LIỆU TĨNH — thay bằng API ở giai đoạn sau
+│   ├── floor_map.dart            # phép đổi mét ↔ pixel của sơ đồ thật
+│   ├── khu_vuc.dart              # gộp điểm tham chiếu thành khu vực
+│   ├── khu_vuc_thu_vien.dart     # SINH TỰ ĐỘNG — bản offline của khu vực
+│   ├── anh_khu_vuc.dart          # số ảnh mỗi thư mục, dựng đường dẫn asset
+│   └── demo_data.dart            # vài chuỗi cố định của toà nhà
 ├── widgets/
-│   ├── blob_background.dart      # nền gradient + khối blob mờ
-│   ├── glass_card.dart           # thẻ trắng bán trong suốt dùng chung
-│   ├── app_bottom_nav.dart       # thanh điều hướng 3 tab + nút tìm kiếm
-│   └── floor_plan.dart           # sơ đồ mặt bằng tầng 1 (toạ độ hệ 393x852)
-└── screens/
-    ├── home_screen.dart          # Trang chủ
-    ├── map_screen.dart           # Bản đồ
-    ├── area_detail_screen.dart   # Chi tiết khu vực
-    ├── search_screen.dart        # Tìm kiếm
-    └── settings_screen.dart      # Cài đặt
+│   ├── so_do_that.dart           # vẽ Map.png, nhãn khu vực, chấm vị trí
+│   ├── glass_card.dart           # thẻ kính dùng chung
+│   ├── blob_background.dart      # nền gradient
+│   └── tap_feedback.dart         # phản hồi chạm + nhãn trợ năng
+├── screens/                      # Trang chủ, Bản đồ, Chi tiết, Tìm kiếm, Cài đặt
+└── l10n/                         # app_vi.arb, app_en.arb và mã sinh từ chúng
 ```
+
+`khu_vuc_thu_vien.dart` **không sửa tay**: sinh bằng `python -m tools.sinh_khu_vuc`
+từ `data/reference/reference_points.csv`, và `tests/test_khu_vuc.py` so từng byte
+tệp sinh ra với CSV.
 
 ## Ghi chú kỹ thuật
 
-**Hệ toạ độ.** Sơ đồ mặt bằng và các blob dùng đúng hệ **393 × 852** của frame
-thiết kế, rồi co giãn theo bề rộng màn hình thật qua hệ số `s = maxWidth / 393`.
-Nhờ vậy khi thay số đo thực tế chỉ cần sửa toạ độ, không phải tính lại layout.
+**Chu kỳ quét 5 giây.** Android chặn ứng dụng nền trước ở 4 lần `startScan` mỗi
+2 phút. Quét dày hơn chỉ tốn pin để nhận lại kết quả cũ trong bộ đệm, nên con số
+này là giới hạn hệ điều hành chứ không phải tuỳ chọn.
 
-**Điểm nối API sau này.** Ba chỗ cần thay khi backend sẵn sàng:
+**Hệ toạ độ.** Sơ đồ dùng phép đổi mét ↔ pixel trong `lib/data/floor_map.dart`, cùng
+một phép với backend và Dashboard web. Ba nơi giữ cùng bộ hằng số và
+`tests/test_dashboard.py` đối chiếu cả ba với `data/reference/ban_do_tang1.json`.
 
-| Vị trí | Hiện tại | Sẽ thành |
-|---|---|---|
-| `DemoData.userX/userY` | hằng số `(150, 585)` | toạ độ từ `WS /ws/location` |
-| `DemoData.nearby`, `searchResults` | danh sách tĩnh | `GET /map`, API tìm kiếm |
-| `FloorPlan._rooms` | danh sách tĩnh | `GET /map/{floor_id}` |
+**Không đủ AP thì không đoán.** Máy chủ trả 422 khi lần quét khớp ít AP hơn
+ngưỡng trong hợp đồng dữ liệu; ứng dụng xoá toạ độ cũ và nói rõ "chưa xác định
+vị trí" thay vì giữ tên phòng cũ trên màn hình.
 
-**Chưa làm.** Chỉ đường (Dijkstra/A*), quét WiFi thật, kết nối WebSocket — đúng
-phạm vi "bản demo giao diện" đã thống nhất.
+**`kotlin.incremental=false`** trong `android/gradle.properties`: ứng dụng dùng
+Kotlin Gradle Plugin 2.4.0 còn `wifi_scan` khai Kotlin 1.8.21, cơ chế biên dịch
+tăng dần của Kotlin 2.x làm hỏng build. Gỡ dòng này khi nâng được `wifi_scan`.
 
 ## Trạng thái kiểm thử
-
-Đã kiểm chứng trên Flutter 3.47.1:
 
 | Lệnh | Kết quả |
 |---|---|
 | `flutter analyze` | `No issues found!` |
-| `flutter test` | `All tests passed!` (3/3) |
+| `flutter test` | `All tests passed!` (65 bài) |
+| `flutter build apk --debug` | `✓ Built app-debug.apk` |
 
-`test/widget_test.dart` kiểm tra: màn Trang chủ hiển thị đúng vị trí hiện tại,
-bottom nav chuyển được sang Cài đặt, và nút tìm kiếm mở màn Tìm kiếm ra đủ 5 kết quả.
-
-**Chưa chạy thử trực quan trên thiết bị** — mới dừng ở mức test widget.
-
-Đã build thật ra APK:
-
-```
-✓ Built build\app\outputs\flutter-apk\app-debug.apk   (143.6 MB, bản debug)
-```
-
-### Môi trường
-
-| Hạng mục | Trạng thái |
+| Tệp test | Nội dung |
 |---|---|
-| Flutter SDK | ✅ 3.47.1 tại `D:\flutter` |
-| Android toolchain | ✅ SDK 36.0.0, license đã chấp nhận |
-| Chrome (chạy web) | ✅ |
-| Thiết bị kết nối | ✅ 3 thiết bị |
-| Visual Studio C++ | ⚠️ thiếu workload "Desktop development with C++" — **chỉ cần nếu build app Windows desktop**, không ảnh hưởng Android/web |
+| `dinh_vi_test.dart` | Vòng quét, phân loại lỗi API, huỷ giữa chừng, mốc cập nhật |
+| `quyen_va_dia_chi_test.dart` | Quyền truy cập, ô địa chỉ máy chủ, ghi nhớ tuỳ chọn |
+| `so_do_that_test.dart` | Phép đổi mét ↔ pixel và vị trí chấm trên sơ đồ |
+| `anh_khu_vuc_test.dart` | Số ảnh mỗi thư mục khớp `AssetManifest` |
+| `widget_test.dart` | Điều hướng, và không bịa vị trí khi chưa định vị |
+| `uxui_test.dart`, `interaction_test.dart`, `settings_test.dart` | Trợ năng, cỡ chữ lớn, viewport thấp, song ngữ |
 
-### ⚠️ Lưu ý quan trọng về `cmdline-tools`
+Đã chạy trên máy Android thật (Samsung), gồm cả tình huống đứng ngoài thư viện:
+điện thoại thấy 23 access point, khớp 0 với hợp đồng dữ liệu, ứng dụng báo
+không đủ dữ liệu thay vì trả một toạ độ trong thư viện.
 
-SDK đang dùng **cmdline-tools 19.0**, không phải bản mới nhất (23.0).
+## Lưu ý về môi trường Android
 
-Lý do: từ bản 20 trở đi Google thay `sdkmanager` cũ bằng "Android CLI" mới, và
-wrapper mới **tách tên gói ở dấu `;`** — nên khi Gradle gọi
-`sdkmanager "ndk;28.2.13676358"` thì nó hiểu nhầm thành hai gói rời rồi crash
-(`0xC0000409`), làm build APK thất bại.
+**Đừng đổi `cmdline-tools\latest` sang 23.0.** SDK đang cố ý dùng
+**cmdline-tools 19.0**. Từ bản 20 trở đi Google thay `sdkmanager` cũ bằng
+"Android CLI" mới, và wrapper mới tách tên gói ở dấu `;` — Gradle gọi
+`sdkmanager "ndk;28.2.13676358"` thì nó hiểu thành hai gói rời rồi crash
+(`0xC0000409`), build APK thất bại. Bản 23.0 vẫn giữ ở
+`...\Android\Sdk\cmdline-tools\23.0` để dùng khi Gradle hỗ trợ CLI mới.
 
-Bản 23.0 vẫn được giữ tại `...\Android\Sdk\cmdline-tools\23.0` để dùng sau khi
-Gradle/Flutter hỗ trợ CLI mới. **Đừng đổi `cmdline-tools\latest` sang 23.0** cho
-tới lúc đó, sẽ hỏng build Android.
+Cảnh báo `SDK XML version 4 ... understands up to 3` là hệ quả của việc này —
+vô hại, build vẫn đúng.
 
-Cảnh báo `SDK XML version 4 ... understands up to 3` khi chạy sdkmanager là hệ quả
-của việc này — vô hại, build vẫn chạy đúng.
+Thiếu workload "Desktop development with C++" của Visual Studio chỉ chặn build
+app Windows desktop, không ảnh hưởng Android hay web.
+
+## Chưa làm
+
+- Chỉ đường mới dừng ở danh sách chỉ dẫn từng chặng; chưa vẽ tuyến lên sơ đồ và
+  chưa có la bàn theo hướng người dùng đang quay.
+- Chưa dùng `WS /ws/location`; ứng dụng gọi REST mỗi 5 giây.
+- Chưa chụp ảnh màn hình bộ giao diện mới trên thiết bị thật.

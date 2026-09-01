@@ -181,6 +181,121 @@ Mỗi lần dự đoán là độc lập → marker nhảy loạn khi RSSI dao �
 
 ---
 
+## PHẦN 2b — RÀ MÃ NGUỒN GITHUB (bổ sung 01/09/2026)
+
+Phần 2 ở trên viết từ báo cáo và ảnh chụp mã. Đợt này rà thẳng kho
+`github.com/NgocSongNe/IPS` — 9 nhánh — nên có thêm những chỗ chỉ được đúng
+dòng, và một chỗ **đính chính lại kết luận cũ của chính nhóm**.
+
+### 2b.1. Bản đồ GeoJSON sai hình học — V13
+
+Bản đồ Mapbox của CTK45 dựng từ `assets/geojson/`. Khớp 40 điểm trong
+`POI.geojson` của họ với 40 toạ độ nhóm đã đo:
+
+| Phép đo | Kết quả |
+|---|---|
+| Hộp bao 40 điểm POI, quy ra mét thật | **30,5 × 34,4 m** |
+| Hộp bao thật của khu khảo sát | **86 × 52 m** |
+| Khớp Procrustes (quay + co giãn đều + tịnh tiến) | RMS **5,99 m** |
+| Khớp affine đầy đủ (hai trục co khác nhau) | RMS **5,08 m**, lệch lớn nhất **28,55 m** |
+| 780 cặp điểm: khoảng cách GeoJSON / khoảng cách thật | trung vị **0,40×**, trải 0,06× đến 1,12× |
+| 143 cặp dưới 20 m (cỡ một tuyến chỉ đường) | sai số tuyệt đối trung bình **7,5 m** |
+
+Affine đầy đủ vẫn còn 5 m nghĩa là biến dạng **không tuyến tính** — toạ độ đặt
+bằng tay chứ không theo phép chiếu nào. Hệ quả: thẻ "Tổng khoảng cách: 18.43
+mét" ở Hình 23 của báo cáo là con số tính trên hình học sai. Ba cặp điểm có
+khoảng cách thật 16 m, 12,8 m và 18 m thì GeoJSON cho ra 14,1 m, 7,3 m và 9,3 m.
+
+**Đây là căn cứ để KHÔNG kế thừa `Room.geojson`, `Hallways.geojson`,
+`Stair.geojson`.** Sáu đa giác phòng, năm hành lang và tám khối cầu thang đều có
+sẵn và tải về được, nhưng đặt vào hệ mét của nhóm thì lệch chỗ 5 m — vẽ lên còn
+tệ hơn không vẽ. Nhóm tự trích hình học từ `Map.png`, xem `tools/trich_ban_do.py`.
+
+### 2b.2. `walls` nạp từ `Paths.geojson` — V14
+
+`POISelectionScreen.dart:417` — `_loadWallsFromAPI()` gọi `/geojson/Paths` rồi
+**gán thẳng** vào biến `walls`. `Paths` là hành lang đi được, không phải tường.
+Vậy `_isPathBlocked()` chặn đúng những cạnh chạy dọc hành lang và cho qua những
+cạnh xuyên tường gạch — ngược hoàn toàn với ý định.
+
+`loadGeoJson()` cũng `walls.add()` từ `Wall.geojson` thật, nhưng cả hai hàm gọi
+trong **constructor** và không `await`, nên cái nào về sau ghi đè cái kia.
+`_loadWallsFromAPI` dùng phép gán nên nếu nó về sau thì dữ liệu tường thật bị xoá
+sạch. Hành vi phụ thuộc độ trễ mạng, không tái lập được.
+
+### 2b.3. Cạnh POI đến waypoint là mã chết — V15
+
+`POISelectionScreen.dart:585` trong `_generateGraph()`: lấy ba waypoint gần nhất
+rồi lặp qua chúng chỉ để gán một biến cục bộ `distance` và bỏ đi — không thêm
+cạnh nào vào đồ thị. Cạnh chỉ được thêm trong nhánh dự phòng
+`if (closestWaypoints.isEmpty)`.
+
+Điểm nào nhìn thấy được ít nhất một waypoint thì **cô lập hoàn toàn** trong đồ
+thị. Chỉ điểm không thấy waypoint nào mới được nối trực tiếp với điểm khác.
+
+### 2b.4. Làm mượt tuyến không kiểm tường — V16
+
+`_smoothRoute()` nội suy Catmull-Rom 10 đoạn mỗi chặng mà không xét vật cản, nên
+đường cong mượt có thể cắt qua tường dù chặng gốc thì không. Đây là lý do tuyến
+trong Hình 23 uốn cong qua giữa nhà.
+
+Đi kèm: mỗi chấm trên tuyến là một `Marker` widget riêng, cộng 40 marker điểm và
+40 thẻ nhãn — đủ giải thích câu "load bản đồ hiển thị vẫn còn chậm" mà phần Kết
+luận của báo cáo tự thừa nhận.
+
+### 2b.5. Giá trị điền thiếu lệch giữa huấn luyện và suy luận — V17
+
+Báo cáo trang 42 ghi rõ **"giá trị RSS = −98 được đặt mặc định với các AP không
+phát hiện được"**. Nhưng `wifi_service.dart:59` điền `macToRssi[mac] ?? -100`.
+Huấn luyện −98, chạy thật −100 — lệch hệ thống trên mọi AP vắng mặt, mà không có
+gì báo. Đây chính là lý do giá trị điền thiếu của nhóm nằm trong
+`artifacts/feature_list.json` và backend đọc lại từ đó, không viết cứng hai nơi.
+
+### 2b.6. Quyền truy cập đòi cả `locationAlways` — V18
+
+`wifi_scanner.dart:9` nối ba quyền bằng `&&`, trong đó `locationAlways` là quyền
+nền mà từ Android 11 không cấp được qua hộp thoại thường — phải vào Cài đặt hệ
+thống. Thiếu một quyền là trả `false` và `scanWiFi()` trả danh sách rỗng trong im
+lặng. Nhóm đặt ngưỡng ngược lại: cấp MỘT trong hai quyền vị trí hoặc
+`NEARBY_WIFI_DEVICES` là đủ.
+
+Kèm theo: `startWifiTracking` tạo `Timer.periodic` mà không giữ tham chiếu, còn
+`stopWifiTracking` lại nhận timer từ nơi khác — timer ấy không bao giờ huỷ được.
+
+### 2b.7. Đính chính — `getDirection` của CTK45 KHÔNG lộn trái/phải
+
+Đợt rà trước kết luận hàm `getDirection` của họ hoán vị hai trục nên mọi câu
+trái/phải bị đảo. **Kết luận đó sai.** Kiểm trên cả 7 nhánh có hàm này, cả bảy
+đều gán `v1x` theo kinh độ và `v1y` theo vĩ độ — đúng quy ước đông/bắc, tích có
+hướng dương là rẽ trái, **dấu của họ đúng**. Chỗ hoán vị trục nằm trong hàm
+`orientation()` của phép kiểm cắt đoạn thẳng, mà ở đó hoán vị nhất quán chỉ là
+phép soi gương nên vô hại.
+
+Hàm ấy vẫn có hai hạn chế thật, và đó mới là chỗ nhóm cải tiến:
+
+- Chỉ ba kết quả thẳng/trái/phải, nên một cú quay đầu 179 độ đọc thành "rẽ trái".
+- Tính góc bằng `acos(dot / (mag1 * mag2))`: gặp hai điểm trùng nhau thì mẫu số
+  bằng 0, `angle` thành NaN, mọi phép so đều sai và hàm rơi xuống nhánh cuối trả
+  **"Rẽ phải" cho một chặng không hề rẽ**.
+
+Hàm của nhóm trả về **góc** thay vì một nhãn, phân loại là việc của tầng trên —
+nên thêm được mức "quay đầu", mức "chếch", và điểm trùng chỉ cho ra góc 0. Ngưỡng
+đi thẳng cũng nới từ 10 độ lên 20 độ: dưới 20 độ người đi bộ không nhận ra là một
+cú rẽ.
+
+### 2b.8. Vụn
+
+- `CategoryModel` có 8 loại, trong đó `Khu vực tự học` **thừa một dấu cách** ở
+  cuối chuỗi. Bộ lọc so khớp theo nhãn hiển thị nên lệch một dấu cách là hỏng;
+  nhóm dùng mã nhóm bất biến (`AreaCategory`) nên không dính.
+- `WifiPredictor.dart` kiểm `if (_interpreter == null)` trên một trường `late`
+  không nullable — nhánh chết, và truy cập trước khi gán thì ném
+  `LateInitializationError` chứ không vào được nhánh đó.
+- `heuristic()` dùng `firstWhere` không có `orElse`, thiếu điểm là ném lỗi giữa
+  lúc đang tìm đường.
+
+---
+
 ## PHẦN 3 — GIẢI PHÁP CẢI TIẾN CHO ĐỒ ÁN MỚI
 
 ### 3.1. Bảng đối chiếu tổng hợp
@@ -199,10 +314,17 @@ Mỗi lần dự đoán là độc lập → marker nhảy loạn khi RSSI dao �
 | V10 | Dồn vào `main.py` | Tách `services/` theo trách nhiệm | 🟡 |
 | V11 | Commit rác | `.gitignore` chuẩn Python | 🟡 |
 | V12 | Sai số lượng tử hóa | Hồi quy tọa độ liên tục | ✅ Đã có trong đề cương |
+| V13 | Bản đồ GeoJSON lệch hình học, khoảng cách chỉ bằng 0,40× thật | Tự trích hình học từ `Map.png`, kiểm bằng lưới chấm 1000 px / 86 m | 🔴 Đã làm |
+| V14 | `walls` nạp từ `Paths.geojson` — chặn ngược | Đọc mặt nạ tường từ ảnh, dùng vùng liên thông chứ không dùng ngưỡng | 🔴 Đã làm |
+| V15 | Cạnh POI → waypoint là mã chết, đồ thị rời rạc | Đồ thị k=3 láng giềng, có `test_duong_di_khong_chui_qua_tuong` | 🔴 Đã làm |
+| V16 | Làm mượt Catmull-Rom cắt qua tường | Không làm mượt; trả đúng dãy đỉnh của đồ thị đã lọc tường | 🟠 Đã làm |
+| V17 | Điền thiếu −98 lúc train, −100 lúc chạy | `missing_rssi_value` nằm trong `feature_list.json`, một nguồn duy nhất | 🔴 Đã làm |
+| V18 | Đòi cả `locationAlways` nên quét trả rỗng im lặng | Cấp MỘT trong hai quyền là đủ; phân biệt 5 lý do không quét được | 🟠 Đã làm |
 
-**Tình trạng tới 30/08/2026.** Bảng trên là đề xuất ban đầu, giữ nguyên làm dấu
-vết. Đã làm xong V1–V6, V9, V10, V11. V8 chưa làm — phần quản lý phiên bản mô
-hình nằm ngoài phạm vi giai đoạn 3.
+**Tình trạng tới 01/09/2026.** V1–V12 là bảng đề xuất ban đầu, giữ nguyên làm dấu
+vết; V13–V18 thêm sau đợt rà mã nguồn GitHub ở Phần 2b. Đã làm xong V1–V6, V9,
+V10, V11 và cả V13–V18. V8 chưa làm — phần quản lý phiên bản mô hình nằm ngoài
+phạm vi giai đoạn 3.
 
 Riêng **V7 đã làm khác đề xuất**: thay EMA bằng đồng thuận không gian. Lý do là
 các ca sai nặng gần như luôn là một lần quét dị thường lẻ loi, mà EMA kéo trung
@@ -445,9 +567,9 @@ Không phải mọi thứ đều cần thay — những điểm sau đồ án c�
 | Điểm tốt | Lý do giữ lại |
 |---|---|
 | Load model **một lần** lúc khởi động (biến toàn cục) | Đúng thực hành, tránh độ trễ mỗi request |
-| Dùng **GeoJSON** mô tả bản đồ trong nhà | Chuẩn mở, tách layer rõ ràng (POI/Doors/Hallways/Paths/Room/Stair), dễ vẽ ở frontend. Nên giữ, lưu dưới dạng `JSONB` trong PostgreSQL |
+| Dùng **GeoJSON** mô tả bản đồ trong nhà | Chuẩn mở, tách layer rõ ràng (POI/Doors/Hallways/Paths/Room/Stair), dễ vẽ ở frontend. Nên giữ. Đã dựng khác: hình học tầng 1 trích thẳng từ `Map.png` ra `data/reference/ban_do_tang1.json`, đọc từ tệp chứ không qua CSDL |
 | FastAPI + Uvicorn | Phù hợp, hỗ trợ sẵn WebSocket và async |
-| `motor` (async driver) | Tư duy bất đồng bộ đúng — với PostgreSQL nên dùng `asyncpg`/SQLAlchemy async tương đương |
+| `motor` (async driver) | Tư duy bất đồng bộ đúng. Đã dựng: SQLAlchemy async trên `aiosqlite` |
 | Kiểm tra số lượng đặc trưng đầu vào | Ý tưởng đúng, chỉ cần nâng cấp thành kiểm tra theo BSSID |
 | Google Colab để huấn luyện | Phù hợp với điều kiện sinh viên |
 

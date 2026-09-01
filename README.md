@@ -4,22 +4,31 @@
 GVHD: TS. Nguyễn Thị Lương.
 
 Nghiên cứu hệ thống định vị trong nhà bằng kỹ thuật WiFi Fingerprinting và xây dựng
-Web Dashboard hiển thị vị trí người dùng theo thời gian thực.
+Web Dashboard hiển thị vị trí người dùng theo thời gian thực — đúng hai mục tiêu
+ở mục I của đề cương.
 
 ## Bài toán
 
 - **Input**: vector cường độ tín hiệu RSSI từ các Access Point `[AP_1, ..., AP_n]`
 - **Output**: tọa độ người dùng `(x, y)` theo đơn vị mét
-- **Đánh giá**: `error = sqrt((x_pred - x_true)² + (y_pred - y_true)²)`
+- **Đánh giá**: `error = sqrt((x_pred - x_true)² + (y_pred - y_true)²)`, kèm CDF
+  tại các mức 50%, 75%, 90%
 
-Mô hình chính của đề tài: **XGBoost Regression**. Mô hình cơ sở đối chứng: kNN,
-WKNN, Random Forest.
+Đề cương phát biểu bài toán dưới dạng **hồi quy toạ độ** chứ không phân lớp điểm
+tham chiếu, để đánh giá trực tiếp bằng mét. Mô hình chính: **XGBoost Regression**.
+Mô hình cơ sở đối chứng theo đề cương: **kNN và WKNN**; Random Forest và kNN vân
+tay là hai mô hình làm thêm, không nằm trong đề cương.
 
-Mô hình **đang được triển khai** thì chọn theo sai số trên tập validation, và
-hiện là `kNN vân tay (Bray-Curtis)` — 1,92 m so với 6,48 m của XGBoost. Lý do:
-dữ liệu chỉ có 39 toạ độ khác nhau vì thu đúng tại các điểm tham chiếu, nên bài
-toán gần với phân lớp hơn hồi quy. Xem `docs/Phan_Tich_Thiet_Ke_He_Thong.md`
-§2.4.1. `GET /health` luôn cho biết mô hình nào đang chạy.
+Kết quả thực nghiệm ngược với dự kiến ở mục VI, và được báo cáo đúng như đo
+được: **XGBoost không thấp hơn được mô hình cơ sở** — 6,48 m so với 5,15 m của
+kNN. Nguyên nhân nằm ở tính chất dữ liệu: chỉ có 39 toạ độ khác nhau vì mẫu thu
+đúng tại các điểm tham chiếu, nên bài toán gần với phân lớp hơn hồi quy liên tục,
+mà đó là chỗ hồi quy cây quyết định yếu nhất.
+
+Mô hình **đang được triển khai** chọn theo sai số trên tập validation, và hiện là
+`kNN vân tay (Bray-Curtis)` — 1,92 m, giảm 62,8% so với mô hình cơ sở tốt nhất.
+`GET /health` luôn cho biết mô hình nào đang chạy. Chi tiết ở
+`docs/Phan_Tich_Thiet_Ke_He_Thong.md` §2.4.1.
 
 ## Cài đặt
 
@@ -55,6 +64,10 @@ Chạy đúng thứ tự trên: `ml.train` cần artifact do `ml.pipeline` sinh 
 
 ## Chạy ứng dụng di động
 
+> Đề cương chỉ yêu cầu ứng dụng **Web**. Ứng dụng di động là phần làm thêm: nó
+> là nguồn quét WiFi cho hệ thống và là cách kiểm thử thực địa, không thay thế
+> Web Dashboard.
+
 ```bash
 cd mobile
 flutter pub get
@@ -70,9 +83,13 @@ tả lấy từ `GET /map`.
 
 Địa chỉ máy chủ sửa được trong Cài đặt — mặc định `http://10.0.2.2:8000` là lối
 tắt máy ảo Android gọi về máy đang chạy nó, điện thoại thật phải đổi sang IP nội
-bộ. Danh sách "Gần bạn" và kết quả tìm kiếm vẫn là dữ liệu demo.
+bộ. Danh sách "Gần bạn" và kết quả tìm kiếm cũng lấy từ `GET /map`, sắp theo
+khoảng cách thật tới chỗ đang đứng; chưa nối được máy chủ thì lùi về bản 11 khu
+vực nhúng sẵn trong ứng dụng.
 
-Giao diện đủ 5 màn hình, hai ngôn ngữ Việt/Anh và chế độ sáng/tối.
+Giao diện đủ 5 màn hình, hai ngôn ngữ Việt/Anh và chế độ sáng/tối. Địa chỉ máy
+chủ, ngôn ngữ và chế độ sáng/tối được nhớ giữa hai lần mở app. Chi tiết ở
+`mobile/README.md`.
 
 ## Chạy backend
 
@@ -143,6 +160,45 @@ lệch nhau thì cùng một toạ độ hiện ở hai chỗ khác nhau trên h
 | `docs/` | Tài liệu phân tích, thiết kế |
 
 Chi tiết đầy đủ: `docs/Cau_Truc_Thu_Muc_Du_An.md`
+
+## Hạn chế đã biết
+
+Ghi ở đây để trình bày chủ động chứ không đợi hội đồng hỏi.
+
+**Không có xác thực.** Dashboard phục vụ ở `/` và WebSocket phát toạ độ của mọi
+thiết bị cho mọi kết nối đang mở, kèm `device_id`. Ai vào được mạng LAN cũng xem
+được toàn bộ. `ALLOWED_ORIGINS` mặc định là `*`. Chấp nhận được cho một hệ thống
+chạy trong mạng nội bộ thư viện lúc demo, nhưng phải thêm xác thực trước khi
+dùng thật.
+
+**Sáu cửa ra vào là giả định.** `Map.png` vẽ tường nhưng không vẽ cửa, nên đồ thị
+đi lại vỡ thành 7 mảnh rời. Công cụ nối lại bằng cạnh ngắn nhất giữa hai mảnh và
+ghi riêng vào `cua_gia_dinh` trong `ban_do_tang1.json`. Sáu cạnh này chưa được
+đối chiếu thực địa; đường đi qua chúng có thể không đi được thật.
+
+**RP41 có dữ liệu quét nhưng chưa có toạ độ.** Nhóm đã thu 20 lần quét tại một
+điểm mới không có trong đồ án CTK45, nhưng chưa đo được toạ độ mét của nó nên
+pipeline bỏ cả 20 lần quét đó (`ghep_toa_do.scan_bi_bo` trong
+`pipeline_manifest.json`). Vân tay RSSI ước lượng thô khoảng (−14,5 · 40,7). Chỉ
+cần một buổi đo thực địa là dùng được — không hiện một thứ mình chưa đo còn hơn
+đặt bừa một chấm lên sơ đồ.
+
+**`device_holdout` và `time_holdout` không thực hiện được** với bộ dữ liệu hiện
+có — một máy đo, mỗi điểm chỉ đo một buổi. Xem mục 2.4.1 của tài liệu thiết kế.
+
+**Chưa đánh giá độ ổn định theo mật độ người** (mục 4.3 của đề cương). Bộ dữ
+liệu kế thừa không ghi lại số người có mặt lúc đo, nên muốn làm phải tổ chức một
+đợt đo mới ở hai khung giờ đông và vắng.
+
+**Front-end không dùng Tailwind CSS** như mục V của đề cương ghi. Trang viết
+bằng HTML/CSS/JS thuần vì Tailwind qua CDN cần Internet, mà phòng bảo vệ có thể
+không ra được mạng ngoài; bản build tại chỗ thì phải thêm Node và một bước build
+vào một dự án còn lại thuần Python. Toàn bộ giao diện chỉ có một trang nên phần
+tiện lợi của Tailwind cũng không còn nhiều.
+
+**RP26 có toạ độ nhưng không có mẫu đo.** Ngược lại với RP41. Bản đồ 40 điểm,
+dữ liệu huấn luyện 39 điểm — mô hình vĩnh viễn không bao giờ báo RP26, dù
+`/route` vẫn dẫn tới đó.
 
 ## Nguyên tắc quan trọng
 

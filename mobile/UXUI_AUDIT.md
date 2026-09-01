@@ -3,6 +3,10 @@
 Ngày rà soát: 26/08/2026  
 Phạm vi: toàn bộ `mobile/lib` và các widget test của ứng dụng Flutter IPS DLU.
 
+> **Trạng thái tính tới 01/09/2026.** Đây là biên bản của đợt rà soát ngày
+> 26/08, giữ nguyên làm dấu vết. Bảy hướng tối ưu ở cuối đã làm xong sáu; tình
+> trạng từng mục ghi ngay trong danh sách đó.
+
 ## Phạm vi đã kiểm tra
 
 | Khu vực | Nội dung đã rà soát |
@@ -25,17 +29,17 @@ Phạm vi: toàn bộ `mobile/lib` và các widget test của ứng dụng Flutt
 | Trung bình | Nhiều chuỗi ghép cứng, tên địa điểm chỉ có một ngôn ngữ và số thập phân không theo locale | Bổ sung bản dịch dữ liệu demo, format accuracy theo locale, tách các chuỗi đếm/khoảng cách vào l10n |
 | Trung bình | Một số vùng chạm/chip thấp hơn khuyến nghị trên mobile; text scale lớn có nguy cơ cắt nội dung | Nâng chiều cao chip/vùng thao tác, thêm ellipsis có chủ đích và các metric co giãn theo text scale |
 | Trung bình | Nút/icon và sơ đồ chưa cung cấp đủ ngữ cảnh cho công nghệ hỗ trợ | Thêm semantic label/hint cho nút định vị, sơ đồ, tiêu đề nhóm và các card tương tác |
-| Thấp | Header bản đồ và placeholder ảnh vẫn là dữ liệu demo | Giữ nguyên trong phạm vi demo; cần thay bằng dữ liệu API/ảnh thật ở giai đoạn tích hợp backend |
+| Thấp | Header bản đồ và placeholder ảnh vẫn là dữ liệu demo | ✅ Đã xong. Header đếm khu vực thật và hiện mốc cập nhật thật; ô ảnh thay bằng 38 ảnh chụp tại thư viện |
 
 ## Hướng tối ưu UX/UI tiếp theo
 
-1. **P0 — Kiểm thử trực quan trên thiết bị thật.** Chụp/đối chiếu Home, Map, Search và Detail ở Android nhỏ (360dp), máy có notch, gesture navigation và text scale 1.3–2.0. Widget test bắt được overflow logic nhưng không thay thế đánh giá khoảng cách, độ tương phản và cảm giác chạm.
-2. **P0 — Hoàn thiện luồng định vị.** Khi API sẵn sàng, hiển thị trạng thái đang định vị/mất tín hiệu/độ chính xác thấp và cho phép retry; nút “Định vị lại” hiện đang chỉ hiện toast demo.
-3. **P1 — Làm rõ tìm kiếm.** Debounce khi gọi API, hiển thị loading/error/retry, giữ query khi đổi filter và thêm nút xoá query riêng nếu bàn phím đang mở.
-4. **P1 — Làm cho sơ đồ có tính dẫn đường.** Cho phép chạm phòng để mở đúng dữ liệu phòng, hiển thị legend và trạng thái tầng; khi zoom nên có affordance reset/recenter rõ ràng.
-5. **P1 — Lưu cài đặt.** Lưu theme, locale và tuỳ chọn định vị bằng storage; đồng bộ trạng thái quyền thật với OS thay vì giá trị demo.
-6. **P2 — Hiệu năng và giảm chuyển động.** Đo shader/liquid glass trên máy cấp thấp, giảm blur khi cần và tôn trọng `MediaQuery.disableAnimations`/tuỳ chọn giảm chuyển động.
-7. **P2 — Bản địa hoá sản phẩm thật.** Đưa tên khu vực, category và nội dung chi tiết về API theo locale; kiểm tra pluralization và thuật ngữ song ngữ với người dùng DLU.
+1. ⏳ **P0 — Kiểm thử trực quan trên thiết bị thật.** Chụp/đối chiếu Home, Map, Search và Detail ở Android nhỏ (360dp), máy có notch, gesture navigation và text scale 1.3–2.0. Widget test bắt được overflow logic nhưng không thay thế đánh giá khoảng cách, độ tương phản và cảm giác chạm.
+2. ✅ **P0 — Hoàn thiện luồng định vị.** Đã xong: quét WiFi thật mỗi 5 giây, phân biệt sáu loại lỗi API và năm lý do không quét được, nút "Định vị lại" bật lại vòng quét thật. Thiếu dữ liệu thì nói "chưa xác định vị trí" chứ không giữ toạ độ cũ.
+3. ✅ **P1 — Làm rõ tìm kiếm.** Đã xong phần cốt lõi: tìm trên danh sách khu vực đã có sẵn trong bộ nhớ nên không cần debounce hay trạng thái loading. Query giữ nguyên khi đổi filter.
+4. ✅ **P1 — Làm cho sơ đồ có tính dẫn đường.** Đã xong: sơ đồ là bản số hoá thật, chạm vào mở tấm tóm tắt rồi dẫn sang màn Chi tiết đúng khu vực. Còn thiếu: vẽ tuyến chỉ đường lên chính sơ đồ.
+5. ✅ **P1 — Lưu cài đặt.** Đã xong: theme, ngôn ngữ và địa chỉ máy chủ lưu bằng `shared_preferences`; dòng quyền đọc trạng thái thật từ hệ điều hành và phân biệt chưa cấp / bị chặn.
+6. ⏳ **P2 — Hiệu năng và giảm chuyển động.** Đo shader/liquid glass trên máy cấp thấp, giảm blur khi cần và tôn trọng `MediaQuery.disableAnimations`/tuỳ chọn giảm chuyển động.
+7. ✅ **P2 — Bản địa hoá sản phẩm thật.** Tên khu vực và mô tả nay lấy từ `GET /map` chứ không viết cứng trong app. Chưa làm: bản dịch tiếng Anh cho tên khu vực — dữ liệu nguồn chỉ có tiếng Việt.
 
 ## Validation
 
@@ -45,3 +49,9 @@ Chạy từ `mobile/`:
 - `D:\flutter\bin\flutter.bat test` — tất cả test pass, gồm các test UX/UI mới trong `test/uxui_test.dart`.
 
 Giới hạn: chưa thực hiện visual QA trên thiết bị Android vật lý trong lần rà soát này; kết quả hiện tại là static review và widget test trên Flutter test environment.
+
+**Bổ sung 01/09/2026.** Đã chạy trên máy Android thật và bắt được một lỗi mà
+widget test không thể thấy: đứng ngoài thư viện, điện thoại nhìn thấy 23 access
+point nhưng khớp 0 với hợp đồng dữ liệu, mà ứng dụng vẫn khẳng định người dùng
+đang ở "TV3,4" trong thư viện. Đã sửa ở cả hai tầng — máy chủ trả 422, ứng dụng
+xoá toạ độ cũ. Vẫn chưa chụp ảnh màn hình bộ giao diện mới trên thiết bị.
