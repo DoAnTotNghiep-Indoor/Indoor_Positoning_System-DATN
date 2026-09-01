@@ -1,1 +1,185 @@
 /* Web Dashboard - IPS DLU */
+
+:root {
+  --nen: #f1f5f9;
+  --the: #ffffff;
+  --muc: #0f172a;
+  --muc-nhat: #64748b;
+  --vien: #e2e8f0;
+  --nhan: #2563eb;
+  --cam: #e08a1e;
+  --do: #dc2626;
+  --xanh: #16a34a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 20px;
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--nen);
+  color: var(--muc);
+}
+
+h1 { margin: 0; font-size: 19px; }
+h2 { margin: 0 0 12px; font-size: 14px; letter-spacing: 0.02em; }
+
+.phu-de { margin: 2px 0 0; color: var(--muc-nhat); font-size: 12.5px; }
+
+.thanh-tren {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.thanh-phai { display: flex; align-items: center; gap: 12px; }
+.dem { color: var(--muc-nhat); font-size: 13px; }
+.dem strong { color: var(--muc); font-size: 16px; }
+
+.huy-hieu {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.huy-hieu::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.huy-hieu.noi { background: #dcfce7; color: var(--xanh); }
+.huy-hieu.mat { background: #fee2e2; color: var(--do); }
+
+.bao-loi {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border-left: 3px solid var(--do);
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+}
+
+/* Hai cột trên màn rộng, xếp chồng trên màn hẹp. minmax(0, ...) là bắt buộc:
+   mặc định của grid là min-content nên canvas không co lại được và tràn ra
+   ngoài khung thay vì thu nhỏ theo. */
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 940px) {
+  main { grid-template-columns: minmax(0, 1fr); }
+}
+
+.khung {
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+main > .khung, main .cot-phai > .khung:last-child { margin-bottom: 0; }
+
+.dau-khung {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.dau-khung h2 { margin-bottom: 12px; }
+
+.ghi-chu { margin: 8px 0 0; color: var(--muc-nhat); font-size: 12px; }
+
+.hop-canvas { line-height: 0; }
+#so-do { max-width: 100%; }
+
+.luoi-the { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.the-so-lieu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--nen);
+}
+.the-so-lieu .nhan { font-size: 11px; color: var(--muc-nhat); }
+.the-so-lieu .gia-tri { font-size: 16px; }
+.the-so-lieu .phu { font-size: 11px; color: var(--muc-nhat); }
+
+.hang-chon {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+}
+.hang-chon label {
+  display: flex;
+  flex: 1 1 130px;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muc-nhat);
+}
+
+select, button {
+  font: inherit;
+  padding: 7px 10px;
+  border: 1px solid var(--vien);
+  border-radius: 8px;
+  background: var(--the);
+  color: var(--muc);
+}
+select { width: 100%; font-size: 13px; }
+
+button {
+  background: var(--nhan);
+  border-color: var(--nhan);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:hover { filter: brightness(1.08); }
+button.nhe { background: var(--the); border-color: var(--vien); color: var(--muc); }
+
+.chi-dan { margin: 10px 0 0; padding-left: 20px; }
+.chi-dan li { margin-bottom: 7px; font-size: 13px; }
+.buoc-chinh { font-weight: 600; }
+.buoc-den { color: var(--muc-nhat); margin-left: 5px; }
+
+/* Bảng rộng phải tự cuộn ngang bên trong khung, không đẩy cả trang trượt. */
+.hop-bang { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td {
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--vien);
+  white-space: nowrap;
+}
+th { font-size: 11px; color: var(--muc-nhat); font-weight: 600; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* Số căn phải và dùng chữ số đều bề rộng: cột toạ độ nhảy qua nhảy lại mỗi
+   lần cập nhật nếu chữ số rộng hẹp khác nhau. */
+.so { text-align: right; font-variant-numeric: tabular-nums; }
+
+.trong { margin: 4px 0; color: var(--muc-nhat); font-size: 13px; }
+
+footer { margin-top: 4px; font-size: 12px; }
+footer a { color: var(--nhan); }

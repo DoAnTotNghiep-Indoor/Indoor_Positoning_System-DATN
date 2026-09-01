@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — IPS Thư viện ĐH Đà Lạt</title>
+  <link rel="stylesheet" href="src/css/style.css">
+</head>
+<body>
+  <header class="thanh-tren">
+    <div>
+      <h1>Định vị trong nhà — Thư viện ĐH Đà Lạt</h1>
+      <p class="phu-de">WiFi Fingerprinting · Đồ án tốt nghiệp nhóm 15</p>
+    </div>
+    <div class="thanh-phai">
+      <span class="dem"><strong id="so-thiet-bi">0</strong> thiết bị</span>
+      <span id="trang-thai-ws" class="huy-hieu mat">Đang nối…</span>
+    </div>
+  </header>
+
+  <p id="loi" class="bao-loi" hidden></p>
+
+  <main>
+    <section class="khung so-do-khung">
+      <div class="dau-khung">
+        <h2>Sơ đồ tầng 1</h2>
+        <span id="pham-vi" class="ghi-chu"></span>
+      </div>
+      <div class="hop-canvas">
+        <canvas id="so-do"></canvas>
+      </div>
+      <p class="ghi-chu">
+        Chấm xám là 40 điểm tham chiếu, chấm xanh là thiết bị đang định vị kèm
+        vệt đường đã đi. Toạ độ hiển thị là toạ độ ĐÃ GỘP qua cửa sổ ba lần
+        quét, không phải toạ độ thô từng lần.
+      </p>
+    </section>
+
+    <div class="cot-phai">
+      <section class="khung">
+        <h2>Trạng thái hệ thống</h2>
+        <div id="the-he-thong" class="luoi-the"></div>
+      </section>
+
+      <section class="khung">
+        <h2>Chỉ đường</h2>
+        <div class="hang-chon">
+          <label>Từ <select id="tu-rp"></select></label>
+          <label>Đến <select id="den-rp"></select></label>
+          <button id="nut-tim-duong" type="button">Tìm đường</button>
+        </div>
+        <p id="tom-tat-duong" class="ghi-chu"></p>
+        <ol id="ket-qua-duong" class="chi-dan"></ol>
+      </section>
+
+      <section class="khung">
+        <h2>Hiệu quả gộp</h2>
+        <canvas id="bieu-do-gop"></canvas>
+        <p class="ghi-chu">
+          Khoảng cách giữa toạ độ thô và toạ độ sau khi gộp, 60 lần gần nhất.
+          Càng lớn nghĩa là bộ gộp càng kéo được nhiều nhiễu ra khỏi kết quả.
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <section class="khung">
+    <h2>Thiết bị đang định vị</h2>
+    <div id="bang-thiet-bi" class="hop-bang"></div>
+  </section>
+
+  <section class="khung">
+    <div class="dau-khung">
+      <h2>Lịch sử định vị</h2>
+      <button id="nut-lam-moi" type="button" class="nhe">Làm mới</button>
+    </div>
+    <div id="bang-lich-su" class="hop-bang"></div>
+  </section>
+
+  <footer>
+    <a href="docs" target="_blank" rel="noopener">Tài liệu API (Swagger)</a>
+  </footer>
+
+  <script type="module" src="src/js/dashboard.js"></script>
+</body>
+</html>
