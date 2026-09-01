@@ -7,7 +7,7 @@ trên chỗ đi được theo định nghĩa**: phải có người đứng đú
 Cạnh thì cần thêm sơ đồ mặt bằng, vì hai RP gần nhau vẫn có thể có tường ở
 giữa. `tools/trich_ban_do.py` dò việc đó trên Map.png rồi ghi ra
 `ban_do_tang1.json`; module này chỉ đọc JSON nên không cần thư viện ảnh. Kết
-quả: cạnh dài nhất giảm từ 22,4 m xuống 17,2 m.
+quả: cạnh dài nhất giảm từ 21,0 m xuống 17,2 m.
 
 `cua_gia_dinh` là sáu cạnh nối lại các mảnh bị tường cắt rời — Map.png không vẽ
 cửa nên phải suy ra. Chúng là GIẢ ĐỊNH chưa kiểm chứng thực địa.
@@ -53,8 +53,13 @@ def _goc_quay(truoc: float, sau: float) -> float:
     Dương là rẽ TRÁI: hệ toạ độ của dự án có x sang phải, y hướng lên, tức
     thuận chiều toán học, nên góc tăng là quay ngược kim đồng hồ.
 
-    Đây đúng chỗ `getDirection` của CTK45 sai — hàm đó gán x = latitude,
-    y = longitude nên hoán vị hai trục và đảo mọi câu trái/phải.
+    Trả về góc thay vì trả thẳng một nhãn như `getDirection` của CTK45, vì hai
+    lẽ. Một, hàm đó chỉ có ba kết quả thẳng/trái/phải nên một cú quay đầu 179°
+    đọc thành "rẽ trái". Hai, nó tính góc bằng `acos(dot / (mag1 * mag2))`, gặp
+    hai điểm trùng nhau thì mẫu số bằng 0, `angle` thành NaN, mọi phép so đều
+    sai và hàm rơi xuống nhánh cuối trả "Rẽ phải" cho một chặng không hề rẽ.
+    Có góc trong tay thì phân loại được bao nhiêu mức tuỳ ý, và điểm trùng chỉ
+    cho ra góc 0.
     """
     return (sau - truoc + 180.0) % 360.0 - 180.0
 

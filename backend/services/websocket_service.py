@@ -53,7 +53,7 @@ class ConnectionManager:
                 # treo vô hạn — lúc đó MỘT dashboard kẹt đóng băng luồng vị
                 # trí của mọi thiết bị. Quá hạn thì coi như đã rớt.
                 await asyncio.wait_for(ws.send_json(du_lieu), HAN_GUI_GIAY)
-            except (Exception, asyncio.TimeoutError):
+            except Exception:
                 hong.append(ws)
 
         if hong:

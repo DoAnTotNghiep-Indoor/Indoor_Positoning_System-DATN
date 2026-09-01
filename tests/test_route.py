@@ -281,8 +281,9 @@ def test_re_trai_phai_dung_chieu(do_thi):
     RP01 -> RP04 (-30, 10) thì y tăng. Hệ toạ độ có y hướng lên, nên khi mặt
     đang quay về phía x giảm, phía y tăng nằm bên TAY PHẢI.
 
-    Đây là bài chặn đúng lỗi của CTK45: hàm getDirection của họ hoán vị hai
-    trục nên mọi câu trái/phải đảo ngược, mà lỗi đó không làm chương trình sập.
+    Phải chốt bằng test vì lộn dấu ở đây không làm chương trình sập: chỉ dẫn
+    vẫn ra đủ số chặng, đúng số mét, chỉ có mỗi chữ trái/phải là ngược — mà
+    người đọc chỉ phát hiện khi đã đi sai.
     """
     buoc = do_thi.chi_dan(["RP02", "RP01", "RP04"])
     assert buoc[1]["huong"] in ("re_phai", "chech_phai"), buoc[1]
