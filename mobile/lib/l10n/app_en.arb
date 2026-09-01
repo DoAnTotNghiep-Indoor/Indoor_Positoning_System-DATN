@@ -1,25 +1,19 @@
 {
   "@@locale": "en",
-
   "appTitle": "IPS DLU",
-
   "tabHome": "Home",
   "tabMap": "Map",
   "tabSettings": "Settings",
   "searchHint": "Search rooms, areas…",
-
   "homeYouAreAt": "You are at",
-  "homeAccuracy": "Accuracy ±{met} m",
   "homeQuickAccess": "Quick access",
   "homeNearby": "Near you",
-
   "mapFloorOne": "Floor 1",
   "mapRelocateDemo": "Demo build — positioning API not connected yet",
   "mapRelocate": "Recentre on me",
   "mapAreaSummary": "{count} areas · updated {giay}s ago",
   "mapFloorPlanLabel": "Floor 1 plan",
   "mapFloorPlanHint": "Pinch to zoom, drag to pan",
-
   "searchTitle": "Search",
   "searchResultCount": "{count} results",
   "searchEmpty": "No matching areas found",
@@ -29,43 +23,123 @@
   "searchFilterStudy": "Study",
   "searchFilterFacility": "Facilities",
   "searchFilterInternal": "Staff only",
-
   "detailGoHere": "Go here",
   "detailRouteDemo": "Demo build — routing comes in a later stage",
   "detailImagePlaceholder": "Area photo",
-
+  "detailPhotos": "{so, plural, one{1 photo of this area, swipe to browse} other{{so} photos of this area, swipe to browse}}",
   "settingsTitle": "Settings",
   "settingsGroupGeneral": "GENERAL",
   "settingsGroupAppearance": "APPEARANCE",
   "settingsGroupPositioning": "POSITIONING",
   "settingsGroupPermissions": "PERMISSIONS",
-
   "settingsAppInfo": "App version",
   "settingsServer": "Positioning server",
-
   "settingsTheme": "Theme",
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Light",
   "settingsThemeDark": "Dark",
-
   "settingsLanguage": "Language",
   "settingsLanguageVi": "Tiếng Việt",
   "settingsLanguageEn": "English",
-
   "settingsAutoUpdate": "Auto-update position",
-  "settingsAutoUpdateSub": "Rescan every 2 seconds",
+  "settingsAutoUpdateSub": "Rescan every {giay} seconds",
   "settingsKeepAwake": "Keep screen on",
   "settingsKeepAwakeSub": "While viewing the map",
-
   "settingsPermission": "Location and WiFi",
   "settingsPermissionSub": "Required for positioning",
   "settingsPermissionGranted": "Granted",
-
+  "settingsPermissionMissing": "Not granted",
+  "settingsPermissionBlocked": "Blocked",
+  "settingsPermissionChecking": "Checking…",
+  "settingsPermissionAsk": "Tap to grant",
+  "settingsPermissionOpen": "Tap to open system settings",
   "settingsFootnote": "More options will be added in the next version.",
-
   "distanceMeters": "{met} m",
-
   "commonBack": "Back",
   "a11yAreaRow": "{ten}, {met} metres away",
-  "a11yOpenArea": "Open area details"
+  "a11yOpenArea": "Open area details",
+  "liveStart": "Start positioning",
+  "liveStop": "Stop positioning",
+  "liveScanning": "Scanning WiFi…",
+  "liveDemo": "Showing demo data",
+  "liveCoords": "x {x} m · y {y} m",
+  "@liveCoords": {
+    "placeholders": {
+      "x": {
+        "type": "String"
+      },
+      "y": {
+        "type": "String"
+      }
+    }
+  },
+  "liveMatched": "Matched {so} access points",
+  "@liveMatched": {
+    "placeholders": {
+      "so": {
+        "type": "int"
+      }
+    }
+  },
+  "liveModel": "Model {ten} · {ms} ms",
+  "@liveModel": {
+    "placeholders": {
+      "ten": {
+        "type": "String"
+      },
+      "ms": {
+        "type": "String"
+      }
+    }
+  },
+  "liveMerged": "Merged {so} scans",
+  "@liveMerged": {
+    "placeholders": {
+      "so": {
+        "type": "int"
+      }
+    }
+  },
+  "errWifiPermission": "Location permission not granted. The app will ask again when you start.",
+  "errWifiBlocked": "Location permission is blocked. Open system Settings to grant it.",
+  "errLocationOff": "Location services are off. Turn them on and try again.",
+  "errWifiUnsupported": "This device cannot scan WiFi.",
+  "errScanFailed": "WiFi scan failed. Try again in a few seconds.",
+  "errNotEnoughAp": "Not enough data to locate you — only {so} of {can} library access points matched. Are you inside the library?",
+  "errBadAddress": "Invalid server address: {diaChi}. It must look like http://<IP>:<port>",
+  "errNoConnection": "Cannot reach the server at {diaChi}",
+  "@errNoConnection": {
+    "placeholders": {
+      "diaChi": {
+        "type": "String"
+      }
+    }
+  },
+  "errServer": "Server returned error {ma}",
+  "@errServer": {
+    "placeholders": {
+      "ma": {
+        "type": "int"
+      }
+    }
+  },
+  "errBadFormat": "The server returned malformed data.",
+  "settingsServerHint": "Enter server address",
+  "settingsServerSub": "Emulator uses 10.0.2.2, a real phone needs the LAN IP",
+  "a11yToggleTracking": "Turn realtime positioning on or off",
+  "errTimeout": "The server did not respond in time. Check your network.",
+  "detailPointCount": "{so} survey points",
+  "detailPhotoCount": "{so} photos",
+  "detailNeedPosition": "Turn on positioning to get directions",
+  "detailRouteLoading": "Finding a route…",
+  "detailRouteFailed": "No route to this area",
+  "routeSummary": "{met} m · {buoc} steps",
+  "routeStep": "{huong} {met} m to {noi}",
+  "stepStraight": "Go straight",
+  "stepSlightLeft": "Bear left",
+  "stepSlightRight": "Bear right",
+  "stepLeft": "Turn left",
+  "stepRight": "Turn right",
+  "stepUTurn": "Turn around",
+  "mapOpenDetail": "Open area details"
 }

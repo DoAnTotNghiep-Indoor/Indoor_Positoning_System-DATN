@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'l10n/app_localizations.dart';
+import 'services/theo_doi_vi_tri.dart';
 import 'theme/app_settings.dart';
 import 'theme/app_theme.dart';
 import 'widgets/blob_background.dart';
@@ -16,9 +17,10 @@ Future<void> main() async {
   // Nạp trước shader để khung hình đầu tiên đã có kính thật, không bị nháy.
   await LiquidGlassWidgets.initialize();
 
-  // brightnessResolver là bắt buộc khi dùng MaterialApp: thiếu nó thì viền và
-  // bóng của kính đọc theo sáng/tối của HỆ ĐIỀU HÀNH thay vì theo ThemeMode của
-  // app, nên người dùng chọn "Sáng" trên máy đang để tối sẽ thấy kính biến mất.
+  // brightnessResolver bắt buộc khi dùng MaterialApp: thiếu nó thì viền và bóng
+  // của kính đọc theo sáng/tối của HỆ ĐIỀU HÀNH chứ không theo ThemeMode của
+  // app, nên chọn "Sáng" trên máy đang để tối là kính biến mất. Cùng họ lỗi với
+  // GlassStatusBarStyle.auto ở AppShell bên dưới.
   runApp(LiquidGlassWidgets.wrap(
     child: const IpsDluApp(),
     brightnessResolver: Theme.maybeBrightnessOf,
@@ -34,9 +36,24 @@ class IpsDluApp extends StatefulWidget {
 
 class _IpsDluAppState extends State<IpsDluApp> {
   final _tuyChon = AppSettings();
+  late final _theoDoi = TheoDoiViTri(diaChiMayChu: _tuyChon.diaChiMayChu);
+
+  late final AppLifecycleListener _vongDoi;
+
+  @override
+  void initState() {
+    super.initState();
+    _tuyChon.addListener(_dongBoMayChu);
+    _vongDoi = AppLifecycleListener(onStateChange: _theoDoi.doiVongDoi);
+  }
+
+  void _dongBoMayChu() => _theoDoi.doiMayChu(_tuyChon.diaChiMayChu);
 
   @override
   void dispose() {
+    _vongDoi.dispose();
+    _tuyChon.removeListener(_dongBoMayChu);
+    _theoDoi.dispose();
     _tuyChon.dispose();
     super.dispose();
   }
@@ -45,33 +62,32 @@ class _IpsDluAppState extends State<IpsDluApp> {
   Widget build(BuildContext context) {
     return AppSettingsScope(
       settings: _tuyChon,
-      child: AnimatedBuilder(
-        animation: _tuyChon,
-        builder: (context, _) => MaterialApp(
-          onGenerateTitle: (context) => L.of(context).appTitle,
-          debugShowCheckedModeBanner: false,
+      child: TheoDoiViTriScope(
+        theoDoi: _theoDoi,
+        child: AnimatedBuilder(
+          animation: _tuyChon,
+          builder: (context, _) => MaterialApp(
+            onGenerateTitle: (context) => L.of(context).appTitle,
+            debugShowCheckedModeBanner: false,
 
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: _tuyChon.cheDo,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: _tuyChon.cheDo,
 
-          locale: _tuyChon.ngonNgu,
-          localizationsDelegates: L.localizationsDelegates,
-          supportedLocales: L.supportedLocales,
+            locale: _tuyChon.ngonNgu,
+            localizationsDelegates: L.localizationsDelegates,
+            supportedLocales: L.supportedLocales,
 
-          // Scaffold của Material vốn dựng một Material bên trong, và chính nó
-          // cấp DefaultTextStyle cho cả cây widget. GlassScaffold không phải
-          // Material nên mất thứ đó: mọi Text dựa vào kế thừa kiểu chữ sẽ rơi về
-          // kiểu dự phòng của Flutter — monospace kèm gạch chân vàng. Chỉ chữ
-          // nào ghi đủ `style:` mới hiện đúng, nên lỗi lộ ra loang lổ.
-          //
-          // MaterialType.transparency dựng Material mà KHÔNG vẽ nền, nên vừa
-          // trả lại DefaultTextStyle vừa không che mất lớp kính phía sau.
-          builder: (context, child) => Material(
-            type: MaterialType.transparency,
-            child: child ?? const SizedBox.shrink(),
+            // GlassScaffold không phải Material nên không cấp DefaultTextStyle:
+            // thiếu lớp này thì mọi Text không ghi rõ `style:` rơi về kiểu dự
+            // phòng monospace kèm gạch chân vàng. `transparency` trả lại
+            // DefaultTextStyle mà không vẽ nền che mất lớp kính.
+            builder: (context, child) => Material(
+              type: MaterialType.transparency,
+              child: child ?? const SizedBox.shrink(),
+            ),
+            home: const AppShell(),
           ),
-          home: const AppShell(),
         ),
       ),
     );
@@ -80,9 +96,8 @@ class _IpsDluAppState extends State<IpsDluApp> {
 
 /// Khung chính: nền blob + thanh điều hướng kính, đổi nội dung theo tab.
 ///
-/// `GlassScaffold` lo phần nền, thứ tự lớp và làm mờ mép. Kính khúc xạ theo thứ
-/// nằm phía sau nó, nên nền phải do scaffold cấp chứ không để từng màn hình tự
-/// dựng — đó là lý do `BlobBackground` nằm ở đây.
+/// Kính khúc xạ theo thứ nằm phía sau scaffold, nên nền phải do scaffold cấp
+/// chứ không để từng màn hình tự dựng.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -124,7 +139,7 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final t = L.of(context);
 
-    // GlassTab nhận Widget chứ không nhận IconData, nên bọc trong Icon().
+    // GlassTab nhận Widget chứ không IconData.
     final tabs = <GlassTab>[
       GlassTab(
         icon: const Icon(Icons.home_outlined),
@@ -145,11 +160,9 @@ class _AppShellState extends State<AppShell> {
 
     return GlassScaffold(
       background: BlobBackground(blobs: _blobs),
-      // KHÔNG dùng GlassStatusBarStyle.auto: tài liệu thư viện ghi rõ nó chọn
-      // theo MediaQuery platform brightness, tức độ sáng của HỆ ĐIỀU HÀNH chứ
-      // không phải ThemeMode của app. Máy để chế độ sáng mà app đang tối thì
-      // auto chọn biểu tượng tối, đặt lên nền tối thành vô hình — đo được tương
-      // phản chỉ 0,3/255. Cùng một họ lỗi với brightnessResolver ở main().
+      // KHÔNG dùng GlassStatusBarStyle.auto: nó chọn theo độ sáng của HỆ ĐIỀU
+      // HÀNH chứ không theo ThemeMode, nên máy để sáng mà app đang tối thì biểu
+      // tượng tối đặt lên nền tối — đo được tương phản 0,3/255.
       statusBarStyle: Theme.of(context).brightness == Brightness.dark
           ? GlassStatusBarStyle.light
           : GlassStatusBarStyle.dark,
@@ -165,8 +178,7 @@ class _AppShellState extends State<AppShell> {
         searchConfig: GlassSearchBarConfig(
           hintText: t.searchHint,
           controller: _timKiem,
-          // Mặc định của thư viện là CupertinoIcons.search, trong khi cả app
-          // dùng bộ Material — đặt tường minh để nét icon đồng bộ.
+          // Mặc định thư viện là CupertinoIcons, cả app dùng bộ Material.
           searchIcon: const Icon(Icons.search, size: 20),
           onSearchToggle: (dangMo) => setState(() => _searching = dangMo),
           onChanged: (_) => setState(() {}),

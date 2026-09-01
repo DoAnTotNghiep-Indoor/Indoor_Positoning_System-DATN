@@ -1,21 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Bọc một vùng chạm để nó *có phản hồi* khi bấm, và để trình đọc màn hình
-/// nhận ra đó là nút.
+/// Bọc một vùng chạm để nó có phản hồi khi bấm, và để trình đọc màn hình nhận
+/// ra đó là nút.
 ///
-/// Tồn tại vì một khoảng trống thật trong app: các thẻ bấm được đang dùng
-/// `GestureDetector` trần. Ghi chú cũ trong `glass_card.dart` nói "thư viện đã
-/// có phản hồi chạm riêng dạng biến dạng jelly", nhưng `lg.GlassCard` của
-/// `liquid_glass_widgets` 0.30.2 KHÔNG có tham số `onTap` — hiệu ứng đó chỉ có ở
-/// `GlassButton`/`GlassIconButton`. Hệ quả: chạm vào ô truy cập nhanh, dòng "Gần
-/// bạn", thẻ kết quả tìm kiếm hay nút "Đi tới đây" đều không thấy gì xảy ra cho
-/// tới khi màn hình mới đã đẩy xong.
-///
-/// Không dùng `InkWell`: `GlassScaffold` không dựng `Material` nên `InkWell` ném
-/// assertion, và gợn mực của Material cũng vẽ đè lên mặt kính.
-///
-/// Cách làm là thu nhỏ nhẹ khi giữ — cùng ngôn ngữ với `interactionScale` mà
-/// `GlassIconButton` của thư viện dùng, nên không phá vẻ ngoài chung.
+/// `lg.GlassCard` 0.30.2 KHÔNG nhận `onTap` — hiệu ứng jelly của thư viện chỉ
+/// có ở `GlassButton`/`GlassIconButton`. Không dùng `InkWell` thay thế:
+/// `GlassScaffold` không dựng `Material` nên `InkWell` ném assertion, và gợn
+/// mực của Material vẽ đè lên mặt kính.
 class TapFeedback extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -63,8 +54,8 @@ class _TapFeedbackState extends State<TapFeedback> {
       child: widget.child,
     );
 
-    // Khi đã tự đặt nhãn thì bỏ ngữ nghĩa của các con đi, nếu không trình đọc
-    // màn hình đọc hai lần: một lần nhãn tự đặt, một lần từng dòng chữ bên trong.
+    // Có nhãn riêng thì phải bỏ ngữ nghĩa của các con, không thì trình đọc màn
+    // hình đọc hai lần.
     if (coNhanRieng) noiDung = ExcludeSemantics(child: noiDung);
 
     final nut = Semantics(
@@ -82,9 +73,8 @@ class _TapFeedbackState extends State<TapFeedback> {
       ),
     );
 
-    // Không có nhãn riêng thì gộp chữ bên trong lại thành một mục: nếu không,
-    // trình đọc màn hình đọc rời "Phòng họp", "Meeting room", "34 m" thành ba
-    // mục thay vì một nút.
+    // Không có nhãn riêng thì gộp chữ bên trong thành một mục, thay vì đọc rời
+    // "Khu vực đọc", "Khu vực cung cấp các thể loại sách", "34 m" thành ba mục.
     return coNhanRieng ? nut : MergeSemantics(child: nut);
   }
 }

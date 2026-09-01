@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lg;
 import '../data/demo_data.dart';
+import '../data/khu_vuc.dart';
+import '../services/api_dinh_vi.dart';
+import '../services/theo_doi_vi_tri.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
@@ -28,29 +31,53 @@ class _SearchScreenState extends State<SearchScreen> {
 
   bool get _dangLoc => _filter != 0;
 
-  /// Lọc cục bộ trên dữ liệu demo — bản chính thức sẽ gọi API tìm kiếm.
+  /// Lọc cục bộ trên 11 khu vực thật.
   ///
-  /// Khớp theo từng từ thay vì nguyên cụm, để "phòng học" vẫn ra cả "Phòng họp",
-  /// "Phòng hội thảo"… đúng như frame thiết kế (5 kết quả).
-  List<Area> get _results {
-    final tokens = widget.tuKhoa
-        .trim()
-        .toLowerCase()
+  /// Không gọi API tìm kiếm: cả thư viện chỉ có 11 khu vực, lọc tại chỗ vừa
+  /// nhanh hơn vừa chạy được khi chưa nối máy chủ.
+  ///
+  /// Khớp theo từng từ thay vì nguyên cụm, để "khu doc" vẫn ra "Khu vực đọc".
+  /// Bỏ dấu trước khi so, vì người dùng gõ vội thường không bỏ dấu.
+  List<KhuVuc> _ketQua(List<KhuVuc> tatCa) {
+    final tokens = _khongDau(widget.tuKhoa)
         .split(RegExp(r'\s+'))
         .where((t) => t.isNotEmpty)
         .toList();
 
     final nhom = AreaCategory.danhSach[_filter];
 
-    return DemoData.searchResults.where((a) {
-      final haystack = '${a.nameVi} ${a.nameEn}'.toLowerCase();
-      final matchQuery =
-          tokens.isEmpty || tokens.any((t) => haystack.contains(t));
+    return tatCa.where((k) {
+      final kho = _khongDau('${k.nhom} ${k.moTa}');
+      final khopTu = tokens.isEmpty || tokens.every((t) => kho.contains(t));
       // So theo MÃ nhóm, không theo nhãn hiển thị: nhãn đổi theo ngôn ngữ nên
       // bản cũ (so với chuỗi "Học tập") lọc ra rỗng khi giao diện đang tiếng Anh.
-      final matchFilter = nhom == AreaCategory.all || a.category == nhom;
-      return matchQuery && matchFilter;
+      final khopLoc = nhom == AreaCategory.all || _nhomCua(k) == nhom;
+      return khopTu && khopLoc;
     }).toList();
+  }
+
+  /// Xếp khu vực vào ba nhóm lọc sẵn có của màn này.
+  static String _nhomCua(KhuVuc k) => switch (k.nhom) {
+        'Khu vực tự học' || 'Khu vực đọc' || 'TV3,4' || 'Phòng tạp chí' =>
+          AreaCategory.study,
+        'Căn tin' || 'Hội trường thư viện' || 'Bàn thủ thư' =>
+          AreaCategory.facility,
+        _ => AreaCategory.internal,
+      };
+
+  /// Bỏ dấu tiếng Việt để so chuỗi. Chỉ cần đủ cho 11 tên khu vực nên tra bảng
+  /// thay vì kéo cả một gói chuẩn hoá Unicode vào.
+  static String _khongDau(String s) {
+    const co = 'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩ'
+        'òóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ';
+    const khong = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiii'
+        'ooooooooooooooooouuuuuuuuuuuyyyyyd';
+    final b = StringBuffer();
+    for (final c in s.trim().toLowerCase().runes) {
+      final k = co.indexOf(String.fromCharCode(c));
+      b.write(k < 0 ? String.fromCharCode(c) : khong[k]);
+    }
+    return b.toString();
   }
 
   String _nhanNhom(L t, String ma) => switch (ma) {
@@ -64,7 +91,8 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final chuaCho = AppMetrics.chuaChoThanhTab(context);
     final t = L.of(context);
-    final results = _results;
+    final theoDoi = TheoDoiViTriScope.of(context);
+    final results = _ketQua(theoDoi.khuVuc);
 
     return SafeArea(
       bottom: false,
@@ -149,7 +177,10 @@ class _SearchScreenState extends State<SearchScreen> {
                     padding: EdgeInsets.fromLTRB(16, 0, 16, chuaCho),
                     itemCount: results.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, i) => _ResultCard(area: results[i]),
+                    itemBuilder: (context, i) => _ResultCard(
+                      khuVuc: results[i],
+                      viTri: theoDoi.viTri,
+                    ),
                   ),
           ),
         ],
@@ -277,8 +308,10 @@ class _NutBoLoc extends StatelessWidget {
 }
 
 class _ResultCard extends StatelessWidget {
-  final Area area;
-  const _ResultCard({required this.area});
+  final KhuVuc khuVuc;
+  final ViTri? viTri;
+
+  const _ResultCard({required this.khuVuc, required this.viTri});
 
   @override
   Widget build(BuildContext context) {
@@ -288,10 +321,10 @@ class _ResultCard extends StatelessWidget {
 
     return GlassCard(
       radius: 24,
-      semanticLabel: t.a11yAreaRow(area.tenChinh(context), area.distanceM),
+      semanticLabel: khuVuc.nhom,
       semanticHint: t.a11yOpenArea,
       onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const AreaDetailScreen()),
+        MaterialPageRoute(builder: (_) => AreaDetailScreen(khuVuc: khuVuc)),
       ),
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -303,7 +336,7 @@ class _ResultCard extends StatelessWidget {
               color: nhan.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(area.icon, size: 22, color: nhan),
+            child: Icon(khuVuc.icon, size: 22, color: nhan),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -311,7 +344,7 @@ class _ResultCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  area.tenChinh(context),
+                  khuVuc.nhom,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -322,7 +355,7 @@ class _ResultCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  area.tenPhu(context),
+                  khuVuc.moTa,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -335,7 +368,10 @@ class _ResultCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            t.distanceMeters(area.distanceM),
+            viTri == null
+                ? t.detailPointCount(khuVuc.diem.length)
+                : t.distanceMeters(
+                    khuVuc.khoangCach(viTri!.xGop, viTri!.yGop).round()),
             maxLines: 1,
             style: TextStyle(
               fontSize: 12.5,

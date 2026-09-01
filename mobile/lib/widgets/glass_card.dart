@@ -3,17 +3,10 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lg;
 
 import 'tap_feedback.dart';
 
-/// Thẻ kính dùng xuyên suốt app.
+/// Thẻ kính dùng xuyên suốt app, bọc `lg.GlassCard` của thư viện.
 ///
-/// Trước đây đây là thẻ tự vẽ: nền trắng `alpha 0.55` cộng viền sáng, tức là
-/// *giả* hiệu ứng kính bằng độ trong suốt. Nay uỷ quyền cho
-/// `liquid_glass_widgets`, nơi làm mờ nền bằng fragment shader thật nên thẻ
-/// thực sự khúc xạ những gì nằm phía sau, có highlight và sai sắc theo mép.
-///
-/// Giữ nguyên tên và tham số cũ (`radius`, `padding`, `onTap`) để năm màn hình
-/// không phải sửa gì. Hai tham số `opacity` và `shadow` đã được gỡ hẳn: độ trong
-/// và bóng nay do shader tự tính theo nền phía sau, nên `build()` không đọc tới
-/// chúng — để lại chỉ khiến chỗ gọi tưởng mình đang chỉnh được thứ gì đó.
+/// Không có tham số `opacity` hay `shadow`: shader tự tính hai thứ đó theo nền
+/// phía sau, mở ra chỉ khiến chỗ gọi tưởng mình chỉnh được.
 class GlassCard extends StatelessWidget {
   final Widget child;
   final double radius;
@@ -44,11 +37,8 @@ class GlassCard extends StatelessWidget {
 
     if (onTap == null) return the;
 
-    // Trước đây chỗ này là `GestureDetector` trần, kèm ghi chú rằng thư viện đã
-    // tự lo phản hồi chạm. Ghi chú đó sai: `lg.GlassCard` 0.30.2 không nhận
-    // `onTap` nên cũng không có trạng thái "đang bấm" nào để hiển thị — chạm vào
-    // thẻ không thấy gì đổi. `TapFeedback` bù đúng phần thiếu đó, đồng thời khai
-    // báo ngữ nghĩa nút cho trình đọc màn hình.
+    // lg.GlassCard không nhận onTap nên tự nó không có phản hồi chạm nào;
+    // TapFeedback bù phần đó và khai báo ngữ nghĩa nút.
     return TapFeedback(
       onTap: onTap,
       semanticLabel: semanticLabel,

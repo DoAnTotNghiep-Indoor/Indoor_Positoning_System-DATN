@@ -5,7 +5,8 @@ import '../data/demo_data.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
-import '../widgets/floor_plan.dart';
+import '../widgets/so_do_that.dart';
+import '../services/theo_doi_vi_tri.dart';
 import '../widgets/glass_card.dart';
 
 class MapScreen extends StatelessWidget {
@@ -23,29 +24,14 @@ class MapScreen extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Sơ đồ mặt bằng.
-          //
-          // Lề dưới phải chừa đủ chỗ cho thanh điều hướng, nếu không tường bao
-          // và ba phòng cuối toà nhà bị nó cắt mất — đúng lỗi của bản trước, khi
-          // lề này để cứng 96 trong khi thanh tab chiếm 84 cộng lề an toàn.
+          // Sơ đồ mặt bằng. Lề dưới phải chừa chỗ cho thanh điều hướng nổi;
+          // lề trên chỉ 8 vì header là lớp nổi, không chiếm chỗ bố cục.
           Positioned.fill(
             child: Padding(
-              // Lề trên chỉ 8 chứ không phải 96: header là lớp nổi (Positioned
-              // top: 0) nên không chiếm chỗ bố cục, mà 96 đơn vị đầu của sơ đồ
-              // vốn là khoảng trống phía trên mái vòm lối vào — header phủ lên
-              // đúng chỗ trống đó. Bỏ luôn lề hai bên.
-              //
-              // Sơ đồ có tỉ lệ 393:852, cao và hẹp hơn vùng hiển thị còn lại,
-              // nên khi ép vừa chiều cao vẫn thừa lề hai bên. Cắt lề khung là
-              // cách duy nhất làm nó to thêm mà vẫn thấy trọn cả tầng.
               padding: EdgeInsets.only(top: 8, bottom: chuaCho),
-              // InteractiveViewer để phóng to bằng hai ngón và kéo xem chi tiết.
-              // Mức 1 là toàn cảnh vừa màn hình, kéo lên tới 4 lần.
-              //
-              // Semantics bao ngoài: sơ đồ vẽ bằng CustomPaint nên trình đọc màn
-              // hình chỉ thấy một mớ nhãn phòng rời rạc, không biết đang đứng
-              // trước cái gì và cũng không đoán ra là chụm ngón được. Giữ
-              // `explicitChildNodes` để tên từng phòng vẫn đọc được.
+              // Semantics bao ngoài: sơ đồ vẽ bằng canvas nên trình đọc màn hình
+              // không biết đang đứng trước cái gì, cũng không đoán ra là chụm
+              // ngón được. `explicitChildNodes` giữ cho nhãn từng khu vẫn đọc.
               child: Semantics(
                 container: true,
                 explicitChildNodes: true,
@@ -53,8 +39,8 @@ class MapScreen extends StatelessWidget {
                 hint: t.mapFloorPlanHint,
                 child: InteractiveViewer(
                   minScale: 1,
-                  maxScale: 4,
-                  child: const Center(child: FloorPlan()),
+                  maxScale: 5,
+                  child: const Center(child: SoDoMatBang()),
                 ),
               ),
             ),
@@ -68,28 +54,23 @@ class MapScreen extends StatelessWidget {
             child: MapHeader(),
           ),
 
-          // Nút định vị lại.
-          //
-          // Phải nằm HẲN trên thanh điều hướng: nút tìm kiếm của thanh đó cũng
-          // ở mép phải, nên đặt thấp là hai nút tròn dính vào nhau. Bản trước để
-          // bottom: 96 và chúng chồng lên nhau đúng như vậy.
+          // Nút định vị phải nằm HẲN trên thanh điều hướng: nút tìm kiếm của
+          // thanh đó cũng ở mép phải, đặt thấp là hai nút tròn dính vào nhau.
           Positioned(
             right: 16,
             bottom: chuaCho,
-            // GlassIconButton thay cho vòng tròn tự vẽ: nền, viền và bóng
-            // trước đây phải tự canh, nay lấy theo lớp kính phía sau.
+            // GlassIconButton lấy nền, viền và bóng theo lớp kính phía sau.
             child: GlassIconButton(
               icon: Icon(Icons.navigation_outlined,
                   size: 21, color: AppColors.accentOf(context)),
               size: 54,
-              // Nút chỉ có mỗi biểu tượng mũi tên: không có nhãn thì trình đọc
-              // màn hình đọc thành "nút" trống, người dùng không biết bấm để làm gì.
+              // Nút chỉ có biểu tượng: thiếu nhãn thì trình đọc màn hình đọc
+              // thành "nút" trống.
               semanticLabel: t.mapRelocate,
-              onPressed: () => GlassToast.show(
-                context,
-                message: t.mapRelocateDemo,
-                type: GlassToastType.info,
-              ),
+              onPressed: () {
+                final theoDoi = TheoDoiViTriScope.of(context);
+                if (theoDoi.trangThai == TrangThai.dung) theoDoi.batDau();
+              },
             ),
           ),
         ],
@@ -133,7 +114,8 @@ class MapHeader extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     t.mapAreaSummary(
-                        DemoData.areaCount, DemoData.updatedSecondsAgo),
+                        TheoDoiViTriScope.of(context).khuVuc.length,
+                        DemoData.updatedSecondsAgo),
                     // Thẻ này nằm đè lên sơ đồ nên chiều cao phải đoán trước
                     // được; để dòng phụ tự xuống hàng trên máy hẹp sẽ đẩy thẻ
                     // cao thêm và che mất hàng phòng đầu tiên.
@@ -151,11 +133,8 @@ class MapHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                // Ở chế độ tối, nền trắng 60% cộng chữ `inkOf` (gần trắng) là
-                // chữ sáng trên nền sáng — đo được tương phản khoảng 1,2:1, tức
-                // không đọc được. Chế độ sáng giữ nguyên đúng thiết kế gốc, chế
-                // độ tối hạ xuống một lớp phủ trắng mỏng để viên nhãn vẫn tách
-                // khỏi mặt kính mà chữ sáng vẫn nổi.
+                // Chế độ tối phải hạ nền xuống lớp phủ mỏng: nền trắng 60%
+                // cộng chữ `inkOf` gần trắng chỉ cho tương phản 1,2:1.
                 color: Colors.white.withValues(alpha: toi ? 0.12 : 0.6),
                 borderRadius: BorderRadius.circular(15),
               ),

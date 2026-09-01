@@ -27,11 +27,6 @@ class LEn extends L {
   String get homeYouAreAt => 'You are at';
 
   @override
-  String homeAccuracy(String met) {
-    return 'Accuracy ±$met m';
-  }
-
-  @override
   String get homeQuickAccess => 'Quick access';
 
   @override
@@ -98,6 +93,17 @@ class LEn extends L {
   String get detailImagePlaceholder => 'Area photo';
 
   @override
+  String detailPhotos(int so) {
+    String _temp0 = intl.Intl.pluralLogic(
+      so,
+      locale: localeName,
+      other: '$so photos of this area, swipe to browse',
+      one: '1 photo of this area, swipe to browse',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override
@@ -143,7 +149,9 @@ class LEn extends L {
   String get settingsAutoUpdate => 'Auto-update position';
 
   @override
-  String get settingsAutoUpdateSub => 'Rescan every 2 seconds';
+  String settingsAutoUpdateSub(int giay) {
+    return 'Rescan every $giay seconds';
+  }
 
   @override
   String get settingsKeepAwake => 'Keep screen on';
@@ -159,6 +167,21 @@ class LEn extends L {
 
   @override
   String get settingsPermissionGranted => 'Granted';
+
+  @override
+  String get settingsPermissionMissing => 'Not granted';
+
+  @override
+  String get settingsPermissionBlocked => 'Blocked';
+
+  @override
+  String get settingsPermissionChecking => 'Checking…';
+
+  @override
+  String get settingsPermissionAsk => 'Tap to grant';
+
+  @override
+  String get settingsPermissionOpen => 'Tap to open system settings';
 
   @override
   String get settingsFootnote =>
@@ -179,4 +202,141 @@ class LEn extends L {
 
   @override
   String get a11yOpenArea => 'Open area details';
+
+  @override
+  String get liveStart => 'Start positioning';
+
+  @override
+  String get liveStop => 'Stop positioning';
+
+  @override
+  String get liveScanning => 'Scanning WiFi…';
+
+  @override
+  String get liveDemo => 'Showing demo data';
+
+  @override
+  String liveCoords(String x, String y) {
+    return 'x $x m · y $y m';
+  }
+
+  @override
+  String liveMatched(int so) {
+    return 'Matched $so access points';
+  }
+
+  @override
+  String liveModel(String ten, String ms) {
+    return 'Model $ten · $ms ms';
+  }
+
+  @override
+  String liveMerged(int so) {
+    return 'Merged $so scans';
+  }
+
+  @override
+  String get errWifiPermission =>
+      'Location permission not granted. The app will ask again when you start.';
+
+  @override
+  String get errWifiBlocked =>
+      'Location permission is blocked. Open system Settings to grant it.';
+
+  @override
+  String get errLocationOff =>
+      'Location services are off. Turn them on and try again.';
+
+  @override
+  String get errWifiUnsupported => 'This device cannot scan WiFi.';
+
+  @override
+  String get errScanFailed => 'WiFi scan failed. Try again in a few seconds.';
+
+  @override
+  String errNotEnoughAp(int so, int can) {
+    return 'Not enough data to locate you — only $so of $can library access points matched. Are you inside the library?';
+  }
+
+  @override
+  String errBadAddress(String diaChi) {
+    return 'Invalid server address: $diaChi. It must look like http://<IP>:<port>';
+  }
+
+  @override
+  String errNoConnection(String diaChi) {
+    return 'Cannot reach the server at $diaChi';
+  }
+
+  @override
+  String errServer(int ma) {
+    return 'Server returned error $ma';
+  }
+
+  @override
+  String get errBadFormat => 'The server returned malformed data.';
+
+  @override
+  String get settingsServerHint => 'Enter server address';
+
+  @override
+  String get settingsServerSub =>
+      'Emulator uses 10.0.2.2, a real phone needs the LAN IP';
+
+  @override
+  String get a11yToggleTracking => 'Turn realtime positioning on or off';
+
+  @override
+  String get errTimeout =>
+      'The server did not respond in time. Check your network.';
+
+  @override
+  String detailPointCount(int so) {
+    return '$so survey points';
+  }
+
+  @override
+  String detailPhotoCount(int so) {
+    return '$so photos';
+  }
+
+  @override
+  String get detailNeedPosition => 'Turn on positioning to get directions';
+
+  @override
+  String get detailRouteLoading => 'Finding a route…';
+
+  @override
+  String get detailRouteFailed => 'No route to this area';
+
+  @override
+  String routeSummary(String met, int buoc) {
+    return '$met m · $buoc steps';
+  }
+
+  @override
+  String routeStep(String huong, String met, String noi) {
+    return '$huong $met m to $noi';
+  }
+
+  @override
+  String get stepStraight => 'Go straight';
+
+  @override
+  String get stepSlightLeft => 'Bear left';
+
+  @override
+  String get stepSlightRight => 'Bear right';
+
+  @override
+  String get stepLeft => 'Turn left';
+
+  @override
+  String get stepRight => 'Turn right';
+
+  @override
+  String get stepUTurn => 'Turn around';
+
+  @override
+  String get mapOpenDetail => 'Open area details';
 }

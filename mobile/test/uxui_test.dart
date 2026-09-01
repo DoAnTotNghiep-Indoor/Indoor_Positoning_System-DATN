@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ips_dlu/data/demo_data.dart';
 import 'package:ips_dlu/l10n/app_localizations.dart';
 import 'package:ips_dlu/main.dart';
 import 'package:ips_dlu/screens/search_screen.dart';
@@ -31,7 +30,8 @@ void main() {
     await _openSearch(tester);
 
     final t = _searchCopy(tester);
-    await tester.enterText(find.byType(EditableText).first, 'meeting');
+    // "Căn tin" thuộc nhóm Tiện ích, nên lọc theo Học tập phải ra rỗng.
+    await tester.enterText(find.byType(EditableText).first, 'căn tin');
     await tester.ensureVisible(find.text(t.searchFilterStudy));
     await tester.tap(find.text(t.searchFilterStudy));
     await tester.pumpAndSettle();
@@ -46,7 +46,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(t.searchResultCount(1)), findsOneWidget);
-    expect(find.text('Meeting room'), findsOneWidget);
+    expect(find.text('Căn tin'), findsOneWidget);
     expect(find.text(t.searchEmpty), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -61,15 +61,19 @@ void main() {
     await _openSearch(tester);
 
     final t = _searchCopy(tester);
-    final filter = find.text(t.searchFilterInternal);
-    // Chip cuối nằm ngoài viewport ban đầu; drag mô phỏng thao tác cuộn ngang.
+    await tester.enterText(find.byType(EditableText).first, 'can tin');
+    await tester.pumpAndSettle();
+
+    final filter = find.text(t.searchFilterFacility);
+    // Chip nằm ngoài viewport ban đầu; drag mô phỏng thao tác cuộn ngang.
     await tester.drag(find.byType(ListView).first, const Offset(-240, 0));
     await tester.pumpAndSettle();
     await tester.tap(filter);
     await tester.pumpAndSettle();
 
+    // Gõ không dấu vẫn ra: người dùng gõ vội thường bỏ dấu.
     expect(find.text(t.searchResultCount(1)), findsOneWidget);
-    expect(find.text('Meeting room'), findsOneWidget);
+    expect(find.text('Căn tin'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -77,14 +81,14 @@ void main() {
       (WidgetTester tester) async {
     await _pumpAtSize(tester, const Size(360, 480));
 
-    await tester.tap(find.text(DemoData.currentAreaName).last);
+    await tester.tap(find.text('Bàn thủ thư').first);
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     // CTA nằm trong sheet cuộn; ensureVisible mô phỏng thao tác vuốt của người dùng.
-    final cta = find.text('Đi tới đây');
+    final cta = find.text('Bật định vị để chỉ đường');
     await tester.ensureVisible(cta);
     await tester.pumpAndSettle();
     expect(tester.getRect(cta).bottom, lessThanOrEqualTo(480));

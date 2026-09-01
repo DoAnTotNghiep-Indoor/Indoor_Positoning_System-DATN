@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../widgets/blob_background.dart';
+import 'package:intl/intl.dart' as intl;
+
+import '../data/anh_khu_vuc.dart';
+import '../data/khu_vuc.dart';
 import '../data/demo_data.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
+import '../services/api_dinh_vi.dart';
+import '../services/theo_doi_vi_tri.dart';
 import '../theme/app_metrics.dart';
-import '../widgets/floor_plan.dart';
+import '../widgets/so_do_that.dart';
 import '../widgets/tap_feedback.dart';
 import 'map_screen.dart';
 
-/// Màn chi tiết khu vực: sơ đồ phía trên, bottom sheet thông tin phía dưới.
+/// Màn chi tiết khu vực: sơ đồ phía trên, tấm thông tin phía dưới.
+///
+/// Mọi lối vào đều phải truyền [khuVuc]. Trước đây bốn trong năm lối mở màn này
+/// không tham số, nên mười hai mục bấm được trên Trang chủ và Tìm kiếm đều dẫn
+/// tới đúng một màn mang tên "Không gian đọc".
 class AreaDetailScreen extends StatelessWidget {
-  const AreaDetailScreen({super.key});
+  final KhuVuc khuVuc;
+
+  const AreaDetailScreen({super.key, required this.khuVuc});
 
   @override
   Widget build(BuildContext context) {
@@ -30,11 +42,7 @@ class AreaDetailScreen extends StatelessWidget {
     // nằm sau nó, thiếu nền thì thẻ kính trông phẳng và bạc màu.
     return GlassScaffold(
       background: const BlobBackground(blobs: BlobBackground.mapBlobs),
-      // KHÔNG dùng GlassStatusBarStyle.auto: tài liệu thư viện ghi rõ nó chọn
-      // theo MediaQuery platform brightness, tức độ sáng của HỆ ĐIỀU HÀNH chứ
-      // không phải ThemeMode của app. Máy để chế độ sáng mà app đang tối thì
-      // auto chọn biểu tượng tối, đặt lên nền tối thành vô hình — đo được tương
-      // phản chỉ 0,3/255. Cùng một họ lỗi với brightnessResolver ở main().
+      // Không dùng GlassStatusBarStyle.auto — lý do ở AppShell trong main.dart.
       statusBarStyle: Theme.of(context).brightness == Brightness.dark
           ? GlassStatusBarStyle.light
           : GlassStatusBarStyle.dark,
@@ -44,16 +52,16 @@ class AreaDetailScreen extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Sơ đồ nền
+            // Sơ đồ nền là bản số hoá thật, cùng một sơ đồ với tab Bản đồ.
+            // Trước đây là sơ đồ vẽ tay với những phòng không có trong dữ liệu
+            // khảo sát, nên màn chi tiết của một khu vực thật lại đứng trên nền
+            // một toà nhà không tồn tại.
             const Positioned.fill(
-              child: ClipRect(
-                child: OverflowBox(
+              child: Padding(
+                padding: EdgeInsets.only(top: 116),
+                child: Align(
                   alignment: Alignment.topCenter,
-                  maxHeight: 1400,
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 116),
-                    child: FloorPlan(showUser: false),
-                  ),
+                  child: SoDoMatBang(),
                 ),
               ),
             ),
@@ -91,7 +99,7 @@ class AreaDetailScreen extends StatelessWidget {
               bottom: 0,
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: caoToiDa),
-                child: const _DetailSheet(),
+                child: _DetailSheet(khuVuc: khuVuc),
               ),
             ),
           ],
@@ -102,7 +110,11 @@ class AreaDetailScreen extends StatelessWidget {
 }
 
 class _DetailSheet extends StatelessWidget {
-  const _DetailSheet();
+  final KhuVuc khuVuc;
+
+  const _DetailSheet({required this.khuVuc});
+
+  List<String> get _anh => AnhKhuVuc.duongDan(khuVuc.thuMucAnh);
 
   @override
   Widget build(BuildContext context) {
@@ -139,8 +151,9 @@ class _DetailSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Ảnh khu vực (placeholder gradient)
-            Container(
+            // Không có ảnh mặc định cho khu chưa chụp: gán nhầm ảnh còn tệ
+            // hơn là không có ảnh.
+            if (_anh.isNotEmpty) _DaiAnh(duongDan: _anh) else Container(
               height: 164,
               width: double.infinity,
               alignment: Alignment.center,
@@ -169,8 +182,7 @@ class _DetailSheet extends StatelessWidget {
             Semantics(
               header: true,
               child: Text(
-                theoNgonNgu(
-                    context, DemoData.detailTitle, DemoData.detailTitleEn),
+                khuVuc.nhom,
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
             ),
@@ -185,34 +197,13 @@ class _DetailSheet extends StatelessWidget {
             ),
 
             const SizedBox(height: 18),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final chip in DemoData.detailChips)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: chip.bg,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      theoNgonNgu(context, chip.label, chip.labelEn),
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
-                        color: chip.fg,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+            _ChiSo(khuVuc: khuVuc),
 
             const SizedBox(height: 20),
             Text(
-              theoNgonNgu(context, DemoData.detailDescription,
-                  DemoData.detailDescriptionEn),
+              // Đoạn dài nếu có; lối đi như cầu thang, hành lang thì CTK45 cố ý
+              // không viết mô tả chi tiết nên lùi về câu một dòng.
+              khuVuc.moTaChiTiet.isNotEmpty ? khuVuc.moTaChiTiet : khuVuc.moTa,
               style: TextStyle(
                 fontSize: 13,
                 height: 1.45,
@@ -221,7 +212,7 @@ class _DetailSheet extends StatelessWidget {
             ),
 
             const SizedBox(height: 22),
-            const _NutDiToi(),
+            _NutChiDuong(khuVuc: khuVuc),
           ],
         ),
       ),
@@ -229,65 +220,305 @@ class _DetailSheet extends StatelessWidget {
   }
 }
 
-/// Nút hành động chính của màn Chi tiết.
-class _NutDiToi extends StatelessWidget {
-  const _NutDiToi();
+/// Chip số liệu thật: bao nhiêu điểm đo, bao nhiêu ảnh.
+///
+/// Thay cho ba chip bịa "120 chỗ ngồi · Cách 8 m · Yên tĩnh" giống hệt nhau ở
+/// mọi khu vực. Số điểm đo là thứ đáng nói trong một đồ án định vị: khu vực
+/// nhiều điểm thì mô hình đoán chắc hơn.
+class _ChiSo extends StatelessWidget {
+  final KhuVuc khuVuc;
+
+  const _ChiSo({required this.khuVuc});
 
   @override
   Widget build(BuildContext context) {
     final t = L.of(context);
+    final soAnh = AnhKhuVuc.duongDan(khuVuc.thuMucAnh).length;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _chip(context, t.detailPointCount(khuVuc.diem.length),
+            AppColors.roomBlue, AppColors.strokeNavy),
+        if (soAnh > 0)
+          _chip(context, t.detailPhotoCount(soAnh), AppColors.roomMint,
+              AppColors.strokeGreen),
+      ],
+    );
+  }
+
+  Widget _chip(BuildContext context, String chu, Color nen, Color chuMau) =>
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: nen.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          chu,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w500,
+            color: chuMau,
+          ),
+        ),
+      );
+}
+
+/// Nút hành động chính: gọi `POST /route` thật thay vì hiện một toast.
+///
+/// Nhãn đổi theo trạng thái. Chưa định vị thì không có điểm xuất phát, mà đoán
+/// một điểm bất kỳ sẽ cho ra tuyến đường sai trông rất hợp lý — nên lúc đó nút
+/// bật định vị chứ không tìm đường.
+class _NutChiDuong extends StatefulWidget {
+  final KhuVuc khuVuc;
+
+  const _NutChiDuong({required this.khuVuc});
+
+  @override
+  State<_NutChiDuong> createState() => _NutChiDuongState();
+}
+
+class _NutChiDuongState extends State<_NutChiDuong> {
+  bool _dangTim = false;
+
+  Future<void> _cham(TheoDoiViTri theoDoi) async {
+    if (theoDoi.viTri == null) {
+      theoDoi.batDau();
+      return;
+    }
+
+    setState(() => _dangTim = true);
+    try {
+      final kq = await theoDoi.chiDuongToi(widget.khuVuc);
+      if (mounted) _hienChiDan(context, widget.khuVuc, kq);
+    } on NgoaiLeApi catch (e) {
+      if (mounted) {
+        GlassToast.show(context,
+            message: _cauLoi(L.of(context), e.loai),
+            type: GlassToastType.error);
+      }
+    } finally {
+      if (mounted) setState(() => _dangTim = false);
+    }
+  }
+
+  String _cauLoi(L t, LoiApi loai) => switch (loai) {
+        LoiApi.diaChiSai => t.errBadAddress(''),
+        LoiApi.quaHan => t.errTimeout,
+        _ => t.detailRouteFailed,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final t = L.of(context);
+    final theoDoi = TheoDoiViTriScope.of(context);
     final onPrimary = Theme.of(context).colorScheme.onPrimary;
 
-    return TapFeedback(
-      semanticLabel: t.detailGoHere,
-      // SnackBar cần một Scaffold của Material, mà GlassScaffold không phải —
-      // gọi vào sẽ ném assertion lúc chạm. GlassToast dùng Overlay nên không
-      // phụ thuộc Scaffold.
-      onTap: () => GlassToast.show(
-        context,
-        message: t.detailRouteDemo,
-        type: GlassToastType.info,
-      ),
-      child: Container(
-        // Cao theo cỡ chữ hệ thống: 56 cứng cộng chữ 16.5 ở mức phóng to lớn là
-        // tràn, mà đây lại là nút hành động chính của màn hình.
-        constraints: BoxConstraints(
-          minHeight: AppMetrics.caoTheoCoChu(context, coBan: 56, phanChu: 22),
-        ),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          gradient: AppColors.ctaGradientOf(context),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accentOf(context).withValues(alpha: 0.35),
-              offset: const Offset(0, 8),
-              blurRadius: 18,
+    return AnimatedBuilder(
+      animation: theoDoi,
+      builder: (context, _) {
+        final coViTri = theoDoi.viTri != null;
+        final nhan = _dangTim
+            ? t.detailRouteLoading
+            : (coViTri ? t.detailGoHere : t.detailNeedPosition);
+
+        return TapFeedback(
+          semanticLabel: nhan,
+          onTap: _dangTim ? null : () => _cham(theoDoi),
+          child: Container(
+            constraints: BoxConstraints(
+              minHeight: AppMetrics.caoTheoCoChu(context, coBan: 56, phanChu: 22),
+            ),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(coViTri ? Icons.directions : Icons.my_location,
+                    size: 20, color: onPrimary),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    nhan,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.w600,
+                      color: onPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Câu chữ cho từng mã hướng. Máy chủ trả mã để ứng dụng còn dịch được.
+const _cauHuong = <String, String Function(L)>{
+  'bat_dau': _diThang,
+  'di_thang': _diThang,
+  'chech_trai': _chechTrai,
+  'chech_phai': _chechPhai,
+  're_trai': _reTrai,
+  're_phai': _rePhai,
+  'quay_dau': _quayDau,
+};
+
+String _diThang(L t) => t.stepStraight;
+String _chechTrai(L t) => t.stepSlightLeft;
+String _chechPhai(L t) => t.stepSlightRight;
+String _reTrai(L t) => t.stepLeft;
+String _rePhai(L t) => t.stepRight;
+String _quayDau(L t) => t.stepUTurn;
+
+void _hienChiDan(BuildContext context, KhuVuc khuVuc, KetQuaChiDuong kq) {
+  final t = L.of(context);
+  final so = intl.NumberFormat('#0.#', t.localeName);
+
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Semantics(
+              header: true,
+              child: Text(khuVuc.nhom,
+                  style: Theme.of(context).textTheme.titleLarge),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              t.routeSummary(so.format(kq.quangDuongM), kq.buoc.length),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.inkOf(context).withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: kq.buoc.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, i) {
+                  final b = kq.buoc[i];
+                  final huong = (_cauHuong[b.huong] ?? _diThang)(t);
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${i + 1}.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkOf(context)
+                                .withValues(alpha: 0.45),
+                          )),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          t.routeStep(huong, so.format(b.khoangCachM),
+                              b.denTen.isEmpty ? b.denRp : b.denTen),
+                          style: const TextStyle(fontSize: 14, height: 1.35),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ],
         ),
-        // Màu chữ lấy từ onPrimary chứ không để cứng trắng: ở chế độ tối dải
-        // nhấn sáng lên (#6E9BFF → #8FB4FF), chữ trắng đặt lên đó chỉ đạt tương
-        // phản 1,05:1 — đo được là không đọc nổi. onPrimary đã khai báo sẵn màu
-        // tối cho chế độ tối nên tự đảo đúng chiều.
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
+      ),
+    ),
+  );
+}
+
+/// Dải ảnh thật của khu vực, vuốt ngang để xem hết.
+///
+/// `PageView` chứ không `ListView`: ảnh gốc là ảnh dọc, xếp ngang liên tục thì
+/// mỗi tấm chỉ hiện được một dải hẹp.
+class _DaiAnh extends StatefulWidget {
+  final List<String> duongDan;
+
+  const _DaiAnh({required this.duongDan});
+
+  @override
+  State<_DaiAnh> createState() => _DaiAnhState();
+}
+
+class _DaiAnhState extends State<_DaiAnh> {
+  final _dieuKhien = PageController();
+  int _trang = 0;
+
+  @override
+  void dispose() {
+    _dieuKhien.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = L.of(context);
+    return Semantics(
+      label: t.detailPhotos(widget.duongDan.length),
+      child: SizedBox(
+        height: 164,
+        child: Stack(
           children: [
-            Icon(Icons.navigation_outlined, size: 19, color: onPrimary),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                t.detailGoHere,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 16.5,
-                  fontWeight: FontWeight.w600,
-                  color: onPrimary,
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: PageView(
+                  controller: _dieuKhien,
+                  onPageChanged: (i) => setState(() => _trang = i),
+                  children: [
+                    for (final d in widget.duongDan)
+                      // cover: ảnh dọc trong ô ngang, contain sẽ chừa hai dải
+                      // trống rộng hơn cả ảnh.
+                      Image.asset(d, fit: BoxFit.cover),
+                  ],
                 ),
               ),
             ),
+            if (widget.duongDan.length > 1)
+              Positioned(
+                bottom: 10,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (var i = 0; i < widget.duongDan.length; i++)
+                      Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          // Chấm trên nền ảnh bất kỳ nên phải tự sáng, không
+                          // lấy màu theo theme.
+                          color: Colors.white
+                              .withValues(alpha: i == _trang ? 0.95 : 0.45),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

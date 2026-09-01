@@ -133,12 +133,6 @@ abstract class L {
   /// **'Bạn đang ở'**
   String get homeYouAreAt;
 
-  /// Sai số định vị hiện tại
-  ///
-  /// In vi, this message translates to:
-  /// **'Sai số ±{met} m'**
-  String homeAccuracy(String met);
-
   /// No description provided for @homeQuickAccess.
   ///
   /// In vi, this message translates to:
@@ -259,6 +253,12 @@ abstract class L {
   /// **'Ảnh khu vực'**
   String get detailImagePlaceholder;
 
+  /// Nhãn trợ năng cho dải ảnh thật ở màn Chi tiết
+  ///
+  /// In vi, this message translates to:
+  /// **'{so, plural, other{{so} ảnh của khu vực, vuốt ngang để xem}}'**
+  String detailPhotos(int so);
+
   /// No description provided for @settingsTitle.
   ///
   /// In vi, this message translates to:
@@ -349,11 +349,11 @@ abstract class L {
   /// **'Tự động cập nhật vị trí'**
   String get settingsAutoUpdate;
 
-  /// No description provided for @settingsAutoUpdateSub.
+  /// Chu kỳ quét, lấy từ TheoDoiViTri.chuKy chứ không viết cứng
   ///
   /// In vi, this message translates to:
-  /// **'Quét lại mỗi 2 giây'**
-  String get settingsAutoUpdateSub;
+  /// **'Quét lại mỗi {giay} giây'**
+  String settingsAutoUpdateSub(int giay);
 
   /// No description provided for @settingsKeepAwake.
   ///
@@ -385,6 +385,36 @@ abstract class L {
   /// **'Đã cấp'**
   String get settingsPermissionGranted;
 
+  /// No description provided for @settingsPermissionMissing.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa cấp'**
+  String get settingsPermissionMissing;
+
+  /// No description provided for @settingsPermissionBlocked.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bị chặn'**
+  String get settingsPermissionBlocked;
+
+  /// No description provided for @settingsPermissionChecking.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang kiểm tra…'**
+  String get settingsPermissionChecking;
+
+  /// No description provided for @settingsPermissionAsk.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chạm để cấp quyền'**
+  String get settingsPermissionAsk;
+
+  /// No description provided for @settingsPermissionOpen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chạm để mở Cài đặt hệ thống'**
+  String get settingsPermissionOpen;
+
   /// No description provided for @settingsFootnote.
   ///
   /// In vi, this message translates to:
@@ -414,6 +444,222 @@ abstract class L {
   /// In vi, this message translates to:
   /// **'Mở chi tiết khu vực'**
   String get a11yOpenArea;
+
+  /// No description provided for @liveStart.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bắt đầu định vị'**
+  String get liveStart;
+
+  /// No description provided for @liveStop.
+  ///
+  /// In vi, this message translates to:
+  /// **'Dừng định vị'**
+  String get liveStop;
+
+  /// No description provided for @liveScanning.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang quét WiFi…'**
+  String get liveScanning;
+
+  /// No description provided for @liveDemo.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang hiển thị dữ liệu demo'**
+  String get liveDemo;
+
+  /// No description provided for @liveCoords.
+  ///
+  /// In vi, this message translates to:
+  /// **'x {x} m · y {y} m'**
+  String liveCoords(String x, String y);
+
+  /// No description provided for @liveMatched.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khớp {so} access point'**
+  String liveMatched(int so);
+
+  /// No description provided for @liveModel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mô hình {ten} · {ms} ms'**
+  String liveModel(String ten, String ms);
+
+  /// No description provided for @liveMerged.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã gộp {so} lần quét'**
+  String liveMerged(int so);
+
+  /// No description provided for @errWifiPermission.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa được cấp quyền vị trí. Ứng dụng sẽ hỏi lại khi bạn bấm bắt đầu.'**
+  String get errWifiPermission;
+
+  /// No description provided for @errWifiBlocked.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quyền vị trí đang bị chặn. Mở Cài đặt hệ thống để cấp lại.'**
+  String get errWifiBlocked;
+
+  /// No description provided for @errLocationOff.
+  ///
+  /// In vi, this message translates to:
+  /// **'Dịch vụ vị trí đang tắt. Bật lên rồi thử lại.'**
+  String get errLocationOff;
+
+  /// No description provided for @errWifiUnsupported.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thiết bị không hỗ trợ quét WiFi.'**
+  String get errWifiUnsupported;
+
+  /// No description provided for @errScanFailed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không quét được WiFi. Thử lại sau ít giây.'**
+  String get errScanFailed;
+
+  /// Quét được WiFi nhưng không đủ AP quen; máy chủ trả 422
+  ///
+  /// In vi, this message translates to:
+  /// **'Không đủ dữ liệu để định vị — chỉ khớp {so}/{can} access point của thư viện. Bạn có đang ở trong thư viện không?'**
+  String errNotEnoughAp(int so, int can);
+
+  /// Địa chỉ trong Cài đặt thiếu http:// hoặc thiếu tên máy
+  ///
+  /// In vi, this message translates to:
+  /// **'Địa chỉ máy chủ không hợp lệ: {diaChi}. Cần đủ dạng http://<IP>:<cổng>'**
+  String errBadAddress(String diaChi);
+
+  /// No description provided for @errNoConnection.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không kết nối được máy chủ {diaChi}'**
+  String errNoConnection(String diaChi);
+
+  /// No description provided for @errServer.
+  ///
+  /// In vi, this message translates to:
+  /// **'Máy chủ trả lỗi {ma}'**
+  String errServer(int ma);
+
+  /// No description provided for @errBadFormat.
+  ///
+  /// In vi, this message translates to:
+  /// **'Máy chủ trả dữ liệu không đúng định dạng.'**
+  String get errBadFormat;
+
+  /// No description provided for @settingsServerHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập địa chỉ máy chủ'**
+  String get settingsServerHint;
+
+  /// No description provided for @settingsServerSub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Máy ảo dùng 10.0.2.2, điện thoại thật dùng IP nội bộ'**
+  String get settingsServerSub;
+
+  /// No description provided for @a11yToggleTracking.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bật hoặc tắt định vị theo thời gian thực'**
+  String get a11yToggleTracking;
+
+  /// No description provided for @errTimeout.
+  ///
+  /// In vi, this message translates to:
+  /// **'Máy chủ không phản hồi kịp. Kiểm tra lại chất lượng mạng.'**
+  String get errTimeout;
+
+  /// No description provided for @detailPointCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'{so} điểm đo'**
+  String detailPointCount(int so);
+
+  /// No description provided for @detailPhotoCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'{so} ảnh'**
+  String detailPhotoCount(int so);
+
+  /// No description provided for @detailNeedPosition.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bật định vị để chỉ đường'**
+  String get detailNeedPosition;
+
+  /// No description provided for @detailRouteLoading.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang tìm đường…'**
+  String get detailRouteLoading;
+
+  /// No description provided for @detailRouteFailed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không tìm được đường tới đây'**
+  String get detailRouteFailed;
+
+  /// No description provided for @routeSummary.
+  ///
+  /// In vi, this message translates to:
+  /// **'{met} m · {buoc} bước'**
+  String routeSummary(String met, int buoc);
+
+  /// No description provided for @routeStep.
+  ///
+  /// In vi, this message translates to:
+  /// **'{huong} {met} m tới {noi}'**
+  String routeStep(String huong, String met, String noi);
+
+  /// No description provided for @stepStraight.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đi thẳng'**
+  String get stepStraight;
+
+  /// No description provided for @stepSlightLeft.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chếch trái'**
+  String get stepSlightLeft;
+
+  /// No description provided for @stepSlightRight.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chếch phải'**
+  String get stepSlightRight;
+
+  /// No description provided for @stepLeft.
+  ///
+  /// In vi, this message translates to:
+  /// **'Rẽ trái'**
+  String get stepLeft;
+
+  /// No description provided for @stepRight.
+  ///
+  /// In vi, this message translates to:
+  /// **'Rẽ phải'**
+  String get stepRight;
+
+  /// No description provided for @stepUTurn.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quay đầu'**
+  String get stepUTurn;
+
+  /// No description provided for @mapOpenDetail.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mở chi tiết khu vực'**
+  String get mapOpenDetail;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

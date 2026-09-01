@@ -5,15 +5,17 @@ import '../data/demo_data.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_metrics.dart';
+import '../services/quyen_truy_cap.dart';
+import '../services/theo_doi_vi_tri.dart';
 import '../theme/app_settings.dart';
 
-/// Màn Cài đặt.
-///
-/// Dùng `GlassGroupedSection` thay cho `GlassCard` bọc `Column`: nó tự chèn
-/// đường kẻ giữa các dòng và bo góc đúng cho dòng đầu, dòng cuối — trước đây
-/// phần đó phải tự canh bằng `Padding(left: 64)` và `Divider` thủ công.
+/// Màn Cài đặt. `GlassGroupedSection` tự chèn đường kẻ giữa các dòng và bo góc
+/// đúng cho dòng đầu, dòng cuối.
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  /// Cho tiêm được để kiểm thử không phải đụng kênh nền tảng.
+  final QuyenTruyCap quyen;
+
+  const SettingsScreen({super.key, this.quyen = const QuyenTruyCap()});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -53,7 +55,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 30),
-
           GlassGroupedSection(
             header: _NhanNhom(t.settingsGroupGeneral),
             children: [
@@ -65,13 +66,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               GlassListTile(
                 leading: const Icon(Icons.dns_outlined),
                 title: Text(t.settingsServer),
-                trailing: const SizedBox(width: 120, child: _GiaTri(DemoData.serverHost)),
+                subtitle: Text(t.settingsServerSub),
+                trailing: const SizedBox(width: 150, child: _OMayChu()),
               ),
             ],
           ),
-
           const SizedBox(height: 28),
-
           GlassGroupedSection(
             header: _NhanNhom(t.settingsGroupAppearance),
             children: [
@@ -80,13 +80,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _DongChon(
                 icon: Icons.brightness_6_outlined,
                 title: t.settingsTheme,
-                // GlassSegmentedControl làm việc theo CHỈ SỐ chứ không theo
-                // giá trị, nên phải tự ánh xạ qua lại với ThemeMode.
-                //
-                // Hàm dựng mặc định chứ không phải .scrollable: bản scrollable
-                // dành cho 6 mục trở lên, nó co từng mục theo độ dài chữ rồi
-                // dồn về trái, để thừa một mảng rãnh xám bên phải. Bản mặc
-                // định chia đều các mục kín chiều ngang.
+                // Điều khiển này làm việc theo CHỈ SỐ chứ không theo giá trị.
+                // Không dùng .scrollable — bản đó dành cho 6 mục trở lên, nó
+                // dồn các mục về trái và để thừa rãnh xám bên phải.
                 child: GlassSegmentedControl(
                   selectedIndex: _cheDoTheoThuTu.indexOf(tuyChon.cheDo),
                   segments: [
@@ -114,16 +110,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 28),
-
           GlassGroupedSection(
             header: _NhanNhom(t.settingsGroupPositioning),
             children: [
               GlassListTile(
                 leading: const Icon(Icons.sync),
                 title: Text(t.settingsAutoUpdate),
-                subtitle: Text(t.settingsAutoUpdateSub),
+                // Lấy thẳng từ hằng số chu kỳ, không viết cứng: chuỗi cũ ghi 2 giây
+                  // trong khi vòng quét chạy 5 giây, mà 5 giây là mức Android
+                  // cho phép — nhanh hơn thì hệ điều hành trả lại kết quả cũ.
+                  subtitle:
+                      Text(t.settingsAutoUpdateSub(TheoDoiViTri.chuKy.inSeconds)),
                 trailing: GlassSwitch(
                   value: _tuDongCapNhat,
                   onChanged: (v) => setState(() => _tuDongCapNhat = v),
@@ -140,23 +138,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 28),
-
           GlassGroupedSection(
             header: _NhanNhom(t.settingsGroupPermissions),
             children: [
-              GlassListTile(
-                leading: const Icon(Icons.place_outlined),
-                title: Text(t.settingsPermission),
-                subtitle: Text(t.settingsPermissionSub),
-                trailing: _GiaTri(t.settingsPermissionGranted),
-              ),
+              _DongQuyen(quyen: widget.quyen),
             ],
           ),
-
           const SizedBox(height: 20),
-
           GlassCard(
             padding: const EdgeInsets.all(18),
             shape: const LiquidRoundedSuperellipse(borderRadius: 24),
@@ -185,10 +174,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-/// Dòng cài đặt có bộ chọn nằm bên dưới thay vì bên phải.
-///
-/// Segmented control cần cả chiều ngang; nhét vào ô `trailing` của
-/// `GlassListTile` sẽ bị bóp lại và chữ bị cắt.
+/// Dòng cài đặt có bộ chọn nằm bên dưới: segmented control cần cả chiều ngang,
+/// nhét vào ô `trailing` sẽ bị bóp lại và cắt chữ.
 class _DongChon extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -246,6 +233,75 @@ class _NhanNhom extends StatelessWidget {
 }
 
 /// Giá trị chỉ đọc ở cuối dòng cài đặt.
+/// Ô nhập địa chỉ máy chủ. Chỉ ghi khi rời ô hoặc bấm xong, để mỗi ký tự gõ dở
+/// không dựng lại client HTTP.
+class _OMayChu extends StatefulWidget {
+  const _OMayChu();
+
+  @override
+  State<_OMayChu> createState() => _OMayChuState();
+}
+
+class _OMayChuState extends State<_OMayChu> {
+  final _o = TextEditingController();
+  AppSettings? _tuyChon;
+
+  // Đọc InheritedWidget phải ở didChangeDependencies: lúc initState chạy thì
+  // widget chưa gắn vào cây nên chưa tra ngược lên được.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_tuyChon != null) return;
+    _tuyChon = AppSettingsScope.of(context);
+    _o.text = _tuyChon!.diaChiMayChu;
+  }
+
+  @override
+  void dispose() {
+    _o.dispose();
+    super.dispose();
+  }
+
+  void _luu() {
+    final t = _tuyChon;
+    if (t == null) return;
+    t.datDiaChiMayChu(_o.text);
+
+    // Chuỗi rỗng bị từ chối; không đồng bộ lại thì ô hiện trống trong khi ứng
+    // dụng vẫn gọi địa chỉ cũ.
+    if (_o.text.trim() != t.diaChiMayChu) _o.text = t.diaChiMayChu;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = L.of(context);
+    return TextField(
+      controller: _o,
+      textAlign: TextAlign.end,
+      keyboardType: TextInputType.url,
+      autocorrect: false,
+      style: TextStyle(
+        fontSize: 13,
+        color: AppColors.inkOf(context).withValues(alpha: 0.7),
+      ),
+      decoration: InputDecoration(
+        isDense: true,
+        border: InputBorder.none,
+        hintText: t.settingsServerHint,
+        hintStyle: TextStyle(
+          fontSize: 13,
+          color: AppColors.inkOf(context).withValues(alpha: 0.35),
+        ),
+      ),
+      onTapOutside: (_) {
+        _luu();
+        FocusScope.of(context).unfocus();
+      },
+      onSubmitted: (_) => _luu(),
+    );
+  }
+}
+
 class _GiaTri extends StatelessWidget {
   final String text;
   const _GiaTri(this.text);
@@ -260,6 +316,101 @@ class _GiaTri extends StatelessWidget {
         fontSize: 14,
         color: AppColors.inkOf(context).withValues(alpha: 0.5),
       ),
+    );
+  }
+}
+
+
+/// Dòng quyền truy cập, đọc trạng thái THẬT thay vì viết cứng "Đã cấp".
+///
+/// Bản trước luôn hiện "Đã cấp", nên app có thể đồng thời báo "Thiếu quyền truy
+/// cập WiFi" ở Trang chủ và "Đã cấp" ở đây — mà đây đúng là nơi người dùng tìm
+/// đến sau khi thấy lỗi kia.
+class _DongQuyen extends StatefulWidget {
+  final QuyenTruyCap quyen;
+
+  const _DongQuyen({required this.quyen});
+
+  @override
+  State<_DongQuyen> createState() => _DongQuyenState();
+}
+
+class _DongQuyenState extends State<_DongQuyen> with WidgetsBindingObserver {
+  TrangThaiQuyen? _trangThai;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _doc();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Đọc lại khi quay về từ màn Cài đặt hệ thống: người dùng vừa cấp quyền ở đó
+  /// mà dòng này vẫn hiện trạng thái cũ thì họ tưởng bấm không ăn.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState trangThai) {
+    if (trangThai == AppLifecycleState.resumed) _doc();
+  }
+
+  Future<void> _doc() async {
+    try {
+      final tt = await widget.quyen.kiemTra();
+      if (mounted) setState(() => _trangThai = tt);
+    } catch (_) {
+      // Kênh nền tảng không có (chạy trên web hoặc trong test) — để trống còn
+      // hơn hiện một trạng thái bịa ra.
+      if (mounted) setState(() => _trangThai = null);
+    }
+  }
+
+  Future<void> _cham() async {
+    if (_trangThai == TrangThaiQuyen.biChan) {
+      await widget.quyen.moCaiDat();
+      return;
+    }
+    try {
+      final tt = await widget.quyen.xin();
+      if (mounted) setState(() => _trangThai = tt);
+    } catch (_) {
+      /* không xin được thì giữ nguyên trạng thái đang hiện */
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = L.of(context);
+    final (chu, goiY) = switch (_trangThai) {
+      TrangThaiQuyen.daCap => (t.settingsPermissionGranted, null),
+      TrangThaiQuyen.chuaCap => (
+          t.settingsPermissionMissing,
+          t.settingsPermissionAsk
+        ),
+      TrangThaiQuyen.biChan => (
+          t.settingsPermissionBlocked,
+          t.settingsPermissionOpen
+        ),
+      null => (t.settingsPermissionChecking, null),
+    };
+
+    return GlassListTile(
+      leading: Icon(
+        _trangThai == TrangThaiQuyen.daCap
+            ? Icons.place_outlined
+            : Icons.error_outline,
+        color: _trangThai == TrangThaiQuyen.daCap
+            ? null
+            : Theme.of(context).colorScheme.error,
+      ),
+      title: Text(t.settingsPermission),
+      subtitle: Text(goiY ?? t.settingsPermissionSub),
+      trailing: _GiaTri(chu),
+      onTap: goiY == null ? null : _cham,
     );
   }
 }

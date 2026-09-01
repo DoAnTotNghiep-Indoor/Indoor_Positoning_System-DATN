@@ -19,6 +19,11 @@ dependencies:
     sdk: flutter
   intl: ^0.20.3
 
+  # Quét WiFi và xin quyền — phần đưa ứng dụng từ dữ liệu demo sang chạy thật.
+  wifi_scan: ^0.4.1+2
+  permission_handler: ^11.3.1
+  http: ^1.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -29,3 +34,24 @@ flutter:
 
   # Bật sinh mã đa ngôn ngữ từ lib/l10n/*.arb theo cấu hình l10n.yaml
   generate: true
+
+  assets:
+    # Sơ đồ mặt bằng tầng 1 đã số hoá. Bản gốc ở data/reference/Map.png; chép
+    # sang đây vì Flutter chỉ đóng gói được asset nằm trong thư mục mobile/.
+    - assets/map/Map.png
+
+    # Ảnh thật của 11 khu vực, do nhóm CTK45 chụp tại chỗ. Bản gốc 1920x2560
+    # nặng 24,9 MB; đã thu về cạnh dài 1024 px chất lượng 80 còn 4,0 MB — thừa
+    # nét cho màn điện thoại mà không phình kho mã.
+    # Flutter không nhận mẫu lồng nhau nên phải liệt kê từng thư mục.
+    - assets/images/ban_thu_thu/
+    - assets/images/can_tin/
+    - assets/images/cau_thang/
+    - assets/images/cau_thang_tang_2/
+    - assets/images/cua_ra_vao/
+    - assets/images/hanh_lang/
+    - assets/images/hoi_truong_thu_vien/
+    - assets/images/khu_vuc_doc/
+    - assets/images/khu_vuc_tu_hoc/
+    - assets/images/phong_tap_chi/
+    - assets/images/tv3_4/

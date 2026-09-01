@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ips_dlu/main.dart';
-import 'package:ips_dlu/data/demo_data.dart';
 
 void main() {
   testWidgets('Mở app hiển thị màn Trang chủ với vị trí hiện tại',
@@ -13,8 +12,10 @@ void main() {
     expect(find.text('Bạn đang ở'), findsOneWidget);
     expect(find.text('Truy cập nhanh'), findsOneWidget);
     expect(find.text('Gần bạn'), findsOneWidget);
-    // "Phòng học nhóm" xuất hiện 2 lần: tiêu đề hero và nhãn ô truy cập nhanh.
-    expect(find.text(DemoData.currentAreaName), findsNWidgets(2));
+    // Bốn ô truy cập nhanh và sáu dòng "Gần bạn" nay là khu vực THẬT, lấy từ
+    // bản nhúng sẵn khi chưa nối được máy chủ.
+    expect(find.text('Bàn thủ thư'), findsOneWidget);
+    expect(find.text('Khu vực đọc'), findsOneWidget);
   });
 
   testWidgets('Bottom nav chuyển được sang màn Cài đặt',
@@ -27,7 +28,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('CHUNG'), findsOneWidget);
-    expect(find.text(DemoData.serverHost), findsOneWidget);
+
+    // Địa chỉ máy chủ nay là ô nhập sửa được, không còn là chữ tĩnh lấy từ
+    // DemoData — kiểm nhãn dòng thay vì kiểm giá trị.
+    expect(find.text('Máy chủ định vị'), findsOneWidget);
 
     // Màn Cài đặt nay có 4 nhóm nên nhóm cuối nằm ngoài vùng nhìn; ListView
     // chưa dựng widget chưa hiển thị, phải cuộn tới thì mới tìm thấy.
@@ -39,7 +43,8 @@ void main() {
       find.text('QUYỀN TRUY CẬP'),
       200,
       scrollable: find
-          .descendant(of: find.byType(ListView), matching: find.byType(Scrollable))
+          .descendant(
+              of: find.byType(ListView), matching: find.byType(Scrollable))
           .first,
     );
     expect(find.text('QUYỀN TRUY CẬP'), findsOneWidget);

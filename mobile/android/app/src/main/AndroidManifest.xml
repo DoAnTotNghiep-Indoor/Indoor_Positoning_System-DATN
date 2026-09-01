@@ -1,4 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Quét WiFi cần quyền vị trí: Android coi danh sách AP xung quanh là dữ
+         liệu suy ra được vị trí người dùng. Thiếu ACCESS_FINE_LOCATION thì
+         WifiManager trả về danh sách rỗng chứ không báo lỗi.
+         NEARBY_WIFI_DEVICES là quyền thay thế từ Android 13; khai cả hai để
+         chạy được trên cả máy cũ lẫn máy mới. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
+                     android:usesPermissionFlags="neverForLocation"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <uses-feature android:name="android.hardware.wifi" android:required="true"/>
+
     <application
         android:label="ips_dlu"
         android:name="${applicationName}"
