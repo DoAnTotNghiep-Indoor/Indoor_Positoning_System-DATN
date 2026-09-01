@@ -13,9 +13,11 @@ báo gì. Ba loại lệch dưới đây đều thuộc kiểu ấy nên phải 
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 
+import pandas as pd
 import pytest
 
 from ml import config
@@ -107,6 +109,7 @@ def test_hang_so_javascript_khop_ban_do_json(luoi):
     assert _so(ma, "gocYPx", ":") == luoi["y_max_px"]
     assert _so(ma, "pxMoiMetX", ":") == luoi["px_moi_met_x"]
     assert _so(ma, "pxMoiMetY", ":") == luoi["px_moi_met_y"]
+    assert _so(ma, "gocMetX", ":") == luoi["goc_met_x"]
 
 
 def test_hang_so_dart_khop_ban_do_json(luoi):
@@ -115,6 +118,38 @@ def test_hang_so_dart_khop_ban_do_json(luoi):
     assert _so(ma, "gocYPx", "=") == luoi["y_max_px"]
     assert _so(ma, "pxMoiMetX", "=") == luoi["px_moi_met_x"]
     assert _so(ma, "pxMoiMetY", "=") == luoi["px_moi_met_y"]
+    assert _so(ma, "gocMetX", "=") == luoi["goc_met_x"]
+
+
+def test_goc_met_x_dung_bang_toa_do_nho_nhat(luoi):
+    """Số hạng này từng viết trần ở cả ba ngôn ngữ và không tệp nào khai nó, nên
+    không bài test nào so được — sửa lệch một nơi thì lệch tới 86 m mà cả bộ
+    kiểm thử vẫn xanh. Neo nó vào chính bảng toạ độ đã đo."""
+    rp = pd.read_csv(config.REFERENCE_POINTS_CSV, encoding="utf-8-sig")
+    assert luoi["goc_met_x"] == rp["x"].dropna().min()
+
+
+def test_ba_noi_deu_goi_ten_goc_thay_vi_viet_so():
+    """Bài test trên chỉ so được khi hằng số có tên. Chốt luôn rằng công thức
+    dùng cái tên đó chứ không dùng lại số trần bên cạnh một hằng số trang trí."""
+    mau = {
+        FLOOR_MAP_DART: "(x - gocMetX) * pxMoiMetX",
+        FRONTEND / "src/js/coordinate.js": "(x - SO_DO.gocMetX) * SO_DO.pxMoiMetX",
+        config.ROOT_DIR / "tools" / "trich_ban_do.py":
+            "(x - self.goc_met_x) * self.px_moi_met_x",
+    }
+    for tep, cong_thuc in mau.items():
+        assert cong_thuc in _doc(tep), f"{tep.name}: thiếu `{cong_thuc}`"
+
+
+def test_hai_ban_so_do_giong_het_nhau():
+    """Flutter chỉ đóng gói được asset nằm trong mobile/ nên Map.png phải có hai
+    bản. Lệch nhau thì ứng dụng và Dashboard vẽ hai toà nhà khác nhau, trong khi
+    mọi hằng số biến đổi vẫn khớp nên không gì báo lỗi."""
+    goc = config.REFERENCE_DIR / "Map.png"
+    chep = config.ROOT_DIR / "mobile" / "assets" / "map" / "Map.png"
+    assert chep.exists(), "thiếu bản trong mobile/assets/map"
+    assert hashlib.sha256(goc.read_bytes()).hexdigest() ==         hashlib.sha256(chep.read_bytes()).hexdigest(),         "hai bản Map.png đã lệch nhau — chép lại từ data/reference/"
 
 
 def test_ca_ba_noi_deu_lay_y_huong_len(luoi):

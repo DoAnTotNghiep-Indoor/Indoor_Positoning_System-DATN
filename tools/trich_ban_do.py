@@ -58,15 +58,19 @@ VUNG_TOI_THIEU_PX = 500
 BO_QUA_DAU_PX = 3.0
 
 # Chỉ ghi lại cặp bị chặn trong bán kính này. Cạnh dài nhất mà đồ thị k=3 sinh
-# ra là 22,4 m nên 25 m đã phủ hết, mà JSON không phình lên 550 dòng như khi ghi
-# toàn bộ 780 cặp.
+# ra là 21,0 m nên 25 m đã phủ hết, mà JSON giữ ở 471 dòng thay vì 3.179 dòng
+# như khi ghi toàn bộ 780 cặp.
 BAN_KINH_GHI_M = 25.0
 
 SO_LANG_GIENG = 3
 
 
-def _tach_lop(anh: Path) -> tuple[np.ndarray, np.ndarray]:
-    """Trả về (mặt nạ tường, mặt nạ chấm lưới)."""
+def _tach_ba_lop(anh: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Trả về (nét tường, vật cản, chấm lưới) — ba lớp tách rời.
+
+    Phép dò chặn coi tường và vật cản như nhau nên `_tach_lop` gộp lại; bản vẽ
+    cho báo cáo thì cần vẽ tường đậm còn kệ sách nhạt, nên cần bản chưa gộp.
+    """
     a = np.array(Image.open(anh).convert("RGBA"))
     alpha, sang = a[..., 3], a[..., 0]
     net_den = (alpha > 40) & (sang <= 160)
@@ -79,7 +83,13 @@ def _tach_lop(anh: Path) -> tuple[np.ndarray, np.ndarray]:
         if max(cao, rong) > CHAM_LUOI_PX:
             vat_can |= nhan == i
 
-    return net_den | vat_can, xam & ~vat_can
+    return net_den, vat_can, xam & ~vat_can
+
+
+def _tach_lop(anh: Path) -> tuple[np.ndarray, np.ndarray]:
+    """(mặt nạ vật cản gộp, mặt nạ chấm lưới)."""
+    net_den, vat_can, cham = _tach_ba_lop(anh)
+    return net_den | vat_can, cham
 
 
 def _luoi_toa_do(cham: np.ndarray) -> dict:
@@ -123,12 +133,19 @@ class BanDo:
         self.toa_do = {h.rp_id: (float(h.x), float(h.y)) for h in rp.itertuples()}
         self.ten = {h.rp_id: str(h.ten) for h in rp.itertuples()}
 
-        self.px_moi_met_x = (self.luoi["x_max"] - self.luoi["x_min"]) / 86.0
-        self.px_moi_met_y = (self.luoi["y_max"] - self.luoi["y_min"]) / 52.0
+        # Hộp bao lấy từ chính bộ điểm chứ không viết cứng 86 x 52: ba con số
+        # này phải đi cùng nhau, sửa toạ độ mà quên sửa hằng số là cả sơ đồ lệch
+        # mà không có gì báo.
+        self.goc_met_x = float(rp["x"].min())
+        rong_m = float(rp["x"].max()) - self.goc_met_x
+        cao_m = float(rp["y"].max()) - float(rp["y"].min())
+
+        self.px_moi_met_x = (self.luoi["x_max"] - self.luoi["x_min"]) / rong_m
+        self.px_moi_met_y = (self.luoi["y_max"] - self.luoi["y_min"]) / cao_m
         self._dich_ve_cho_di_duoc()
 
     def sang_pixel(self, x: float, y: float) -> tuple[float, float]:
-        return (self.luoi["x_min"] + (x + 43.0) * self.px_moi_met_x,
+        return (self.luoi["x_min"] + (x - self.goc_met_x) * self.px_moi_met_x,
                 self.luoi["y_max"] - y * self.px_moi_met_y)
 
     def _dich_ve_cho_di_duoc(self) -> None:
@@ -245,6 +262,7 @@ def tinh(bd: "BanDo") -> dict:
             "y_max_px": round(bd.luoi["y_max"], 2),
             "px_moi_met_x": round(bd.px_moi_met_x, 4),
             "px_moi_met_y": round(bd.px_moi_met_y, 4),
+            "goc_met_x": bd.goc_met_x,
             "truc_y_huong_len": True,
         },
         "diem_lech_khoi_san": {
