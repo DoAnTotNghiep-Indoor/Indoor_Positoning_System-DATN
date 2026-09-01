@@ -1,5 +1,5 @@
 {
-  "huan_luyen_luc": "2026-08-30T10:18:10",
+  "huan_luyen_luc": "2026-09-01T18:30:31",
   "mo_hinh_active": "fingerprint_knn",
   "file_active": "model_fingerprint_knn.pkl",
   "hop_dong_du_lieu": {
@@ -38,32 +38,32 @@
       "cdf_50": 0.0,
       "cdf_75": 5.0,
       "cdf_90": 21.557446337416863,
-      "thoi_gian_du_doan_ms": 2.3242379957810044
+      "thoi_gian_du_doan_ms": 1.0339639987796545
     },
     "wknn": {
       "ten": "WKNN",
       "tham_so": {
-        "n_neighbors": 1,
+        "n_neighbors": 2,
         "metric": "manhattan"
       },
-      "loi_validation": 3.7578196166232343,
-      "giay_quet_luoi": 0.09,
-      "giay_huan_luyen": 0.001,
+      "loi_validation": 3.916525555858984,
+      "giay_quet_luoi": 0.04,
+      "giay_huan_luyen": 0.0,
       "mo_hinh": "WKNN",
       "so_mau": 118,
-      "loi_trung_binh": 5.1536732340264155,
-      "loi_trung_vi": 0.0,
+      "loi_trung_binh": 4.5885284153247,
+      "loi_trung_vi": 3.552713678800501e-15,
       "loi_nho_nhat": 0.0,
       "loi_lon_nhat": 40.496913462633174,
-      "loi_do_lech_chuan": 9.969393398760658,
-      "mae_x": 4.466101694915254,
-      "mae_y": 1.771186440677966,
-      "rmse_x": 10.059568343335478,
-      "rmse_y": 4.975363030788365,
-      "cdf_50": 0.0,
-      "cdf_75": 5.0,
-      "cdf_90": 21.557446337416863,
-      "thoi_gian_du_doan_ms": 3.6468099988996983
+      "loi_do_lech_chuan": 8.641424132829842,
+      "mae_x": 3.95322009016667,
+      "mae_y": 1.7523931466266713,
+      "rmse_x": 8.511159490298018,
+      "rmse_y": 4.825864502076927,
+      "cdf_50": 3.552713678800501e-15,
+      "cdf_75": 5.887067173513463,
+      "cdf_90": 16.62214352304283,
+      "thoi_gian_du_doan_ms": 2.280468000099063
     },
     "random_forest": {
       "ten": "Random Forest",
@@ -72,8 +72,8 @@
         "max_depth": null
       },
       "loi_validation": 9.286752768936292,
-      "giay_quet_luoi": 6.4,
-      "giay_huan_luyen": 0.432,
+      "giay_quet_luoi": 3.19,
+      "giay_huan_luyen": 0.302,
       "mo_hinh": "Random Forest",
       "so_mau": 118,
       "loi_trung_binh": 7.550672142143683,
@@ -88,7 +88,7 @@
       "cdf_50": 5.1426527229568535,
       "cdf_75": 10.801254977045541,
       "cdf_90": 18.527952544982213,
-      "thoi_gian_du_doan_ms": 42.48108400031924
+      "thoi_gian_du_doan_ms": 38.886621999554336
     },
     "xgboost_model": {
       "ten": "XGBoost",
@@ -101,8 +101,8 @@
         "reg_lambda": 0.5
       },
       "loi_validation": 8.491210558928373,
-      "giay_quet_luoi": 524.91,
-      "giay_huan_luyen": 2.06,
+      "giay_quet_luoi": 444.99,
+      "giay_huan_luyen": 2.017,
       "mo_hinh": "XGBoost",
       "so_mau": 118,
       "loi_trung_binh": 6.482261244268091,
@@ -117,7 +117,7 @@
       "cdf_50": 5.228016597809945,
       "cdf_75": 9.199058251119508,
       "cdf_90": 13.011716599362964,
-      "thoi_gian_du_doan_ms": 3.4152500005438924
+      "thoi_gian_du_doan_ms": 2.1327920025214553
     },
     "fingerprint_knn": {
       "ten": "kNN vân tay (Bray-Curtis)",
@@ -127,7 +127,7 @@
         "power": 1
       },
       "loi_validation": 2.751005909956146,
-      "giay_quet_luoi": 0.65,
+      "giay_quet_luoi": 0.55,
       "giay_huan_luyen": 0.003,
       "mo_hinh": "kNN vân tay (Bray-Curtis)",
       "so_mau": 118,
@@ -143,7 +143,7 @@
       "cdf_50": 0.0,
       "cdf_75": 0.0,
       "cdf_90": 7.084032966784155,
-      "thoi_gian_du_doan_ms": 0.39304399862885475
+      "thoi_gian_du_doan_ms": 0.3073559980839491
     }
   },
   "hau_xu_ly_gop": {

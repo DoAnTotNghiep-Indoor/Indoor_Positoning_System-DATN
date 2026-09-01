@@ -16,9 +16,15 @@ TEN = "WKNN"
 
 EPS = 1e-6
 
-# Có cả k=1 và k=2: lưới cũ bắt đầu từ 3 và tối ưu rơi đúng vào biên dưới đó.
+# KHÔNG có k=1, khác với lưới của kNN.
+#
+# Với một láng giềng duy nhất thì trọng số không có gì để cân, nên WKNN ở k=1
+# chính là kNN ở k=1 — cùng tham số, cùng dự đoán, cùng sai số tới từng chữ số.
+# Để k=1 trong lưới thì cả hai mô hình cùng chọn nó và bảng so sánh có hai dòng
+# trùng khít, tức mất một mô hình cơ sở mà không ai thấy. Bắt đầu từ k=2 để
+# WKNN luôn thật sự là WKNN.
 LUOI_THAM_SO = {
-    "n_neighbors": [1, 2, 3, 5, 7, 9, 11],
+    "n_neighbors": [2, 3, 5, 7, 9, 11],
     "metric": ["euclidean", "manhattan"],
 }
 
