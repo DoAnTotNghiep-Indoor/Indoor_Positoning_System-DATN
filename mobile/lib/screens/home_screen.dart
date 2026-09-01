@@ -91,8 +91,8 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// Khối vị trí ở đầu màn hình: toạ độ thật khi đang theo dõi, dữ liệu demo khi
-/// chưa bật.
+/// Khối vị trí ở đầu màn hình: toạ độ thật khi đã định vị, nói rõ "chưa xác
+/// định" khi chưa có.
 ///
 /// Gộp thành MỘT mục trợ năng — các dòng rời khiến trình đọc màn hình bắt người
 /// dùng vuốt nhiều lần cho một mẩu thông tin duy nhất.
@@ -135,7 +135,7 @@ class _KhoiViTri extends StatelessWidget {
       if (coLoi)
         _cauLoi(t, theoDoi, mayChu)
       else if (vt == null)
-        dangChay ? t.liveScanning : t.liveDemo
+        dangChay ? t.liveScanning : t.liveIdle
       else ...[
         t.liveMatched(vt.soApKhop),
         // Hiện luôn chứ không chỉ khi cửa sổ chưa đầy: kích thước cửa sổ do
@@ -201,9 +201,12 @@ class _KhoiViTri extends StatelessWidget {
             )
           else
             Text(
+              // Chưa có toạ độ thì nói thẳng là chưa biết. Chỗ này từng hiện
+              // sẵn một tên phòng, nên ứng dụng trông như đã định vị xong ngay
+              // khi vừa mở — đúng lỗi "trả lời tự tin khi không có dữ liệu" mà
+              // cả đồ án lấy làm điểm cải tiến.
               vt == null
-                  ? theoNgonNgu(context, DemoData.currentAreaName,
-                      DemoData.currentAreaNameEn)
+                  ? t.liveUnknown
                   : t.liveCoords(so.format(vt.xGop), so.format(vt.yGop)),
               style: Theme.of(context).textTheme.displayLarge,
             ),

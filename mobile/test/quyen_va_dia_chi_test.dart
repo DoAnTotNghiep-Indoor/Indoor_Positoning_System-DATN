@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -39,6 +40,26 @@ TheoDoiViTri _theoDoi() => TheoDoiViTri(
               utf8.encode(_traLoi()), 200,
               headers: {'content-type': 'application/json'}))),
     );
+
+class _KhoGia implements KhoTuyChon {
+  final Map<String, String> o;
+  _KhoGia([Map<String, String>? ban]) : o = {...?ban};
+
+  @override
+  Future<String?> doc(String khoa) async => o[khoa];
+
+  @override
+  Future<void> ghi(String khoa, String gt) async => o[khoa] = gt;
+}
+
+class _KhoHong implements KhoTuyChon {
+  @override
+  Future<String?> doc(String khoa) async => throw StateError('kênh nền tảng');
+
+  @override
+  Future<void> ghi(String khoa, String gt) async =>
+      throw StateError('kênh nền tảng');
+}
 
 class _QuyenGia implements QuyenTruyCap {
   TrangThaiQuyen tra;
@@ -221,8 +242,74 @@ void main() {
     // là mức Android cho phép, nhanh hơn thì hệ điều hành trả lại kết quả cũ
     // trong bộ đệm. Nay lấy thẳng từ hằng số nên không lệch lại được.
     await _mo(tester, _QuyenGia(TrangThaiQuyen.daCap));
-    expect(find.text('Quét lại mỗi ${TheoDoiViTri.chuKy.inSeconds} giây'),
+    expect(
+        find.text(
+            'Mỗi ${TheoDoiViTri.chuKy.inSeconds} giây — mức Android cho phép'),
         findsOneWidget);
-    expect(find.text('Quét lại mỗi 2 giây'), findsNothing);
+    expect(find.textContaining('2 giây'), findsNothing);
+  });
+
+  // --- 5. Nhớ tuỳ chọn giữa hai lần mở app ---
+
+  test('Địa chỉ máy chủ đã lưu được đọc lại khi mở app', () async {
+    // Trên điện thoại thật địa chỉ phải là IP nội bộ của máy chạy backend.
+    // Bắt gõ lại mỗi lần mở app là hỏng buổi demo.
+    final kho = _KhoGia();
+    final cu = AppSettings(kho: kho);
+    cu.datDiaChiMayChu('http://192.168.1.50:8000');
+    await Future.delayed(Duration.zero);
+
+    final moi = AppSettings(kho: kho);
+    await moi.nap();
+    expect(moi.diaChiMayChu, 'http://192.168.1.50:8000');
+  });
+
+  test('Chế độ sáng/tối và ngôn ngữ cũng được nhớ', () async {
+    final kho = _KhoGia();
+    final cu = AppSettings(kho: kho)
+      ..datCheDo(ThemeMode.dark)
+      ..datNgonNgu(const Locale('en'));
+    await Future.delayed(Duration.zero);
+    expect(cu.cheDo, ThemeMode.dark);
+
+    final moi = AppSettings(kho: kho);
+    await moi.nap();
+    expect(moi.cheDo, ThemeMode.dark);
+    expect(moi.ngonNgu.languageCode, 'en');
+  });
+
+  test('Kho hỏng thì vẫn mở được app với giá trị mặc định', () async {
+    final tuyChon = AppSettings(kho: _KhoHong());
+    await tuyChon.nap();
+    expect(tuyChon.diaChiMayChu, 'http://10.0.2.2:8000');
+    expect(tuyChon.cheDo, ThemeMode.system);
+
+    tuyChon.datCheDo(ThemeMode.dark);
+    await Future.delayed(Duration.zero);
+    expect(tuyChon.cheDo, ThemeMode.dark, reason: 'ghi hỏng không được chặn UI');
+  });
+
+  test('Giá trị đã lưu hỏng định dạng thì bỏ qua chứ không đổ', () async {
+    final tuyChon =
+        AppSettings(kho: _KhoGia({'che_do': 'khong-phai-che-do-nao'}));
+    await tuyChon.nap();
+    expect(tuyChon.cheDo, ThemeMode.system);
+  });
+
+  testWidgets('Màn Cài đặt không còn công tắc nào không nối vào đâu',
+      (tester) async {
+    // "Tự động cập nhật vị trí" và "Giữ màn hình sáng" từng bật/tắt được nhưng
+    // chỉ đổi một biến trong State: tắt "Tự động cập nhật" thì vòng quét vẫn
+    // chạy y nguyên. Một công tắc không làm gì còn tệ hơn là không có, vì người
+    // dùng tin là mình vừa đổi được một thứ.
+    await _mo(tester, _QuyenGia(TrangThaiQuyen.daCap));
+
+    for (final chu in ['Tự động cập nhật vị trí', 'Giữ màn hình sáng']) {
+      expect(find.text(chu), findsNothing, reason: 'còn công tắc chết: $chu');
+    }
+    // Phải là GlassSwitch chứ không phải Switch của Material: GlassSwitch tự
+    // vẽ nên `find.byType(Switch)` không tìm thấy gì kể cả khi công tắc còn đó,
+    // tức phép so đó xanh vĩnh viễn và không khoá được điều gì.
+    expect(find.byType(GlassSwitch), findsNothing);
   });
 }

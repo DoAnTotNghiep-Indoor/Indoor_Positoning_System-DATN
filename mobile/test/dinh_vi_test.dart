@@ -187,6 +187,7 @@ void main() {
     td.batDau();
     await Future.delayed(const Duration(milliseconds: 100));
     expect(td.viTri, isNotNull, reason: 'lần quét đầu phải có toạ độ');
+    expect(td.giayTuCapNhat, isNotNull, reason: 'đã có toạ độ thì có mốc');
 
     // Ép một vòng quét nữa qua API công khai: xuống nền rồi quay lên sẽ dừng
     // và bật lại, mà `batDau` quét ngay chứ không đợi hết chu kỳ 5 giây.
@@ -196,6 +197,8 @@ void main() {
 
     expect(td.viTri, isNull, reason: 'toạ độ cũ phải bị xoá');
     expect(td.loiApi, LoiApi.khongDuAp);
+    // "Cập nhật 3 giây trước" mà không có toạ độ nào cũng là khẳng định sai.
+    expect(td.giayTuCapNhat, isNull, reason: 'mốc cập nhật phải bị xoá theo');
     td.dispose();
   });
 
@@ -230,6 +233,14 @@ void main() {
     // bị cắt và toạ độ mất phần hậu xử lý.
     expect(theoDoi.deviceId, theoDoi.deviceId);
     expect(theoDoi.deviceId, startsWith('dlu-'));
+  });
+
+  test('Chưa định vị lần nào thì không có mốc cập nhật để mà hiện', () {
+    // Header màn Bản đồ từng viết cứng "cập nhật 2 giây trước", nên nó đúng
+    // hai giây suốt vòng đời ứng dụng — kể cả khi định vị đang tắt.
+    final theoDoi = TheoDoiViTri(diaChiMayChu: 'http://test');
+    expect(theoDoi.giayTuCapNhat, isNull);
+    theoDoi.dispose();
   });
 
   test('Chưa bật thì không có toạ độ và trạng thái là dừng', () {

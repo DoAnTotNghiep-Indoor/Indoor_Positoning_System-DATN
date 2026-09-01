@@ -50,6 +50,37 @@ void main() {
     expect(find.text('QUYỀN TRUY CẬP'), findsOneWidget);
   });
 
+  testWidgets('Chưa định vị thì nói chưa biết, không bịa tên phòng',
+      (WidgetTester tester) async {
+    // Không có máy chủ trong test nên ứng dụng chưa hề có toạ độ. Chỗ tiêu đề
+    // này từng hiện sẵn "Phòng học nhóm" — một cái tên không có trong dữ liệu
+    // khảo sát lẫn mã nguồn CTK45 — nên app trông như đã định vị xong ngay khi
+    // vừa mở. Đúng lỗi "trả lời tự tin khi không có dữ liệu" mà cả đồ án lấy
+    // làm điểm cải tiến.
+    await tester.pumpWidget(const IpsDluApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Chưa xác định vị trí'), findsOneWidget);
+    expect(find.text('Phòng học nhóm'), findsNothing);
+    expect(find.text('Chưa bật định vị'), findsOneWidget);
+  });
+
+  testWidgets('Header Bản đồ không nói "cập nhật" khi chưa có toạ độ nào',
+      (WidgetTester tester) async {
+    // Dòng phụ từng lấy một hằng số viết cứng nên luôn ghi "cập nhật 2 giây
+    // trước", kể cả lúc định vị đang tắt và chưa quét lần nào.
+    await tester.pumpWidget(const IpsDluApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Bản đồ').first);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('cập nhật'), findsNothing);
+    // Vẫn phải hiện số khu vực — bỏ vế thời gian chứ không bỏ cả dòng. Dùng
+    // chuỗi chính xác vì ô tìm kiếm cũng có chữ "khu vực" trong gợi ý.
+    expect(find.text('11 khu vực'), findsOneWidget);
+  });
+
   testWidgets('Nút tìm kiếm mở màn Tìm kiếm', (WidgetTester tester) async {
     await tester.pumpWidget(const IpsDluApp());
     await tester.pumpAndSettle();

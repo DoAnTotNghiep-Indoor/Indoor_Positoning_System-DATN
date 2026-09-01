@@ -31,8 +31,6 @@ const _cheDoTheoThuTu = <ThemeMode>[
 const _maNgonNgu = <String>['vi', 'en'];
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _tuDongCapNhat = true;
-  bool _giuManHinhSang = false;
 
   @override
   Widget build(BuildContext context) {
@@ -114,27 +112,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           GlassGroupedSection(
             header: _NhanNhom(t.settingsGroupPositioning),
             children: [
+              // Dòng THÔNG TIN, không phải tuỳ chọn. Trước đây là hai công tắc
+              // không nối vào gì: tắt "Tự động cập nhật" thì vòng quét vẫn chạy
+              // y nguyên. Chu kỳ đọc từ hằng số và không đổi được — lý do ở
+              // [TheoDoiViTri.chuKy].
               GlassListTile(
                 leading: const Icon(Icons.sync),
-                title: Text(t.settingsAutoUpdate),
-                // Lấy thẳng từ hằng số chu kỳ, không viết cứng: chuỗi cũ ghi 2 giây
-                  // trong khi vòng quét chạy 5 giây, mà 5 giây là mức Android
-                  // cho phép — nhanh hơn thì hệ điều hành trả lại kết quả cũ.
-                  subtitle:
-                      Text(t.settingsAutoUpdateSub(TheoDoiViTri.chuKy.inSeconds)),
-                trailing: GlassSwitch(
-                  value: _tuDongCapNhat,
-                  onChanged: (v) => setState(() => _tuDongCapNhat = v),
-                ),
-              ),
-              GlassListTile(
-                leading: const Icon(Icons.brightness_high_outlined),
-                title: Text(t.settingsKeepAwake),
-                subtitle: Text(t.settingsKeepAwakeSub),
-                trailing: GlassSwitch(
-                  value: _giuManHinhSang,
-                  onChanged: (v) => setState(() => _giuManHinhSang = v),
-                ),
+                title: Text(t.settingsScanCycle),
+                subtitle:
+                    Text(t.settingsScanCycleSub(TheoDoiViTri.chuKy.inSeconds)),
               ),
             ],
           ),

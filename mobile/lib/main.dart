@@ -35,7 +35,7 @@ class IpsDluApp extends StatefulWidget {
 }
 
 class _IpsDluAppState extends State<IpsDluApp> {
-  final _tuyChon = AppSettings();
+  final _tuyChon = AppSettings(kho: const KhoMacDinh());
   late final _theoDoi = TheoDoiViTri(diaChiMayChu: _tuyChon.diaChiMayChu);
 
   late final AppLifecycleListener _vongDoi;
@@ -44,6 +44,7 @@ class _IpsDluAppState extends State<IpsDluApp> {
   void initState() {
     super.initState();
     _tuyChon.addListener(_dongBoMayChu);
+    _tuyChon.nap();
     _vongDoi = AppLifecycleListener(onStateChange: _theoDoi.doiVongDoi);
   }
 
