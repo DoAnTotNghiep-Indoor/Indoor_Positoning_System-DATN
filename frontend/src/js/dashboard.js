@@ -76,6 +76,14 @@ async function napBanDo() {
   trangThai.diem = bd.diem_tham_chieu;
   soDo.datDiem(bd.diem_tham_chieu);
 
+  // Đồ thị đi lại: 58 cạnh còn lại sau khi lọc cạnh xuyên tường. Hỏng thì bỏ
+  // qua — sơ đồ mất phần cạnh nhưng vẫn còn điểm và thiết bị, còn hơn trang trắng.
+  try {
+    soDo.datCanh((await api.doThi()).canh);
+  } catch {
+    /* không có đồ thị thì thôi */
+  }
+
   $('#pham-vi').textContent =
     `${so.format(bd.pham_vi.x_max - bd.pham_vi.x_min)} × ` +
     `${so.format(bd.pham_vi.y_max - bd.pham_vi.y_min)} m · ` +

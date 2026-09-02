@@ -186,3 +186,40 @@ def test_tep_tinh_cua_dashboard_tai_duoc(client):
     for duong_dan in ("/src/css/style.css", "/src/js/dashboard.js",
                       "/src/js/coordinate.js", "/src/components/data-table.js"):
         assert client.get(duong_dan).status_code == 200, duong_dan
+
+def test_moi_phuong_thuc_trong_api_js_deu_co_noi_goi():
+    """Khai một lối gọi API rồi không dùng thì endpoint sống mà không ai thấy.
+
+    `api.doThi` từng nằm im như vậy: `GET /graph` chạy tốt, có test, nhưng
+    Dashboard không vẽ cạnh nào nên 58 cạnh của đồ thị đi lại không lên màn hình.
+    """
+    api_js = _doc(FRONTEND / "src" / "js" / "api.js")
+    khai = set(re.findall(r"^\s{2}(\w+):", api_js, re.M))
+
+    dung = "".join(_doc(t) for t in _tep_js() if t.name != "api.js")
+    khong_goi = sorted(k for k in khai if f"api.{k}(" not in dung)
+    assert not khong_goi, f"khai trong api.js mà không nơi nào gọi: {khong_goi}"
+
+
+def test_dashboard_ve_canh_do_thi_len_so_do():
+    dashboard = _doc(FRONTEND / "src" / "js" / "dashboard.js")
+    renderer = _doc(FRONTEND / "src" / "js" / "map-renderer.js")
+
+    assert "datCanh(" in renderer, "bộ vẽ chưa có lối nhận danh sách cạnh"
+    assert "soDo.datCanh(" in dashboard, "Dashboard chưa truyền cạnh xuống bộ vẽ"
+
+    # Cạnh phải vẽ TRƯỚC chấm, không thì nét cắt ngang qua đầu mút.
+    assert renderer.index("this.canh") < renderer.index("for (const d of this.diem)")
+
+
+def test_moi_canh_do_thi_deu_noi_hai_diem_co_that(client):
+    """Cạnh chỉ mang mã điểm; Dashboard tra toạ độ từ GET /map.
+
+    Một mã lệch giữa hai endpoint là cạnh biến mất khỏi sơ đồ mà không báo gì.
+    """
+    canh = client.get("/graph").json()["canh"]
+    co = {d["rp_id"] for d in client.get("/map").json()["diem_tham_chieu"]}
+
+    assert len(canh) == 58
+    thieu = {c[k] for c in canh for k in ("tu", "den")} - co
+    assert not thieu, f"cạnh trỏ tới điểm không có trong /map: {sorted(thieu)}"

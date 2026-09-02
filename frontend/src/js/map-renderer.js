@@ -3,6 +3,7 @@
 import { SO_DO, metSangKhung } from './coordinate.js';
 
 const MAU = {
+  canh: 'rgba(100, 116, 139, 0.42)',
   diem: '#94a3b8',
   diemTuyen: '#e08a1e',
   tuyen: '#e08a1e',
@@ -19,6 +20,7 @@ export class SoDoCanvas {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.diem = [];
+    this.canh = [];
     this.thietBi = new Map(); // device_id -> { x, y, vet: [] }
     this.tuyen = null;
 
@@ -33,6 +35,14 @@ export class SoDoCanvas {
 
   datDiem(ds) {
     this.diem = ds;
+    this.ve();
+  }
+
+  // Cạnh chỉ mang mã điểm, toạ độ tra từ `diem` nạp bằng GET /map. Không tự
+  // tính lại cạnh ở client: phép lọc tường chạy trên mặt nạ ảnh, client không
+  // có ảnh đó và cũng không nên có hai bản luật đi lại.
+  datCanh(ds) {
+    this.canh = ds;
     this.ve();
   }
 
@@ -85,6 +95,24 @@ export class SoDoCanvas {
 
     const q = (d) => metSangKhung(d.x, d.y, rongCss);
     const tren = new Set(this.tuyen?.map((d) => d.rp_id) ?? []);
+
+    // Cạnh vẽ TRƯỚC chấm để chấm nằm đè lên đầu mút, không bị nét cắt ngang.
+    if (this.canh.length && this.diem.length) {
+      const toaDo = new Map(this.diem.map((d) => [d.rp_id, d]));
+      ctx.strokeStyle = MAU.canh;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (const c of this.canh) {
+        const a = toaDo.get(c.tu);
+        const b = toaDo.get(c.den);
+        if (!a || !b) continue;
+        const pa = q(a);
+        const pb = q(b);
+        ctx.moveTo(pa.x, pa.y);
+        ctx.lineTo(pb.x, pb.y);
+      }
+      ctx.stroke();
+    }
 
     for (const d of this.diem) {
       const p = q(d);
