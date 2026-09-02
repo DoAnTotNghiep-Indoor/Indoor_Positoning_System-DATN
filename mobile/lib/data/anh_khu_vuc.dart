@@ -17,7 +17,7 @@ class AnhKhuVuc {
     'hoi_truong_thu_vien': 5,
     'khu_vuc_doc': 7,
     'khu_vuc_tu_hoc': 5,
-    'phong_tap_chi': 4,
+    'phong_tap_chi': 3,
     'tv3_4': 3,
   };
 

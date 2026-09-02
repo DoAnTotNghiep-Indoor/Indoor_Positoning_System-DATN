@@ -50,7 +50,7 @@ void main() {
         so++;
       }
     }
-    expect(so, 38);
+    expect(so, 37);
   });
 
   test('AnhKhuVuc khớp đúng danh sách asset trong pubspec.yaml', () async {

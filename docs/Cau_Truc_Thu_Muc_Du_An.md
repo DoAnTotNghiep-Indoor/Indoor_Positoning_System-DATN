@@ -277,24 +277,30 @@ System_Indoor/
 │
 ├── mobile/                              # NGOÀI đề cương — xem mobile/README.md
 │   ├── lib/  services/  data/  screens/  widgets/  theme/  l10n/
-│   ├── assets/  map/Map.png  images/ (38 ảnh, 11 khu vực)
-│   └── test/                            # 65 bài
+│   ├── assets/  map/Map.png  images/ (37 ảnh, 11 khu vực)
+│   └── test/                            # 74 bài
 │
 ├── tools/                               # chạy một lần rồi commit kết quả
 │   ├── trich_ban_do.py                  # Map.png → ban_do_tang1.json
-│   └── sinh_khu_vuc.py                  # CSV → khu_vuc_thu_vien.dart
+│   ├── sinh_khu_vuc.py                  # CSV → khu_vuc_thu_vien.dart
+│   └── ve_ban_ve.py                     # bản vẽ tầng 1 cho báo cáo
 │
-├── tests/                               # 128 bài
+├── tests/                               # 131 bài
 │   ├── test_preprocess.py  test_feature_mapper.py  test_postprocess.py
 │   ├── test_train.py  test_api.py  test_route.py
 │   └── test_luu_tru.py  test_dashboard.py  test_khu_vuc.py
 │
-├── reports/  figures/ (7 biểu đồ)  tables/ (3 bảng)
+├── reports/  figures/ (13 biểu đồ)  tables/ (3 bảng)
 └── docs/     3 tài liệu .md + frame thiết kế
 ```
 
-Hai thư mục rỗng còn lại từ thiết kế cũ: `backend/migrations/` (Alembic, bỏ cùng
-PostgreSQL) và `frontend/assets/icons/` (Dashboard không dùng tệp icon nào).
+Đợt dọn ngày 02/09 đã xoá hẳn phần thừa của thiết kế cũ: hai thư mục rỗng
+`backend/migrations/` (Alembic, bỏ cùng PostgreSQL) và `frontend/assets/icons/`
+(Dashboard không dùng tệp icon nào); hai notebook `01_data_exploration.ipynb`
+cùng `04_evaluation.ipynb` không có ô nào, việc của chúng nay nằm ở
+`ml/audit.py`, `ml/evaluate.py` và `ml/report.py`; và `docs/uxui.jpg` là bản
+xuất raster của chính `ips-dlu-screens-v4.svg` đang giữ, nặng gấp ba lần mà
+không tệp nào tham chiếu.
 
 ---
 

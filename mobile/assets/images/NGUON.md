@@ -1,6 +1,6 @@
 # Nguồn ảnh
 
-38 ảnh trong 11 thư mục dưới đây do **nhóm CTK45** chụp tại Thư viện Đại học Đà
+37 ảnh trong 11 thư mục dưới đây do **nhóm CTK45** chụp tại Thư viện Đại học Đà
 Lạt, lấy từ nhánh `Backup` của kho `github.com/NgocSongNe/IPS`
 (`assets/images/`). Đây là dữ liệu kế thừa, không phải ảnh nhóm mình chụp.
 
