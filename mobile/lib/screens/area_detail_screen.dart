@@ -20,10 +20,56 @@ import 'map_screen.dart';
 /// Mọi lối vào đều phải truyền [khuVuc]. Trước đây bốn trong năm lối mở màn này
 /// không tham số, nên mười hai mục bấm được trên Trang chủ và Tìm kiếm đều dẫn
 /// tới đúng một màn mang tên "Không gian đọc".
+/// Mở màn Chi tiết bằng chuyển cảnh TRƯỢT LÊN TỪ ĐÁY.
+///
+/// Dùng route riêng chứ không `MaterialPageRoute`: mặc định của Android là đẩy
+/// ngang, đọc như "sang một chỗ khác". Nội dung ở đây là thông tin của chính
+/// chỗ vừa chạm nên trượt lên hợp hơn — cùng hướng với tấm tóm tắt trên sơ đồ,
+/// hai lối vào cho ra cùng một cảm giác.
+///
+/// Tôn trọng thiết lập tắt hiệu ứng của hệ điều hành: lúc đó bỏ luôn phần
+/// trượt thay vì rút ngắn nó.
+Future<void> moChiTietKhuVuc(
+  BuildContext context,
+  KhuVuc khuVuc, {
+  bool toanManHinh = true,
+}) {
+  return Navigator.of(context).push(
+    PageRouteBuilder<void>(
+      transitionDuration: const Duration(milliseconds: 320),
+      reverseTransitionDuration: const Duration(milliseconds: 260),
+      pageBuilder: (_, __, ___) =>
+          AreaDetailScreen(khuVuc: khuVuc, toanManHinh: toanManHinh),
+      transitionsBuilder: (context, hoat, __, con) {
+        if (MediaQuery.disableAnimationsOf(context)) return con;
+        return SlideTransition(
+          position: Tween(begin: const Offset(0, 1), end: Offset.zero).animate(
+            CurvedAnimation(parent: hoat, curve: Curves.easeOutCubic),
+          ),
+          child: con,
+        );
+      },
+    ),
+  );
+}
+
 class AreaDetailScreen extends StatelessWidget {
   final KhuVuc khuVuc;
 
-  const AreaDetailScreen({super.key, required this.khuVuc});
+  /// Thông tin chiếm trọn màn, không chừa nửa dưới cho sơ đồ.
+  ///
+  /// Bật khi vào từ danh sách — Trang chủ hoặc Tìm kiếm — nơi người dùng chọn
+  /// theo tên chứ không theo vị trí, nên nửa sơ đồ phía sau chỉ chiếm chỗ của
+  /// chính nội dung họ vừa hỏi. Tắt khi vào từ tấm tóm tắt trên sơ đồ: ở đó
+  /// người dùng vừa chạm một chấm nên giữ bản đồ lại mới thấy mình đang xem chỗ
+  /// nào.
+  final bool toanManHinh;
+
+  const AreaDetailScreen({
+    super.key,
+    required this.khuVuc,
+    this.toanManHinh = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +83,9 @@ class AreaDetailScreen extends StatelessWidget {
     // và không có cách nào cuộn tới. Chặn ở 78% chiều cao rồi cho cuộn bên trong
     // vừa giữ được sơ đồ phía sau vẫn nhìn thấy, vừa không giấu mất nội dung.
     final caoToiDa = MediaQuery.sizeOf(context).height * 0.78;
+
+    // Chừa đúng chỗ cho hàng nút quay lại, phần còn lại là của nội dung.
+    const caoHeader = 62.0;
 
     // Màn này được đẩy chồng lên nên phải tự cấp nền: kính khúc xạ theo thứ
     // nằm sau nó, thiếu nền thì thẻ kính trông phẳng và bạc màu.
@@ -56,15 +105,16 @@ class AreaDetailScreen extends StatelessWidget {
             // Trước đây là sơ đồ vẽ tay với những phòng không có trong dữ liệu
             // khảo sát, nên màn chi tiết của một khu vực thật lại đứng trên nền
             // một toà nhà không tồn tại.
-            const Positioned.fill(
-              child: Padding(
-                padding: EdgeInsets.only(top: 116),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: SoDoMatBang(),
+            if (!toanManHinh)
+              const Positioned.fill(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 116),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: SoDoMatBang(),
+                  ),
                 ),
               ),
-            ),
 
             // Header + nút quay lại.
             //
@@ -87,7 +137,9 @@ class AreaDetailScreen extends StatelessWidget {
                     onPressed: () => Navigator.maybePop(context),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(child: MapHeader()),
+                  // Toàn màn hình thì bỏ header bản đồ: tấm thông tin ngay dưới
+                  // đã ghi "Tầng 1 · Thư viện Đại học Đà Lạt" rồi.
+                  if (!toanManHinh) const Expanded(child: MapHeader()),
                 ],
               ),
             ),
@@ -95,11 +147,14 @@ class AreaDetailScreen extends StatelessWidget {
             Positioned(
               left: 0,
               right: 0,
+              top: toanManHinh ? caoHeader : null,
               bottom: 0,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: caoToiDa),
-                child: _DetailSheet(khuVuc: khuVuc),
-              ),
+              child: toanManHinh
+                  ? _DetailSheet(khuVuc: khuVuc)
+                  : ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: caoToiDa),
+                      child: _DetailSheet(khuVuc: khuVuc),
+                    ),
             ),
           ],
         ),

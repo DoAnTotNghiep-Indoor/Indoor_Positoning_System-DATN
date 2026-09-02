@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../data/floor_map.dart';
 import '../data/khu_vuc.dart';
-import '../l10n/app_localizations.dart';
-import '../screens/area_detail_screen.dart';
-import 'tap_feedback.dart';
+import 'tom_tat_khu_vuc.dart';
 import '../services/api_dinh_vi.dart';
 import '../services/theo_doi_vi_tri.dart';
 import '../theme/app_colors.dart';
@@ -61,7 +59,7 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
       behavior: HitTestBehavior.opaque,
       onTapUp: (e) {
         final k = _khuVucTaiDiem(e.localPosition, theoDoi.khuVuc, rong);
-        if (k != null) _hienTom(context, k);
+        if (k != null) hienTomTatKhuVuc(context, k);
       },
       child: Stack(
         children: [
@@ -217,81 +215,6 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
   }
 }
 
-/// Tấm tóm tắt khi chạm vào một khu vực trên sơ đồ.
-///
-/// Học theo bottom sheet của CTK45: tên, mô tả, rồi nút mở màn chi tiết. Chạm
-/// thẳng vào bản đồ là cách tự nhiên nhất để hỏi "chỗ này là chỗ nào".
-void _hienTom(BuildContext context, KhuVuc k) {
-  showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    builder: (sheet) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(k.icon, size: 22, color: AppColors.accentOf(sheet)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Semantics(
-                    header: true,
-                    child: Text(k.nhom,
-                        style: Theme.of(sheet).textTheme.titleLarge),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              k.moTa,
-              style: TextStyle(
-                fontSize: 13.5,
-                height: 1.4,
-                color: AppColors.inkOf(sheet).withValues(alpha: 0.72),
-              ),
-            ),
-            const SizedBox(height: 18),
-            TapFeedback(
-              semanticLabel: L.of(sheet).a11yOpenArea,
-              onTap: () {
-                Navigator.of(sheet).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => AreaDetailScreen(khuVuc: k),
-                  ),
-                );
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Theme.of(sheet).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Text(
-                  L.of(sheet).mapOpenDetail,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(sheet).colorScheme.onPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
 
 /// Chấm 40 điểm tham chiếu và tuyến đường, vẽ thẳng lên canvas.
 ///

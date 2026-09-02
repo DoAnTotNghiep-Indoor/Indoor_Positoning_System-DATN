@@ -7,12 +7,12 @@ import '../l10n/app_localizations.dart';
 import '../services/api_dinh_vi.dart';
 import '../services/quet_wifi.dart';
 import '../services/theo_doi_vi_tri.dart';
+import 'area_detail_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_settings.dart';
 import '../theme/app_metrics.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/tap_feedback.dart';
-import 'area_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -191,11 +191,7 @@ class _KhoiViTri extends StatelessWidget {
             TapFeedback(
               semanticLabel: khu.ten,
               semanticHint: t.a11yOpenArea,
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => AreaDetailScreen(khuVuc: khuHienTai),
-                ),
-              ),
+              onTap: () => moChiTietKhuVuc(context, khuHienTai),
               child: Text(khu.ten,
                   style: Theme.of(context).textTheme.displayLarge),
             )
@@ -281,9 +277,7 @@ class _QuickTile extends StatelessWidget {
       radius: 24,
       semanticLabel: khuVuc.nhom,
       semanticHint: t.a11yOpenArea,
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => AreaDetailScreen(khuVuc: khuVuc)),
-      ),
+      onTap: () => moChiTietKhuVuc(context, khuVuc),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -345,9 +339,7 @@ class _NearbyRow extends StatelessWidget {
     return TapFeedback(
       semanticLabel: khuVuc.nhom,
       semanticHint: t.a11yOpenArea,
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => AreaDetailScreen(khuVuc: khuVuc)),
-      ),
+      onTap: () => moChiTietKhuVuc(context, khuVuc),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9.5),
         child: Row(

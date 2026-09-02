@@ -61,6 +61,10 @@ class _IpsDluAppState extends State<IpsDluApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Hai scope bọc NGOÀI MaterialApp, không phải trong `home:`. Route đẩy
+    // chồng lên — màn Chi tiết, tấm tóm tắt trên sơ đồ — dựng ở nhánh khác của
+    // cây nên chỉ thấy được scope nào nằm trên Navigator. Dời xuống dưới là
+    // chúng ném "Thiếu TheoDoiViTriScope" ngay lần chạm đầu tiên.
     return AppSettingsScope(
       settings: _tuyChon,
       child: TheoDoiViTriScope(

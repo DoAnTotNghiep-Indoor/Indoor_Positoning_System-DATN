@@ -321,9 +321,7 @@ class _ResultCard extends StatelessWidget {
       radius: 24,
       semanticLabel: khuVuc.nhom,
       semanticHint: t.a11yOpenArea,
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => AreaDetailScreen(khuVuc: khuVuc)),
-      ),
+      onTap: () => moChiTietKhuVuc(context, khuVuc),
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ips_dlu/main.dart';
+import 'package:ips_dlu/screens/area_detail_screen.dart';
+import 'package:ips_dlu/widgets/so_do_that.dart';
 
 /// Kiểm tra các nút có thực sự phản hồi khi chạm.
 ///
@@ -67,5 +69,70 @@ void main() {
       await tester.tap(find.byIcon(Icons.arrow_back));
       await tester.pumpAndSettle();
     }
+  });
+
+  testWidgets('Trang chủ vào thẳng màn Chi tiết, không chen tấm tóm tắt',
+      (WidgetTester tester) async {
+    // Hai màn cố ý khác nhau. Ở Trang chủ người dùng đã đọc tên và mô tả ngay
+    // trên danh sách, chen thêm một tấm nữa là bắt bấm hai lần cho cùng việc.
+    await tester.pumpWidget(const IpsDluApp());
+    await tester.pumpAndSettle();
+
+    // "Cửa ra vào" không nằm trong bốn ô truy cập nhanh nên chỉ có ở danh sách.
+    final dong = find.text('Cửa ra vào');
+    await tester.ensureVisible(dong.first);
+    await tester.pumpAndSettle();
+    await tester.tap(dong.first);
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.arrow_back), findsOneWidget,
+        reason: 'phải sang thẳng màn Chi tiết');
+    expect(find.text('Mở chi tiết khu vực'), findsNothing);
+  });
+
+  testWidgets('Màn Chi tiết trượt lên từ đáy chứ không đẩy ngang',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const IpsDluApp());
+    await tester.pumpAndSettle();
+
+    final cao = tester.getSize(find.byType(MaterialApp)).height;
+    await tester.tap(find.text('Bàn thủ thư').first);
+
+    // Giữa chừng chuyển cảnh: màn mới phải đang nằm THẤP HƠN chỗ nó dừng, tức
+    // đi lên từ đáy. Đẩy ngang thì dy giữ nguyên 0 suốt.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 90));
+    final giua = tester.getTopLeft(find.byType(AreaDetailScreen)).dy;
+    expect(giua, greaterThan(0.0), reason: 'không thấy trượt lên');
+    expect(giua, lessThan(cao));
+
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byType(AreaDetailScreen)).dy, 0.0);
+  });
+
+  testWidgets('Vào từ Trang chủ thì thông tin chiếm trọn màn, không có sơ đồ',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const IpsDluApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bàn thủ thư').first);
+    await tester.pumpAndSettle();
+
+    // Chọn theo tên chứ không theo vị trí, nên nửa sơ đồ phía sau chỉ chiếm chỗ
+    // của chính nội dung vừa hỏi.
+    expect(
+      find.descendant(
+        of: find.byType(AreaDetailScreen),
+        matching: find.byType(SoDoMatBang),
+      ),
+      findsNothing,
+    );
+
+    // Nội dung phải cao gần trọn màn, không dừng ở 78% như lúc còn chừa sơ đồ.
+    final cao = tester.getSize(find.byType(MaterialApp)).height;
+    final tam = find.descendant(
+      of: find.byType(AreaDetailScreen),
+      matching: find.text('Bàn thủ thư'),
+    );
+    expect(tester.getTopLeft(tam).dy, lessThan(cao * 0.6));
   });
 }

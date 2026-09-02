@@ -133,3 +133,29 @@ def test_moi_loi_vao_deu_truyen_khu_vuc():
             if "super.key" in goi:
                 continue
             assert "khuVuc:" in goi, f"{p.name}: {goi}"
+
+
+def test_chi_mot_noi_dinh_nghia_cach_mo_man_chi_tiet():
+    """Mọi lối vào phải đi qua `moChiTietKhuVuc`, nơi duy nhất dựng route.
+
+    Đẩy thẳng bằng `MaterialPageRoute` thì màn trượt NGANG theo mặc định của
+    Android, đọc như "sang một chỗ khác". Thông tin ở đây là của chính chỗ vừa
+    chạm nên phải trượt LÊN, cùng hướng với tấm tóm tắt trên sơ đồ.
+    """
+    lib = config.ROOT_DIR / "mobile" / "lib"
+    sai = []
+    for p in lib.rglob("*.dart"):
+        # Bỏ dòng chú thích trước khi quét: chính docstring của
+        # `moChiTietKhuVuc` giải thích vì sao không dùng MaterialPageRoute.
+        ma = "\n".join(
+            l for l in p.read_text(encoding="utf-8").splitlines()
+            if not l.lstrip().startswith("//")
+        )
+        for m in re.finditer(r"MaterialPageRoute[^;]*?AreaDetailScreen", ma, re.S):
+            sai.append(f"{p.name}: {m.group(0)[:60]}")
+    assert not sai, f"còn lối vào đẩy ngang: {sai}"
+
+    dinh_nghia = (lib / "screens" / "area_detail_screen.dart").read_text(encoding="utf-8")
+    assert "SlideTransition" in dinh_nghia
+    assert "Offset(0, 1)" in dinh_nghia, "phải trượt từ đáy lên"
+    assert "disableAnimationsOf" in dinh_nghia, "phải tôn trọng thiết lập tắt hiệu ứng"

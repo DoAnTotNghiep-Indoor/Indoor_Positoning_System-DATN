@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 
 import 'package:ips_dlu/data/khu_vuc.dart';
 import 'package:ips_dlu/l10n/app_localizations.dart';
+import 'package:ips_dlu/screens/area_detail_screen.dart';
 import 'package:ips_dlu/screens/map_screen.dart';
 import 'package:ips_dlu/services/api_dinh_vi.dart';
 import 'package:ips_dlu/services/quet_wifi.dart';
@@ -98,10 +99,16 @@ Future<void> _mo(WidgetTester tester, TheoDoiViTri td,
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
-  await tester.pumpWidget(MaterialApp(
-    localizationsDelegates: L.localizationsDelegates,
-    supportedLocales: L.supportedLocales,
-    home: TheoDoiViTriScope(theoDoi: td, child: const MapScreen()),
+  // Scope bọc NGOÀI MaterialApp, đúng như `IpsDluApp` dựng. Đặt vào trong
+  // `home:` thì nó nằm dưới Navigator, và mọi route đẩy chồng lên — tấm tóm
+  // tắt, màn Chi tiết — không còn thấy nó.
+  await tester.pumpWidget(TheoDoiViTriScope(
+    theoDoi: td,
+    child: const MaterialApp(
+      localizationsDelegates: L.localizationsDelegates,
+      supportedLocales: L.supportedLocales,
+      home: MapScreen(),
+    ),
   ));
   await tester.pumpAndSettle();
 }
@@ -223,6 +230,74 @@ void main() {
     await tester.tap(_chip('Căn tin'));
     await tester.pumpAndSettle();
     expect(loc(), isNull);
+
+    td.dispose();
+  });
+
+  testWidgets('Chạm sơ đồ mở tấm có cả nút chỉ đường lẫn nút xem chi tiết',
+      (tester) async {
+    final td = _theoDoi();
+    await _mo(tester, td);
+
+    // Chạm giữa sơ đồ: điểm gần nhất là RP20 "Bàn thủ thư" ở (0, 20), cách tâm
+    // khoảng 6 m nên lọt ngưỡng 12 m của phép bắt khu vực.
+    await tester.tap(find.byType(SoDoMatBang));
+    await tester.pumpAndSettle();
+
+    final t = L.of(tester.element(find.byType(MapScreen)));
+    expect(find.text('Bàn thủ thư'), findsWidgets);
+    expect(find.text(t.mapOpenDetail), findsOneWidget);
+
+    // Chưa định vị thì nút chỉ đường đổi việc thay vì tắt — đoán một điểm xuất
+    // phát bất kỳ sẽ cho ra tuyến sai trông rất hợp lý.
+    expect(find.text(t.detailNeedPosition), findsOneWidget);
+    expect(find.text(t.detailGoHere), findsNothing);
+
+    td.dispose();
+  });
+
+  testWidgets('Có vị trí thì nút chỉ đường tìm tuyến rồi đóng tấm lại',
+      (tester) async {
+    final td = _theoDoi();
+    td.batDau();
+    await _mo(tester, td);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(SoDoMatBang));
+    await tester.pumpAndSettle();
+
+    final t = L.of(tester.element(find.byType(MapScreen)));
+    await tester.tap(find.text(t.detailGoHere));
+    await tester.pumpAndSettle();
+
+    // Tấm đóng lại để lộ sơ đồ, tuyến nằm sẵn trong TheoDoiViTri nên tự vẽ lên
+    // kèm thẻ tổng quãng đường.
+    expect(find.text(t.mapOpenDetail), findsNothing);
+    expect(td.tuyen, isNotNull);
+    expect(find.byIcon(Icons.turn_right_rounded), findsOneWidget);
+
+    td.dispose();
+  });
+
+  testWidgets('Vào từ tấm trên sơ đồ thì màn Chi tiết vẫn giữ bản đồ phía sau',
+      (tester) async {
+    final td = _theoDoi();
+    await _mo(tester, td);
+    await tester.tap(find.byType(SoDoMatBang));
+    await tester.pumpAndSettle();
+
+    final t = L.of(tester.element(find.byType(MapScreen)));
+    await tester.tap(find.text(t.mapOpenDetail));
+    await tester.pumpAndSettle();
+
+    // Người dùng vừa chạm một chấm nên giữ sơ đồ lại mới thấy đang xem chỗ nào.
+    expect(
+      find.descendant(
+        of: find.byType(AreaDetailScreen),
+        matching: find.byType(SoDoMatBang),
+      ),
+      findsOneWidget,
+    );
 
     td.dispose();
   });
