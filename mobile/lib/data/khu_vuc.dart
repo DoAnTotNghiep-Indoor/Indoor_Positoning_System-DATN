@@ -50,11 +50,9 @@ class KhuVuc {
     return min == double.infinity ? min : math.sqrt(min);
   }
 
-  /// Tâm của từng CỤM điểm, mỗi cụm một chỗ đặt nhãn trên sơ đồ.
-  ///
-  /// Không dùng trọng tâm cả nhóm: 5 trong 11 nhóm có trọng tâm rơi cách điểm
-  /// gần nhất của chính nó hơn 8 m. Gom theo liên kết đơn, hai điểm cách nhau
-  /// trong [nguongCumM] thì cùng cụm.
+  /// Tâm của từng CỤM điểm, mỗi cụm một chỗ đặt nhãn. Không dùng trọng tâm cả
+  /// nhóm: 5 trong 11 nhóm có trọng tâm rơi cách điểm gần nhất hơn 8 m. Gom
+  /// theo liên kết đơn trong [nguongCumM].
   List<Offset> get tamCum {
     final cha = List.generate(diem.length, (i) => i);
     int goc(int i) {

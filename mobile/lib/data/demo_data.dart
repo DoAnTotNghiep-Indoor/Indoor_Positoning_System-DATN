@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 
 /// Vài chuỗi cố định của toà nhà, cùng phép chọn chuỗi theo ngôn ngữ.
 ///
-/// Từng là kho dữ liệu demo cho cả màn Trang chủ, Tìm kiếm và Bản đồ. Nay ba
-/// màn đó đều đọc dữ liệu thật từ `GET /map`, nên chỉ còn lại đây những gì
-/// không đến từ máy chủ: tên toà nhà, tên tầng và phiên bản ứng dụng.
+/// Ba màn Trang chủ, Tìm kiếm, Bản đồ nay đọc dữ liệu thật từ `GET /map`, nên
+/// đây chỉ còn thứ không đến từ máy chủ: tên toà nhà, tên tầng, phiên bản.
 
-/// Chọn chuỗi theo ngôn ngữ đang bật.
-///
-/// Tên khu vực là danh từ riêng của toà nhà nên không nằm trong `.arb`; mỗi mục
-/// giữ sẵn hai bản.
+/// Chọn chuỗi theo ngôn ngữ đang bật. Tên khu vực là danh từ riêng nên không
+/// nằm trong `.arb`; mỗi mục giữ sẵn hai bản.
 String theoNgonNgu(BuildContext context, String vi, String en) =>
     Localizations.localeOf(context).languageCode == 'en' ? en : vi;
 

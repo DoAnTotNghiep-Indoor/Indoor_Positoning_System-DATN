@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:ips_dlu/data/khu_vuc_thu_vien.dart';
 import 'package:ips_dlu/main.dart';
 
 void main() {
@@ -33,12 +34,10 @@ void main() {
     // DemoData — kiểm nhãn dòng thay vì kiểm giá trị.
     expect(find.text('Máy chủ định vị'), findsOneWidget);
 
-    // Màn Cài đặt nay có 4 nhóm nên nhóm cuối nằm ngoài vùng nhìn; ListView
-    // chưa dựng widget chưa hiển thị, phải cuộn tới thì mới tìm thấy.
-    //
-    // Phải chỉ rõ cuộn cái nào: trong cây còn nhiều Scrollable khác — hai
-    // segmented control ở nhóm GIAO DIỆN cũng cuộn ngang được — nên để mặc
-    // định thì scrollUntilVisible báo "Too many elements".
+    // Màn Cài đặt nay có 4 nhóm nên nhóm cuối nằm ngoài vùng nhìn; ListView chưa
+    // dựng widget chưa hiển thị, phải cuộn tới mới tìm thấy. Phải chỉ rõ cuộn
+    // cái nào — trong cây còn nhiều Scrollable khác nên để mặc định thì
+    // scrollUntilVisible báo "Too many elements".
     await tester.scrollUntilVisible(
       find.text('QUYỀN TRUY CẬP'),
       200,
@@ -77,8 +76,10 @@ void main() {
 
     expect(find.textContaining('cập nhật'), findsNothing);
     // Vẫn phải hiện số khu vực — bỏ vế thời gian chứ không bỏ cả dòng. Dùng
-    // chuỗi chính xác vì ô tìm kiếm cũng có chữ "khu vực" trong gợi ý.
-    expect(find.text('11 khu vực'), findsOneWidget);
+    // chuỗi chính xác vì ô tìm kiếm cũng có chữ "khu vực" trong gợi ý; số lấy
+    // từ chính bộ dữ liệu nhúng sẵn để thêm khu vực không làm bài này đỏ oan.
+    final soKhuVuc = KhuVucThuVien.tatCa.length;
+    expect(find.text('$soKhuVuc khu vực'), findsOneWidget);
   });
 
   testWidgets('Nút tìm kiếm mở màn Tìm kiếm', (WidgetTester tester) async {

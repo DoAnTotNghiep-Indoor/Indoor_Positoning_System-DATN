@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -44,10 +45,26 @@ class _QuetGia extends MayQuetWifi {
       const [DiemTruyCap(bssid: '88:dc:97:12:62:cf', rssi: -57)];
 }
 
+/// Bản đồ hai điểm nằm ĐÚNG hai mép trái/phải, tên dài. Dùng để kiểm nhãn có bị
+/// cắt cụt ở mép không — trên máy thật chúng hiện thành "Kh…" và "Hành …".
+String _banDoSatMep() => jsonEncode({
+      'don_vi': 'met',
+      'pham_vi': {'x_min': -43, 'x_max': 43, 'y_min': 0, 'y_max': 52},
+      'diem_tham_chieu': [
+        {'rp_id': 'RP22', 'x': -43.0, 'y': 35.0,
+         'ten': 'Khu vực đọc', 'nhom': 'Khu vực đọc'},
+        {'rp_id': 'RP25', 'x': 43.0, 'y': 35.0,
+         'ten': 'Hành lang', 'nhom': 'Hành lang'},
+      ],
+      'do_thi': {'so_diem': 2, 'so_canh': 1, 'canh_ngan_nhat_m': 1.0,
+                 'canh_dai_nhat_m': 2.0, 'bac_trung_binh': 1.0},
+    });
+
 /// Máy chủ giả trả về một toạ độ cố định cho /predict và bản đồ hai điểm.
-TheoDoiViTri _theoDoi({double x = 0, double y = 0}) {
+TheoDoiViTri _theoDoi({double x = 0, double y = 0, String Function()? banDo}) {
   final client = MockClient((yc) async {
-    final than = yc.url.path.endsWith('/map') ? _banDo() : _traLoi(x, y);
+    final than =
+        yc.url.path.endsWith('/map') ? (banDo ?? _banDo)() : _traLoi(x, y);
     return http.Response.bytes(utf8.encode(than), 200,
         headers: {'content-type': 'application/json'});
   });
@@ -71,7 +88,7 @@ Future<void> _mo(WidgetTester tester, TheoDoiViTri td) async {
 void main() {
   test('Bốn góc hộp toạ độ rơi đúng bốn góc lưới chấm trong ảnh', () {
     // Lưới chấm trải x 24,5..1024,5 và y 20,5..625,5 px, ứng với hộp bao
-    // x ∈ [-43, 43] m và y ∈ [0, 52] m của 40 điểm tham chiếu.
+    // x ∈ [-43, 43] m và y ∈ [0, 52] m của bộ điểm tham chiếu.
     expect(SoDoThat.sangPixel(-43, 0).dx, closeTo(24.5, 0.01));
     expect(SoDoThat.sangPixel(-43, 0).dy, closeTo(625.5, 0.01));
     expect(SoDoThat.sangPixel(43, 52).dx, closeTo(1024.5, 0.01));
@@ -80,7 +97,7 @@ void main() {
 
   test('Trục y hướng LÊN: y lớn hơn cho pixel cao hơn trên ảnh', () {
     // Chiều này là kết luận từ hình dạng toà nhà chứ không phải quy ước tuỳ
-    // chọn — lật nó thì cả 40 điểm sai phòng. Xem tools/trich_ban_do.py.
+    // chọn — lật nó thì mọi điểm sai phòng. Xem tools/trich_ban_do.py.
     expect(SoDoThat.sangPixel(0, 52).dy, lessThan(SoDoThat.sangPixel(0, 0).dy));
   });
 
@@ -101,16 +118,47 @@ void main() {
     expect(cham, findsOneWidget);
 
     // Số mong đợi viết thẳng bằng TỈ LỆ đo trên ảnh gốc, KHÔNG gọi lại
-    // SoDoThat.sangKhung: gọi lại thì hàm tự so với chính nó, có lật ngược trục
-    // hay đổi tỉ lệ bài test vẫn xanh.
-    //
-    //   x = 22 m  ->  24,5 + (22+43)·11,6279 = 780,31 px  ->  780,31/1053
-    //   y = 52 m  ->  625,5 - 52·11,6346     =  20,50 px  ->   20,50/651
+    // SoDoThat.sangKhung: gọi lại thì hàm tự so với chính nó, lật ngược trục hay
+    // đổi tỉ lệ bài test vẫn xanh.
+    //   x = 22 m -> 24,5 + (22+43)·11,6279 = 780,31 px -> 780,31/1053
+    //   y = 52 m -> 625,5 - 52·11,6346     =  20,50 px ->  20,50/651
     final khung = find.byType(SoDoMatBang);
     final kt = tester.getSize(khung);
     final o = tester.getCenter(cham) - tester.getTopLeft(khung);
     expect(o.dx / kt.width, closeTo(780.31 / 1053, 0.002));
     expect(o.dy / kt.height, closeTo(20.50 / 651, 0.002));
+
+    td.dispose();
+  });
+
+  testWidgets('Nhãn của khu vực sát mép nằm trọn trong khung, không cụt',
+      (tester) async {
+    // RP22 ở x = -43 và RP25 ở x = +43 là hai mép của hộp toạ độ, nên nhãn của
+    // chúng căn giữa quanh chấm sẽ thò ra ngoài nếu không kẹp lại. Cách đặt cũ
+    // (`left: 0, width: tam.dx * 2`) cho cụm trái bề rộng gần 0 và cụm phải một
+    // hộp tràn khỏi khung — đúng lỗi thấy ở Hình 21 của CTK45.
+    final td = _theoDoi(banDo: _banDoSatMep);
+    await _mo(tester, td);
+
+    final khung = tester.getRect(find.byType(SoDoMatBang));
+    for (final ten in ['Khu vực đọc', 'Hành lang']) {
+      final o = find.text(ten);
+      expect(o, findsOneWidget, reason: '$ten phải hiện đủ chữ');
+
+      final hop = tester.getRect(o);
+      expect(hop.left, greaterThanOrEqualTo(khung.left - 0.01),
+          reason: '$ten thò ra khỏi mép trái');
+      expect(hop.right, lessThanOrEqualTo(khung.right + 0.01),
+          reason: '$ten thò ra khỏi mép phải');
+
+      // Hỏi thẳng bộ dựng chữ xem nó có phải cắt bớt không, thay vì tự đo lại
+      // bề rộng: đo lại là dựng đúng cái kiểu chữ có thể đang sai, nên bài test
+      // sẽ đồng ý với chính lỗi mình cần bắt. Lần trước đo bằng kiểu trần,
+      // không gộp DefaultTextStyle lẫn textScaler, và mọi nhãn trên máy thật bị
+      // cắt thành "Cầu thang tần…" mà bài test vẫn xanh.
+      final chu = tester.renderObject<RenderParagraph>(o);
+      expect(chu.didExceedMaxLines, isFalse, reason: '$ten hiện thành "…"');
+    }
 
     td.dispose();
   });
@@ -160,11 +208,12 @@ void main() {
   });
 
   test('Bán kính quầng bằng nửa trung vị khoảng cách tới điểm gần nhất', () {
-    // Chốt 3,5 m vào chính dữ liệu khảo sát chứ không để nó là số chọn cho đẹp.
-    // Đo lại từ 40 điểm nhúng sẵn: trung vị khoảng cách tới điểm gần nhất là
-    // 7,0 m, nên quầng vừa chạm nhau chứ không nuốt điểm bên cạnh.
+    // Chốt bán kính vào chính dữ liệu khảo sát chứ không để nó là số chọn cho
+    // đẹp: quầng phải vừa chạm nhau, không nuốt điểm bên cạnh. Trung vị đo lại
+    // từ bộ điểm nhúng sẵn nên thêm mốc là nó tự đổi theo — sai số 0,1 m là
+    // phần làm tròn của hằng số.
     final diem = [for (final k in KhuVucThuVien.tatCa) ...k.diem];
-    expect(diem.length, 40);
+    expect(diem, isNotEmpty);
 
     final gan = [
       for (final a in diem)
@@ -175,7 +224,7 @@ void main() {
     ]..sort();
     final trungVi = (gan[diem.length ~/ 2 - 1] + gan[diem.length ~/ 2]) / 2;
 
-    expect(trungVi, closeTo(7.0, 0.01));
-    expect(SoDoThat.banKinhQuangM, closeTo(trungVi / 2, 0.01));
+    expect(SoDoThat.banKinhQuangM, closeTo(trungVi / 2, 0.1),
+        reason: 'trung vị hiện tại $trungVi m');
   });
 }

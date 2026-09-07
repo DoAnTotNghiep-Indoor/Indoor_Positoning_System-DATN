@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 /// Bọc một vùng chạm để nó có phản hồi khi bấm, và để trình đọc màn hình nhận
 /// ra đó là nút.
 ///
-/// `lg.GlassCard` 0.30.2 KHÔNG nhận `onTap` — hiệu ứng jelly của thư viện chỉ
-/// có ở `GlassButton`/`GlassIconButton`. Không dùng `InkWell` thay thế:
-/// `GlassScaffold` không dựng `Material` nên `InkWell` ném assertion, và gợn
-/// mực của Material vẽ đè lên mặt kính.
+/// `lg.GlassCard` 0.30.2 KHÔNG nhận `onTap` — hiệu ứng jelly chỉ có ở
+/// `GlassButton`/`GlassIconButton`. Không dùng `InkWell` thay: `GlassScaffold`
+/// không dựng `Material` nên nó ném assertion, và gợn mực vẽ đè lên mặt kính.
 class TapFeedback extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;

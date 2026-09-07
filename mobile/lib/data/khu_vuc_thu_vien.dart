@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'khu_vuc.dart';
 
-/// 11 khu vực của thư viện, nhúng sẵn làm bản dự phòng.
-///
-/// Nguồn là `data/reference/reference_points.csv`, cũng chính là thứ `GET /map`
-/// trả về. Nhúng vào ứng dụng để danh sách khu vực, ảnh và mô tả vẫn dùng được
-/// khi chưa nối được máy chủ — lúc demo trước hội đồng, backend có thể chưa kịp
-/// bật.
+/// 12 khu vực của thư viện, nhúng sẵn làm bản dự phòng khi chưa nối được
+/// máy chủ — lúc demo trước hội đồng, backend có thể chưa kịp bật. Nguồn là
+/// `data/reference/reference_points.csv`, cũng là thứ `GET /map` trả về.
 ///
 /// SINH TỰ ĐỘNG bằng `python -m tools.sinh_khu_vuc`, đừng sửa tay.
 class KhuVucThuVien {
@@ -28,7 +25,7 @@ class KhuVucThuVien {
       moTaChiTiet: 'Căn tin hiện đại, đa dạng về các loại mặt hàng, cung cấp nhiều loại đồ ăn và thức uống. Khu vực có thể đáp ứng các nhu cầu ăn uống, mua sắm các vật dụng hỗ trợ cho cả sinh viên và cán bộ giảng viên.',
       thuMucAnh: 'can_tin',
       icon: Icons.restaurant_outlined,
-      diem: [Offset(30, 14)],
+      diem: [Offset(38, 7)],
     ),
     KhuVuc(
       nhom: 'Cầu thang',
@@ -36,7 +33,7 @@ class KhuVucThuVien {
       moTaChiTiet: '',
       thuMucAnh: 'cau_thang',
       icon: Icons.stairs_outlined,
-      diem: [Offset(-30, 10), Offset(-8, 10), Offset(8, 10), Offset(30, 10), Offset(-15, 18), Offset(0, 18), Offset(0, 33), Offset(-22, 34), Offset(22, 34), Offset(0, 41), Offset(-22, 45), Offset(22, 45)],
+      diem: [Offset(-30, 10), Offset(-8, 10), Offset(8, 10), Offset(30, 10), Offset(-15, 18), Offset(0, 18), Offset(0, 33), Offset(-22, 34), Offset(22, 34), Offset(0, 41), Offset(-22, 45), Offset(22, 45), Offset(28, 2.5), Offset(-28, 2.5)],
     ),
     KhuVuc(
       nhom: 'Cầu thang tầng 2',
@@ -68,7 +65,7 @@ class KhuVucThuVien {
       moTaChiTiet: 'Hội trường thư viện có không gian rộng lớn, hiện đại, số lượng ghế ngồi rộng lớn với khoảng 300 chỗ. Phòng phù hợp cho các buổi hội thảo, các cuộc họp và sự kiện quan trọng.',
       thuMucAnh: 'hoi_truong_thu_vien',
       icon: Icons.stadium_outlined,
-      diem: [Offset(16, 0)],
+      diem: [Offset(41, 0)],
     ),
     KhuVuc(
       nhom: 'Khu vực tự học',
@@ -100,7 +97,15 @@ class KhuVucThuVien {
       moTaChiTiet: 'Phòng máy tính TV3 và TV4 với hệ thống trang thiết bị hiện đại, phòng học được trang bị các bộ máy tính được kết nối Internet chất lượng cao. Phòng học đáp ứng được các nhu cầu về học tập và làm việc một cách ổn định và mượt mà.',
       thuMucAnh: 'tv3_4',
       icon: Icons.computer_outlined,
-      diem: [Offset(-16, 0)],
+      diem: [Offset(-41, 0)],
+    ),
+    KhuVuc(
+      nhom: 'WC',
+      moTa: 'Nhà vệ sinh ở hai đầu hành lang phía nam.',
+      moTaChiTiet: 'Nhà vệ sinh đặt ở hai đầu hành lang phía nam tầng 1, cạnh lối ra vào hai bên. Điểm này chỉ dùng làm đích đến khi dẫn đường, chưa có dữ liệu quét WiFi nên hệ thống không định vị người dùng vào đây.',
+      thuMucAnh: 'wc',
+      icon: Icons.wc_outlined,
+      diem: [Offset(42, 7), Offset(-42, 7)],
     ),
   ];
 }

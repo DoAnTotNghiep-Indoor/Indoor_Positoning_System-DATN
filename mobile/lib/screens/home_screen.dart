@@ -47,10 +47,12 @@ class HomeScreen extends StatelessWidget {
           _TieuDeMuc(t.homeQuickAccess),
           const SizedBox(height: 14),
 
-          // Chiều cao co theo cỡ chữ hệ thống: đóng cứng 104 thì ở mức phóng
-          // to 1,6 lần cột chữ bên trong tràn 26 pixel.
+          // Chiều cao co theo cỡ chữ hệ thống: đóng cứng thì ở mức phóng to
+          // 1,6 lần cột chữ bên trong tràn. Số đã thu lại sau khi bỏ dòng đếm
+          // điểm đo — giữ nguyên 104/48 thì thẻ thừa một dòng trống và nhãn bị
+          // đẩy xuống dưới thanh điều hướng trên máy màn thấp.
           SizedBox(
-            height: AppMetrics.caoTheoCoChu(context, coBan: 104, phanChu: 48),
+            height: AppMetrics.caoTheoCoChu(context, coBan: 88, phanChu: 35),
             child: Row(
               children: [
                 for (var i = 0; i < khu.length && i < 4; i++) ...[
@@ -91,11 +93,9 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// Khối vị trí ở đầu màn hình: toạ độ thật khi đã định vị, nói rõ "chưa xác
-/// định" khi chưa có.
-///
-/// Gộp thành MỘT mục trợ năng — các dòng rời khiến trình đọc màn hình bắt người
-/// dùng vuốt nhiều lần cho một mẩu thông tin duy nhất.
+/// Khối vị trí đầu màn: toạ độ thật khi đã định vị, nói rõ "chưa xác định"
+/// khi chưa có. Gộp thành MỘT mục trợ năng — dòng rời khiến trình đọc màn
+/// hình bắt vuốt nhiều lần cho một mẩu thông tin.
 class _KhoiViTri extends StatelessWidget {
   const _KhoiViTri();
 
@@ -237,7 +237,10 @@ class _KhoiViTri extends StatelessWidget {
         LoiQuet.khongHoTro => t.errWifiUnsupported,
         LoiQuet.thatBai => t.errScanFailed,
         null => switch (theoDoi.loiApi) {
-            LoiApi.mayChuLoi => t.errServer(theoDoi.maHttp ?? 0),
+            LoiApi.mayChuLoi => switch (theoDoi.maHttp) {
+                final ma? => t.errServer(ma),
+                _ => t.errServerNoCode,
+              },
             LoiApi.saiDinhDang => t.errBadFormat,
             LoiApi.quaHan => t.errTimeout,
             LoiApi.diaChiSai => t.errBadAddress(mayChu),
@@ -272,6 +275,7 @@ class _QuickTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = L.of(context);
+    final khoangCach = _khoangCach(t, khuVuc, viTri);
 
     return GlassCard(
       radius: 24,
@@ -297,28 +301,38 @@ class _QuickTile extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            _khoangCach(t, khuVuc, viTri),
-            maxLines: 1,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: AppColors.inkOf(context).withValues(alpha: 0.42),
+          // Chỉ chừa chỗ khi thật sự có khoảng cách để hiện, không thì thẻ tự
+          // co lại thay vì để một dòng trống.
+          if (khoangCach != null) ...[
+            const SizedBox(height: 4),
+            // Thu chữ cho vừa thẻ thay vì cắt: Text cắt mặc định không để lại
+            // dấu gì nên trên máy thật nó hiện cụt.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                khoangCach,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.inkOf(context).withValues(alpha: 0.42),
+                ),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 }
 
-/// Khoảng cách tới khu vực, hoặc số điểm đo khi chưa định vị.
+/// Khoảng cách tới khu vực, null khi chưa định vị.
 ///
 /// Bản trước ghi cứng "12 m", "28 m" — những con số không đổi dù người dùng đi
-/// khắp toà nhà. Thà nói số điểm đo còn hơn nói một khoảng cách bịa.
-String _khoangCach(L t, KhuVuc k, ViTri? vt) {
-  if (vt == null) return t.detailPointCount(k.diem.length);
+/// khắp toà nhà. Chưa định vị thì KHÔNG hiện gì: số điểm đo là chi tiết khảo
+/// sát, không phải thứ người dùng cần thấy ở Trang chủ. Màn Chi tiết vẫn giữ.
+String? _khoangCach(L t, KhuVuc k, ViTri? vt) {
+  if (vt == null) return null;
   return t.distanceMeters(k.khoangCach(vt.xGop, vt.yGop).round());
 }
 
@@ -333,6 +347,7 @@ class _NearbyRow extends StatelessWidget {
     final t = L.of(context);
     final muc = AppColors.inkOf(context);
     final nhan = AppColors.accentOf(context);
+    final khoangCach = _khoangCach(t, khuVuc, viTri);
 
     // TapFeedback chứ không GestureDetector trần: dòng này nằm trong một
     // GlassCard chung nên không có nền riêng để đổi màu khi bấm.
@@ -377,16 +392,19 @@ class _NearbyRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              _khoangCach(t, khuVuc, viTri),
-              maxLines: 1,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: nhan,
+            if (khoangCach != null) ...[
+              const SizedBox(width: 8),
+              Text(
+                khoangCach,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: nhan,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

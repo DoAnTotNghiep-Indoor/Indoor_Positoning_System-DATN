@@ -308,10 +308,8 @@ class _GiaTri extends StatelessWidget {
 
 
 /// Dòng quyền truy cập, đọc trạng thái THẬT thay vì viết cứng "Đã cấp".
-///
-/// Bản trước luôn hiện "Đã cấp", nên app có thể đồng thời báo "Thiếu quyền truy
-/// cập WiFi" ở Trang chủ và "Đã cấp" ở đây — mà đây đúng là nơi người dùng tìm
-/// đến sau khi thấy lỗi kia.
+/// Bản trước luôn hiện "Đã cấp" nên app vừa báo thiếu quyền ở Trang chủ vừa
+/// báo đã cấp ở đây — đúng nơi người dùng tìm đến sau khi thấy lỗi kia.
 class _DongQuyen extends StatefulWidget {
   final QuyenTruyCap quyen;
 

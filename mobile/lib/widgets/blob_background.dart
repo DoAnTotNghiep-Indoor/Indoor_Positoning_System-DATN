@@ -9,12 +9,10 @@ class Blob {
   const Blob(this.cx, this.cy, this.r, this.color, this.opacity);
 }
 
-/// Nền gradient kèm các khối màu mờ, tái hiện lớp nền trong frame thiết kế.
-/// Toạ độ blob dùng hệ 393x852 rồi được co giãn theo kích thước màn hình thật.
+/// Nền gradient kèm khối màu mờ, toạ độ hệ 393x852 co giãn theo màn thật.
 ///
-/// Đây là NỀN THUẦN, không bọc nội dung. Kính khúc xạ theo thứ nằm sau nó nên
-/// nền phải do `GlassScaffold` cấp qua tham số `background`, không để từng màn
-/// hình tự dựng — nếu không mỗi màn sẽ có lớp nền riêng và kính lấy mẫu sai.
+/// NỀN THUẦN, không bọc nội dung: kính khúc xạ theo thứ nằm sau nó nên nền
+/// phải do `GlassScaffold` cấp qua `background`, không để từng màn tự dựng.
 class BlobBackground extends StatelessWidget {
   final List<Blob> blobs;
 

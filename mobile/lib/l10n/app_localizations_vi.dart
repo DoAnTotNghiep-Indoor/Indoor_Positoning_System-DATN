@@ -244,7 +244,7 @@ class LVi extends L {
 
   @override
   String errNotEnoughAp(int so, int can) {
-    return 'Không đủ dữ liệu để định vị — chỉ khớp $so/$can access point của thư viện. Bạn có đang ở trong thư viện không?';
+    return 'Không đủ dữ liệu để định vị — chỉ khớp $so access point quen thuộc, cần ít nhất $can. Bạn có đang ở trong thư viện không?';
   }
 
   @override
@@ -263,7 +263,11 @@ class LVi extends L {
   }
 
   @override
-  String get errBadFormat => 'Máy chủ trả dữ liệu không đúng định dạng.';
+  String get errServerNoCode => 'Máy chủ báo lỗi khi xử lý lần quét.';
+
+  @override
+  String get errBadFormat =>
+      'Ứng dụng và máy chủ chưa hiểu đúng gói tin của nhau.';
 
   @override
   String get settingsServerHint => 'Nhập địa chỉ máy chủ';
@@ -280,13 +284,13 @@ class LVi extends L {
       'Máy chủ không phản hồi kịp. Kiểm tra lại chất lượng mạng.';
 
   @override
-  String detailPointCount(int so) {
-    return '$so điểm đo';
-  }
-
-  @override
   String detailPhotoCount(int so) {
-    return '$so ảnh';
+    String _temp0 = intl.Intl.pluralLogic(
+      so,
+      locale: localeName,
+      other: '$so ảnh',
+    );
+    return '$_temp0';
   }
 
   @override

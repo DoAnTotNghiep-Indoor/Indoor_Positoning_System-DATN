@@ -7,12 +7,10 @@ import 'package:ips_dlu/widgets/so_do_that.dart';
 
 /// Kiểm tra các nút có thực sự phản hồi khi chạm.
 ///
-/// Bài test này tồn tại vì một lỗi thật: sau khi chuyển sang `GlassScaffold`,
-/// hai nút vẫn gọi `ScaffoldMessenger.showSnackBar`, mà `GlassScaffold` không
-/// phải `Scaffold` của Material nên lời gọi ném assertion
-/// *"no descendant Scaffolds to present to"* ngay lúc chạm. `flutter analyze`
-/// không bắt được vì mã vẫn hợp lệ về kiểu, và ba bài test cũ cũng không bắt
-/// được vì chúng chỉ kiểm tra điều hướng chứ không chạm vào nút nào.
+/// Tồn tại vì một lỗi thật: sau khi chuyển sang `GlassScaffold`, hai nút vẫn gọi
+/// `ScaffoldMessenger.showSnackBar` và ném assertion ngay lúc chạm.
+/// `flutter analyze` không bắt được vì mã vẫn hợp lệ về kiểu, còn ba bài test
+/// cũ chỉ kiểm điều hướng chứ không chạm vào nút nào.
 void main() {
   testWidgets('Nút định vị lại trên màn Bản đồ bật định vị thật',
       (WidgetTester tester) async {

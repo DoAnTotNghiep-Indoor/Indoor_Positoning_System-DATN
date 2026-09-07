@@ -505,10 +505,10 @@ abstract class L {
   /// **'Không quét được WiFi. Thử lại sau ít giây.'**
   String get errScanFailed;
 
-  /// Quét được WiFi nhưng không đủ AP quen; máy chủ trả 422
+  /// Quét được WiFi nhưng không đủ AP quen; máy chủ trả 422. {can} là NGƯỠNG tối thiểu, không phải tổng số AP của thư viện
   ///
   /// In vi, this message translates to:
-  /// **'Không đủ dữ liệu để định vị — chỉ khớp {so}/{can} access point của thư viện. Bạn có đang ở trong thư viện không?'**
+  /// **'Không đủ dữ liệu để định vị — chỉ khớp {so} access point quen thuộc, cần ít nhất {can}. Bạn có đang ở trong thư viện không?'**
   String errNotEnoughAp(int so, int can);
 
   /// Địa chỉ trong Cài đặt thiếu http:// hoặc thiếu tên máy
@@ -529,10 +529,16 @@ abstract class L {
   /// **'Máy chủ trả lỗi {ma}'**
   String errServer(int ma);
 
+  /// Dùng cho kênh WebSocket: lỗi không kèm mã HTTP nào.
+  ///
+  /// In vi, this message translates to:
+  /// **'Máy chủ báo lỗi khi xử lý lần quét.'**
+  String get errServerNoCode;
+
   /// No description provided for @errBadFormat.
   ///
   /// In vi, this message translates to:
-  /// **'Máy chủ trả dữ liệu không đúng định dạng.'**
+  /// **'Ứng dụng và máy chủ chưa hiểu đúng gói tin của nhau.'**
   String get errBadFormat;
 
   /// No description provided for @settingsServerHint.
@@ -559,16 +565,10 @@ abstract class L {
   /// **'Máy chủ không phản hồi kịp. Kiểm tra lại chất lượng mạng.'**
   String get errTimeout;
 
-  /// No description provided for @detailPointCount.
-  ///
-  /// In vi, this message translates to:
-  /// **'{so} điểm đo'**
-  String detailPointCount(int so);
-
   /// No description provided for @detailPhotoCount.
   ///
   /// In vi, this message translates to:
-  /// **'{so} ảnh'**
+  /// **'{so, plural, other{{so} ảnh}}'**
   String detailPhotoCount(int so);
 
   /// No description provided for @detailNeedPosition.

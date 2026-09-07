@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 // Ẩn GlassCard của thư viện: file này dùng bản bọc trong widgets/glass_card.dart
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' hide GlassCard;
@@ -108,18 +110,46 @@ class _MapScreenState extends State<MapScreen> {
 }
 
 /// Thẻ header hiển thị tên toà nhà và tầng đang xem.
-class MapHeader extends StatelessWidget {
+class MapHeader extends StatefulWidget {
   const MapHeader({super.key});
 
-  /// Dòng phụ của thẻ header: số khu vực, kèm mốc cập nhật nếu đã định vị.
-  ///
-  /// Chưa có toạ độ nào thì bỏ hẳn vế thời gian thay vì điền một con số cho có
-  /// — chuỗi cũ viết cứng "cập nhật 2 giây trước" nên nó đúng hai giây trong cả
-  /// vòng đời ứng dụng, kể cả lúc định vị đang tắt.
+  @override
+  State<MapHeader> createState() => _MapHeaderState();
+}
+
+class _MapHeaderState extends State<MapHeader> {
+  Timer? _nhip;
+  int? _giay;
+  late TheoDoiViTri _theoDoi;
+
+  @override
+  void initState() {
+    super.initState();
+    // Hub chỉ báo khi có lần quét mới, mà lần quét nào cũng đặt lại mốc — nên
+    // không có nhịp riêng thì con số đứng nguyên ở 0, và sau khi dừng quét nó
+    // còn khẳng định "0 giây trước" cho toạ độ đã cũ hàng phút.
+    _nhip = Timer.periodic(const Duration(seconds: 1), (_) {
+      final g = _theoDoi.giayTuCapNhat;
+      if (g != _giay) setState(() => _giay = g);
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _theoDoi = TheoDoiViTriScope.of(context);
+  }
+
+  @override
+  void dispose() {
+    _nhip?.cancel();
+    super.dispose();
+  }
+
+  /// Dòng phụ: số khu vực, kèm mốc cập nhật nếu đã định vị.
   String _tomTat(BuildContext context) {
-    final theoDoi = TheoDoiViTriScope.of(context);
-    final so = theoDoi.khuVuc.length;
-    final giay = theoDoi.giayTuCapNhat;
+    final so = _theoDoi.khuVuc.length;
+    final giay = _giay = _theoDoi.giayTuCapNhat;
     final t = L.of(context);
     return giay == null ? t.mapAreaCount(so) : t.mapAreaSummary(so, giay);
   }
@@ -202,12 +232,9 @@ class MapHeader extends StatelessWidget {
   }
 }
 
-/// Hàng chip lọc loại khu vực, cuộn ngang.
-///
-/// Nhãn chip lấy thẳng từ `nhom` của dữ liệu khảo sát, không có bảng loại viết
-/// riêng. CTK45 giữ một `CategoryModel` tách rời nên chuỗi trong bảng đó trôi
-/// khỏi chuỗi trong dữ liệu — có mục thừa một dấu cách ở cuối và không bao giờ
-/// khớp được cái gì. Ở đây chỉ có một nguồn nên không có gì để lệch.
+/// Hàng chip lọc loại khu vực, cuộn ngang. Nhãn lấy thẳng từ `nhom` của dữ
+/// liệu khảo sát, không có bảng loại riêng: bảng tách rời như CTK45 thì chuỗi
+/// trôi khỏi dữ liệu và không bao giờ khớp được gì.
 class _HangChip extends StatelessWidget {
   final String? chon;
   final ValueChanged<String?> doi;
@@ -276,12 +303,9 @@ class _HangChip extends StatelessWidget {
   }
 }
 
-/// Thẻ tổng quãng đường của tuyến đang hiện, kèm nút xoá.
-///
-/// Số mét ở đây là quãng đường Dijkstra cộng dồn trên các cạnh ĐÃ LỌC TƯỜNG,
-/// tính trong hệ mét đo thực địa — khác với thẻ "Tổng khoảng cách" của CTK45
-/// vốn cộng trên hình học GeoJSON vẽ tay, nơi một cặp điểm cách nhau 12,8 m
-/// thật được ghi thành 7,3 m.
+/// Thẻ tổng quãng đường của tuyến đang hiện, kèm nút xoá. Số mét là đường
+/// Dijkstra cộng trên các cạnh ĐÃ LỌC TƯỜNG, trong hệ mét đo thực địa —
+/// khác CTK45 cộng trên hình học vẽ tay, nơi 12,8 m thật bị ghi thành 7,3 m.
 class _TheTuyen extends StatelessWidget {
   const _TheTuyen();
 

@@ -2,11 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// Các số đo bố cục dùng chung.
-///
-/// Thanh điều hướng dưới nổi lên TRÊN nội dung (`GlassScaffold` đặt
-/// `extendBody: true` để kính khúc xạ được thứ trôi phía sau), nên mọi màn hình
-/// phải tự chừa chỗ cho nó.
+/// Các số đo bố cục dùng chung. Thanh điều hướng dưới nổi TRÊN nội dung
+/// (`GlassScaffold` đặt `extendBody: true` để kính khúc xạ được thứ trôi phía
+/// sau), nên mọi màn hình phải tự chừa chỗ cho nó.
 class AppMetrics {
   AppMetrics._();
 
@@ -20,11 +18,10 @@ class AppMetrics {
 
   /// Chiều cao cần chừa ở đáy để không bị thanh điều hướng che.
   ///
-  /// Lấy MAX của `viewPadding.bottom` và `viewInsets.bottom` chứ không chỉ
-  /// `viewPadding`: ô tìm kiếm nằm ngay trong thanh điều hướng nên lúc gõ là
-  /// bàn phím luôn bật, mà `viewPadding` theo định nghĩa đã bỏ qua bàn phím.
-  /// Không cộng dồn hai giá trị — bàn phím bật thì hệ điều hành đã ẩn thanh cử
-  /// chỉ, cộng cả hai sẽ thừa một khoảng.
+  /// Lấy MAX của `viewPadding.bottom` và `viewInsets.bottom`: ô tìm kiếm nằm trong
+  /// thanh điều hướng nên lúc gõ là bàn phím luôn bật, mà `viewPadding` theo định
+  /// nghĩa đã bỏ qua bàn phím. Không cộng dồn — bàn phím bật thì hệ điều hành đã
+  /// ẩn thanh cử chỉ.
   static double chuaChoThanhTab(BuildContext context) {
     final mq = MediaQuery.of(context);
     return chieuCaoThanhTab +

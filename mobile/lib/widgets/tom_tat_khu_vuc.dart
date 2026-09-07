@@ -9,13 +9,12 @@ import '../services/theo_doi_vi_tri.dart';
 import '../theme/app_colors.dart';
 import 'tap_feedback.dart';
 
-/// Tấm tóm tắt trượt lên khi chạm một vị trí trên sơ đồ: tên, mô tả, rồi hai
-/// lối đi tiếp — xem chi tiết, hoặc chỉ đường từ chỗ đang đứng tới đó.
+/// Tấm tóm tắt trượt lên khi chạm một vị trí trên sơ đồ: tên, mô tả, rồi hai lối
+/// đi tiếp — xem chi tiết, hoặc chỉ đường từ chỗ đang đứng tới đó.
 ///
 /// Chỉ màn Bản đồ dùng tấm này. Trang chủ vào thẳng màn Chi tiết vì ở đó người
-/// dùng đã đọc tên và mô tả ngay trên danh sách rồi, chen thêm một tấm nữa là
-/// bắt bấm hai lần cho cùng một việc. Trên sơ đồ thì ngược lại: chạm vào một
-/// chấm chưa biết đó là chỗ nào, nên cần một bước trả lời trước khi đi tiếp.
+/// dùng đã đọc tên và mô tả trên danh sách rồi; còn chạm một chấm trên sơ đồ thì
+/// chưa biết đó là chỗ nào nên cần một bước trả lời trước.
 void hienTomTatKhuVuc(BuildContext context, KhuVuc k) {
   showModalBottomSheet<void>(
     context: context,

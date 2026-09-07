@@ -94,4 +94,49 @@ void main() {
     expect(tester.getRect(cta).bottom, lessThanOrEqualTo(480));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Số ít tiếng Anh không ghi "1 photos"',
+      (WidgetTester tester) async {
+    // Bài này trước soi `detailPointCount`, nay chuỗi ấy đã bỏ cùng với việc gỡ
+    // nhãn đếm điểm đo khỏi giao diện. Dời sang `detailPhotoCount` — và ngay
+    // lần dời đã bắt được lỗi: bản tiếng Anh khi ấy là "{so} photos" trần, tức
+    // một ảnh sẽ hiện thành "1 photos". Chưa khu vực nào có đúng một ảnh nên
+    // lỗi chưa lộ, nhưng thêm một khu như vậy là thấy ngay.
+    final en = lookupL(const Locale('en'));
+    expect(en.detailPhotoCount(1), '1 photo');
+    expect(en.detailPhotoCount(14), '14 photos');
+  });
+
+  testWidgets('Mọi nhãn một dòng đều có cách xử lý khi tràn',
+      (WidgetTester tester) async {
+    // Text đặt maxLines:1 mà quên overflow thì cắt ngang KHÔNG để lại dấu gì —
+    // "14 survey points" hiện thành "14 survey" và không ai biết là đã mất chữ.
+    //
+    // Bản trước chỉ soi đúng nhãn đếm điểm đo. Nhãn ấy nay đã gỡ khỏi giao diện,
+    // nên thay vì bỏ bài test, soi MỌI nhãn một dòng trên cả hai màn hay tràn
+    // nhất. Cách này rộng hơn bản cũ và không phụ thuộc một chuỗi cụ thể.
+    await _pumpAtSize(tester, const Size(393, 852));
+    final t = L.of(tester.element(find.byType(Text).first));
+
+    // Chữ gợi ý của ô tìm kiếm do `liquid_glass_widgets` dựng, mình chỉ truyền
+    // chuỗi vào `GlassSearchBarConfig.hintText` nên không đặt overflow được.
+    final ngoaiLe = {t.searchHint};
+
+    Future<void> soi(String man) async {
+      final hong = <String>[];
+      for (final w in tester.widgetList<Text>(find.byType(Text))) {
+        if (w.maxLines != 1 || w.overflow != null) continue;
+        if (ngoaiLe.contains(w.data)) continue;
+        final vua = find.ancestor(
+            of: find.byWidget(w), matching: find.byType(FittedBox));
+        if (vua.evaluate().isEmpty) hong.add(w.data ?? '(khong co data)');
+      }
+      expect(hong, isEmpty,
+          reason: '$man: nhãn một dòng không ellipsis cũng không FittedBox');
+    }
+
+    await soi('Trang chủ');
+    await _openSearch(tester);
+    await soi('Tìm kiếm');
+  });
 }

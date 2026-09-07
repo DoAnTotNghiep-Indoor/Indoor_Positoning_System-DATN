@@ -50,7 +50,8 @@ void main() {
         so++;
       }
     }
-    expect(so, 37);
+    // 37 ảnh kế thừa từ CTK45 + 2 ảnh WC nhóm 15 chụp 07/09/2026.
+    expect(so, 39);
   });
 
   test('AnhKhuVuc khớp đúng danh sách asset trong pubspec.yaml', () async {

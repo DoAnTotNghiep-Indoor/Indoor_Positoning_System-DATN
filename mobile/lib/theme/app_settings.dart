@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Nơi cất tuỳ chọn giữa hai lần mở ứng dụng.
-///
-/// Có mặt giao diện này để bài kiểm thử thay được bằng bản trong bộ nhớ —
-/// `SharedPreferences` đi qua kênh nền tảng, gọi trong `flutter test` sẽ ném
-/// `MissingPluginException`.
+/// Nơi cất tuỳ chọn giữa hai lần mở ứng dụng. Có mặt giao diện này để test thay
+/// được bằng bản trong bộ nhớ — `SharedPreferences` đi qua kênh nền tảng, gọi
+/// trong `flutter test` sẽ ném `MissingPluginException`.
 abstract class KhoTuyChon {
   Future<String?> doc(String khoa);
   Future<void> ghi(String khoa, String gt);
@@ -25,10 +23,9 @@ class KhoMacDinh implements KhoTuyChon {
 
 /// Tuỳ chọn của người dùng: chế độ sáng/tối, ngôn ngữ và địa chỉ máy chủ.
 ///
-/// `InheritedNotifier` thay vì một gói quản lý trạng thái — cả app chỉ có ba
-/// giá trị và chúng nằm ở gốc cây widget. Cả ba lưu xuống đĩa: địa chỉ máy chủ
-/// là IP nội bộ của máy chạy backend, bắt gõ lại mỗi lần mở app là hỏng buổi
-/// demo. [kho] để null thì không lưu gì, đó là chế độ kiểm thử dùng.
+/// `InheritedNotifier` thay vì một gói quản lý trạng thái — cả app chỉ có ba giá
+/// trị, nằm ở gốc cây widget. Cả ba lưu xuống đĩa vì địa chỉ máy chủ là IP nội
+/// bộ, bắt gõ lại mỗi lần mở app là hỏng buổi demo. [kho] null là chế độ test.
 class AppSettings extends ChangeNotifier {
   static const _khoaCheDo = 'che_do';
   static const _khoaNgonNgu = 'ngon_ngu';

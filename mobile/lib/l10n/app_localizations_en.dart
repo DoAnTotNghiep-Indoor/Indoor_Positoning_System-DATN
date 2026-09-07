@@ -245,7 +245,7 @@ class LEn extends L {
 
   @override
   String errNotEnoughAp(int so, int can) {
-    return 'Not enough data to locate you — only $so of $can library access points matched. Are you inside the library?';
+    return 'Not enough data to locate you — only $so known access points matched, at least $can are needed. Are you inside the library?';
   }
 
   @override
@@ -264,7 +264,12 @@ class LEn extends L {
   }
 
   @override
-  String get errBadFormat => 'The server returned malformed data.';
+  String get errServerNoCode =>
+      'The server reported an error while handling the scan.';
+
+  @override
+  String get errBadFormat =>
+      'The app and the server could not parse each other\'s packets.';
 
   @override
   String get settingsServerHint => 'Enter server address';
@@ -281,13 +286,14 @@ class LEn extends L {
       'The server did not respond in time. Check your network.';
 
   @override
-  String detailPointCount(int so) {
-    return '$so survey points';
-  }
-
-  @override
   String detailPhotoCount(int so) {
-    return '$so photos';
+    String _temp0 = intl.Intl.pluralLogic(
+      so,
+      locale: localeName,
+      other: '$so photos',
+      one: '1 photo',
+    );
+    return '$_temp0';
   }
 
   @override

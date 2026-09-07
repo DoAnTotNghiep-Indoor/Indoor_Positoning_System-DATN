@@ -186,9 +186,9 @@
   "errLocationOff": "Dịch vụ vị trí đang tắt. Bật lên rồi thử lại.",
   "errWifiUnsupported": "Thiết bị không hỗ trợ quét WiFi.",
   "errScanFailed": "Không quét được WiFi. Thử lại sau ít giây.",
-  "errNotEnoughAp": "Không đủ dữ liệu để định vị — chỉ khớp {so}/{can} access point của thư viện. Bạn có đang ở trong thư viện không?",
+  "errNotEnoughAp": "Không đủ dữ liệu để định vị — chỉ khớp {so} access point quen thuộc, cần ít nhất {can}. Bạn có đang ở trong thư viện không?",
   "@errNotEnoughAp": {
-    "description": "Quét được WiFi nhưng không đủ AP quen; máy chủ trả 422",
+    "description": "Quét được WiFi nhưng không đủ AP quen; máy chủ trả 422. {can} là NGƯỠNG tối thiểu, không phải tổng số AP của thư viện",
     "placeholders": {
       "so": {
         "type": "int"
@@ -223,20 +223,16 @@
       }
     }
   },
-  "errBadFormat": "Máy chủ trả dữ liệu không đúng định dạng.",
+  "errServerNoCode": "Máy chủ báo lỗi khi xử lý lần quét.",
+  "@errServerNoCode": {
+    "description": "Dùng cho kênh WebSocket: lỗi không kèm mã HTTP nào."
+  },
+  "errBadFormat": "Ứng dụng và máy chủ chưa hiểu đúng gói tin của nhau.",
   "settingsServerHint": "Nhập địa chỉ máy chủ",
   "settingsServerSub": "Máy ảo dùng 10.0.2.2, điện thoại thật dùng IP nội bộ",
   "a11yToggleTracking": "Bật hoặc tắt định vị theo thời gian thực",
   "errTimeout": "Máy chủ không phản hồi kịp. Kiểm tra lại chất lượng mạng.",
-  "detailPointCount": "{so} điểm đo",
-  "@detailPointCount": {
-    "placeholders": {
-      "so": {
-        "type": "int"
-      }
-    }
-  },
-  "detailPhotoCount": "{so} ảnh",
+  "detailPhotoCount": "{so, plural, other{{so} ảnh}}",
   "@detailPhotoCount": {
     "placeholders": {
       "so": {

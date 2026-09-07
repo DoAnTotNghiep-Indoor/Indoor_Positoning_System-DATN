@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'l10n/app_localizations.dart';
+import 'services/api_dinh_vi.dart';
+import 'services/kenh_vi_tri.dart';
 import 'services/theo_doi_vi_tri.dart';
 import 'theme/app_settings.dart';
 import 'theme/app_theme.dart';
@@ -36,7 +38,16 @@ class IpsDluApp extends StatefulWidget {
 
 class _IpsDluAppState extends State<IpsDluApp> {
   final _tuyChon = AppSettings(kho: const KhoMacDinh());
-  late final _theoDoi = TheoDoiViTri(diaChiMayChu: _tuyChon.diaChiMayChu);
+
+  // Dựng ApiDinhVi ở đây chứ không để TheoDoiViTri tự dựng: kênh WebSocket cần
+  // đúng thể hiện ấy, vừa để lấy địa chỉ máy chủ hiện hành vừa để rơi về REST
+  // khi kênh hỏng.
+  late final _api = ApiDinhVi(_tuyChon.diaChiMayChu);
+  late final _theoDoi = TheoDoiViTri(
+    diaChiMayChu: _tuyChon.diaChiMayChu,
+    api: _api,
+    kenh: KenhViTri(api: _api),
+  );
 
   late final AppLifecycleListener _vongDoi;
 

@@ -12,11 +12,9 @@ import '../widgets/tap_feedback.dart';
 import 'area_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
-  /// Từ khoá do thanh điều hướng dưới cung cấp.
-  ///
-  /// Ô nhập nay nằm trong `GlassTabBar.searchable` chứ không nằm trong màn hình,
-  /// nên màn hình chỉ nhận kết quả gõ vào chứ không tự giữ TextEditingController
-  /// — tránh hai ô tìm kiếm cùng hiện trên một màn.
+  /// Từ khoá do thanh điều hướng dưới cung cấp. Ô nhập nằm trong
+  /// `GlassTabBar.searchable` nên màn hình không tự giữ TextEditingController —
+  /// tránh hai ô tìm kiếm cùng hiện trên một màn.
   final String tuKhoa;
 
   const SearchScreen({super.key, this.tuKhoa = ''});
@@ -31,13 +29,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   bool get _dangLoc => _filter != 0;
 
-  /// Lọc cục bộ trên 11 khu vực thật.
-  ///
-  /// Không gọi API tìm kiếm: cả thư viện chỉ có 11 khu vực, lọc tại chỗ vừa
-  /// nhanh hơn vừa chạy được khi chưa nối máy chủ.
-  ///
-  /// Khớp theo từng từ thay vì nguyên cụm, để "khu doc" vẫn ra "Khu vực đọc".
-  /// Bỏ dấu trước khi so, vì người dùng gõ vội thường không bỏ dấu.
+  /// Lọc cục bộ trên các khu vực thật, không gọi API: cả thư viện chỉ hơn chục
+  /// khu vực. Khớp theo từng từ và bỏ dấu trước khi so, để "khu doc" vẫn ra
+  /// "Khu vực đọc".
   List<KhuVuc> _ketQua(List<KhuVuc> tatCa) {
     final tokens = _khongDau(widget.tuKhoa)
         .split(RegExp(r'\s+'))
@@ -109,12 +103,8 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(height: 16),
 
-          // --- Chip lọc ---
-          //
-          // Chiều cao 46 chứ không phải 34. Chip nằm trong ListView ngang nên bị
-          // ép đúng chiều cao của hộp này, tức vùng chạm cũng chỉ cao 34 — dưới
-          // mức tối thiểu 48dp của Material và 44pt của Apple HIG. Đây là hàng
-          // điều khiển hay bấm nhất trên màn Tìm kiếm nên đáng để nới.
+          // Chiều cao 46 chứ không phải 34: chip nằm trong ListView ngang nên vùng
+          // chạm bị ép theo hộp này, dưới mức tối thiểu 48dp Material / 44pt HIG.
           SizedBox(
             height: AppMetrics.caoTheoCoChu(context, coBan: 46, phanChu: 18),
             child: ListView.separated(
@@ -187,11 +177,8 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
-/// Trạng thái "không tìm thấy gì".
-///
-/// Trước đây chỗ này là một `ListView` rỗng: người dùng gõ sai một chữ là màn
-/// hình trắng trơn, chỉ còn dòng "0 kết quả" nhỏ ở trên — không nói vì sao và
-/// cũng không gợi ý làm gì tiếp.
+/// Trạng thái "không tìm thấy gì". Trước đây là `ListView` rỗng: gõ sai một
+/// chữ là màn hình trắng trơn, không nói vì sao và không gợi ý gì.
 class _KhongCoKetQua extends StatelessWidget {
   final bool dangLoc;
   final double chuaCho;
@@ -362,19 +349,22 @@ class _ResultCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            viTri == null
-                ? t.detailPointCount(khuVuc.diem.length)
-                : t.distanceMeters(
-                    khuVuc.khoangCach(viTri!.xGop, viTri!.yGop).round()),
-            maxLines: 1,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w500,
-              color: nhan,
+          // Chưa định vị thì không hiện gì: số điểm đo là chi tiết khảo sát.
+          if (viTri != null) ...[
+            const SizedBox(width: 8),
+            Text(
+              t.distanceMeters(
+                  khuVuc.khoangCach(viTri!.xGop, viTri!.yGop).round()),
+              maxLines: 1,
+              // Thiếu overflow thì Text cắt ngang không để lại dấu gì.
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+                color: nhan,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

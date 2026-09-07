@@ -1,9 +1,7 @@
 /// Ảnh thật của từng khu vực, do nhóm CTK45 chụp (xem assets/images/NGUON.md).
 ///
-/// Tên thư mục khớp cột `thu_muc_anh` mà `GET /map` trả về, nên không cần bảng
-/// tra thứ hai. Số lượng viết cứng chứ không đọc `AssetManifest` lúc chạy —
-/// thêm ảnh là phải sửa `pubspec.yaml` ngay bên cạnh, và một bài test đối chiếu
-/// hai nơi.
+/// Tên thư mục khớp cột `thu_muc_anh` của `GET /map` nên không cần bảng tra
+/// thứ hai. Số lượng viết cứng, có test đối chiếu với `pubspec.yaml`.
 class AnhKhuVuc {
   AnhKhuVuc._();
 
@@ -19,6 +17,7 @@ class AnhKhuVuc {
     'khu_vuc_tu_hoc': 5,
     'phong_tap_chi': 3,
     'tv3_4': 3,
+    'wc': 2,
   };
 
   /// Đường dẫn asset của mọi ảnh trong một khu vực, rỗng nếu không có ảnh.

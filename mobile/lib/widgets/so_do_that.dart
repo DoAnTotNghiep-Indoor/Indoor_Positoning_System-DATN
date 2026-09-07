@@ -6,19 +6,21 @@ import '../data/floor_map.dart';
 import '../data/khu_vuc.dart';
 import 'tom_tat_khu_vuc.dart';
 import '../services/api_dinh_vi.dart';
+import '../services/la_ban.dart';
 import '../services/theo_doi_vi_tri.dart';
 import '../theme/app_colors.dart';
 
-/// Sơ đồ mặt bằng thật của tầng 1, kèm chấm vị trí đang đứng.
-///
-/// Dùng bản số hoá `Map.png` và đúng hệ mét mô hình trả về, nên chấm vị trí rơi
-/// vào chỗ thật — khác [FloorPlan] là sơ đồ vẽ tay chỉ để trình bày.
+/// Sơ đồ mặt bằng thật của tầng 1, kèm chấm vị trí đang đứng. Dùng `Map.png`
+/// và đúng hệ mét mô hình trả về — khác [FloorPlan] là sơ đồ vẽ tay.
 class SoDoMatBang extends StatefulWidget {
   /// Nhóm khu vực đang lọc, null là hiện tất cả. Chấm và nhãn ngoài nhóm bị
   /// làm mờ chứ không ẩn — ẩn đi thì người dùng mất luôn ngữ cảnh xung quanh.
   final String? loc;
 
-  const SoDoMatBang({super.key, this.loc});
+  /// Truyền vào trong kiểm thử để khỏi cần từ kế thật.
+  final LaBan? laBan;
+
+  const SoDoMatBang({super.key, this.loc, this.laBan});
 
   @override
   State<SoDoMatBang> createState() => _SoDoMatBangState();
@@ -26,6 +28,27 @@ class SoDoMatBang extends StatefulWidget {
 
 class _SoDoMatBangState extends State<SoDoMatBang> {
   bool _daGoi = false;
+  late final LaBan _laBan = widget.laBan ?? LaBan();
+
+  // Bề rộng nhãn đã đo, khoá theo (chữ, cỡ, hệ số phóng chữ). Không có bộ nhớ
+  // đệm này thì mỗi khung hình phải `TextPainter.layout()` cho cả 26 nhãn.
+  final _demRongChu = <String, double>{};
+
+  @override
+  void initState() {
+    super.initState();
+    // KHÔNG addListener ở đây: từ kế chỉ đổi nón hướng, mà nón nằm trong
+    // `_NetSoDo`. Nghe ở cấp State thì mỗi số đọc dựng lại cả Stack — kể cả 26
+    // nhãn và phép đo bề rộng của chúng. Nay chỉ `CustomPaint` nghe, xem `_ve`.
+    _laBan.batDau();
+  }
+
+  @override
+  void dispose() {
+    // Chỉ dọn cái tự dựng. La bàn truyền từ ngoài vào là của bên gọi.
+    if (widget.laBan == null) _laBan.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -63,9 +86,8 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
       },
       child: Stack(
         children: [
-        // Chế độ tối đảo RGB chứ không đổi màu cả khối: nét đen thành trắng,
-        // chấm lưới thành xám đậm, giữ đúng thứ tự tương phản của bản sáng.
-        // Hàng alpha không đổi nên nền vẫn trong suốt.
+        // Chế độ tối đảo RGB chứ không đổi màu cả khối, giữ đúng thứ tự tương
+        // phản của bản sáng. Hàng alpha không đổi nên nền vẫn trong suốt.
         Positioned.fill(
           child: ColorFiltered(
             colorFilter: toi
@@ -80,24 +102,34 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
           ),
         ),
 
-          // Chấm điểm tham chiếu và tuyến đường vẽ trên cùng một canvas: cả
-          // hai đều là hình học thuần, tách ra thành widget thì mỗi chấm là
-          // một Positioned và 40 chấm thành 40 lớp cho cùng một khung hình.
+          // Chấm và tuyến chung một canvas: tách thành widget thì 40 chấm hoá 40
+          // lớp Positioned cho cùng một khung hình.
+          //
+          // Chỉ riêng lớp này nghe từ kế, nên số đọc mới chỉ vẽ lại canvas chứ
+          // không dựng lại nhãn. RepaintBoundary tách hẳn lớp vẽ để phần còn lại
+          // của Stack không phải sơn lại theo.
           Positioned.fill(
-            child: CustomPaint(
-              painter: _NetSoDo(
-                diem: theoDoi.banDo,
-                tuyen: theoDoi.tuyen?.duongDi ?? const [],
-                loc: widget.loc,
-                rong: rong,
-                mau: AppColors.accentOf(context),
-                muc: toi ? AppColors.inkDark : AppColors.ink,
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: _laBan,
+                builder: (context, _) => CustomPaint(
+                  painter: _NetSoDo(
+                    diem: theoDoi.banDo,
+                    tuyen: theoDoi.tuyen?.duongDi ?? const [],
+                    loc: widget.loc,
+                    rong: rong,
+                    mau: AppColors.accentOf(context),
+                    muc: toi ? AppColors.inkDark : AppColors.ink,
+                    viTri: vt,
+                    huong: _laBan.huongSoDo,
+                  ),
+                ),
               ),
             ),
           ),
 
         for (final n in _viTriNhan(theoDoi.khuVuc, rong))
-          _nhan(n.$1.nhom, n.$2, rong, toi, _moNhat(n.$1.nhom)),
+          _nhan(context, n.$1.nhom, n.$2, rong, toi, _moNhat(n.$1.nhom)),
 
           if (vt != null)
             _cham(SoDoThat.sangKhung(vt.xGop, vt.yGop, rong), rong),
@@ -106,15 +138,9 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
     );
   }
 
-  /// Chỗ đặt nhãn: MỘT NHÃN MỖI CỤM, đã đẩy ra cho khỏi chồng nhau.
-  ///
-  /// Mỗi cụm chứ không phải mỗi nhóm — xem [KhuVuc.tamCum]. Trước đây nhãn đặt
-  /// ở trọng tâm cả nhóm nên "Hành lang" hạ xuống giữa sảnh, cách cả hai điểm
-  /// hành lang thật 42 m.
-  ///
-  /// Nhãn vẫn có thể trùng chỗ vì trọng tâm của "Bàn thủ thư" và "Cầu thang
-  /// tầng 2" chỉ cách nhau vài mét, đọc thành một dòng vô nghĩa. Xếp theo chiều
-  /// dọc rồi đẩy nhãn sau xuống dưới nhãn trước nếu quá gần.
+  /// Chỗ đặt nhãn: MỘT NHÃN MỖI CỤM (xem [KhuVuc.tamCum]), đã đẩy ra cho khỏi
+  /// chồng nhau. Đặt ở trọng tâm cả nhóm thì "Hành lang" rơi xuống giữa sảnh,
+  /// cách hai điểm hành lang thật 42 m. Cụm gần nhau vẫn trùng nên xếp dọc.
   List<(KhuVuc, Offset)> _viTriNhan(List<KhuVuc> khu, double rong) {
     final cao = _caoChu(rong) * 1.6;
     final ra = <(KhuVuc, Offset)>[];
@@ -170,21 +196,60 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
   double _moNhat(String nhom) =>
       widget.loc == null || widget.loc == nhom ? 1.0 : 0.28;
 
-  Widget _nhan(String chu, Offset tam, double rong, bool toi, double mo) {
+  /// Kiểu chữ của nhãn. Tách ra vì phải dựng đúng kiểu này hai lần — một lần
+  /// đo bề rộng, một lần vẽ; đo bằng kiểu khác thì nhãn lại cụt như cũ.
+  TextStyle _kieuNhan(double co, Color mau) => TextStyle(
+        fontSize: co,
+        fontWeight: FontWeight.w600,
+        color: mau,
+      );
+
+  /// Bề rộng thật của nhãn khi vẽ ra. Phải gộp [DefaultTextStyle] và
+  /// [MediaQuery.textScalerOf] chứ không đo bằng kiểu trần: `Text` thừa hưởng
+  /// phông theme và cỡ chữ hệ thống, đo thiếu là mọi nhãn bị cắt.
+  double _rongChu(BuildContext context, String chu, double co) {
+    final scaler = MediaQuery.textScalerOf(context);
+    final khoa = '$chu|${co.toStringAsFixed(2)}|${scaler.scale(10)}';
+    final da = _demRongChu[khoa];
+    if (da != null) return da;
+
+    final thuoc = TextPainter(
+      text: TextSpan(
+        text: chu,
+        style: DefaultTextStyle.of(context)
+            .style
+            .merge(_kieuNhan(co, const Color(0xFF000000))),
+      ),
+      textDirection: TextDirection.ltr,
+      textScaler: scaler,
+      maxLines: 1,
+    )..layout();
+    // Nới một pixel: bề rộng bố cục làm tròn xuống thì chữ cuối chạm mép và
+    // ellipsis nhảy vào dù chỉ thiếu phần lẻ.
+    return _demRongChu[khoa] = thuoc.width + 1;
+  }
+
+  Widget _nhan(BuildContext context, String chu, Offset tam, double rong,
+      bool toi, double mo) {
     final co = _caoChu(rong);
+
+    // Căn giữa quanh chấm nhưng phải nằm trọn khung. Cách cũ `left: 0, width:
+    // tam.dx * 2` làm cụm sát mép bị cụt thành "Kh..." — lỗi Hình 21 của CTK45.
+    final w = math.min(_rongChu(context, chu, co), rong);
+    final trai = math.max(0.0, math.min(tam.dx - w / 2, rong - w));
+
     return Positioned(
-      left: 0,
+      left: trai,
       top: tam.dy - co,
-      width: tam.dx * 2,
+      width: w,
       child: Text(
         chu,
         textAlign: TextAlign.center,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: co,
-          fontWeight: FontWeight.w600,
-          color: (toi ? AppColors.inkDark : AppColors.ink)
+        style: _kieuNhan(
+          co,
+          (toi ? AppColors.inkDark : AppColors.ink)
               .withValues(alpha: 0.7 * mo),
         ),
       ),
@@ -216,11 +281,9 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
 }
 
 
-/// Chấm 40 điểm tham chiếu và tuyến đường, vẽ thẳng lên canvas.
-///
-/// Tuyến vẽ bằng chuỗi chấm tròn cách đều theo mét thật, không phải đường liền:
-/// khoảng hở giữa các chấm nói rằng đây là tuyến nối các điểm đã đo chứ không
-/// phải một lối đi liên tục đã khảo sát từng centimet.
+/// Chấm điểm tham chiếu và tuyến đường, vẽ thẳng lên canvas. Tuyến là chuỗi
+/// chấm cách đều chứ không phải đường liền: khoảng hở nói rằng đây là tuyến
+/// nối các điểm đã đo, không phải lối đi khảo sát từng centimet.
 class _NetSoDo extends CustomPainter {
   final List<DiemThamChieu> diem;
   final List<DiemThamChieu> tuyen;
@@ -228,6 +291,13 @@ class _NetSoDo extends CustomPainter {
   final double rong;
   final Color mau;
   final Color muc;
+
+  /// Vị trí đang đứng, null khi chưa định vị. Chỉ dùng để đặt gốc nón hướng.
+  final ViTri? viTri;
+
+  /// Hướng đã quy về hệ sơ đồ, độ theo chiều kim đồng hồ từ trục +y. Null thì
+  /// không vẽ nón — máy không có từ kế, hoặc chưa có số đọc nào.
+  final double? huong;
 
   /// Khoảng cách giữa hai chấm trên tuyến, tính bằng MÉT chứ không bằng pixel —
   /// người dùng phóng to sơ đồ thì mật độ chấm phải giữ nguyên ý nghĩa.
@@ -247,6 +317,8 @@ class _NetSoDo extends CustomPainter {
     required this.rong,
     required this.mau,
     required this.muc,
+    required this.viTri,
+    required this.huong,
   });
 
   @override
@@ -254,6 +326,7 @@ class _NetSoDo extends CustomPainter {
     _veQuang(canvas);
     _veDiem(canvas);
     _veTuyen(canvas);
+    _veNonHuong(canvas);
     _veThuoc(canvas, size);
   }
 
@@ -277,6 +350,35 @@ class _NetSoDo extends CustomPainter {
       if (d.nhom != loc) continue;
       canvas.drawCircle(SoDoThat.sangKhung(d.x, d.y, rong), r, son);
     }
+  }
+
+  /// Nón hướng nhìn, mở từ chấm vị trí. Vẽ RỘNG có chủ ý: [LaBan.gocBacSoDo]
+  /// chưa ai đo nên nón lệch đúng bằng sai số đó. Mũi tên nhọn sẽ khẳng định
+  /// một độ chính xác mà dữ liệu không đỡ nổi.
+  void _veNonHuong(Canvas canvas) {
+    final vt = viTri;
+    final h = huong;
+    if (vt == null || h == null) return;
+
+    final goc = SoDoThat.sangKhung(vt.xGop, vt.yGop, rong);
+    final ban = (rong / SoDoThat.rongPx * 46).clamp(22.0, 46.0);
+
+    // Trục +y sơ đồ hướng LÊN nhưng trục y canvas hướng XUỐNG, nên 0° phải là
+    // -pi/2 chứ không phải 0. Quên chỗ này là nón chỉ sang phải thay vì lên.
+    final giua = (h - 90) * math.pi / 180;
+    const mo = LaBan.nuaGocMoDo * math.pi / 180;
+
+    canvas.drawPath(
+      Path()
+        ..moveTo(goc.dx, goc.dy)
+        ..arcTo(Rect.fromCircle(center: goc, radius: ban), giua - mo, mo * 2,
+            false)
+        ..close(),
+      Paint()
+        ..shader = RadialGradient(
+          colors: [mau.withValues(alpha: 0.42), mau.withValues(alpha: 0.0)],
+        ).createShader(Rect.fromCircle(center: goc, radius: ban)),
+    );
   }
 
   void _veThuoc(Canvas canvas, Size size) {
@@ -329,9 +431,8 @@ class _NetSoDo extends CustomPainter {
     final r = (rong / SoDoThat.rongPx * 5).clamp(2.5, 5.0);
     final son = Paint()..color = mau;
 
-    // Đi dọc từng chặng và rải chấm theo mét, mang phần dư sang chặng kế tiếp.
-    // Không mang dư thì mỗi đỉnh gãy lại khởi động lại nhịp, và chỗ nối trông
-    // như hai chấm dính nhau.
+    // Rải chấm theo mét và mang phần dư sang chặng kế: không mang thì mỗi đỉnh
+    // gãy khởi động lại nhịp, chỗ nối trông như hai chấm dính nhau.
     var du = 0.0;
     for (var i = 0; i < tuyen.length - 1; i++) {
       final a = tuyen[i], b = tuyen[i + 1];
@@ -373,5 +474,7 @@ class _NetSoDo extends CustomPainter {
       cu.tuyen != tuyen ||
       cu.loc != loc ||
       cu.rong != rong ||
-      cu.mau != mau;
+      cu.mau != mau ||
+      cu.viTri != viTri ||
+      cu.huong != huong;
 }

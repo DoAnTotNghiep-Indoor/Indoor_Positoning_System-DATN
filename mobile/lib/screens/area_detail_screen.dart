@@ -17,18 +17,12 @@ import 'map_screen.dart';
 
 /// Màn chi tiết khu vực: sơ đồ phía trên, tấm thông tin phía dưới.
 ///
-/// Mọi lối vào đều phải truyền [khuVuc]. Trước đây bốn trong năm lối mở màn này
-/// không tham số, nên mười hai mục bấm được trên Trang chủ và Tìm kiếm đều dẫn
-/// tới đúng một màn mang tên "Không gian đọc".
-/// Mở màn Chi tiết bằng chuyển cảnh TRƯỢT LÊN TỪ ĐÁY.
+/// Mọi lối vào đều phải truyền [khuVuc]: trước đây bốn trong năm lối không
+/// tham số, nên mười hai mục bấm được đều dẫn tới cùng một màn.
 ///
-/// Dùng route riêng chứ không `MaterialPageRoute`: mặc định của Android là đẩy
-/// ngang, đọc như "sang một chỗ khác". Nội dung ở đây là thông tin của chính
-/// chỗ vừa chạm nên trượt lên hợp hơn — cùng hướng với tấm tóm tắt trên sơ đồ,
-/// hai lối vào cho ra cùng một cảm giác.
-///
-/// Tôn trọng thiết lập tắt hiệu ứng của hệ điều hành: lúc đó bỏ luôn phần
-/// trượt thay vì rút ngắn nó.
+/// Route riêng để TRƯỢT LÊN TỪ ĐÁY chứ không đẩy ngang như mặc định Android:
+/// nội dung là của chính chỗ vừa chạm, cùng hướng với tấm tóm tắt trên sơ đồ.
+/// Tôn trọng thiết lập tắt hiệu ứng của hệ điều hành.
 Future<void> moChiTietKhuVuc(
   BuildContext context,
   KhuVuc khuVuc, {
@@ -56,13 +50,9 @@ Future<void> moChiTietKhuVuc(
 class AreaDetailScreen extends StatelessWidget {
   final KhuVuc khuVuc;
 
-  /// Thông tin chiếm trọn màn, không chừa nửa dưới cho sơ đồ.
-  ///
-  /// Bật khi vào từ danh sách — Trang chủ hoặc Tìm kiếm — nơi người dùng chọn
-  /// theo tên chứ không theo vị trí, nên nửa sơ đồ phía sau chỉ chiếm chỗ của
-  /// chính nội dung họ vừa hỏi. Tắt khi vào từ tấm tóm tắt trên sơ đồ: ở đó
-  /// người dùng vừa chạm một chấm nên giữ bản đồ lại mới thấy mình đang xem chỗ
-  /// nào.
+  /// Thông tin chiếm trọn màn, không chừa nửa dưới cho sơ đồ. Bật khi vào từ
+  /// danh sách (chọn theo tên); tắt khi vào từ tấm tóm tắt trên sơ đồ, ở đó
+  /// giữ bản đồ lại mới thấy mình đang xem chỗ nào.
   final bool toanManHinh;
 
   const AreaDetailScreen({
@@ -75,16 +65,11 @@ class AreaDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = L.of(context);
 
-    // Chiều cao tối đa của tấm thông tin.
-    //
-    // Trước đây tấm này là `Positioned(bottom: 0)` không giới hạn, cao bao nhiêu
-    // tuỳ nội dung. Trên máy thấp phần dôi ra tràn lên khỏi mép trên và bị Stack
-    // cắt IM LẶNG — đo trên khung 360x480 thì ô ảnh nằm ở y = -66, tức mất hẳn,
-    // và không có cách nào cuộn tới. Chặn ở 78% chiều cao rồi cho cuộn bên trong
-    // vừa giữ được sơ đồ phía sau vẫn nhìn thấy, vừa không giấu mất nội dung.
+    // Chặn ở 78% chiều cao rồi cho cuộn bên trong. Để `Positioned(bottom: 0)`
+    // không giới hạn thì trên máy thấp phần dôi ra bị Stack cắt IM LẶNG — đo
+    // trên khung 360x480 thấy ô ảnh nằm ở y = -66, mất hẳn, không cuộn tới được.
     final caoToiDa = MediaQuery.sizeOf(context).height * 0.78;
 
-    // Chừa đúng chỗ cho hàng nút quay lại, phần còn lại là của nội dung.
     const caoHeader = 62.0;
 
     // Màn này được đẩy chồng lên nên phải tự cấp nền: kính khúc xạ theo thứ
@@ -101,10 +86,8 @@ class AreaDetailScreen extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Sơ đồ nền là bản số hoá thật, cùng một sơ đồ với tab Bản đồ.
-            // Trước đây là sơ đồ vẽ tay với những phòng không có trong dữ liệu
-            // khảo sát, nên màn chi tiết của một khu vực thật lại đứng trên nền
-            // một toà nhà không tồn tại.
+            // Sơ đồ nền là bản số hoá thật, cùng sơ đồ với tab Bản đồ. Bản vẽ tay cũ
+            // có những phòng không hề có trong dữ liệu khảo sát.
             if (!toanManHinh)
               const Positioned.fill(
                 child: Padding(
@@ -116,14 +99,9 @@ class AreaDetailScreen extends StatelessWidget {
                 ),
               ),
 
-            // Header + nút quay lại.
-            //
-            // Nút quay lại là bắt buộc, không phải trang trí: màn này đẩy bằng
-            // MaterialPageRoute lên trên một GlassScaffold — không phải Scaffold
-            // của Material nên KHÔNG có AppBar nào tự sinh mũi tên quay lại. Trên
-            // Android và trên web, MaterialPageRoute cũng không có cử chỉ vuốt
-            // mép để lùi. Kết quả là màn Chi tiết trước đây là ngõ cụt: vào rồi
-            // chỉ thoát được bằng phím back cứng của hệ điều hành.
+            // Nút quay lại là bắt buộc, không phải trang trí: màn này đẩy lên một
+            // GlassScaffold nên không có AppBar tự sinh mũi tên, và MaterialPageRoute
+            // không có cử chỉ vuốt mép. Thiếu nó thì màn Chi tiết là ngõ cụt.
             Positioned(
               top: 0,
               left: 16,
@@ -178,9 +156,8 @@ class _DetailSheet extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        // Nền phải theo theme, không để cứng Colors.white: chữ trong tấm này
-        // dùng inkOf(context) nên ở chế độ tối là chữ sáng — đặt trên nền trắng
-        // thành trắng trên trắng, không đọc được.
+        // Nền phải theo theme: chữ dùng inkOf(context) nên ở chế độ tối là chữ
+        // sáng, đặt trên Colors.white cứng thành trắng trên trắng.
         color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
         boxShadow: [
@@ -196,9 +173,8 @@ class _DetailSheet extends StatelessWidget {
           24,
           32,
           24,
-          // Cộng vùng an toàn dưới: lề cứng 24 đo từ MÉP MÀN HÌNH, mà trên máy
-          // dùng cử chỉ điều hướng thì thanh gạch ngang chiếm khoảng 34 đơn vị
-          // ở đúng chỗ đó — nút "Đi tới đây" nằm lọt dưới nó.
+          // Cộng vùng an toàn dưới: lề cứng 24 đo từ MÉP MÀN HÌNH, mà thanh gạch
+          // điều hướng chiếm ~34 đơn vị ngay đó — nút "Đi tới đây" lọt xuống dưới.
           24 + MediaQuery.viewPaddingOf(context).bottom,
         ),
         child: Column(
@@ -224,9 +200,8 @@ class _DetailSheet extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w500,
-                  // Chữ trắng trên dải xanh nhạt này chỉ đạt khoảng 2:1, dưới
-                  // ngưỡng 4.5:1 của WCAG AA. Dải màu cố định ở cả hai chế độ nên
-                  // đổi sang mực xanh đậm là đọc được ở cả hai.
+                  // Chữ trắng trên dải xanh nhạt chỉ đạt ~2:1, dưới ngưỡng 4.5:1 của WCAG
+                  // AA. Dải màu cố định ở cả hai chế độ nên dùng mực xanh đậm.
                   color: AppColors.strokeNavy.withValues(alpha: 0.75),
                 ),
               ),
@@ -274,11 +249,8 @@ class _DetailSheet extends StatelessWidget {
   }
 }
 
-/// Chip số liệu thật: bao nhiêu điểm đo, bao nhiêu ảnh.
-///
-/// Thay cho ba chip bịa "120 chỗ ngồi · Cách 8 m · Yên tĩnh" giống hệt nhau ở
-/// mọi khu vực. Số điểm đo là thứ đáng nói trong một đồ án định vị: khu vực
-/// nhiều điểm thì mô hình đoán chắc hơn.
+/// Chip số ảnh. Trước còn chip đếm điểm đo, nay bỏ: đó là chi tiết khảo sát,
+/// không phải thứ người dùng cần thấy. Khu chưa có ảnh thì không hiện gì.
 class _ChiSo extends StatelessWidget {
   final KhuVuc khuVuc;
 
@@ -288,18 +260,10 @@ class _ChiSo extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = L.of(context);
     final soAnh = AnhKhuVuc.duongDan(khuVuc.thuMucAnh).length;
+    if (soAnh == 0) return const SizedBox.shrink();
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _chip(context, t.detailPointCount(khuVuc.diem.length),
-            AppColors.roomBlue, AppColors.strokeNavy),
-        if (soAnh > 0)
-          _chip(context, t.detailPhotoCount(soAnh), AppColors.roomMint,
-              AppColors.strokeGreen),
-      ],
-    );
+    return _chip(context, t.detailPhotoCount(soAnh), AppColors.roomMint,
+        AppColors.strokeGreen);
   }
 
   Widget _chip(BuildContext context, String chu, Color nen, Color chuMau) =>
@@ -320,11 +284,9 @@ class _ChiSo extends StatelessWidget {
       );
 }
 
-/// Nút hành động chính: gọi `POST /route` thật thay vì hiện một toast.
-///
-/// Nhãn đổi theo trạng thái. Chưa định vị thì không có điểm xuất phát, mà đoán
-/// một điểm bất kỳ sẽ cho ra tuyến đường sai trông rất hợp lý — nên lúc đó nút
-/// bật định vị chứ không tìm đường.
+/// Nút hành động chính: gọi `POST /route` thật. Nhãn đổi theo trạng thái —
+/// chưa định vị thì nút bật định vị, vì đoán điểm xuất phát sẽ cho ra tuyến
+/// sai trông rất hợp lý.
 class _NutChiDuong extends StatefulWidget {
   final KhuVuc khuVuc;
 
@@ -502,10 +464,8 @@ void _hienChiDan(BuildContext context, KhuVuc khuVuc, KetQuaChiDuong kq) {
   );
 }
 
-/// Dải ảnh thật của khu vực, vuốt ngang để xem hết.
-///
-/// `PageView` chứ không `ListView`: ảnh gốc là ảnh dọc, xếp ngang liên tục thì
-/// mỗi tấm chỉ hiện được một dải hẹp.
+/// Dải ảnh thật của khu vực, vuốt ngang để xem hết. `PageView` chứ không
+/// `ListView`: ảnh gốc là ảnh dọc, xếp ngang thì mỗi tấm chỉ hiện một dải.
 class _DaiAnh extends StatefulWidget {
   final List<String> duongDan;
 
@@ -544,7 +504,19 @@ class _DaiAnhState extends State<_DaiAnh> {
                     for (final d in widget.duongDan)
                       // cover: ảnh dọc trong ô ngang, contain sẽ chừa hai dải
                       // trống rộng hơn cả ảnh.
-                      Image.asset(d, fit: BoxFit.cover),
+                      //
+                      // Ô cao cố định 164 và ảnh là ảnh dọc, nên chiều cao là
+                      // cạnh quyết định. Giải mã đúng cỡ cần dùng thay vì nguyên
+                      // 768×1024: trên máy 3x chỉ cần 492 px, tiết kiệm hơn nửa
+                      // thời gian giải mã và bộ nhớ ảnh.
+                      Image.asset(
+                        d,
+                        fit: BoxFit.cover,
+                        cacheHeight:
+                            (164 * MediaQuery.devicePixelRatioOf(context))
+                                .round()
+                                .clamp(1, 1024),
+                      ),
                   ],
                 ),
               ),

@@ -51,6 +51,8 @@ lib/
 │   ├── quet_wifi.dart            # gọi wifi_scan, phân loại lý do không quét được
 │   ├── quyen_truy_cap.dart       # quyền vị trí / NEARBY_WIFI_DEVICES
 │   ├── api_dinh_vi.dart          # POST /predict, GET /map, POST /route
+│   ├── kenh_vi_tri.dart          # WS /ws/location, hỏng kênh thì rơi về REST
+│   ├── la_ban.dart               # từ kế → hướng quy về trục sơ đồ
 │   └── theo_doi_vi_tri.dart      # vòng lặp quét 5 giây, giữ trạng thái cho UI
 ├── data/
 │   ├── floor_map.dart            # phép đổi mét ↔ pixel của sơ đồ thật
@@ -59,7 +61,8 @@ lib/
 │   ├── anh_khu_vuc.dart          # số ảnh mỗi thư mục, dựng đường dẫn asset
 │   └── demo_data.dart            # vài chuỗi cố định của toà nhà
 ├── widgets/
-│   ├── so_do_that.dart           # vẽ Map.png, nhãn khu vực, chấm vị trí
+│   ├── so_do_that.dart           # vẽ Map.png, nhãn khu vực, chấm vị trí, nón hướng
+│   ├── tom_tat_khu_vuc.dart      # tấm trượt lên khi chạm một chấm trên sơ đồ
 │   ├── glass_card.dart           # thẻ kính dùng chung
 │   ├── blob_background.dart      # nền gradient
 │   └── tap_feedback.dart         # phản hồi chạm + nhãn trợ năng
@@ -94,7 +97,7 @@ tăng dần của Kotlin 2.x làm hỏng build. Gỡ dòng này khi nâng đư�
 | Lệnh | Kết quả |
 |---|---|
 | `flutter analyze` | `No issues found!` |
-| `flutter test` | `All tests passed!` (65 bài) |
+| `flutter test` | `All tests passed!` (101 bài) |
 | `flutter build apk --debug` | `✓ Built app-debug.apk` |
 
 | Tệp test | Nội dung |
@@ -104,11 +107,17 @@ tăng dần của Kotlin 2.x làm hỏng build. Gỡ dòng này khi nâng đư�
 | `so_do_that_test.dart` | Phép đổi mét ↔ pixel và vị trí chấm trên sơ đồ |
 | `anh_khu_vuc_test.dart` | Số ảnh mỗi thư mục khớp `AssetManifest` |
 | `widget_test.dart` | Điều hướng, và không bịa vị trí khi chưa định vị |
+| `tuyen_va_loc_test.dart` | Vẽ tuyến lên sơ đồ và bộ lọc loại khu vực |
+| `kenh_vi_tri_test.dart` | Kênh WebSocket: lọc theo `device_id`, rơi về REST khi hỏng |
+| `la_ban_test.dart` | Quy đổi bắc từ → trục sơ đồ, lọc số đọc rung |
 | `uxui_test.dart`, `interaction_test.dart`, `settings_test.dart` | Trợ năng, cỡ chữ lớn, viewport thấp, song ngữ |
 
-Đã chạy trên máy Android thật (Samsung), gồm cả tình huống đứng ngoài thư viện:
-điện thoại thấy 23 access point, khớp 0 với hợp đồng dữ liệu, ứng dụng báo
-không đủ dữ liệu thay vì trả một toạ độ trong thư viện.
+Đã chạy trên máy Android thật — **Redmi K40 Pro (M2012K11C), Android 14** — nối
+qua `adb reverse tcp:8000`. Đứng ngoài thư viện nên khớp 0 trong 36 BSSID đã
+học: `GET /map` trả 200, kênh `WS /ws/location` mở được, mọi lần quét trả lỗi
+"không đủ AP" và ứng dụng nói rõ *"chỉ khớp 0 access point quen thuộc, cần ít
+nhất 6"* thay vì trả một toạ độ trong thư viện. Không lỗi Dart, không crash,
+không bản ghi nào lọt vào cơ sở dữ liệu.
 
 ## Lưu ý về môi trường Android
 
@@ -127,7 +136,16 @@ app Windows desktop, không ảnh hưởng Android hay web.
 
 ## Chưa làm
 
-- Chỉ đường mới dừng ở danh sách chỉ dẫn từng chặng; chưa vẽ tuyến lên sơ đồ và
-  chưa có la bàn theo hướng người dùng đang quay.
-- Chưa dùng `WS /ws/location`; ứng dụng gọi REST mỗi 5 giây.
+- Nón hướng đã vẽ nhưng **chưa ai nhìn thấy nó chạy trên máy thật**: nón chỉ
+  hiện khi đã có toạ độ, mà ở ngoài thư viện thì mọi lần quét đều trả 422.
+- Phương vị dùng cho nón (`LaBan.gocBacSoDo`) đo trên ảnh Google Maps, còn sai
+  số dư dưới 1° do lệch giữa bắc thật và bắc từ — chưa hiệu chỉnh tại chỗ.
 - Chưa chụp ảnh màn hình bộ giao diện mới trên thiết bị thật.
+
+## Đã làm xong, ghi lại để khỏi hỏi lại
+
+- Tuyến đường vẽ lên sơ đồ bằng chuỗi chấm theo mét thật (`so_do_that.dart`).
+- La bàn: nón hướng mở 40° quanh chấm vị trí (`la_ban.dart`).
+- `WS /ws/location`: ứng dụng gửi lần quét qua kênh, **hỏng kênh thì tự rơi về
+  REST** (`kenh_vi_tri.dart`). Kênh không làm vị trí cập nhật dày hơn — nhịp 5
+  giây do Android chặn quét WiFi quyết định, không do đường truyền.
