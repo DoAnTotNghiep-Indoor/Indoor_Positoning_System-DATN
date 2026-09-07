@@ -6,74 +6,16 @@ Tài liệu này phân tích cấu trúc thư mục của đồ án cũ (`DATN_C
 
 ## PHẦN 1 — CẤU TRÚC THƯ MỤC ĐỒ ÁN CŨ
 
-### 1.1. Frontend (Flutter) — Hình 11
+### 1.1. Hiện trạng — Hình 11 (Flutter) và Hình 12 (Backend) của báo cáo CTK45
 
-```
-IPS_APP/
-├── android/
-│   ├── .gradle/
-│   ├── app/
-│   │   ├── src/
-│   │   └── build.gradle
-│   ├── gradle/wrapper/
-│   │   ├── gradle-wrapper.jar
-│   │   └── gradle-wrapper.properties
-│   ├── .gitignore
-│   ├── build.gradle
-│   ├── flutter_application_1_android.iml
-│   ├── gradle.properties
-│   ├── gradlew / gradlew.bat
-│   ├── local.properties
-│   └── settings.gradle
-├── assets/
-│   ├── geojson/
-│   ├── icon/
-│   ├── images/
-│   ├── model/                       ← model trùng lặp với backend
-│   ├── avt_st.jpg
-│   ├── canteen.jpg
-│   ├── combined_data_sorted.csv     ← DATASET nằm trong app!
-│   ├── info_desk.jpg
-│   ├── LibDLU.jpg
-│   ├── magazine_room.jpg
-│   └── main_entrance.jpg
-├── ips/                             ← mục đích không rõ
-└── lib/
-    ├── controller/
-    ├── models/
-    ├── services/
-    ├── ultils/                      ← lỗi chính tả (utils)
-    ├── account.dart
-    ├── home.dart
-    ├── information.dart
-    ├── Location.dart                ← PascalCase
-    ├── main.dart
-    ├── POISelectionScreen.dart      ← PascalCase
-    ├── tutorial_overlay.dart
-    └── welcome_screen.dart
-```
+Trước đây mục này chép nguyên hai cây thư mục. Bỏ đi vì mọi phát hiện rút ra từ
+chúng đều đã nằm trong bảng 1.2 dưới đây, và bản chép thì dài gấp ba lần bảng.
+Những chỗ đáng chú ý nhất trong hai hình: `combined_data_sorted.csv` nằm trong
+`assets/` của app, thư mục `model/` có mặt ở cả frontend lẫn backend,
+`node_modules/` trong một dự án Python, và `venv/` + `__pycache__/` +
+`backend.zip` đều được commit.
 
-### 1.2. Backend (FastAPI) — Hình 12
-
-```
-BACKEND/
-├── __pycache__/                     ← cache Python, không nên commit
-├── model/
-│   ├── model.tflite                 ← không rõ khác nhau gì
-│   └── model2.tflite
-├── node_modules/                    ← thư viện Node.js trong dự án Python
-├── venv/                            ← môi trường ảo, không nên commit
-├── .env                             ← tồn tại nhưng KHÔNG được dùng
-├── backend.zip                      ← file nén commit chung mã nguồn
-├── convertcsv_to_json_value.py
-├── example.json
-├── main.py                          ← toàn bộ logic dồn vào 1 file
-├── package-lock.json
-├── package.json
-└── requirements.txt
-```
-
-### 1.3. Các vấn đề của cấu trúc cũ
+### 1.2. Các vấn đề của cấu trúc cũ
 
 | # | Vấn đề | Ảnh hưởng |
 |---|---|---|
@@ -106,7 +48,7 @@ Dự án mới khác đồ án cũ ở chỗ: thêm **Web Dashboard** bên cạn
 > | `frontend/` HTML5 + Tailwind, 7 trang | một `index.html`, JS thuần không thư viện ngoài | Bảy trang kia không trang nào có nội dung, mà dữ liệu chúng định hiện thì máy chủ chưa có endpoint. Bỏ CDN vì phòng bảo vệ có thể không ra được Internet |
 > | `routers/models.py`, `routers/datasets.py` | đã xoá | Thuộc phần quản lý phiên bản mô hình, chưa làm |
 > | `map.py` — `GET /map/{floor_id}` | `GET /map`, `GET /graph`, `POST /route` | Chỉ có một tầng; thêm đồ thị đi lại và chỉ đường |
-> | `smoothing_service.py` — `PositionSmoother` (EMA) | `BoGop` (đồng thuận không gian) | Xem mục 2.4.1 của tài liệu thiết kế: 0,38 m thay vì kéo trung bình theo điểm lạc |
+> | `smoothing_service.py` — `PositionSmoother` (EMA) | `BoGop` (đồng thuận không gian) | Xem mục 2.4.1 của tài liệu thiết kế: 0,00 m thay vì kéo trung bình theo điểm lạc |
 > | `ml/preprocess/` gói 8 tệp | `ml/preprocess.py` một tệp 358 dòng | 12 bước gọi tuần tự đúng một lần, tách tệp chỉ thêm chỗ phải nhảy qua lại |
 > | `.env`: `API_KEY`, `SMOOTHING_ALPHA`, `MAX_JUMP_DISTANCE_M` | bỏ cả ba; thêm `CUA_SO_GOP` | API_KEY chưa dùng tới; hai tham số kia thuộc thiết kế EMA đã bỏ |
 
@@ -231,9 +173,10 @@ System_Indoor/                           # gốc dự án (git repository)
     └── Cau_Truc_Thu_Muc_Du_An.md
 ```
 
-### Cây thư mục THỰC TẾ (tính tới 01/09/2026)
+### Cây thư mục THỰC TẾ (tính tới 03/09/2026)
 
-Đây là những gì git đang theo dõi — 224 tệp, khoảng 11 MB.
+Đây là những gì git đang theo dõi — 226 tệp đã commit cộng 9 tệp mới chưa
+commit, khoảng 12 MB.
 
 ```
 System_Indoor/
@@ -244,7 +187,7 @@ System_Indoor/
 │   ├── processed/fingerprint_dataset_sorted.csv
 │   ├── splits/                          # sinh bằng pipeline, không commit
 │   └── reference/
-│       ├── reference_points.csv         # 40 điểm, 10 cột (toạ độ + nhãn + mô tả)
+│       ├── reference_points.csv         # 44 điểm, 10 cột (toạ độ + nhãn + mô tả)
 │       ├── reference_points_template.csv
 │       ├── Map.png                      # sơ đồ mặt bằng do CTK45 số hoá
 │       └── ban_do_tang1.json            # hình học trích từ Map.png
@@ -253,11 +196,12 @@ System_Indoor/
 │   ├── feature_list.json  model_metadata.json  pipeline_manifest.json
 │   └── (scaler.pkl, model_*.pkl — sinh lại được nên không commit)
 │
-├── notebooks/                           # Colab: 4 notebook + 12 bước tiền xử lý
+├── notebooks/                           # Colab: 2 notebook + 12 bước tiền xử lý
 │
 ├── ml/
 │   ├── config.py  preprocess.py  pipeline.py  train.py
 │   ├── evaluate.py  postprocess.py  report.py  audit.py
+│   ├── danh_gia_cheo.py                 # giao thức bỏ trọn một điểm tham chiếu
 │   └── models/  knn.py  wknn.py  xgboost_model.py  random_forest.py
 │                fingerprint_knn.py
 │
@@ -277,20 +221,22 @@ System_Indoor/
 │
 ├── mobile/                              # NGOÀI đề cương — xem mobile/README.md
 │   ├── lib/  services/  data/  screens/  widgets/  theme/  l10n/
-│   ├── assets/  map/Map.png  images/ (37 ảnh, 11 khu vực)
-│   └── test/                            # 74 bài
+│   ├── assets/  map/Map.png  images/ (37 ảnh, 11 thư mục)
+│   └── test/                            # 101 bài
 │
 ├── tools/                               # chạy một lần rồi commit kết quả
 │   ├── trich_ban_do.py                  # Map.png → ban_do_tang1.json
 │   ├── sinh_khu_vuc.py                  # CSV → khu_vuc_thu_vien.dart
-│   └── ve_ban_ve.py                     # bản vẽ tầng 1 cho báo cáo
+│   ├── ve_ban_ve.py                     # bản vẽ tầng 1 cho báo cáo
+│   └── ve_khoi_nha.py                   # sơ đồ khối nhìn từ trên cao
 │
-├── tests/                               # 131 bài
+├── tests/                               # 160 bài
 │   ├── test_preprocess.py  test_feature_mapper.py  test_postprocess.py
 │   ├── test_train.py  test_api.py  test_route.py
 │   └── test_luu_tru.py  test_dashboard.py  test_khu_vuc.py
+│       test_danh_gia_cheo.py
 │
-├── reports/  figures/ (13 biểu đồ)  tables/ (3 bảng)
+├── reports/  figures/ (14 biểu đồ)  tables/ (4 bảng)
 └── docs/     3 tài liệu .md + frame thiết kế
 ```
 
@@ -388,171 +334,30 @@ def test_thieu_ap_thi_bao_loi():
 
 ## PHẦN 4 — CÁC FILE CẤU HÌNH KÈM THEO
 
-### 4.1. `.gitignore`
+Trước đây phần này chép nguyên nội dung `.gitignore`, `.env.example`,
+`requirements.txt` và khung `README.md`. Bỏ đi vì bản chép đã lệch khỏi bản
+thật: doc còn giữ 7 dòng `.gitignore` không còn tồn tại (kể cả dạng chú thích
+cùng dòng vốn là lỗi đã sửa — git không hiểu nó là chú thích), và liệt kê
+`alembic`, `asyncpg`, `seaborn`, `websockets` vốn không hề cài, trong khi thiếu
+`aiosqlite` đang dùng thật.
 
-```gitignore
-# Python
-__pycache__/
-*.py[cod]
-venv/
-.venv/
-env/
-*.egg-info/
-
-# Bí mật — TUYỆT ĐỐI không commit
-.env
-*.key
-credentials.json
-
-# Dữ liệu lớn (sinh lại được bằng pipeline)
-data/raw/
-data/processed/
-data/splits/
-*.csv
-!data/reference/*.csv          # NGOẠI LỆ: tọa độ RP phải commit
-
-# Artifact model (nặng, sinh lại được)
-artifacts/*.pkl
-artifacts/*.joblib
-!artifacts/feature_list.json   # NGOẠI LỆ: file nhỏ, là hợp đồng dữ liệu
-!artifacts/model_metadata.json
-
-# Node / build
-node_modules/
-dist/
-build/
-
-# IDE / OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
-# Nén
-*.zip
-*.rar
-```
-
-### 4.2. `.env.example` (commit được — làm mẫu cho cả nhóm)
-
-```bash
-# Database
-DATABASE_URL=postgresql+asyncpg://ips_user:CHANGE_ME@localhost:5432/ips_dlu
-
-# Bảo mật
-API_KEY=CHANGE_ME_random_string
-ALLOWED_ORIGINS=["http://localhost:5173","http://127.0.0.1:5500"]
-
-# Đường dẫn artifact
-MODEL_DIR=artifacts
-
-# Tham số hậu xử lý
-CUA_SO_GOP=3
-RESET_AFTER_SECONDS=30
-```
-
-### 4.3. `requirements.txt` (ghim phiên bản để tái lập được)
-
-```
-# Backend
-fastapi==0.115.0
-uvicorn[standard]==0.32.0
-pydantic==2.9.2
-pydantic-settings==2.6.0
-sqlalchemy==2.0.36
-asyncpg==0.30.0
-alembic==1.14.0
-websockets==13.1
-
-# Machine Learning
-numpy==2.1.3
-pandas==2.2.3
-scikit-learn==1.5.2
-xgboost==2.1.2
-joblib==1.4.2
-
-# Trực quan hóa (dùng khi viết báo cáo)
-matplotlib==3.9.2
-seaborn==0.13.2
-
-# Kiểm thử
-pytest==8.3.3
-httpx==0.27.2
-```
-
-> **Đã lỗi thời — xem `requirements.txt` mới là bản đúng.** Khối trên là bản dự
-> kiến lúc thiết kế. Máy thật chạy Python 3.14.7, mà các bản trên không có wheel
-> cho 3.14 nên phải nâng: `numpy 2.5.2`, `pandas 3.0.5`, `scikit-learn 1.9.0`,
-> `joblib 1.5.3`, `xgboost 3.4.1`, `matplotlib 3.11.1`, `pytest 9.1.1`.
-> `seaborn` đã gỡ hẳn — rà lại toàn bộ mã nguồn thì không nơi nào import nó.
-> Riêng `xgboost` phải khớp đúng 3.4.1 vì `model_xgboost_model.pkl` sinh ra từ
-> bản đó.
-
-> Ghi chú: đồ án cũ để `requirements.txt` không ghim phiên bản (`fastapi`, `tensorflow`, `numpy`...). Khi thư viện cập nhật, dự án có thể chạy sai hoặc không chạy được nữa — rủi ro thật khi bảo vệ đồ án cách thời điểm code vài tháng.
-
-### 4.4. `README.md` (khung)
-
-```markdown
-# Hệ thống định vị trong nhà bằng WiFi Fingerprinting
-
-## Cài đặt
-1. `python -m venv venv && venv\Scripts\activate`
-2. `pip install -r requirements.txt`
-3. `copy .env.example .env` rồi điền thông tin thật
-4. `alembic upgrade head`
-
-## Chạy
-- Backend: `uvicorn backend.main:app --reload`
-- Frontend: mở `frontend/index.html` (hoặc `python -m http.server 5500`)
-- Tiền xử lý: `python -m ml.pipeline`
-
-## Cấu trúc
-Xem `docs/Cau_Truc_Thu_Muc_Du_An.md`
-```
+Đọc thẳng bản thật ở gốc kho: `.gitignore`, `.env.example`, `requirements.txt`,
+`README.md`.
 
 ---
 
-## PHẦN 5 — ÁNH XẠ CÁC FILE HIỆN CÓ VÀO CẤU TRÚC MỚI
+## PHẦN 5 — THỨ TỰ TẠO THƯ MỤC VÀ CÁCH ĐÁNH SỐ GIAI ĐOẠN
 
-Các file bạn đã làm sẽ chuyển vào đâu:
+Không cần tạo hết ngay từ đầu. Theo đúng tiến độ trong đề cương.
 
-| File hiện tại | Vị trí mới |
-|---|---|
-| `D:\Nam5\DATN\combined_data.csv` | `data/raw/combined_data.csv` |
-| `D:\Nam5\DATN\fingerprint_dataset.csv` | `data/processed/fingerprint_dataset_sorted.csv` |
-| `System_Indoor\preprocess_steps\docdulieu_1.py` → `gomscan_2.py` | `ml/preprocess.py` — `load_raw`, `build_scan_id`, `build_scan_meta` |
-| `pivotdulieu_3.py` → `ghepToaDo_4.py` | `ml/preprocess.py` — `to_wide`, `attach_coordinates` |
-| `locAP_5.py` → `loaibomau_6.py` | `ml/preprocess.py` — `filter_access_points`, `filter_sparse_scans` |
-| `missRSSI_7.py` | `ml/preprocess.py` — `fill_missing` |
-| `locnhieu_8.py` | `ml/preprocess.py` — `hampel_filter` |
-| `chiadulieu_9.py` | `ml/preprocess.py` — `split_dataset` |
-| `chuanhoa_10.py` → `xuatketqua_11.py` → `sapxep_12.py` | `ml/preprocess.py` — `scale_dataset`, phần ghi artifact nằm ở `ml/pipeline.py` |
-| `01_preprocess_colab.ipynb` | `notebooks/02_preprocessing_colab.ipynb` |
-| `reference_points_template.csv` | `data/reference/reference_points.csv` (sau khi điền đủ) |
-| `layout_tool_click_toado.py` | `notebooks/tools/` hoặc `ml/tools/` |
-| `Phan_Tich_Thiet_Ke_He_Thong.md` | `docs/` |
-| `Phan_Tich_Ky_Thuat_DoAnCu_va_Cai_Tien.md` | `docs/` |
+**Bảng này là cách đánh số giai đoạn CHUẨN của dự án** — nói "giai đoạn 4" là nói
+`frontend/`. `roadmap.md` từng đánh số khác (giai đoạn 4 là ứng dụng Flutter) và
+đã sửa lại theo bảng này ngày 07/09/2026. Chốt ở đây vì đây là bảng duy nhất ánh
+xạ giai đoạn sang mốc thời gian của đề cương.
 
-> **Lưu ý về nhóm file `colab_steps/`**: các file này được viết theo dạng "từng cell copy vào Colab" nên dùng biến toàn cục (`df`, `fingerprint`, `ap_cols_selected`) chảy qua các bước. Khi chuyển sang `ml/preprocess.py`, mỗi bước được bọc lại thành hàm có tham số vào/ra rõ ràng để test được, ví dụ:
->
-> ```python
-> # ml/preprocess.py — bước 8
-> def hampel_filter(df: pd.DataFrame, ap_cols: list[str],
->                   group_col: str = "rp_id", k: float | None = None,
->                   ) -> tuple[pd.DataFrame, int]:
->     ...
->     return ket_qua, so_o_bi_thay
-> ```
->
-> Giữ nguyên bản Colab để chạy thử nhanh, đồng thời có bản module hóa để đưa vào dự án — không mâu thuẫn nhau.
->
-> **Cập nhật 28/08/2026**: ban đầu 12 bước được tách thành gói `ml/preprocess/` với 8 tệp con (`load.py`, `pivot.py`, `filter.py`, `missing.py`, `denoise.py`, `split.py`, `scale.py`, `coords.py`). Nay gộp lại thành **một tệp `ml/preprocess.py`** xếp theo đúng thứ tự pipeline gọi, để đọc một mạch từ trên xuống là ra trình tự 12 bước. Tên hàm giữ nguyên nên chỗ gọi chỉ đổi cách import.
-
----
-
-## PHẦN 6 — THỨ TỰ TẠO THƯ MỤC
-
-Không cần tạo hết ngay từ đầu. Theo đúng tiến độ trong đề cương:
+Đừng lẫn với bảng "Nhóm bảng ưu tiên triển khai theo giai đoạn" ở mục 2.5 của
+`Phan_Tich_Thiet_Ke_He_Thong.md` — bảng đó đánh số thứ tự dựng **bảng CSDL**, là
+một trục khác.
 
 | Giai đoạn | Tạo | Mốc đề cương |
 |---|---|---|
@@ -566,7 +371,7 @@ Riêng `.gitignore` và `.env.example` nên tạo **ngay từ ngày đầu** —
 
 ---
 
-## PHẦN 7 — BẢNG TÓM TẮT CẢI TIẾN
+## PHẦN 6 — BẢNG TÓM TẮT CẢI TIẾN
 
 | Vấn đề cũ | Cải tiến |
 |---|---|

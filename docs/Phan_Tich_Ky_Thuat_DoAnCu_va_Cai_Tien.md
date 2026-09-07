@@ -323,22 +323,32 @@ cú rẽ.
 
 **Tình trạng tới 01/09/2026.** V1–V12 là bảng đề xuất ban đầu, giữ nguyên làm dấu
 vết; V13–V18 thêm sau đợt rà mã nguồn GitHub ở Phần 2b. Đã làm xong V1–V6, V9,
-V10, V11 và cả V13–V18. V8 chưa làm — phần quản lý phiên bản mô hình nằm ngoài
-phạm vi giai đoạn 3.
+V10, V11 và cả V13–V18. V8 chưa làm: nó cần bảng `ml_models` + `is_active`, thuộc
+nhóm bảng CSDL số 2 (Machine Learning) ở mục 2.5 tài liệu thiết kế, trong khi CSDL
+mới chỉ dựng nhóm số 3 — đúng hai bảng `positioning_sessions` và
+`position_predictions`. Việc đối chiếu phiên bản hiện làm bằng dấu vân hợp đồng
+dữ liệu trong `model_metadata.json`, không bằng bảng CSDL.
 
 Riêng **V7 đã làm khác đề xuất**: thay EMA bằng đồng thuận không gian. Lý do là
 các ca sai nặng gần như luôn là một lần quét dị thường lẻ loi, mà EMA kéo trung
 bình nên vẫn bị điểm lạc lôi đi; đồng thuận không gian chọn dự đoán có tổng
 khoảng cách tới các dự đoán còn lại nhỏ nhất nên tự loại được điểm lạc và luôn
-trả về một điểm tham chiếu có thật. Đo trên tập test: 1,92 m xuống 0,38 m, số
-điểm sai từ 13/39 xuống 1/39. Chi tiết ở mục 2.4.1 của
+trả về một điểm tham chiếu có thật. Đo trên tập test: 2,28 m xuống 0,00 m, số
+điểm sai từ 15/39 xuống 0/39. Chi tiết ở mục 2.4.1 của
 `Phan_Tich_Thiet_Ke_He_Thong.md`.
 
 V12 cũng khác: bài toán vẫn là hồi quy toạ độ, nhưng mô hình tốt nhất
 (`kNN vân tay Bray-Curtis`) thực chất phân lớp 39 điểm tham chiếu rồi trả về toạ
 độ của điểm được chọn. Dữ liệu chỉ có 39 toạ độ khác nhau vì thu đúng tại các
-điểm tham chiếu, nên cách này khớp bản chất dữ liệu hơn — 1,92 m so với 6,48 m
+điểm tham chiếu, nên cách này khớp bản chất dữ liệu hơn — 2,30 m so với 6,26 m
 của XGBoost hồi quy liên tục.
+
+Kèm một cảnh báo phải đọc cùng: hai con số ấy đo bằng cách chia ngẫu nhiên theo
+lần quét, mà cách chia đó để cả 39 điểm có mặt đồng thời ở train lẫn test. Đo
+lại bằng giao thức bỏ trọn một điểm tham chiếu thì thứ hạng đảo — XGBoost 14,60 m
+đứng đầu, kNN vân tay 16,54 m. Nói cách khác, lợi thế của cách phân lớp ở trên
+đúng khi hệ thống chỉ phải nhận lại chỗ đã có dữ liệu, chứ không phải khi nó
+phải nội suy sang chỗ chưa đo. Xem `ml/danh_gia_cheo.py`.
 
 ### 3.2. Cải tiến then chốt #1 — Hợp đồng dữ liệu có BSSID (sửa V2 + V3)
 
@@ -362,68 +372,21 @@ của XGBoost hồi quy liên tục.
 
 Backend tự ánh xạ theo đúng thứ tự đã học:
 
-```python
-# services/preprocessing_service.py
-import json, joblib, numpy as np
+Xem bản đã cài đặt: `backend/services/preprocessing_service.py`.
 
-class FeatureMapper:
-    """Nguồn sự thật duy nhất cho việc ánh xạ BSSID -> vector đặc trưng.
-    Mọi tham số đều đọc từ artifact sinh ra lúc huấn luyện, không hardcode."""
-
-    def __init__(self, feature_list_path: str, scaler_path: str):
-        with open(feature_list_path, encoding="utf-8") as f:
-            meta = json.load(f)
-        self.ap_columns   = meta["ap_columns"]          # thứ tự cột CHÍNH XÁC lúc train
-        self.missing_value = meta["missing_rssi_value"] # hằng số động, không phải -98 cố định
-        self.min_ap        = meta["min_ap_per_scan"]
-        self.index = {bssid: i for i, bssid in enumerate(self.ap_columns)}
-        self.scaler = joblib.load(scaler_path)          # scaler ĐÃ fit trên train
-
-    def transform(self, scan: list[dict]) -> np.ndarray:
-        vector = np.full(len(self.ap_columns), self.missing_value, dtype=np.float32)
-        matched = 0
-        for item in scan:
-            idx = self.index.get(item["bssid"].lower())
-            if idx is not None:                 # AP lạ -> bỏ qua, không làm lệch thứ tự
-                vector[idx] = item["rssi"]
-                matched += 1
-        if matched < self.min_ap:
-            raise ValueError(
-                f"Chỉ nhận diện được {matched} AP đã biết, cần tối thiểu {self.min_ap}"
-            )
-        return self.scaler.transform(vector.reshape(1, -1))
-```
+Bản phác trước đây đặt ở chỗ này đã bị bỏ vì nó lệch khỏi bản thật theo hướng
+nguy hiểm: nó gán `vector[idx] = item["rssi"]`, tức ghi đè theo thứ tự mảng —
+đúng lỗi khiến cùng một lần quét gửi theo hai thứ tự cho ra hai toạ độ khác
+nhau. Bản thật lấy TRUNG BÌNH các BSSID trùng lặp (khớp
+`pivot_table(aggfunc="mean")` của bước 3) và lọc RSSI ngoài khoảng vật lý;
+`tests/test_feature_mapper.py` và `tests/test_api.py` khoá cả hai điều đó.
 
 Lợi ích: AP lạ không phá thứ tự cột; AP mất tín hiệu tự động gán `missing_value`; tiền xử lý lúc dự đoán **giống hệt** lúc huấn luyện.
 
 ### 3.3. Cải tiến then chốt #2 — Bảo mật cấu hình (sửa V1 + V4)
 
-```python
-# config.py
-from pydantic_settings import BaseSettings
-
-class Settings(BaseSettings):
-    database_url: str                 # đọc từ biến môi trường, KHÔNG hardcode
-    allowed_origins: list[str] = ["http://localhost:5173"]
-    api_key: str                      # bảo vệ endpoint ghi dữ liệu
-    model_dir: str = "artifacts"
-
-    class Config:
-        env_file = ".env"
-
-settings = Settings()
-```
-
-```python
-# main.py
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_origins,   # KHÔNG dùng "*"
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "X-API-Key"],
-)
-```
+Xem bản đã cài đặt: `backend/config.py` (đọc từ biến môi trường) và
+`backend/main.py`. Mẫu biến môi trường ở `.env.example`.
 
 `.gitignore` bắt buộc có:
 ```
@@ -438,83 +401,18 @@ data/raw/
 
 ### 3.4. Cải tiến then chốt #3 — Realtime + làm mượt (sửa V6 + V7)
 
-```python
-# services/smoothing_service.py
-import time, math
+Xem bản đã cài đặt: `backend/services/smoothing_service.py`, gọi thẳng
+`ml.postprocess.gop` để backend và bảng số liệu trong báo cáo dùng chung một
+thuật toán.
 
-class PositionSmoother:
-    """EMA theo từng thiết bị + chống nhảy bất thường."""
-
-    def __init__(self, alpha=0.3, max_jump_m=5.0, reset_after_s=30.0):
-        self.alpha = alpha
-        self.max_jump_m = max_jump_m
-        self.reset_after_s = reset_after_s
-        self.state = {}   # device_id -> (x, y, last_timestamp)
-
-    def smooth(self, device_id: str, x: float, y: float):
-        now = time.time()
-        prev = self.state.get(device_id)
-
-        if prev is None or (now - prev[2]) > self.reset_after_s:
-            self.state[device_id] = (x, y, now)      # lần đầu / mất tín hiệu lâu -> dùng trực tiếp
-            return x, y
-
-        px, py, _ = prev
-        jump = math.hypot(x - px, y - py)
-        if jump > self.max_jump_m:                    # nhảy bất thường -> kéo về giới hạn
-            ratio = self.max_jump_m / jump
-            x, y = px + (x - px) * ratio, py + (y - py) * ratio
-
-        sx = self.alpha * x + (1 - self.alpha) * px
-        sy = self.alpha * y + (1 - self.alpha) * py
-        self.state[device_id] = (sx, sy, now)
-        return sx, sy
-```
-
-```python
-# WebSocket thay cho polling
-@app.websocket("/ws/location")
-async def ws_location(websocket: WebSocket):
-    await websocket.accept()
-    try:
-        while True:
-            payload = await websocket.receive_json()
-            vector = mapper.transform(payload["scan"])
-            x, y = predictor.predict(vector)
-            sx, sy = smoother.smooth(payload["device_id"], x, y)
-            asyncio.create_task(log_prediction(...))   # ghi log bất đồng bộ, không chặn phản hồi
-            await websocket.send_json({
-                "x": round(x, 2), "y": round(y, 2),
-                "x_smooth": round(sx, 2), "y_smooth": round(sy, 2),
-                "model": predictor.model_code,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            })
-    except WebSocketDisconnect:
-        pass
-```
+Xem bản đã cài đặt: `backend/routers/predict.py` (`ws_location`) và
+`backend/services/websocket_service.py`.
 
 ### 3.5. Cải tiến then chốt #4 — Quản lý phiên bản model (sửa V8 + V9)
 
-```python
-# services/prediction_service.py
-class Predictor:
-    """Load model MỘT LẦN lúc khởi động (đúng như đồ án cũ đã làm tốt),
-    nhưng bổ sung khả năng đổi model động mà không cần restart."""
-
-    def __init__(self, model_x, model_y, model_code: str):
-        self.model_x, self.model_y = model_x, model_y
-        self.model_code = model_code
-
-    @classmethod
-    def load_active(cls, db) -> "Predictor":
-        row = db.query("SELECT * FROM ml_models WHERE is_active = true LIMIT 1")
-        return cls(joblib.load(f"{row.artifact_path}/model_x.pkl"),
-                   joblib.load(f"{row.artifact_path}/model_y.pkl"),
-                   row.model_code)
-
-    def predict(self, vector):
-        return float(self.model_x.predict(vector)[0]), float(self.model_y.predict(vector)[0])
-```
+Xem bản đã cài đặt: `backend/services/prediction_service.py` — nạp model một
+lần lúc khởi động, đối chiếu dấu vân hợp đồng dữ liệu trước khi nạp, và chạy
+nóng ngay tại `__init__` vì lần dự đoán đầu tốn ~1.400 ms.
 
 Mỗi dự đoán ghi vào `position_predictions` (x_pred, y_pred, x_smooth, y_smooth, model_id, visible_ap_count) → phục vụ debug và đánh giá sau triển khai, điều đồ án cũ hoàn toàn không có.
 
@@ -582,6 +480,13 @@ Không phải mọi thứ đều cần thay — những điểm sau đồ án c�
 | Băng thông | Lặp header HTTP mỗi request | Chỉ payload |
 | Tiêu thụ pin | Cao | Thấp hơn |
 | Biết trạng thái mất kết nối | Không | Có (hiển thị "Disconnected") |
+
+**Đọc dòng "độ trễ" cho đúng.** Nó nói về chặng máy chủ → Dashboard: toạ độ vừa
+tính xong là phát đi ngay, không đợi ai hỏi. Chặng điện thoại → máy chủ thì
+**kênh không làm vị trí cập nhật dày hơn**: nhịp 5 giây do Android chặn ứng dụng
+nền trước ở 4 lần `startScan` mỗi 2 phút quyết định, không do đường truyền. Cái
+kênh thật sự mang lại ở phía điện thoại là bỏ được bắt tay TCP và phần đầu HTTP
+mỗi vòng. Nói WebSocket làm định vị "nhanh hơn" là nói quá.
 
 ---
 

@@ -100,7 +100,7 @@ flowchart LR
 | Yêu cầu | Kết quả |
 |---|---|
 | Độ trễ < 200 ms | Đạt rất thoải mái: 0,85 ms mỗi mẫu cho mô hình đang chạy, mô hình chậm nhất là Random Forest ở 35,9 ms. Có bước chạy nóng lúc khởi động vì lần `predict` đầu tiên của scikit-learn tốn hơn hẳn |
-| XGBoost thấp hơn baseline 10–20% | **Không đạt** — cao hơn 25,8%. Xem mục 2.4.1 |
+| XGBoost thấp hơn baseline 10–20% | Tuỳ giao thức. Chia ngẫu nhiên theo lần quét: **không đạt**, cao hơn kNN 14,0% và cao hơn WKNN 36,1%. Bỏ trọn một điểm tham chiếu: **đạt với kNN** (thấp hơn 13,6%), chưa đạt với WKNN (thấp hơn 6,4%). Xem mục 2.4.1 |
 | Tái lập được | Đạt: `random_state=42`, và hai lần chạy pipeline cho ra dataset giống hệt **từng byte** |
 | Dashboard báo mất kết nối | Đạt: huy hiệu trạng thái đổi ngay khi WebSocket đóng, tự nối lại với thời gian chờ tăng dần |
 | Xác thực | **Chưa làm** — không có endpoint ghi dữ liệu training, nhưng Dashboard và WebSocket cũng đang mở hoàn toàn. Ghi trong phần hạn chế đã biết của README |
@@ -207,23 +207,38 @@ về một điểm tham chiếu có thật và tự loại điểm lạc.
 
 | Cách gộp | Sai số trung bình | Lớn nhất | Số điểm sai |
 |---|---|---|---|
-| Một lần quét, không gộp | 1,92 m | 37,6 m | 13/39 |
-| Bình chọn đa số | 0,59 m | 18,0 m | 2/39 |
-| Trung vị toạ độ | 0,38 m | 15,0 m | 1/39 |
-| **Đồng thuận không gian** | **0,38 m** | **15,0 m** | **1/39** |
+| Một lần quét, không gộp | 2,28 m | 15,0 m | 15/39 |
+| Trung vị toạ độ | 0,46 m | 9,0 m | 2/39 |
+| **Đồng thuận không gian** | **0,00 m** | **0,0 m** | **0/39** |
 
 Hai tham số `α` và giới hạn bước nhảy vì thế không còn, thay bằng `cua_so_gop`
 (số lần quét gộp, mặc định 3) và `reset_after_seconds`.
 
 **2. Thêm mô hình thứ năm không có trong thiết kế.** Dữ liệu chỉ có 39 toạ độ
 khác nhau vì thu đúng tại các điểm tham chiếu, nên bài toán gần với phân lớp hơn
-hồi quy. `kNN vân tay (Bray-Curtis)` khai thác đúng tính chất đó và cho 1,92 m,
-so với 5,15 m của cơ sở tốt nhất và 6,48 m của XGBoost.
+hồi quy. `kNN vân tay (Bray-Curtis)` khai thác đúng tính chất đó và cho 2,30 m,
+so với 5,50 m của mô hình cơ sở (kNN, chọn theo validation), 4,60 m của WKNN
+và 6,26 m của XGBoost.
 
 Kèm theo đó là một kết quả ngược với giả thiết ban đầu, cần nói thẳng trong báo
 cáo: **XGBoost không đạt mục tiêu ở mục 2.1** — thay vì thấp hơn baseline
-10–20%, nó cao hơn 25,8%. Nguyên nhân là tính chất dữ liệu nêu trên chứ không
+10–20%, nó cao hơn kNN 14,0% và cao hơn WKNN 36,1%. Nguyên nhân là tính chất dữ
+liệu nêu trên chứ không
 phải thiếu tinh chỉnh: lưới tham số đã nới tới khi cực trị nằm hẳn bên trong.
+
+**Mọi con số trong hai đoạn trên đo bằng cách chia ngẫu nhiên theo lần quét, và
+cách chia đó có rò rỉ.** Mỗi điểm tham chiếu chỉ được đo trong đúng một phiên
+chừng 15 phút, cùng máy, cùng ngày, nên chia ngẫu nhiên khiến cả 39 điểm có mặt
+đồng thời ở train lẫn test; 75% bản ghi test có láng giềng train gần nhất nằm
+ngay tại điểm của chính nó, cách 0,023 theo Bray-Curtis. Đo lại bằng giao thức
+bỏ trọn một điểm tham chiếu (`python -m ml.danh_gia_cheo`, bảng
+`reports/tables/model_comparison_bo_diem.csv`) thì **thứ hạng đảo ngược hoàn
+toàn**: XGBoost đứng đầu với 14,60 m, còn kNN vân tay tụt xuống 16,54 m.
+
+Hai con số là hai chặn của cùng một sự thật — chia ngẫu nhiên là chặn lạc quan,
+bỏ trọn một điểm là chặn bi quan — nên báo cáo phải nêu cả hai kèm giao thức đi
+với từng con số. Điều này không gỡ bỏ kết luận ở trên, nhưng nó cho biết kết
+luận ấy chỉ đúng trong phạm vi cách chia đã dùng.
 XGBoost vẫn là mô hình chính của đề tài và vẫn được huấn luyện, đánh giá đầy đủ
 trong bảng so sánh; mô hình *đang triển khai* thì chọn theo sai số validation,
 và `GET /health` luôn cho biết mô hình nào đang chạy.
@@ -308,7 +323,10 @@ erDiagram
   points_of_interest ||--o{ graph_nodes : maps_to
 ```
 
-**Nhóm bảng ưu tiên triển khai theo giai đoạn** (khớp mục 17 trong tài liệu thiết kế CSDL, ánh xạ vào mốc thời gian đề cương ở mục 2.9 bên dưới):
+**Nhóm bảng ưu tiên triển khai theo giai đoạn** (khớp mục 17 trong tài liệu thiết kế CSDL, ánh xạ vào mốc thời gian đề cương ở mục 2.9 bên dưới).
+
+Số ở cột đầu là thứ tự dựng BẢNG CSDL, không phải giai đoạn dự án — cách đánh
+số giai đoạn dự án nằm ở PHẦN 5 của `docs/Cau_Truc_Thu_Muc_Du_An.md`:
 
 | Giai đoạn | Bảng | Mục tiêu |
 |---|---|---|
@@ -366,7 +384,7 @@ lần rồi commit kết quả vào `data/reference/ban_do_tang1.json`, nên bac
 đọc JSON và không cần thư viện xử lý ảnh lúc chạy thật.
 
 **Phép biến đổi mét ↔ pixel được kiểm bằng hai phép đo độc lập.** Lưới chấm trong
-ảnh trải đúng 1000 px ngang và 605 px dọc, trong khi hộp bao 40 điểm tham chiếu
+ảnh trải đúng 1000 px ngang và 605 px dọc, trong khi hộp bao bộ điểm tham chiếu
 là 86 m × 52 m — cho 11,628 và 11,635 px/m. Hai trục tính riêng mà khớp tới 4 chữ
 số có nghĩa; đó là căn cứ khẳng định lưới chấm chính là hệ toạ độ mét của bộ dữ
 liệu, không phải một quy ước tự đặt.
@@ -377,19 +395,58 @@ toà nhà thắt eo ở giữa, theo chiều này đoạn eo ứng với y ∈ [
 phải chứa hai điểm ở |x| = 43 m, rộng hơn cả eo. Trục x không lật: khớp 39 điểm
 với GPS trong `POI.geojson` cho RMS 3,15 m khi không lật và 13,84 m khi lật.
 
+#### Đối chứng bằng ảnh Google Maps — phương vị toà nhà
+
+`Map.png` vẽ toà nhà thẳng trục nên tự nó **không chứa thông tin hướng**. Muốn
+biết trục sơ đồ chỉ về đâu ngoài đời phải lấy từ nguồn khác. Nhóm dùng ảnh khu
+thư viện trên Google Maps: Google luôn hướng bắc lên trên, và khối nhà trong lớp
+vector là đa giác đo đạc chứ không phải hình vẽ tay.
+
+Đo trên khối chứa nhãn *"Trung tâm Thông tin - Thư viện"*, ba đường độc lập:
+
+| Cách đo | Phương vị trục +x |
+|---|---:|
+| Hộp chữ nhật nhỏ nhất bao khối | 338,25° |
+| Trục chính PCA của chính khối đó | 340,35° |
+| Hình 21 CTK45, hai điểm cùng cạnh `y = 0` | 336,88° |
+| **Trung bình** (biên độ 3,5°) | **338,5°** |
+
+Ba chỗ khớp thêm, đều là kiểm chứng chứ không phải giả định:
+
+- Cả ba khối nhà nhìn thấy trong ảnh đều **cùng một phương vị**, đúng kiểu quy
+  hoạch một khuôn viên.
+- Tỉ lệ hộp bao khối thư viện là **1,76**, so với **86/52 = 1,65** của bộ dữ
+  liệu — lệch 6%, tức hình dạng 86 × 52 m đứng vững trước một nguồn hoàn toàn
+  bên ngoài.
+- Trục +y chỉ về **tây-tây-nam**, đúng phía Google đặt *"Bãi Giữ Xe Cổng Sau"*.
+  Mô tả của RP34 trong `reference_points.csv` ghi cửa sau *"dẫn ra bãi đỗ xe cổng
+  sau"* — hai nguồn không liên quan nhau mà chỉ về cùng một hướng.
+
+Phép đo này sửa một con số đang sai trong ứng dụng: `LaBan.gocBacSoDo` để 22°,
+lấy từ độ nghiêng nhìn bằng mắt trên ảnh chụp báo cáo CTK45. **22° đúng là góc
+nghiêng của lưới nhà so với trục bắc-nam, nhưng nó không phải phương vị của trục
++y** — dùng nhầm thì nón hướng trên sơ đồ lệch khoảng 226°, gần như ngược. Giá
+trị đúng là 248,5°.
+
+Giới hạn phải nói rõ: ảnh chụp không kèm thước tỉ lệ, nên **nguồn này chỉ kiểm
+được hướng và tỉ lệ hình dạng, không kiểm được kích thước tuyệt đối**. Khẳng
+định 86 × 52 m vẫn dựa vào lưới chấm trong `Map.png` và câu *"khoảng cách trung
+bình giữa hai vị trí tham chiếu lân cận là 7 mét"* ở trang 72 báo cáo CTK45 —
+đọc Bảng 4 thành mét cho trung vị đúng 7,00 m.
+
 #### Đồ thị đi lại
 
-Nút của đồ thị là chính 40 điểm tham chiếu, vì **RP nằm trên chỗ đi được theo
+Nút của đồ thị là chính các điểm tham chiếu, vì **RP nằm trên chỗ đi được theo
 định nghĩa**: phải có người đứng đúng đó cầm máy quét mới đo ra được toạ độ.
 
 Cạnh thì cần thêm sơ đồ, vì hai điểm gần nhau vẫn có thể có tường ở giữa. Công cụ
 dựng mặt nạ tường từ `Map.png` rồi **gán nhãn vùng liên thông**: hai điểm cùng
 một vùng thì đi được, khác vùng thì không. Cách này không có tham số ngưỡng nào
 phải chỉnh tay. Kết quả: 103 cặp điểm trong bán kính 25 m bị loại, cạnh dài nhất
-giảm từ 21,0 m xuống 17,2 m.
+giảm từ 21,0 m xuống 16,1 m.
 
 `Map.png` vẽ tường nhưng **không vẽ cửa**, nên chặn hết cạnh cắt tường thì đồ thị
-vỡ thành 7 mảnh rời. Công cụ nối lại bằng số cạnh ít nhất, mỗi lần chọn cạnh ngắn
+vỡ thành 8 mảnh rời. Công cụ nối lại bằng số cạnh ít nhất, mỗi lần chọn cạnh ngắn
 nhất giữa hai mảnh — chỗ nhiều khả năng có cửa nhất. Sáu cạnh ấy ghi riêng vào
 khoá `cua_gia_dinh`, **không trộn** vào phần suy ra được từ ảnh, để ra thực địa
 còn biết cái nào cần đối chiếu. Đây là hạn chế đã biết, nêu trong README.
@@ -432,7 +489,7 @@ trị `x` nhỏ nhất trong bảng toạ độ đã đo.
 
 ### 2.6.1. Đối chiếu với bản đã dựng
 
-Đã dựng 9 endpoint. Bốn nhóm trong bảng trên chưa làm, và đều có lý do:
+Đã dựng 8 endpoint. Bốn nhóm trong bảng trên chưa làm, và đều có lý do:
 
 | Endpoint đề xuất | Tình trạng |
 |---|---|
@@ -440,7 +497,7 @@ trị `x` nhỏ nhất trong bảng toạ độ đã đo.
 | `GET /graph`, `POST /route` | Đã dựng, dù bảng ghi là "mở rộng". `/route` trả kèm `chi_dan` — chỉ dẫn rẽ từng chặng |
 | `GET /health`, `GET /map/so-do.png`, `GET /` | Thêm mới: trạng thái mô hình, ảnh sơ đồ, và trang Dashboard phục vụ ngay từ uvicorn |
 | `POST /wifi-scans/training` | Không làm. Dữ liệu khảo sát kế thừa từ CTK45, nhóm không tổ chức đợt thu mới nên không cần đường ghi dữ liệu huấn luyện qua API |
-| `GET /floors/{id}/reference-points` | Không làm. Chỉ có một tầng, `GET /map` trả luôn cả 40 điểm |
+| `GET /floors/{id}/reference-points` | Không làm. Chỉ có một tầng, `GET /map` trả luôn mọi điểm |
 | `GET /models`, `/models/active`, `POST /models/{id}/activate`, `GET /model-evaluations` | Không làm. Thuộc phần quản lý phiên bản mô hình qua giao diện; mô hình active chọn lúc huấn luyện và ghi vào `model_metadata.json` |
 
 ---
@@ -469,7 +526,7 @@ Bố cục chung: sidebar trái (điều hướng module) + top bar (trạng th�
 **Dashboard gộp thành một trang, không chia bảy màn.** Bảy tệp HTML từng được
 tạo theo bảy module ở trên nhưng không tệp nào có nội dung, mà dữ liệu chúng
 định hiển thị thì máy chủ chưa có endpoint tương ứng — giữ lại chỉ là giữ bảy
-đường dẫn 404 có tiêu đề. Trang hiện tại gồm: sơ đồ mặt bằng với 40 điểm tham
+đường dẫn 404 có tiêu đề. Trang hiện tại gồm: sơ đồ mặt bằng với 44 điểm tham
 chiếu và marker thiết bị kèm vệt đã đi, bảng thiết bị đang kết nối, hộp chỉ
 đường, biểu đồ hiệu quả bước gộp, và bảng lịch sử định vị. Tức là phần MVP và
 hai màn Evaluation, History đã có mặt dưới dạng khối trong một trang.
@@ -538,9 +595,9 @@ Cột "Mốc" chép đúng mục VII của đề cương. Cột cuối là tình
 | 4 | XGBoost và tinh chỉnh siêu tham số | 09/09–20/09 | `ml/models/xgboost_model.py`, quét lưới 648 tổ hợp | Xong |
 | 5 | Báo cáo tiến độ lần 1 | 25/09–30/09 | Bảng so sánh 5 mô hình + biểu đồ CDF | Sẵn sàng |
 | 6 | Thực nghiệm, so sánh và đánh giá | 01/10–15/10 | Heatmap lỗi theo điểm, phân bố sai số, hậu xử lý gộp | Xong phần đo; còn mục 4.3 (mật độ người) chưa làm được |
-| 7 | Back-end FastAPI, tích hợp mô hình và WebSocket | 16/10–31/10 | 9 endpoint, `/ws/location`, `BoGop` | Xong |
+| 7 | Back-end FastAPI, tích hợp mô hình và WebSocket | 16/10–31/10 | 8 endpoint, `/ws/location`, `BoGop` | Xong |
 | 8 | Front-end Web Dashboard và ghép nối | 01/11–10/11 | `frontend/index.html`, phục vụ ngay từ uvicorn | Xong |
-| 9 | Kiểm thử, hoàn thiện và viết báo cáo | 11/11–15/11 | 128 test Python, 65 test Flutter | Đang làm |
+| 9 | Kiểm thử, hoàn thiện và viết báo cáo | 11/11–15/11 | 175 test Python, 101 test Flutter | Đang làm |
 | 10 | Báo cáo tiến độ lần 2 | 16/11–18/11 | — | Chưa tới |
 | 11 | Sửa chữa, hoàn thiện đồ án | 19/11–24/11 | — | Chưa tới |
 | 12 | Báo cáo bảo vệ trước hội đồng | 25/11–30/11 | Demo Dashboard realtime + bảng so sánh mô hình | Chưa tới |
@@ -565,6 +622,8 @@ dụng di động Flutter, đồ thị đi lại và chỉ đường — không 
 
 ## Việc tiếp theo có thể làm
 
-1. Vẽ các sơ đồ trên (use-case, kiến trúc, sequence, ERD) thành hình ảnh/artifact để chèn trực tiếp vào Word thay vì mã Mermaid.
-2. Viết chi tiết SQL DDL theo schema đã thống nhất, nếu báo cáo cần trình bày đầy đủ 16 bảng của ERD.
-3. Viết code khung dự án (`project/` structure đã đề xuất) để nhóm code luôn.
+1. Vẽ các sơ đồ trên (use-case, kiến trúc, sequence, ERD) thành hình ảnh để chèn
+   thẳng vào Word thay vì mã Mermaid.
+2. Nếu báo cáo cần trình bày SQL DDL: viết theo schema ĐANG chạy — hai bảng trong
+   `backend/database.py` — chứ không theo 16 bảng của ERD đầy đủ, vì bản 16 bảng
+   đã bị thu lại có chủ đích (lý do ở docstring đầu `backend/database.py`).

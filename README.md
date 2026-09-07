@@ -19,16 +19,34 @@ tham chiếu, để đánh giá trực tiếp bằng mét. Mô hình chính: **X
 Mô hình cơ sở đối chứng theo đề cương: **kNN và WKNN**; Random Forest và kNN vân
 tay là hai mô hình làm thêm, không nằm trong đề cương.
 
-Kết quả thực nghiệm ngược với dự kiến ở mục VI, và được báo cáo đúng như đo
-được: **XGBoost không thấp hơn được mô hình cơ sở** — 6,48 m so với 5,15 m của
-kNN. Nguyên nhân nằm ở tính chất dữ liệu: chỉ có 39 toạ độ khác nhau vì mẫu thu
-đúng tại các điểm tham chiếu, nên bài toán gần với phân lớp hơn hồi quy liên tục,
-mà đó là chỗ hồi quy cây quyết định yếu nhất.
+Kết quả **phụ thuộc vào cách chia dữ liệu**, nên báo cáo bằng hai giao thức chứ
+không một. Mỗi điểm tham chiếu chỉ được đo trong đúng một phiên chừng 15 phút,
+cùng máy, cùng ngày; chia ngẫu nhiên theo lần quét thì cả 39 điểm đều có mặt
+đồng thời ở train lẫn test, và 75% bản ghi test có láng giềng train gần nhất nằm
+ngay tại điểm của chính nó.
 
-Mô hình **đang được triển khai** chọn theo sai số trên tập validation, và hiện là
-`kNN vân tay (Bray-Curtis)` — 1,92 m, giảm 62,8% so với mô hình cơ sở tốt nhất.
-`GET /health` luôn cho biết mô hình nào đang chạy. Chi tiết ở
-`docs/Phan_Tich_Thiet_Ke_He_Thong.md` §2.4.1.
+| Mô hình | Chia ngẫu nhiên theo lần quét | Bỏ trọn một điểm tham chiếu |
+|---|---:|---:|
+| **XGBoost** | 6,26 m | **14,60 m** ① |
+| Random Forest | 6,59 m | 15,03 m |
+| WKNN | 4,60 m | 15,60 m |
+| kNN vân tay | **2,30 m** ① | 16,54 m |
+| kNN | 5,50 m | 16,90 m |
+
+Cột trái là **chặn lạc quan**: nó đo "nhận lại được lần quét vài phút trước, cùng
+chỗ, cùng máy không". Cột phải là **chặn bi quan**: toạ độ cần đoán chưa từng
+xuất hiện lúc học, mà lưới điểm cách nhau trung vị 7 m. Thứ hạng đảo ngược hoàn
+toàn giữa hai cột — cách chia ngẫu nhiên thưởng cho mô hình biết ghi nhớ phiên
+đo và phạt mô hình hồi quy liên tục, tức phạt đúng XGBoost.
+
+Sai số lúc triển khai nằm giữa hai chặn. Chốt được nó cần một đợt đo lần hai tại
+chính 40 điểm cũ, khác ngày và khác máy; xem mục **Hạn chế đã biết**. Sinh
+lại bảng phải bằng `python -m ml.train` và `python -m ml.danh_gia_cheo`.
+
+Mô hình **đang được triển khai** chọn theo sai số trên tập validation — mà tập
+validation chia theo cùng cách ngẫu nhiên nên mang cùng phần rò rỉ — và hiện là
+`kNN vân tay (Bray-Curtis)`. `GET /health` luôn cho biết mô hình nào đang chạy.
+Chi tiết ở `docs/Phan_Tich_Thiet_Ke_He_Thong.md` §2.4.1.
 
 ## Cài đặt
 
@@ -76,10 +94,11 @@ flutter test
 flutter analyze
 ```
 
-Ứng dụng **quét WiFi thật** và gọi `POST /predict` mỗi 5 giây (chu kỳ này bị
-Android chặn ở 4 lần quét mỗi 2 phút, nhanh hơn chỉ tốn pin). Tab Bản đồ vẽ sơ
-đồ mặt bằng đã số hoá kèm chấm vị trí; màn Chi tiết khu vực hiện ảnh thật và mô
-tả lấy từ `GET /map`.
+Ứng dụng **quét WiFi thật** và gửi lên qua `WS /ws/location` mỗi 5 giây, hỏng
+kênh thì tự rơi về `POST /predict`. Chu kỳ 5 giây do Android chặn ở 4 lần quét
+mỗi 2 phút quyết định — kênh không làm nó dày hơn được, cái kênh tiết kiệm là
+bắt tay TCP mỗi vòng. Tab Bản đồ vẽ sơ đồ mặt bằng đã số hoá kèm chấm vị trí và
+nón hướng la bàn; màn Chi tiết khu vực hiện ảnh thật và mô tả lấy từ `GET /map`.
 
 Địa chỉ máy chủ sửa được trong Cài đặt — mặc định `http://10.0.2.2:8000` là lối
 tắt máy ảo Android gọi về máy đang chạy nó, điện thoại thật phải đổi sang IP nội
@@ -104,9 +123,9 @@ Mở `http://127.0.0.1:8000/docs` để thử API bằng giao diện Swagger.
 | `GET /health` | Xác nhận mô hình đã nạp và hợp đồng dữ liệu khớp |
 | `POST /predict` | Nhận `{device_id, scan:[{bssid, rssi}]}` → trả `{x, y, x_smooth, y_smooth, …}` |
 | `GET /predictions` | Lịch sử vị trí đã lưu |
-| `WS /ws/location` | Kênh thời gian thực: gửi lần quét, nhận toạ độ; dashboard chỉ xem thì nhận toạ độ của mọi thiết bị |
-| `GET /map` | Toàn bộ dữ liệu không gian trong một response: phạm vi, 40 điểm tham chiếu, thống kê đồ thị |
-| `GET /graph` | Danh sách cạnh của đồ thị đi lại |
+| `WS /ws/location` | Kênh thời gian thực: gửi lần quét, nhận toạ độ; dashboard chỉ xem thì nhận toạ độ của mọi thiết bị. Ứng dụng di động đi lối này, hỏng kênh thì tự rơi về `POST /predict` |
+| `GET /map` | Toàn bộ dữ liệu không gian trong một response: phạm vi, điểm tham chiếu, thống kê đồ thị |
+| `GET /graph` | Danh sách cạnh của đồ thị đi lại. Cạnh có `cua_gia_dinh: true` là 6 chỗ nhóm tự nối tay vì `Map.png` không vẽ cửa — chưa ai đối chiếu thực địa |
 | `POST /route` | Chỉ đường giữa hai điểm tham chiếu (Dijkstra), điểm đầu cho bằng `tu_rp` hoặc toạ độ mét. Trả kèm `chi_dan` — từng bước "đi thẳng / rẽ trái / rẽ phải" và số mét |
 | `GET /map/so-do.png` | Ảnh sơ đồ mặt bằng, phục vụ thẳng từ `data/reference/Map.png` |
 | `GET /` | Web Dashboard (xem mục dưới) |
@@ -131,7 +150,7 @@ Không cần máy chủ tĩnh riêng: chính `uvicorn` ở trên phục vụ lu�
 uvicorn backend.main:app      # rồi mở http://127.0.0.1:8000
 ```
 
-Trang hiển thị sơ đồ mặt bằng với 40 điểm tham chiếu và marker của thiết bị đang
+Trang hiển thị sơ đồ mặt bằng với 44 điểm tham chiếu và marker của thiết bị đang
 định vị kèm vệt đường đã đi, bảng thiết bị đang kết nối, hộp chỉ đường, biểu đồ
 hiệu quả bước gộp, và lịch sử định vị.
 
@@ -152,7 +171,7 @@ lệch nhau thì cùng một toạ độ hiện ở hai chỗ khác nhau trên h
 | `notebooks/` | Notebook chạy trên Google Colab |
 | `ml/` | Mã nguồn tiền xử lý và huấn luyện, tái sử dụng được |
 | `mobile/` | Ứng dụng Flutter — 5 màn hình, song ngữ, sáng/tối, quét WiFi thật |
-| `backend/` | FastAPI + WebSocket + SQLite — 9 endpoint, đã chạy |
+| `backend/` | FastAPI + WebSocket + SQLite — 8 endpoint, đã chạy |
 | `frontend/` | Web Dashboard — HTML/CSS/JS thuần, không thư viện ngoài |
 | `tools/` | Công cụ chạy một lần rồi commit kết quả (trích hình học từ sơ đồ) |
 | `tests/` | Kiểm thử tự động |
@@ -171,8 +190,14 @@ thiết bị cho mọi kết nối đang mở, kèm `device_id`. Ai vào đượ
 chạy trong mạng nội bộ thư viện lúc demo, nhưng phải thêm xác thực trước khi
 dùng thật.
 
-**Sáu cửa ra vào là giả định.** `Map.png` vẽ tường nhưng không vẽ cửa, nên đồ thị
-đi lại vỡ thành 7 mảnh rời. Công cụ nối lại bằng cạnh ngắn nhất giữa hai mảnh và
+**Chưa có đợt đo lần hai, nên chưa chốt được sai số triển khai.** Bảng hai cột ở
+đầu tài liệu cho một chặn lạc quan và một chặn bi quan, không cho con số thật.
+Chốt nó cần thu lại tại chính 40 điểm cũ vào ngày khác, máy khác, rồi huấn luyện
+trên đợt 1 và kiểm trên đợt 2. Chuyến đo ấy đồng thời giải quyết được RP41 chưa
+có toạ độ, bảy cửa giả định, và phương vị toà nhà hiện chỉ đo trên ảnh vệ tinh.
+
+**Bảy cửa ra vào là giả định.** `Map.png` vẽ tường nhưng không vẽ cửa, nên đồ thị
+đi lại vỡ thành 8 mảnh rời. Công cụ nối lại bằng cạnh ngắn nhất giữa hai mảnh và
 ghi riêng vào `cua_gia_dinh` trong `ban_do_tang1.json`. Sáu cạnh này chưa được
 đối chiếu thực địa; đường đi qua chúng có thể không đi được thật.
 
@@ -196,9 +221,10 @@ không ra được mạng ngoài; bản build tại chỗ thì phải thêm Node
 vào một dự án còn lại thuần Python. Toàn bộ giao diện chỉ có một trang nên phần
 tiện lợi của Tailwind cũng không còn nhiều.
 
-**RP26 có toạ độ nhưng không có mẫu đo.** Ngược lại với RP41. Bản đồ 40 điểm,
-dữ liệu huấn luyện 39 điểm — mô hình vĩnh viễn không bao giờ báo RP26, dù
-`/route` vẫn dẫn tới đó.
+**Năm điểm có toạ độ nhưng không có mẫu đo.** RP26 (ngược lại với RP41) và bốn
+điểm nhóm 2025 bổ sung: RP42, RP43 (WC) và RP44, RP45 (cầu thang). Bản đồ 44
+điểm, dữ liệu huấn luyện 39 điểm — mô hình vĩnh viễn không bao giờ báo năm điểm
+đó, dù `/route` vẫn dẫn tới chúng.
 
 ## Nguyên tắc quan trọng
 
