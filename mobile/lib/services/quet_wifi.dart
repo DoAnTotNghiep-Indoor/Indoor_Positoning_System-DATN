@@ -21,9 +21,9 @@ class NgoaiLeQuet implements Exception {
 class MayQuetWifi {
   /// Quét một lần, trả về danh sách AP kèm RSSI.
   ///
-  /// Hạ BSSID về chữ thường: `feature_list.json` lưu chữ thường và backend ánh
-  /// xạ theo đúng chuỗi, mà máy Android trả hoa hay thường tuỳ hãng — không
-  /// chuẩn hoá thì số AP khớp về 0 mà không báo lỗi gì.
+  /// Hạ BSSID về chữ thường: `feature_list.json` lưu chữ thường và backend ánh xạ
+  /// theo đúng chuỗi, mà máy Android trả hoa hay thường tuỳ hãng — không chuẩn
+  /// hoá thì số AP khớp về 0 mà không báo lỗi gì.
   Future<List<DiemTruyCap>> quet() async {
     final co = await WiFiScan.instance.canStartScan();
     if (co != CanStartScan.yes) throw NgoaiLeQuet(_doiLoi(co));

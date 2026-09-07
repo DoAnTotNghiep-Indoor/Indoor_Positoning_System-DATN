@@ -26,11 +26,14 @@ dependencies:
 
   # Nhớ địa chỉ máy chủ giữa hai lần mở app.
   shared_preferences: ^2.3.2
+  flutter_compass: ^0.8.1
+  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  stream_channel: ^2.1.4
 
 flutter:
   uses-material-design: true
@@ -43,9 +46,9 @@ flutter:
     # sang đây vì Flutter chỉ đóng gói được asset nằm trong thư mục mobile/.
     - assets/map/Map.png
 
-    # Ảnh thật của 11 khu vực, do nhóm CTK45 chụp tại chỗ. Bản gốc 1920x2560
-    # nặng 24,9 MB; đã thu về cạnh dài 1024 px chất lượng 80 còn 4,0 MB — thừa
-    # nét cho màn điện thoại mà không phình kho mã.
+    # Ảnh thật của 12 khu vực: 11 thư mục đầu do nhóm CTK45 chụp, `wc/` do nhóm
+    # 15 chụp ngày 07/09/2026. Đều thu về cạnh dài 1024 px chất lượng 80 — thừa
+    # nét cho màn điện thoại mà không phình kho mã. Xem assets/images/NGUON.md.
     # Flutter không nhận mẫu lồng nhau nên phải liệt kê từng thư mục.
     - assets/images/ban_thu_thu/
     - assets/images/can_tin/
@@ -58,3 +61,4 @@ flutter:
     - assets/images/khu_vuc_tu_hoc/
     - assets/images/phong_tap_chi/
     - assets/images/tv3_4/
+    - assets/images/wc/

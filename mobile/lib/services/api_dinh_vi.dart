@@ -11,7 +11,7 @@ class ViTri {
   final double y;
 
   /// Toạ độ sau khi máy chủ gộp vài lần quét gần nhau. Đây mới là toạ độ nên
-  /// hiển thị: gộp 3 lần quét đưa sai số từ 1,92 m xuống 0,38 m trên tập test.
+  /// hiển thị: gộp 3 lần quét đưa sai số từ 1,90 m xuống 0,38 m trên tập test.
   final double xGop;
   final double yGop;
 
@@ -165,13 +165,9 @@ class ApiDinhVi {
       {http.Client? client, this.quaHan = const Duration(seconds: 8)})
       : _client = client ?? http.Client();
 
-  /// Dựng URL và chặn sớm địa chỉ không dùng được.
-  ///
-  /// `http` ném `ArgumentError` khi URI thiếu host, mà `ArgumentError` là
-  /// `Error` chứ không phải `Exception` nên `on Exception` để lọt và vòng quét
-  /// báo nhầm thành "quét WiFi thất bại" — gõ sai địa chỉ lại đi kiểm tra quyền
-  /// và WiFi. Thiếu scheme (`192.168.1.5`, `localhost:8000`) là chuyện xảy ra
-  /// thật vì màn Cài đặt bảo người dùng nhập IP nội bộ.
+  /// Dựng URL và chặn sớm địa chỉ không dùng được. `http` ném `ArgumentError`
+  /// khi URI thiếu host, mà đó là `Error` chứ không phải `Exception` nên
+  /// `on Exception` để lọt và vòng quét báo nhầm thành "quét WiFi thất bại".
   Uri _url(String duong) {
     final u = Uri.tryParse('$diaChi$duong');
     if (u == null ||
@@ -182,11 +178,9 @@ class ApiDinhVi {
     return u;
   }
 
-  /// Gửi một lần quét, nhận toạ độ.
-  ///
-  /// Gửi `[{bssid, rssi}]` kèm cặp chứ KHÔNG gửi mảng số trần như CTK45: mảng
-  /// trần sai thứ tự thì mô hình vẫn chạy trơn và trả toạ độ sai không một
-  /// cảnh báo nào.
+  /// Gửi một lần quét, nhận toạ độ. Gửi `[{bssid, rssi}]` kèm cặp chứ KHÔNG
+  /// gửi mảng số trần như CTK45: mảng trần sai thứ tự thì mô hình vẫn chạy
+  /// trơn và trả toạ độ sai không một cảnh báo nào.
   Future<ViTri> duDoan({
     required String deviceId,
     required List<DiemTruyCap> quet,
@@ -230,10 +224,8 @@ class ApiDinhVi {
     }
   }
 
-  /// Bóc số AP khớp ra khỏi thân 422 để giao diện nói được "khớp 2/6".
-  ///
-  /// Thân hỏng thì vẫn trả đúng loại lỗi với số đếm rỗng: biết "không đủ AP" đã
-  /// hữu ích hơn hẳn một câu lỗi HTTP chung chung.
+  /// Bóc số AP khớp ra khỏi thân 422 để giao diện nói được "khớp 2/6". Thân
+  /// hỏng thì vẫn trả đúng loại lỗi với số đếm rỗng.
   NgoaiLeApi _khongDuAp(http.Response tra) {
     try {
       final d = jsonDecode(utf8.decode(tra.bodyBytes))['detail'];
@@ -244,7 +236,7 @@ class ApiDinhVi {
     }
   }
 
-  /// 40 điểm tham chiếu kèm tên, tải một lần rồi giữ lại. Nhờ nó giao diện nói
+  /// Điểm tham chiếu kèm tên, tải một lần rồi giữ lại. Nhờ nó giao diện nói
   /// được "Phòng tạp chí" thay vì "x 22,0 m · y 52,0 m".
   Future<List<DiemThamChieu>> layBanDo() async {
     final url = _url('/map');
@@ -272,10 +264,8 @@ class ApiDinhVi {
     }
   }
 
-  /// Đường đi từ toạ độ hiện tại tới một điểm tham chiếu.
-  ///
-  /// Gửi toạ độ mét chứ không gửi rp_id: máy chủ tự neo vào điểm gần nhất, nên
-  /// ứng dụng không phải nhân đôi phép tìm điểm gần nhất ở phía mình.
+  /// Đường đi từ toạ độ hiện tại tới một điểm tham chiếu. Gửi toạ độ mét chứ
+  /// không gửi rp_id: máy chủ tự neo vào điểm gần nhất, ứng dụng khỏi nhân đôi.
   Future<KetQuaChiDuong> chiDuong({
     required double tuX,
     required double tuY,

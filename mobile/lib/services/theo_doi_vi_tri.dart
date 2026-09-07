@@ -5,33 +5,39 @@ import 'package:flutter/material.dart';
 
 import '../data/khu_vuc.dart';
 import 'api_dinh_vi.dart';
+import 'kenh_vi_tri.dart';
 import 'quet_wifi.dart';
 
 enum TrangThai { dung, dangChay, loi }
 
 /// Vòng lặp quét WiFi rồi gửi lên máy chủ, giữ toạ độ mới nhất cho giao diện.
 ///
-/// Chu kỳ 5 giây vì Android chặn ứng dụng nền trước ở 4 lần `startScan` mỗi 2
-/// phút; quét dày hơn chỉ tốn pin để nhận lại kết quả cũ trong bộ đệm.
+/// Chu kỳ 5 giây vì Android chặn 4 lần `startScan` mỗi 2 phút.
 class TheoDoiViTri extends ChangeNotifier {
   static const chuKy = Duration(seconds: 5);
 
   final MayQuetWifi _mayQuet;
   final ApiDinhVi _api;
 
-  TheoDoiViTri(
-      {required String diaChiMayChu, MayQuetWifi? mayQuet, ApiDinhVi? api})
-      : _mayQuet = mayQuet ?? MayQuetWifi(),
-        _api = api ?? ApiDinhVi(diaChiMayChu);
+  /// Lối gửi lần quét. Null nghĩa là đi thẳng REST — dùng trong kiểm thử, nơi
+  /// máy chủ giả chỉ nói HTTP.
+  final KenhViTri? _kenh;
+
+  TheoDoiViTri({
+    required String diaChiMayChu,
+    MayQuetWifi? mayQuet,
+    ApiDinhVi? api,
+    KenhViTri? kenh,
+  })  : _mayQuet = mayQuet ?? MayQuetWifi(),
+        _api = api ?? ApiDinhVi(diaChiMayChu),
+        _kenh = kenh;
 
   Timer? _hen;
   bool _dangBan = false;
   bool _daHuy = false;
 
-  /// Tăng mỗi lần bật hoặc tắt theo dõi. Một lần quét đang bay dở giữ lại số
-  /// lượt của nó và chỉ được ghi kết quả nếu số đó chưa đổi — nếu không, bấm
-  /// Dừng giữa lúc đang quét sẽ bị lần quét cũ kéo trạng thái về `dangChay`
-  /// sau đó vài giây, trong khi timer đã tắt và không còn gì chạy nữa.
+  /// Tăng mỗi lần bật hoặc tắt theo dõi. Lần quét đang bay dở chỉ được ghi kết
+  /// quả nếu số lượt chưa đổi, nếu không bấm Dừng xong vẫn bị kéo về `dangChay`.
   int _luot = 0;
 
   /// Đang tạm dừng vì ứng dụng xuống nền, chứ không phải người dùng bấm dừng.
@@ -45,22 +51,20 @@ class TheoDoiViTri extends ChangeNotifier {
   int? _soApKhop;
   int? _soApToiThieu;
 
-  /// Lúc nhận được toạ độ gần nhất. Null khi chưa từng định vị trong phiên này.
   DateTime? _lucCapNhat;
 
   List<DiemThamChieu> _banDo = const [];
 
-  /// Tuyến đang hiện trên sơ đồ, null khi chưa chỉ đường hoặc đã xoá.
-  ///
-  /// Giữ ở đây chứ không ở màn Chi tiết vì tuyến phải sống sót lúc người dùng
-  /// thoát màn đó quay về sơ đồ — đấy mới là chỗ họ nhìn khi đang đi.
-  ///
-  /// Tuyến neo ở điểm xuất phát lúc bấm và KHÔNG tự tính lại khi người dùng đi
-  /// tiếp: chấm vị trí vẫn chạy theo thời gian thực nên họ tự thấy mình đang ở
-  /// đâu trên tuyến. Tính lại mỗi 5 giây là thêm một lượt gọi mạng mỗi vòng
-  /// quét, mà tuyến sẽ nhảy mỗi khi mô hình đổi điểm tham chiếu gần nhất.
+  /// Tuyến đang hiện trên sơ đồ, null khi chưa chỉ đường. Giữ ở đây để tuyến
+  /// sống sót khi rời màn Chi tiết. Neo ở điểm xuất phát và KHÔNG tự tính lại:
+  /// chấm vị trí vẫn chạy, còn tính lại thì tuyến nhảy mỗi vòng quét.
   KetQuaChiDuong? _tuyen;
   KhuVuc? _dichTuyen;
+
+  /// Chốt lượt riêng cho tuyến, cùng vai trò với `_luot` của vòng quét: một
+  /// tuyến về muộn không được đè lên tuyến mới, cũng không được dựng lại sau
+  /// khi người dùng đã bấm xoá.
+  int _luotTuyen = 0;
 
   TrangThai get trangThai => _trangThai;
   ViTri? get viTri => _viTri;
@@ -68,28 +72,20 @@ class TheoDoiViTri extends ChangeNotifier {
   KetQuaChiDuong? get tuyen => _tuyen;
   KhuVuc? get dichTuyen => _dichTuyen;
 
-  /// Số giây kể từ lần có toạ độ gần nhất, null nếu chưa có lần nào.
-  ///
-  /// Giao diện phải hỏi giá trị này chứ không được viết cứng một con số: header
-  /// màn Bản đồ trước đây luôn ghi "cập nhật 2 giây trước", kể cả khi định vị
-  /// đang tắt và chưa hề có toạ độ nào.
+  /// Số giây kể từ lần có toạ độ gần nhất, null nếu chưa có lần nào. Giao diện
+  /// phải hỏi giá trị này chứ không viết cứng như header cũ "2 giây trước".
   int? get giayTuCapNhat {
     final luc = _lucCapNhat;
     return luc == null ? null : DateTime.now().difference(luc).inSeconds;
   }
 
-  /// Khu vực của thư viện, sắp theo khoảng cách tới vị trí đang đứng.
-  ///
-  /// Chưa tải được `/map` thì lùi về bản nhúng sẵn thay vì trả danh sách rỗng:
-  /// nội dung y hệt, chỉ là không cập nhật được nếu dữ liệu thực địa đổi.
+  /// Khu vực thư viện, sắp theo khoảng cách. Chưa tải được `/map` thì lùi về
+  /// bản nhúng: nội dung y hệt, chỉ không đổi theo dữ liệu thực địa mới.
   List<KhuVuc> get khuVuc =>
       sapTheoKhoangCach(KhuVuc.tuDiem(_banDo), _viTri);
 
-  /// Điểm tham chiếu gần toạ độ hiện tại nhất, null nếu chưa định vị hoặc chưa
-  /// tải được bản đồ.
-  ///
-  /// Mô hình vân tay luôn trả về đúng toạ độ một điểm tham chiếu nên phép tìm
-  /// này gần như luôn khớp tuyệt đối chứ không phải xấp xỉ.
+  /// Điểm tham chiếu gần nhất, null nếu chưa định vị hoặc chưa có bản đồ. Mô
+  /// hình luôn trả đúng toạ độ một điểm nên phép tìm này khớp tuyệt đối.
   DiemThamChieu? get diemGanNhat {
     final vt = _viTri;
     if (vt == null || _banDo.isEmpty) return null;
@@ -107,7 +103,7 @@ class TheoDoiViTri extends ChangeNotifier {
     return gan;
   }
 
-  /// Tên khu vực đang đứng, hoặc null để giao diện lùi về hiện toạ độ mét.
+  /// Tên khu vực đang đứng, null để giao diện lùi về hiện toạ độ mét.
   String? get tenKhuVuc {
     final ten = diemGanNhat?.ten ?? '';
     return ten.isEmpty ? null : ten;
@@ -125,13 +121,14 @@ class TheoDoiViTri extends ChangeNotifier {
       'dlu-${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}'
       '-${Random().nextInt(0xFFFF).toRadixString(16)}';
 
-  void doiMayChu(String diaChi) => _api.diaChi = diaChi;
+  void doiMayChu(String diaChi) {
+    _api.diaChi = diaChi;
+    // Kênh đang mở vẫn trỏ về máy chủ cũ; đóng để vòng sau nối lại chỗ mới.
+    _kenh?.dong();
+  }
 
-  /// Đường đi từ vị trí hiện tại tới khu vực [k].
-  ///
-  /// Ném [NgoaiLeApi] với `khongKetNoi` khi chưa định vị: không có điểm xuất
-  /// phát thì không thể chỉ đường, và đoán một điểm bất kỳ sẽ cho ra tuyến sai
-  /// trông rất hợp lý.
+  /// Đường đi tới khu vực [k]. Ném [NgoaiLeApi] `khongKetNoi` khi chưa định vị:
+  /// đoán một điểm xuất phát sẽ cho ra tuyến sai trông rất hợp lý.
   Future<KetQuaChiDuong> chiDuongToi(KhuVuc k) async {
     final vt = _viTri;
     if (vt == null) throw const NgoaiLeApi(LoiApi.khongKetNoi);
@@ -151,7 +148,9 @@ class TheoDoiViTri extends ChangeNotifier {
     }
     if (den == null) throw const NgoaiLeApi(LoiApi.saiDinhDang);
 
+    final luot = ++_luotTuyen;
     final kq = await _api.chiDuong(tuX: vt.xGop, tuY: vt.yGop, denRp: den);
+    if (luot != _luotTuyen) return kq;
     _tuyen = kq;
     _dichTuyen = k;
     _bao();
@@ -159,6 +158,7 @@ class TheoDoiViTri extends ChangeNotifier {
   }
 
   void xoaTuyen() {
+    _luotTuyen++;
     if (_tuyen == null) return;
     _tuyen = null;
     _dichTuyen = null;
@@ -179,10 +179,8 @@ class TheoDoiViTri extends ChangeNotifier {
     _hen = Timer.periodic(chuKy, (_) => _motVong());
   }
 
-  /// Tải bản đồ song song, không chặn vòng quét. Hỏng thì bỏ qua — giao diện
-  /// lùi về hiện toạ độ mét, còn hơn là không định vị được gì.
-  ///
-  /// Công khai vì màn Bản đồ gọi ngay khi mở tab, không đợi bật định vị.
+  /// Tải bản đồ song song, không chặn vòng quét; hỏng thì bỏ qua. Công khai vì
+  /// màn Bản đồ gọi ngay khi mở tab, không đợi bật định vị.
   Future<void> taiBanDo() async {
     if (_banDo.isNotEmpty) return;
     try {
@@ -197,14 +195,15 @@ class TheoDoiViTri extends ChangeNotifier {
     _luot++;
     _hen?.cancel();
     _hen = null;
+    // Đóng kênh khi thôi theo dõi: để mở là giữ một socket sống suốt phiên chỉ
+    // để nhận toạ độ của máy khác.
+    _kenh?.dong();
     _trangThai = TrangThai.dung;
     _bao();
   }
 
-  /// Ngừng quét khi ứng dụng xuống nền, quét lại khi quay lên.
-  ///
-  /// Chỉ tự quét lại nếu TRƯỚC ĐÓ đang chạy: người dùng đã tự bấm dừng thì giữ
-  /// nguyên ý muốn của họ.
+  /// Ngừng quét khi ứng dụng xuống nền, quét lại khi quay lên — chỉ khi TRƯỚC
+  /// ĐÓ đang chạy, để không đè lên ý muốn của người đã tự bấm dừng.
   void doiVongDoi(AppLifecycleState trangThaiUngDung) {
     final chayNen = trangThaiUngDung == AppLifecycleState.resumed;
     if (!chayNen && _hen != null) {
@@ -223,7 +222,9 @@ class TheoDoiViTri extends ChangeNotifier {
     final luot = _luot;
     try {
       final quet = await _mayQuet.quet();
-      final vt = await _api.duDoan(deviceId: deviceId, quet: quet);
+      final vt = _kenh != null
+          ? await _kenh.duDoan(deviceId: deviceId, quet: quet)
+          : await _api.duDoan(deviceId: deviceId, quet: quet);
       if (luot != _luot) return;
       _viTri = vt;
       _lucCapNhat = DateTime.now();
@@ -244,10 +245,8 @@ class TheoDoiViTri extends ChangeNotifier {
       _loiQuet = null;
       _trangThai = TrangThai.loi;
 
-      // Toạ độ cũ không còn đáng tin khi lần quét mới không đủ dữ liệu: giữ lại
-      // thì giao diện vẫn hiện tên phòng cũ như thể người dùng còn đứng đó. Xoá
-      // luôn mốc thời gian, vì "cập nhật 3 giây trước" mà không có toạ độ nào
-      // cũng là một lời khẳng định sai.
+      // Toạ độ cũ không còn đáng tin khi lần quét mới thiếu dữ liệu: giữ lại thì
+      // giao diện vẫn hiện tên phòng cũ như thể người dùng còn đứng đó.
       if (e.loai == LoiApi.khongDuAp) {
         _viTri = null;
         _lucCapNhat = null;
@@ -275,6 +274,7 @@ class TheoDoiViTri extends ChangeNotifier {
   void dispose() {
     _daHuy = true;
     _hen?.cancel();
+    _kenh?.dong();
     _api.dong();
     super.dispose();
   }

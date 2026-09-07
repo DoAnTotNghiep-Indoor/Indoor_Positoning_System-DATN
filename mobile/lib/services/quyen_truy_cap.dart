@@ -14,13 +14,12 @@ enum TrangThaiQuyen {
 
 /// Đọc và xin quyền quét WiFi.
 ///
-/// Android coi danh sách AP xung quanh là dữ liệu suy ra được vị trí, nên quét
+/// Android coi danh sách AP xung quanh là dữ liệu suy ra được vị trí nên quét
 /// WiFi cần quyền vị trí. Từ Android 13 có thêm `NEARBY_WIFI_DEVICES` dùng thay,
-/// và máy mới trả `denied` vĩnh viễn cho quyền vị trí — vì vậy phải coi là ĐÃ
-/// CẤP khi một trong hai quyền được cấp, chứ không phải cả hai.
+/// và máy mới trả `denied` vĩnh viễn cho quyền vị trí — nên coi là ĐÃ CẤP khi
+/// một trong hai được cấp, không phải cả hai.
 ///
-/// Tách thành lớp riêng và cho tiêm được để màn Cài đặt kiểm thử được: gọi
-/// thẳng `permission_handler` thì mọi bài test widget đều đụng kênh nền tảng.
+/// Tách thành lớp riêng và cho tiêm được để màn Cài đặt kiểm thử được.
 class QuyenTruyCap {
   const QuyenTruyCap();
 

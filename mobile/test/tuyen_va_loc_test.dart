@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -16,13 +17,13 @@ import 'package:ips_dlu/widgets/so_do_that.dart';
 
 /// Kiểm thử tuyến đường vẽ trên sơ đồ và bộ lọc loại khu vực.
 ///
-/// Hai bất biến chính. Một, tuyến phải vẽ theo `duong_di` — danh sách nút đầy
-/// đủ — chứ không theo `chi_dan` vốn đã gộp các chặng đi thẳng; vẽ nhầm thì
-/// tuyến cắt góc xuyên qua tường mà nhìn vẫn rất hợp lý. Hai, nhãn chip lấy
-/// thẳng từ dữ liệu khảo sát, không từ một bảng loại viết riêng.
+/// Hai bất biến: tuyến phải vẽ theo `duong_di` (danh sách nút đầy đủ) chứ không
+/// theo `chi_dan` vốn đã gộp các chặng đi thẳng — vẽ nhầm thì tuyến cắt góc
+/// xuyên tường mà nhìn vẫn rất hợp lý; và nhãn chip lấy thẳng từ dữ liệu khảo
+/// sát, không từ một bảng loại viết riêng.
 
-/// Bản đồ 4 điểm thuộc 3 nhóm. Thứ tự nhóm ở đây KHÔNG theo bảng chữ cái, để
-/// bài test bắt được nếu hàng chip quên sắp xếp.
+/// Bản đồ 4 điểm thuộc 3 nhóm. Thứ tự nhóm KHÔNG theo bảng chữ cái, để bắt được
+/// nếu hàng chip quên sắp xếp.
 String _banDo() => jsonEncode({
       'don_vi': 'met',
       'pham_vi': {'x_min': -43, 'x_max': 43, 'y_min': 0, 'y_max': 52},
@@ -123,6 +124,18 @@ Finder _chip(String chu) => find.descendant(
       of: find.byType(ListView),
       matching: find.text(chu),
     );
+
+/// Tuyến một chặng tới [den], dùng `quang_duong_m` làm dấu nhận biết.
+String _tuyenNgan(String den, double quangDuong) => jsonEncode({
+      'tu': 'RP09', 'den': den,
+      'quang_duong_m': quangDuong,
+      'so_chang': 1,
+      'duong_di': [
+        {'rp_id': 'RP09', 'x': 30.0, 'y': 14.0, 'ten': '', 'nhom': ''},
+        {'rp_id': den, 'x': 22.0, 'y': 52.0, 'ten': '', 'nhom': ''},
+      ],
+      'chi_dan': <Map<String, dynamic>>[],
+    });
 
 void main() {
   test('Tuyến giữ đủ nút trung gian, không rút gọn theo chỉ dẫn', () {
@@ -298,6 +311,92 @@ void main() {
       ),
       findsOneWidget,
     );
+
+    td.dispose();
+  });
+
+  testWidgets('Tuyến về muộn không đè tuyến mới, cũng không sống lại sau khi xoá',
+      (tester) async {
+    // Vòng quét có chốt `_luot` từ đầu; tuyến thì không, nên một yêu cầu chậm
+    // vẫn ghi đè được trạng thái đã đổi sau lưng nó.
+    final cong = <Completer<String>>[];
+    final client = MockClient((yc) async {
+      final p = yc.url.path;
+      if (p.endsWith('/route')) {
+        final c = Completer<String>();
+        cong.add(c);
+        return http.Response.bytes(utf8.encode(await c.future), 200,
+            headers: {'content-type': 'application/json'});
+      }
+      final than = p.endsWith('/map') ? _banDo() : _viTri();
+      return http.Response.bytes(utf8.encode(than), 200,
+          headers: {'content-type': 'application/json'});
+    });
+    final td = TheoDoiViTri(
+      diaChiMayChu: 'http://x',
+      mayQuet: _QuetGia(),
+      api: ApiDinhVi('http://x', client: client),
+    );
+    td.batDau();
+    await _mo(tester, td);
+
+    final cu = td.chiDuongToi(_khu(td, 'Phòng tạp chí'));
+    final moi = td.chiDuongToi(_khu(td, 'Căn tin'));
+    await tester.pump();
+    expect(cong, hasLength(2));
+
+    // Cái sau về trước, rồi mới tới cái trước.
+    cong[1].complete(_tuyenNgan('RP09', 5));
+    await moi;
+    cong[0].complete(_tuyenNgan('RP39', 41.5));
+    await cu;
+    await tester.pumpAndSettle();
+
+    expect(td.tuyen!.quangDuongM, 5, reason: 'tuyến cũ đã đè lên tuyến mới');
+    expect(td.dichTuyen!.nhom, 'Căn tin');
+
+    // Xoá trong lúc một yêu cầu đang bay dở.
+    final boDo = td.chiDuongToi(_khu(td, 'Phòng tạp chí'));
+    await tester.pump();
+    td.xoaTuyen();
+    cong[2].complete(_tuyenNgan('RP39', 41.5));
+    await boDo;
+    await tester.pumpAndSettle();
+
+    expect(td.tuyen, isNull, reason: 'tuyến đã xoá lại tự dựng lại');
+    expect(td.dichTuyen, isNull);
+    expect(find.byIcon(Icons.turn_right_rounded), findsNothing);
+
+    td.dispose();
+  });
+
+  testWidgets('Mốc "N giây trước" tự già đi kể cả sau khi đã dừng quét',
+      (tester) async {
+    // Hub chỉ báo khi có lần quét mới, mà lần quét nào cũng đặt lại mốc. Không
+    // có nhịp riêng thì con số kẹt ở 0 — đúng cái tật của chuỗi viết cứng cũ.
+    final td = _theoDoi();
+    td.batDau();
+    await _mo(tester, td);
+
+    final t = L.of(tester.element(find.byType(MapScreen)));
+    final truoc = td.giayTuCapNhat!;
+    expect(find.text(t.mapAreaSummary(3, truoc)), findsOneWidget);
+
+    td.dungLai();
+    await tester.pumpAndSettle();
+    // Đồng hồ của mốc là giờ thật, không phải đồng hồ giả của tester, nên phải
+    // chờ thật rồi mới bơm một nhịp. `runAsync` cho async thật chạy, kéo theo
+    // MissingPluginException của la bàn — plugin không có trong máy chạy test.
+    await tester
+        .runAsync(() => Future<void>.delayed(const Duration(seconds: 2)));
+    await tester.pump(const Duration(seconds: 1));
+    tester.takeException();
+
+    final sau = td.giayTuCapNhat!;
+    expect(sau, greaterThan(truoc));
+    expect(find.text(t.mapAreaSummary(3, truoc)), findsNothing,
+        reason: 'mốc đứng nguyên trong khi toạ độ đã cũ đi');
+    expect(find.text(t.mapAreaSummary(3, sau)), findsOneWidget);
 
     td.dispose();
   });
