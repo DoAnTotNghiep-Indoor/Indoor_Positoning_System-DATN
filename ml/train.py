@@ -6,20 +6,16 @@
 
 Quy trình cho cả năm mô hình là một, để bảng so sánh có ý nghĩa:
 
-    1. Quét lưới tham số, chọn cấu hình có sai số thấp nhất trên tập VALIDATION
+    1. Quét lưới tham số, chọn cấu hình sai số thấp nhất trên tập VALIDATION
     2. Huấn luyện lại cấu hình đó trên train + validation
     3. Đánh giá MỘT LẦN trên tập TEST
 
-Tập test chỉ được chạm đúng một lần, ở bước 3. Quy tắc này áp cho MỌI quyết
-định chứ không riêng tham số: mô hình nào thành active, mô hình cơ sở nào đem
-ra so sánh — tất cả chọn theo validation, sai số test chỉ đọc để in báo cáo.
+Tập test chỉ được chạm đúng một lần, và quy tắc này áp cho MỌI quyết định chứ
+không riêng tham số — kể cả chọn mô hình active hay mô hình cơ sở đem so sánh.
 Xem `chon_theo_validation`.
 
-Sinh ra:
-    artifacts/model_<ten>.pkl          mô hình đã huấn luyện
-    artifacts/model_metadata.json      tham số tốt nhất + chỉ số + mô hình active
-    reports/tables/model_comparison.csv
-    reports/tables/error_by_reference_point.csv
+Sinh ra: artifacts/model_<ten>.pkl, artifacts/model_metadata.json, và hai bảng
+model_comparison.csv, error_by_reference_point.csv trong reports/tables/.
 """
 
 from __future__ import annotations
@@ -59,9 +55,8 @@ def nap_du_lieu() -> tuple[dict, list[str]]:
 
 
 def _to_hop(luoi: dict, bo_qua=None) -> list[dict]:
-    """Bung dict lưới thành danh sách các bộ tham số cụ thể.
-
-    `bo_qua` cho mô hình tự loại những tổ hợp mà nó biết là trùng kết quả.
+    """Bung dict lưới thành danh sách các bộ tham số cụ thể. `bo_qua` cho mô hình
+    tự loại những tổ hợp mà nó biết là trùng kết quả.
     """
     ten = list(luoi)
     ds = [dict(zip(ten, gt)) for gt in product(*(luoi[k] for k in ten))] or [{}]
@@ -139,14 +134,9 @@ def chon_theo_validation(ket_qua: list[dict], loc=None) -> dict | None:
     """Chọn mô hình tốt nhất theo sai số VALIDATION, không bao giờ theo test.
 
     Tách thành hàm riêng để bất biến này kiểm thử được — xem tests/test_train.py.
-    Trước đây phép chọn nằm inline và dùng `ket_qua_test`, tức chọn trên chính
-    tập dùng để công bố kết quả, đúng thứ mà docstring đầu tệp gọi là "tự lừa
-    mình". Với bộ dữ liệu hiện tại hai cách cho cùng người thắng nên con số đã
-    công bố không đổi, nhưng lập luận thì hỏng và sẽ âm thầm sai khi thêm dữ
-    liệu hoặc thêm mô hình.
-
-    `loc` lọc bớt ứng viên, ví dụ chỉ lấy hai mô hình cơ sở. Trả về None khi
-    không còn ứng viên nào.
+    Chọn trên chính tập dùng để công bố kết quả thì lập luận hỏng và sẽ âm thầm
+    sai khi thêm dữ liệu hoặc thêm mô hình. `loc` lọc bớt ứng viên; trả None
+    khi hết ứng viên.
     """
     ung_vien = [r for r in ket_qua if loc is None or loc(r)]
     if not ung_vien:
@@ -195,10 +185,9 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
         "mo_hinh_active": khoa_tot_nhat,
         "file_active": f"model_{khoa_tot_nhat}.pkl",
         # Dấu vân của hợp đồng dữ liệu lúc huấn luyện. Backend phải đối chiếu ba
-        # trường này với feature_list.json đang nạp; lệch nghĩa là model và hợp
-        # đồng sinh ra từ hai lần chạy pipeline khác nhau, dự đoán sẽ sai âm thầm.
-        # missing_rssi_value đặc biệt nguy hiểm vì nó bằng min(RSSI) - 1 nên đổi
-        # theo dữ liệu: thêm một lần quét yếu hơn -95 dBm là giá trị này đổi.
+        # trường này với feature_list.json đang nạp; lệch nghĩa là model và hợp đồng
+        # sinh ra từ hai lần chạy pipeline khác nhau. missing_rssi_value đặc biệt
+        # nguy hiểm vì nó bằng min(RSSI) - 1 nên đổi theo dữ liệu.
         "hop_dong_du_lieu": {
             "missing_rssi_value": hop_dong["missing_rssi_value"],
             "feature_count": hop_dong["feature_count"],

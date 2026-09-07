@@ -1,16 +1,11 @@
 """Đo chất lượng định vị.
 
-Chỉ số chính là **sai số khoảng cách** tính bằng mét:
+Chỉ số chính là sai số khoảng cách tính bằng mét::
 
     error = sqrt((x_du_doan - x_that)^2 + (y_du_doan - y_that)^2)
 
-Đây là con số duy nhất hội đồng quan tâm — "sai số trung bình 3,2 mét" nói lên
-điều gì đó, còn "R² = 0,94" thì không.
-
-Ngoài ra ghi thêm MAE/RMSE tách theo từng trục để biết mô hình lệch nhiều hơn
-theo chiều dài hay chiều ngang toà nhà, và thời gian dự đoán một mẫu vì yêu cầu
-phi chức năng đặt mốc dưới 200 ms cho cả đường đi từ lúc nhận RSSI tới lúc trả
-toạ độ.
+Ghi thêm MAE/RMSE tách theo từng trục để biết mô hình lệch nhiều hơn theo chiều
+nào, và thời gian dự đoán một mẫu vì yêu cầu phi chức năng đặt mốc 200 ms.
 """
 
 from __future__ import annotations
@@ -34,8 +29,8 @@ def khoang_cach_loi(y_that: np.ndarray, y_du_doan: np.ndarray) -> np.ndarray:
 def do_thoi_gian_du_doan(model, X: np.ndarray, so_lan: int = 50) -> float:
     """Thời gian dự đoán trung bình cho MỘT mẫu, tính bằng mili giây.
 
-    Đo từng mẫu một chứ không đo cả lô: lúc chạy thật backend nhận từng lần quét
-    rời rạc, dự đoán theo lô sẽ cho con số đẹp hơn thực tế nhiều lần.
+    Đo từng mẫu một chứ không đo cả lô: backend nhận từng lần quét rời rạc, dự
+    đoán theo lô sẽ cho con số đẹp hơn thực tế nhiều lần.
     """
     X = np.asarray(X, dtype=float)
     mau = X[: min(so_lan, len(X))]
@@ -58,6 +53,11 @@ def danh_gia(
 ) -> dict:
     """Toàn bộ chỉ số cho một mô hình trên một tập dữ liệu."""
     loi = khoang_cach_loi(y_that, y_du_doan)
+    if len(loi) == 0:
+        # Không chặn thì `loi.mean()` trả NaN kèm RuntimeWarning rồi `loi.min()` mới
+        # vỡ — mọi chỉ số phía trên đã thành NaN trước khi có ai biết, và bảng số
+        # liệu nhận NaN thì không phân biệt được tập rỗng với mô hình hỏng.
+        raise ValueError("tập đánh giá rỗng: không có mẫu nào để tính sai số")
     y_that = np.asarray(y_that, dtype=float)
     y_du_doan = np.asarray(y_du_doan, dtype=float)
     lech = y_du_doan - y_that
@@ -102,9 +102,8 @@ def loi_theo_diem(
 ) -> pd.DataFrame:
     """Sai số trung bình tại từng điểm tham chiếu.
 
-    Dùng vẽ bản đồ nhiệt lỗi — chỗ nào sai nhiều thường là chỗ ít AP phủ tới
-    hoặc bị che khuất, và đó là thông tin cụ thể để cải thiện, khác hẳn một con
-    số trung bình chung chung.
+    Dùng vẽ bản đồ nhiệt lỗi — chỗ sai nhiều thường là chỗ ít AP phủ tới hoặc bị
+    che khuất, thông tin cụ thể để cải thiện khác hẳn một con số trung bình.
     """
     loi = khoang_cach_loi(y_that, y_du_doan)
     return (

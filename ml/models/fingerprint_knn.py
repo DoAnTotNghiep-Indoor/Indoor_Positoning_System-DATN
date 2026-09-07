@@ -1,21 +1,14 @@
 """kNN vân tay dùng khoảng cách Bray-Curtis — mô hình tối ưu cho dữ liệu hiện có.
 
-782 mẫu nhưng chỉ 39 toạ độ khác nhau, vì dữ liệu thu ĐÚNG TẠI các điểm tham
-chiếu chứ không có mẫu nào ở giữa. Nhãn (x, y) vì thế bị lượng tử hoá theo lưới
-~7 mét, nên bài toán gần với phân lớp 39 điểm hơn là hồi quy liên tục — và mô
-hình này làm đúng thế.
+782 mẫu nhưng chỉ 39 toạ độ khác nhau vì dữ liệu thu ĐÚNG TẠI các điểm tham
+chiếu, không có mẫu nào ở giữa. Nhãn (x, y) bị lượng tử hoá theo lưới ~7 m nên
+bài toán gần với phân lớp 39 điểm hơn là hồi quy liên tục.
 
-Hai lựa chọn kỹ thuật đem lại phần lớn cải thiện:
-
-**Bray-Curtis thay cho Euclid.** Bray-Curtis là L1 đã chuẩn hoá theo tổng cường
-độ: `sum|a-b| / sum(a+b)`. Nó so sánh *hình dạng* của vân tay chứ không so sánh
-độ mạnh tuyệt đối, nên bớt nhạy với việc cùng một vị trí nhưng thiết bị khác
-hoặc hướng cầm máy khác cho ra mức tín hiệu chung cao thấp khác nhau. Đo trên
-validation: đúng điểm 84,6% so với 73,5% của Euclid.
-
-**Biểu diễn powed.** Nâng giá trị đã chuẩn hoá lên luỹ thừa beta làm giãn khoảng
-cách giữa các AP mạnh và nén phần AP yếu. AP yếu chủ yếu là nhiễu. Cách biểu
-diễn này lấy từ tài liệu về UJIIndoorLoc.
+Bray-Curtis (`sum|a-b| / sum(a+b)`) là L1 chuẩn hoá theo tổng cường độ: so hình
+dạng vân tay chứ không so độ mạnh tuyệt đối nên bớt nhạy với thiết bị hay hướng
+cầm máy khác — trên validation đúng điểm 84,6% so với 73,5% của Euclid. Biểu
+diễn powed nâng giá trị lên luỹ thừa beta, giãn các AP mạnh và nén AP yếu vốn
+chủ yếu là nhiễu (theo UJIIndoorLoc).
 """
 
 from __future__ import annotations
@@ -27,8 +20,8 @@ from sklearn.neighbors import KNeighborsClassifier
 TEN = "kNN vân tay (Bray-Curtis)"
 
 # beta quét tới 3,5. Lưới cũ dừng ở 2,0 và tối ưu rơi đúng vào biên trên đó —
-# dấu hiệu điểm tốt hơn nằm ngoài lưới. Quét rộng cho thấy cực trị thật ở
-# 2,75-3,0, sai số validation tăng trở lại từ 3,5 nên lưới này đã bao trọn.
+# dấu hiệu điểm tốt hơn nằm ngoài lưới. Cực trị thật ở 2,75-3,0, sai số tăng
+# trở lại từ 3,5 nên lưới này đã bao trọn.
 LUOI_THAM_SO = {
     "beta": [1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.5],
     "n_neighbors": [1, 3, 5],
@@ -51,18 +44,16 @@ def to_hop_trung(tham_so: dict) -> bool:
 def bieu_dien_powed(X: np.ndarray, beta: float) -> np.ndarray:
     """Nâng đặc trưng đã chuẩn hoá lên luỹ thừa beta.
 
-    Phải cắt ngưỡng dưới ở 0 trước khi nâng luỹ thừa: scaler fit trên tập train
-    nên mẫu validation/test có thể mang giá trị âm (thấp nhất -0,333), mà số âm
-    mũ 1,75 cho ra NaN. Cắt ở 0 nghĩa là "yếu hơn mọi mẫu từng thấy lúc huấn
-    luyện" — đúng ý nghĩa cần biểu đạt.
+    Phải cắt ngưỡng dưới ở 0 trước: scaler fit trên train nên mẫu validation/test
+    có thể âm (thấp nhất -0,333), mà số âm mũ 1,75 cho ra NaN. Cắt ở 0 nghĩa là
+    "yếu hơn mọi mẫu từng thấy lúc huấn luyện".
     """
     return np.clip(np.asarray(X, dtype=float), 0.0, None) ** beta
 
 
 class DinhViPhanLop(BaseEstimator, RegressorMixin):
-    """Phân lớp điểm tham chiếu rồi trả về toạ độ, nhưng vẫn nhận y hai cột.
-
-    Giữ nguyên giao diện `fit(X, y_2_cot)` như ba mô hình hồi quy còn lại, để
+    """Phân lớp điểm tham chiếu rồi trả về toạ độ, nhưng vẫn nhận y hai cột — giữ
+    nguyên giao diện `fit(X, y_2_cot)` như ba mô hình hồi quy còn lại, để
     `ml/train.py` đối xử với mọi mô hình theo cùng một quy trình.
     """
 

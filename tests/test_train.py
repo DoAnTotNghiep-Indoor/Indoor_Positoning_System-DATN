@@ -1,12 +1,9 @@
 """Kiểm thử quy trình huấn luyện — trọng tâm là chống rò rỉ tập test.
 
-Bài test cốt lõi ở đây khoá một bất biến đã từng bị vi phạm: mọi quyết định phải
-dựa trên tập validation, tập test chỉ được đọc ở bước cuối để in ra báo cáo.
-
-Lỗi cũ rất khó thấy vì nó không làm gì sai lộ liễu — với bộ dữ liệu hiện tại,
-chọn theo test và chọn theo validation cho ra cùng một người thắng, nên bảng kết
-quả không đổi và không có kiểm thử nào đỏ. Nó chỉ sai về lập luận, và sẽ âm thầm
-chọn nhầm khi thêm dữ liệu hoặc thêm mô hình.
+Khoá một bất biến đã từng bị vi phạm: mọi quyết định dựa trên tập validation,
+tập test chỉ đọc ở bước cuối để in báo cáo. Lỗi kiểu này khó thấy vì với bộ dữ
+liệu hiện tại, chọn theo test hay theo validation đều ra cùng người thắng —
+nó chỉ sai về lập luận, và sẽ âm thầm chọn nhầm khi thêm dữ liệu.
 """
 
 from __future__ import annotations
@@ -84,3 +81,23 @@ def test_hoa_thi_lay_cai_dau_tien():
     b = _mo_hinh("B", loi_validation=3.0, loi_test=1.0)
 
     assert chon_theo_validation([a, b]) is a
+
+
+def test_danh_gia_tap_rong_bao_loi_thay_vi_tra_nan():
+    """Không chặn thì `loi.mean()` trả NaN kèm RuntimeWarning rồi `loi.min()`
+    mới vỡ — mọi chỉ số phía trên đã thành NaN trước khi có ai biết. Bảng số
+    liệu trong báo cáo nhận NaN thì không nhìn ra được là tập rỗng hay mô hình
+    hỏng.
+    """
+    import numpy as np
+    import pytest
+
+    from ml import evaluate
+
+    with pytest.raises(ValueError, match="rỗng"):
+        evaluate.danh_gia(np.empty((0, 2)), np.empty((0, 2)))
+
+    # Một mẫu vẫn phải tính được.
+    kq = evaluate.danh_gia(np.array([[0.0, 0.0]]), np.array([[3.0, 4.0]]))
+    assert kq["so_mau"] == 1
+    assert kq["loi_trung_binh"] == 5.0

@@ -46,9 +46,9 @@ META_COLS = [
 
 TARGET_COLS = ["x", "y"]
 
-# LƯU Ý: cột "Orientation Azimuth (°)" trong file thô ghi đơn vị là độ nhưng giá
-# trị thực nằm trong khoảng [-pi, pi] — tức là RADIAN. Pipeline tự đổi sang độ ở
-# bước pivot để tên cột `azimuth_deg` đúng với nội dung.
+# LƯU Ý: cột "Orientation Azimuth (°)" ghi đơn vị độ nhưng giá trị thực nằm
+# trong [-pi, pi], tức RADIAN. Pipeline đổi sang độ ở bước pivot để tên cột
+# `azimuth_deg` đúng với nội dung.
 AZIMUTH_IS_RADIAN = True
 
 # --- Tham số tiền xử lý ---
@@ -66,9 +66,9 @@ MAD_SCALE = 1.4826  # hệ số hiệu chỉnh cho phân phối Gaussian
 # Lọc nhiễu CHỈ trên tập train và chạy SAU khi chia tập, vì hai lý do:
 #
 # - Hampel thay giá trị lệch bằng trung vị của nhóm cùng rp_id; chạy trước khi
-#   chia thì trung vị đó tính cả trên mẫu test, tức test tự làm sạch chính nó.
+#   chia thì trung vị tính cả trên mẫu test, tức test tự làm sạch chính nó.
 # - Lúc chạy thật backend chỉ nhận MỘT lần quét và không biết nó thuộc rp_id
-#   nào, nên không thể lọc Hampel. Test đã lọc nhiễu là test dễ hơn thực tế.
+#   nào nên không lọc Hampel được; test đã lọc nhiễu là test dễ hơn thực tế.
 #
 # Đặt False để tái lập đúng hành vi bản Colab cũ.
 HAMPEL_ON_TRAIN_ONLY = True
@@ -80,12 +80,10 @@ RANDOM_STATE = 42
 
 
 # --- Ghi tệp văn bản ---
-#
-# Trên Windows, `write_text` và `to_csv` tự đổi xuống dòng sang CRLF, nên
-# artifact sinh trên Windows khác bản sinh trên Linux ở TỪNG DÒNG. Lúc đó phép
-# so "giống hệt từng byte" giữa hai lần chạy pipeline mất sạch ý nghĩa, mà đó
-# chính là cách dự án chứng minh pipeline tái lập được. Hai hàm dưới ép LF ở
-# đúng một chỗ thay cho mười chỗ gọi rải khắp pipeline.py và train.py.
+# Trên Windows, `write_text` và `to_csv` tự đổi xuống dòng sang CRLF nên artifact
+# sinh trên Windows khác bản sinh trên Linux ở TỪNG DÒNG, làm phép so "giống hệt
+# từng byte" giữa hai lần chạy mất ý nghĩa — mà đó là cách dự án chứng minh
+# pipeline tái lập được. Hai hàm dưới ép LF ở đúng một chỗ.
 
 
 def ghi_json(duong_dan: Path, du_lieu) -> None:

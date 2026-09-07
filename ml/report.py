@@ -2,16 +2,12 @@
 
     python -m ml.report
 
-Đọc `artifacts/model_metadata.json` và các tệp model đã huấn luyện, ghi ảnh vào
-`reports/figures/`. Chạy sau mỗi lần `python -m ml.train` để hình không lệch số
-liệu — đây là lý do module này tồn tại thay vì để mã vẽ nằm trong notebook.
+Đọc `artifacts/model_metadata.json` và các model đã huấn luyện, ghi ảnh vào
+`reports/figures/`. Chạy sau mỗi lần `ml.train` để hình không lệch số liệu.
 
-Bảng màu lấy từ bảng phân loại đã kiểm định (blue, orange, aqua, yellow,
-magenta). Ba màu aqua, yellow, magenta có tương phản dưới 3:1 trên nền sáng nên
-mọi biểu đồ cột đều ghi nhãn giá trị hiện rõ, và biểu đồ đường dùng thêm kiểu nét
-đứt khác nhau — vừa để bù tương phản, vừa để đọc được khi in đen trắng.
-
-Hình xuất ra dùng cho báo cáo in nên chỉ làm một chế độ sáng, không làm nền tối.
+Ba trong năm màu của bảng đã kiểm định có tương phản dưới 3:1 trên nền sáng nên
+biểu đồ cột đều ghi nhãn giá trị và biểu đồ đường dùng thêm kiểu nét đứt khác
+nhau — vừa bù tương phản, vừa đọc được khi in đen trắng.
 """
 
 from __future__ import annotations
@@ -160,10 +156,9 @@ def hieu_qua_gop(te: pd.DataFrame, du_doan: dict, thu_tu: list[str]) -> str:
         return u[c.argmax()]
 
     cach = {
-        # Một lần quét: lấy sai số của TỪNG lần quét, không lấy trung bình theo
-        # điểm. Cả bốn cột phải cùng trả lời một câu hỏi — người dùng hỏi một
-        # lần thì nhận sai số bao nhiêu — nên gộp trung bình trước sẽ giấu mất
-        # đúng những ca tệ nhất mà việc gộp sinh ra để xử lý.
+        # Lấy sai số của TỪNG lần quét, không lấy trung bình theo điểm: cả bốn cột
+        # phải cùng trả lời một câu hỏi — hỏi một lần thì nhận sai số bao nhiêu —
+        # nên gộp trung bình trước sẽ giấu mất đúng những ca tệ nhất.
         "Một lần quét": evaluate.khoang_cach_loi(y, p),
         "Bình chọn đa số": do(binh_chon),
         "Trung vị toạ độ": do(postprocess.trung_vi_toa_do),
@@ -284,7 +279,6 @@ def phan_bo_sai_so(loi: dict, thu_tu: list[str]) -> str:
 
 def ti_le_xuat_hien_ap() -> str | None:
     """Biện minh cho ngưỡng lọc AP: đường cong dốc đứng ngay tại ngưỡng đã chọn.
-
     Đọc bảng do ml/pipeline.py ghi ra chứ không tự tính lại, để hình luôn khớp
     đúng lần chạy pipeline hiện tại.
     """
@@ -314,8 +308,20 @@ def ti_le_xuat_hien_ap() -> str | None:
     return _luu(fig, "ap_appearance_rate.png")
 
 
-def chay() -> None:
+def chay(cho_phep_luoi_rut_gon: bool = False) -> None:
     meta, te, ap, loi, du_doan, thu_tu = nap()
+
+    # `ml.train --nhanh` ghi đè artifact y như lần chạy đầy đủ, chỉ khác đúng
+    # trường này. Không chặn thì hình và bảng trong báo cáo vẫn sinh ra bình
+    # thường nhưng mang số của lưới rút gọn.
+    if meta.get("luoi") != "day_du" and not cho_phep_luoi_rut_gon:
+        raise SystemExit(
+            f"Artifact hiện tại huấn luyện bằng lưới '{meta.get('luoi')}', không "
+            f"phải lưới đầy đủ — số liệu này không dùng cho báo cáo được.\n"
+            f"Chạy `python -m ml.train` (bỏ cờ --nhanh) rồi sinh hình lại, hoặc "
+            f"`python -m ml.report --cho-phep-luoi-rut-gon` nếu chỉ xem thử."
+        )
+
     print(f"Huấn luyện lúc {meta['huan_luyen_luc']} · {len(thu_tu)} mô hình · "
           f"{len(te)} mẫu test\n")
 
@@ -335,4 +341,4 @@ def chay() -> None:
 
 
 if __name__ == "__main__":
-    chay()
+    chay(cho_phep_luoi_rut_gon="--cho-phep-luoi-rut-gon" in sys.argv)

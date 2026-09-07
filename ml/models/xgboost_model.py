@@ -1,12 +1,12 @@
 """XGBoost Regression — mô hình chính của đồ án.
 
-XGBoost không nhận nhãn hai cột, nên bọc trong `MultiOutputRegressor`. Lớp bọc
-này huấn luyện **hai mô hình riêng biệt**, một cho trục x một cho trục y — đúng
-thiết kế `model_x`, `model_y` ở mục 2.4, chỉ là không phải tự viết vòng lặp.
+XGBoost không nhận nhãn hai cột nên bọc trong `MultiOutputRegressor`. Lớp bọc
+này huấn luyện HAI mô hình riêng biệt, một cho trục x một cho trục y — đúng
+thiết kế `model_x`, `model_y` ở mục 2.4.
 
-Lưới tham số dưới đây chép đúng tài liệu thiết kế: 3 x 3 x 3 x 2 x 2 x 3 = 324
-tổ hợp. Với 547 mẫu huấn luyện thì quét hết mất vài phút; dùng `--nhanh` trong
-`ml/train.py` để chạy lưới rút gọn khi đang thử nghiệm.
+Lưới tham số đã nới rộng hơn tài liệu thiết kế (bản đó 324 tổ hợp): nay
+3 x 3 x 3 x 2 x 3 x 4 = 648 tổ hợp trên 547 mẫu huấn luyện, quét hết mất vài
+phút; dùng `--nhanh` của `ml/train.py` khi đang thử nghiệm.
 """
 
 from __future__ import annotations
@@ -62,9 +62,8 @@ def build(
 def do_quan_trong_dac_trung(model: MultiOutputRegressor, ten_dac_trung: list[str]) -> dict:
     """Độ quan trọng đặc trưng, tách riêng cho trục x và trục y.
 
-    Biểu đồ này trả lời được câu hỏi hội đồng hay hỏi: AP nào thực sự đóng góp
-    vào việc định vị. Nếu một AP có độ quan trọng gần 0 ở cả hai trục thì ngưỡng
-    lọc ở bước 5 nên siết chặt hơn.
+    Trả lời câu hỏi hội đồng hay hỏi: AP nào thực sự đóng góp vào việc định vị. AP
+    có độ quan trọng gần 0 ở cả hai trục thì ngưỡng lọc bước 5 nên siết chặt hơn.
     """
     return {
         truc: dict(zip(ten_dac_trung, uoc_luong.feature_importances_.tolist()))

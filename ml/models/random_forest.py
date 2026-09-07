@@ -1,9 +1,7 @@
 """Random Forest — mốc so sánh trung gian.
 
-Có lý do cụ thể để đưa mô hình này vào: đồ án CTK45 báo cáo Random Forest đạt
-97,16% với sai số 6,02 m ở bài toán phân lớp điểm tham chiếu. Giữ nó lại cho
-phép so sánh trực tiếp với số liệu đã công bố của nhóm trước, dù bài toán đã
-chuyển từ phân lớp sang hồi quy.
+Đưa vào để so trực tiếp với số liệu CTK45 đã công bố (97,16%, sai số 6,02 m ở
+bài toán phân lớp điểm tham chiếu), dù bài toán đã chuyển sang hồi quy.
 """
 
 from __future__ import annotations

@@ -1,15 +1,10 @@
-"""Rà soát dữ liệu trước khi huấn luyện.
+"""Rà soát dữ liệu trước khi huấn luyện: `python -m ml.audit`.
 
-    python -m ml.audit
-
-Ba phép kiểm, giữ lại vì cả ba đều đã tìm ra vấn đề thật:
-
-1. Rò rỉ giữa các tập. Dữ liệu thu liên tiếp tại từng điểm, mỗi điểm ~20 lần quét
-   trong 13 phút, nên hai lần quét cách nhau vài giây gần như giống hệt nhau. Rơi
-   vào cả train lẫn test thì mô hình chỉ việc nhận ra bản sao.
-2. Độ ổn định từng vị trí — tìm ra 11 điểm có sóng bất ổn, cần đo lại.
-3. So sánh giữa các buổi thu — tìm ra buổi 13/01 nhiễu gấp 2,5 lần, và qua đó lộ
-   ra chuyện mỗi điểm chỉ được đo đúng một buổi.
+Ba phép kiểm, giữ lại vì cả ba đều đã tìm ra vấn đề thật: rò rỉ giữa các tập
+(mỗi điểm ~20 lần quét trong 13 phút nên hai lần cách nhau vài giây gần như
+giống hệt), độ ổn định từng vị trí (11 điểm sóng bất ổn, cần đo lại), và so
+sánh giữa các buổi (buổi 13/01 nhiễu gấp 2,5 lần, qua đó lộ ra mỗi điểm chỉ
+được đo đúng một buổi).
 
 Mã thoát 1 nếu phát hiện rò rỉ.
 """

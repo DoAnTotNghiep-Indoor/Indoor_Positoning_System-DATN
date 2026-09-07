@@ -1,8 +1,8 @@
 """Năm mô hình, cùng một giao diện để so sánh công bằng.
 
 Mỗi module cung cấp `TEN`, `LUOI_THAM_SO` và `build(**tham_so)` trả về estimator
-tương thích scikit-learn nhận y hai cột. Nhờ đó `ml/train.py` xử lý mọi mô hình
-theo đúng một quy trình — điều kiện để bảng so sánh trong báo cáo có ý nghĩa.
+tương thích scikit-learn nhận y hai cột, nhờ đó `ml/train.py` xử lý mọi mô hình
+theo đúng một quy trình — điều kiện để bảng so sánh có ý nghĩa.
 """
 
 from ml.models import fingerprint_knn, knn, random_forest, wknn, xgboost_model

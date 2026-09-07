@@ -1,15 +1,12 @@
 """kNN — mô hình cơ sở đối chứng thứ nhất.
 
-Dự đoán toạ độ bằng trung bình cộng toạ độ của k mẫu huấn luyện có vân tay RSSI
-gần nhất. Không có tham số nào được học; toàn bộ tập train chính là mô hình.
+Dự đoán toạ độ bằng trung bình toạ độ của k mẫu có vân tay gần nhất; không học
+tham số nào, toàn bộ tập train chính là mô hình.
 
-Đây là baseline bắt buộc, và nó đã bác bỏ giả thiết ban đầu của đồ án: XGBoost
-KHÔNG thắng được kNN (6,48 m so với 5,15 m), trong khi tài liệu thiết kế đặt
-mục tiêu thấp hơn baseline 10-20%. Nguyên nhân nằm ở dữ liệu chứ không ở việc
-chỉnh tham số — chỉ có 39 toạ độ khác nhau vì mẫu thu đúng tại các điểm tham
-chiếu, nên bài toán gần với phân lớp hơn là hồi quy liên tục, mà đó lại là chỗ
-hồi quy cây quyết định yếu nhất. Kết quả này là một phần nội dung của đồ án,
-không phải lỗi cần giấu: xem mục 2.4.1 của `docs/Phan_Tich_Thiet_Ke_He_Thong.md`.
+Baseline bắt buộc, và nó đã bác bỏ giả thiết ban đầu: XGBoost KHÔNG thắng được
+kNN (7,16 m so với 5,22 m). Nguyên nhân ở dữ liệu chứ không ở chỉnh tham số —
+chỉ có 39 toạ độ khác nhau nên bài toán gần với phân lớp, đúng chỗ hồi quy cây
+yếu nhất. Xem mục 2.4.1 của `docs/Phan_Tich_Thiet_Ke_He_Thong.md`.
 """
 
 from __future__ import annotations

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from ml import postprocess
 
@@ -57,3 +58,20 @@ def test_cua_so_truot_dap_tat_mot_lan_quet_di_thuong():
     # Mẫu dị thường ở vị trí 2 bị hai mẫu lành hai bên áp đảo
     np.testing.assert_allclose(kq[3], [0.0, 0.0])
     assert np.linalg.norm(kq[2]) < 40.0
+
+
+def test_cua_so_rong_bao_ro_rang():
+    """`dong_thuan` để lọt cửa sổ rỗng xuống `argmin` và báo "attempt to get
+    argmin of an empty sequence" — không ai lần ra được là mình gọi sai.
+
+    Backend không tới được đường này (`BoGop.them` luôn thêm mẫu trước khi gọi),
+    nhưng đây là hàm công khai.
+    """
+    with pytest.raises(ValueError, match="rỗng"):
+        postprocess.gop(np.empty((0, 2)))
+
+
+def test_cach_gop_la_bao_ro_co_nhung_lua_chon_nao():
+    """`KeyError: 'khong_co'` trần không nói được là chọn sai trong những gì."""
+    with pytest.raises(ValueError, match="dong_thuan"):
+        postprocess.gop([[1.0, 2.0]], "khong_co")
