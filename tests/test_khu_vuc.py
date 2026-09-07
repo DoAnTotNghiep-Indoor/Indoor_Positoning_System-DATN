@@ -1,9 +1,8 @@
 """Đối chiếu bản khu vực nhúng trong ứng dụng với reference_points.csv.
 
-`mobile/lib/data/khu_vuc_thu_vien.dart` do `tools/sinh_khu_vuc.py` sinh ra để
-ứng dụng vẫn có danh sách khu vực khi chưa nối được máy chủ. Hai nơi giữ cùng
-một nội dung nên phải có bài kiểm buộc chúng đi cùng nhau — sửa CSV mà quên sinh
-lại thì app hiện dữ liệu cũ mà không có gì báo.
+`mobile/lib/data/khu_vuc_thu_vien.dart` do `tools/sinh_khu_vuc.py` sinh ra. Hai
+nơi giữ cùng một nội dung nên phải có bài kiểm buộc chúng đi cùng nhau — sửa
+CSV mà quên sinh lại thì app hiện dữ liệu cũ mà không có gì báo.
 """
 
 from __future__ import annotations
@@ -138,9 +137,9 @@ def test_moi_loi_vao_deu_truyen_khu_vuc():
 def test_chi_mot_noi_dinh_nghia_cach_mo_man_chi_tiet():
     """Mọi lối vào phải đi qua `moChiTietKhuVuc`, nơi duy nhất dựng route.
 
-    Đẩy thẳng bằng `MaterialPageRoute` thì màn trượt NGANG theo mặc định của
-    Android, đọc như "sang một chỗ khác". Thông tin ở đây là của chính chỗ vừa
-    chạm nên phải trượt LÊN, cùng hướng với tấm tóm tắt trên sơ đồ.
+    Đẩy thẳng bằng `MaterialPageRoute` thì màn trượt NGANG theo mặc định Android,
+    đọc như "sang một chỗ khác". Thông tin ở đây là của chính chỗ vừa chạm nên
+    phải trượt LÊN, cùng hướng với tấm tóm tắt trên sơ đồ.
     """
     lib = config.ROOT_DIR / "mobile" / "lib"
     sai = []

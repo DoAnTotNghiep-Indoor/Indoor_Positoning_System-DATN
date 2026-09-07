@@ -17,11 +17,9 @@ def do_thi() -> DoThiDiLai:
 
 @pytest.fixture(scope="module")
 def quet_du_ap() -> list[dict]:
-    """Một lần quét đủ AP quen để `/predict` chấp nhận.
-
-    Không dùng `scan: []` được nữa: quét rỗng nay bị từ chối bằng 422, vì mô
-    hình vẫn cho ra toạ độ với vector toàn giá trị điền-khi-thiếu và toạ độ đó
-    không mang thông tin gì.
+    """Một lần quét đủ AP quen để `/predict` chấp nhận. Không dùng `scan: []` được
+    nữa: quét rỗng nay bị từ chối bằng 422, vì toạ độ suy từ vector toàn giá trị
+    điền-khi-thiếu không mang thông tin gì.
     """
     import json
 
@@ -39,10 +37,9 @@ def quet_du_ap() -> list[dict]:
 # --- Đồ thị ---
 
 def test_do_thi_lien_thong(do_thi):
-    """Không được có điểm cô lập, nếu không có đích đến nào không tới được.
-
-    Ngưỡng khoảng cách thuần để lại điểm cô lập ngay cả ở 12 m vì các điểm tham
-    chiếu thưa và không đều — đó là lý do dùng k láng giềng gần nhất.
+    """Không được có điểm cô lập, nếu không có đích đến nào không tới được. Ngưỡng
+    khoảng cách thuần để lại điểm cô lập ngay cả ở 12 m vì các điểm thưa và không
+    đều — đó là lý do dùng k láng giềng gần nhất.
     """
     tu = next(iter(do_thi.toa_do))
     for den in do_thi.toa_do:
@@ -118,8 +115,15 @@ def test_route_tra_ve_duong_di(client):
 
 
 def test_route_neo_tu_toa_do(client):
-    """Đưa toạ độ mét bất kỳ thì hệ tự neo vào điểm tham chiếu gần nhất."""
-    d = client.post("/route", json={"tu_x": -16.2, "tu_y": 0.3, "den_rp": "RP20"}).json()
+    """Đưa toạ độ mét bất kỳ thì hệ tự neo vào điểm gần nhất. Mốc dò lấy lệch khỏi
+    chính toạ độ RP01 chứ không viết cứng: dời điểm tham chiếu là bài này mất ý
+    nghĩa mà vẫn xanh.
+    """
+    ds = client.get("/map").json()["diem_tham_chieu"]
+    goc = next(m for m in ds if m["rp_id"] == "RP01")
+
+    d = client.post("/route", json={
+        "tu_x": goc["x"] + 0.2, "tu_y": goc["y"] + 0.3, "den_rp": "RP20"}).json()
     assert d["tu"] == "RP01"
 
 
@@ -155,14 +159,28 @@ def test_ws_phat_cho_dashboard_dang_xem(client, quet_du_ap):
     assert phat["device_id"] == "may-di-dong"
 
 
+def test_rest_va_ws_tra_cung_mot_hinh_dang(client, quet_du_ap):
+    """Cùng một payload logic thì hai đường truyền phải cho cùng bộ trường.
+
+    REST đi qua `KetQuaDuDoan` còn WS gửi thẳng dict, nên trường nào quên khai
+    trong schema sẽ bị pydantic bỏ ở REST mà vẫn còn ở WS — `device_id` đã lọt
+    đúng như vậy.
+    """
+    rest = client.post("/predict", json={"device_id": "A", "scan": quet_du_ap}).json()
+    with client.websocket_connect("/ws/location") as ws:
+        ws.send_json({"device_id": "B", "scan": quet_du_ap})
+        goi = ws.receive_json()
+
+    assert set(rest) == set(goi)
+    assert rest["device_id"] == "A"
+
+
 def test_rest_cung_phat_cho_dashboard(client, quet_du_ap):
     """Toạ độ gửi bằng POST /predict cũng phải tới được dashboard đang xem.
 
-    Trước khi gộp hai lối, /predict tự viết lại luồng và quên bước phát nên
-    dashboard chỉ nhìn thấy thiết bị nào dùng WebSocket.
-
-    Sau khi POST thì dashboard tự gửi một lần quét của chính nó, để nếu bước
-    phát bị mất thì bài test hỏng ngay ở gói tin đầu chứ không treo chờ mãi.
+    Trước khi gộp hai lối, /predict quên bước phát nên dashboard chỉ thấy thiết bị
+    dùng WebSocket. Sau khi POST thì dashboard tự gửi một lần quét của chính nó,
+    để mất bước phát là hỏng ngay ở gói đầu chứ không treo chờ mãi.
     """
     with client.websocket_connect("/ws/location") as xem:
         client.post("/predict", json={"device_id": "qua-rest", "scan": quet_du_ap})
@@ -173,10 +191,8 @@ def test_rest_cung_phat_cho_dashboard(client, quet_du_ap):
 
 
 def test_route_thieu_diem_dau_thi_bao_loi(client):
-    """Quên gửi điểm đầu phải bị từ chối, không được âm thầm lấy RP02.
-
-    RP02 nằm đúng tại (0, 0) nên mặc định tu_x = tu_y = 0.0 của bản trước khiến
-    yêu cầu thiếu điểm đầu vẫn trả về một tuyến đường trông rất hợp lý.
+    """Quên gửi điểm đầu phải bị từ chối, không được âm thầm lấy RP02: RP02 nằm
+    đúng tại (0,0) nên mặc định 0.0 của bản trước vẫn trả về tuyến trông hợp lý.
     """
     assert client.post("/route", json={"den_rp": "RP20"}).status_code == 422
 
@@ -199,7 +215,7 @@ def test_map_tra_ve_ten_va_mo_ta_cho_moi_diem(client):
     """Không điểm nào được để trống tên, nếu không giao diện phải hiện rp_id trần."""
     ds = client.get("/map").json()["diem_tham_chieu"]
 
-    assert len(ds) == 40
+    assert len(ds) == client.get("/map").json()["do_thi"]["so_diem"]
     assert all(m["ten"] and m["nhom"] and m["mo_ta"] for m in ds)
     assert next(m for m in ds if m["rp_id"] == "RP39")["ten"] == "Phòng tạp chí"
 
@@ -217,10 +233,8 @@ def test_duong_di_co_ten_nhung_khong_kem_mo_ta(client):
 
 
 def test_nhan_khop_dung_diem_tham_chieu(do_thi):
-    """Ghép nhãn theo rp_id, không theo thứ tự dòng trong tệp.
-
-    Hai cặp đối xứng qua trục giữa toà nhà phải cùng tên — đây cũng chính là
-    bằng chứng dùng để xác nhận số điểm của CTK45 khớp số điểm của nhóm.
+    """Ghép nhãn theo rp_id, không theo thứ tự dòng. Hai cặp đối xứng qua trục giữa
+    toà nhà phải cùng tên — cũng là bằng chứng xác nhận số điểm CTK45 khớp nhóm.
     """
     assert do_thi.nhan["RP16"]["ten"] == do_thi.nhan["RP17"]["ten"] == "Hành lang"
     assert do_thi.nhan["RP26"]["ten"] == do_thi.nhan["RP27"]["ten"] == "Khu vực đọc"
@@ -262,14 +276,30 @@ def test_duong_di_khong_chui_qua_tuong(do_thi):
 
 
 def test_phai_di_vong_khi_co_tuong_chan(do_thi):
-    """RP02 "Cửa ra vào" và RP05 "Cầu thang" cách nhau 12,8 m đường chim bay,
-    nhưng giữa hai điểm là vạch cầu thang dài 544 px trong Map.png. Đường đi
-    thật phải vòng qua đầu vạch đó."""
-    _, quang_duong = do_thi.tim_duong("RP02", "RP05")
-    chim_bay = do_thi.khoang_cach("RP02", "RP05")
-    assert quang_duong > chim_bay * 1.5, (
-        f"đi thẳng xuyên tường: {quang_duong:.1f} m so với {chim_bay:.1f} m"
-    )
+    """Hai điểm gần nhau mà có tường chắn thì đường đi phải vòng. Cặp điểm lấy từ
+    chính `ban_do_tang1.json`: cặp RP02-RP05 của bản trước nay đã thành cửa giả
+    định, tức khoá vào một sự thật cũ.
+    """
+    xuyen, cua = routing_service._doc_ban_do()
+    ung_vien = [
+        (a, b) for a, b in sorted(xuyen - cua)
+        if a in do_thi.toa_do and b in do_thi.toa_do
+        and do_thi.khoang_cach(a, b) > 8
+    ]
+    assert ung_vien, "không còn cặp nào bị tường chặn để kiểm"
+
+    ty_le = []
+    for a, b in ung_vien:
+        chim_bay = do_thi.khoang_cach(a, b)
+        duong, quang_duong = do_thi.tim_duong(a, b)
+        # Chỉ đòi KHÔNG đi thẳng một chặng. Không đòi dài hơn: RP11, RP19, RP28
+        # cùng nằm trên x = 0 nên vòng qua RP19 vẫn đúng bằng đường chim bay.
+        assert len(duong) > 2, f"{a}-{b} đi thẳng một chặng, tức xuyên tường"
+        ty_le.append(quang_duong / chim_bay)
+
+    # Và tường phải gây ra khác biệt đáng kể ở ít nhất một chỗ, nếu không thì
+    # phép dò tường chẳng đổi được gì so với đồ thị k=3 thuần khoảng cách.
+    assert max(ty_le) > 1.5, f"vòng xa nhất chỉ gấp {max(ty_le):.2f} lần"
 
 
 # --- Chỉ dẫn rẽ từng chặng (nhóm 4, mục H) ---
@@ -277,15 +307,17 @@ def test_phai_di_vong_khi_co_tuong_chan(do_thi):
 def test_re_trai_phai_dung_chieu(do_thi):
     """Kiểm bằng một ví dụ tính được bằng tay.
 
-    Đi từ RP02 (0, 0) tới RP01 (-16, 0) là đi theo chiều x giảm. Sang chặng
-    RP01 -> RP04 (-30, 10) thì y tăng. Hệ toạ độ có y hướng lên, nên khi mặt
-    đang quay về phía x giảm, phía y tăng nằm bên TAY PHẢI.
-
-    Phải chốt bằng test vì lộn dấu ở đây không làm chương trình sập: chỉ dẫn
-    vẫn ra đủ số chặng, đúng số mét, chỉ có mỗi chữ trái/phải là ngược — mà
-    người đọc chỉ phát hiện khi đã đi sai.
+    RP02 (0,0) -> RP05 (-8,10) là chếch lên phía x giảm; sang RP11 (0,18) thì quay
+    sang x tăng. Trục y hướng lên nên mặt đang quay tây-bắc thì đông-bắc ở TAY
+    PHẢI. Phải chốt bằng test vì lộn dấu không làm sập: vẫn đủ chặng, đúng số mét,
+    chỉ mỗi chữ trái/phải là ngược.
     """
-    buoc = do_thi.chi_dan(["RP02", "RP01", "RP04"])
+    # Ví dụ chỉ đúng khi ba điểm còn nằm đúng chỗ đã tính tay.
+    assert do_thi.toa_do["RP02"] == (0.0, 0.0)
+    assert do_thi.toa_do["RP05"] == (-8.0, 10.0)
+    assert do_thi.toa_do["RP11"] == (0.0, 18.0)
+
+    buoc = do_thi.chi_dan(["RP02", "RP05", "RP11"])
     assert buoc[1]["huong"] in ("re_phai", "chech_phai"), buoc[1]
     assert buoc[1]["goc_do"] < 0
 
@@ -293,8 +325,8 @@ def test_re_trai_phai_dung_chieu(do_thi):
 def test_soi_guong_thi_trai_phai_doi_cho(do_thi):
     """Toà nhà đối xứng qua trục x = 0, và các điểm tham chiếu cũng vậy. Lấy
     một tuyến rồi lấy tuyến ảnh gương của nó thì mọi góc quay phải đổi dấu."""
-    trai = do_thi.chi_dan(["RP02", "RP01", "RP04", "RP08"])
-    phai = do_thi.chi_dan(["RP02", "RP03", "RP07", "RP09"])
+    trai = do_thi.chi_dan(["RP01", "RP45", "RP04"])
+    phai = do_thi.chi_dan(["RP03", "RP44", "RP07"])
     assert len(trai) == len(phai)
     for a, b in zip(trai, phai):
         assert a["huong"] == b["huong"].replace("trai", "TAM").replace(
@@ -356,3 +388,60 @@ def test_route_tra_ve_chi_dan(client):
     # Tên điểm đến đi kèm để client khỏi phải tra ngược sang /map.
     assert d["chi_dan"][-1]["den_ten"] == "Phòng tạp chí"
 
+
+
+# --- Chặn đầu vào phi lý cho /route và WS (lỗi tìm được khi rà backend) ---
+
+def test_tu_rp_rong_bao_422_chu_khong_sap(client):
+    """Chuỗi rỗng phải bị bắt như "thiếu điểm đầu", không được rơi xuống dưới.
+
+    Trước khi sửa: validator so `tu_rp is None` nên `""` lọt qua, rồi router
+    dùng `tu_rp or gan_nhat(...)` — chuỗi rỗng là falsy nên vỡ bằng TypeError
+    và client nhận HTTP 500 cho một yêu cầu chỉ thiếu điểm đầu.
+    """
+    for rong in ("", "   "):
+        assert client.post("/route", json={"den_rp": "RP03", "tu_rp": rong}).status_code == 422
+    assert client.post("/route", json={"den_rp": "", "tu_rp": "RP01"}).status_code == 422
+
+
+def test_toa_do_ngoai_toa_nha_bi_tu_choi(client):
+    """(9999, 9999) từng được neo im lặng vào góc gần nhất rồi trả về tuyến."""
+    r = client.post("/route", json={"den_rp": "RP03", "tu_x": 9999.0, "tu_y": 9999.0})
+    assert r.status_code == 422
+    assert r.json()["detail"]["loi"] == "ngoai_pham_vi"
+
+    # Trong nhà và sát mép vẫn phải đi được, nếu không là chặn nhầm người thật.
+    assert client.post("/route", json={
+        "den_rp": "RP03", "tu_x": -41.2, "tu_y": 0.3}).status_code == 200
+
+
+def test_ws_goi_sai_dinh_dang_khong_lam_dut_kenh(client, quet_du_ap):
+    """Năm loại gói sai từng làm đứt kênh bằng ngoại lệ chưa bắt (code 1006).
+
+    Ứng dụng di động khi ấy lặng lẽ rơi về REST, mất phần thời gian thực mà
+    không ai biết vì sao. Kênh phải trả lỗi rồi đi tiếp.
+    """
+    xau = [
+        {"scan": []},                                        # thiếu device_id
+        {"device_id": "x", "scan": "abc"},                   # scan sai kiểu
+        {"device_id": "x", "scan": [{"rssi": -70}]},         # phần tử thiếu bssid
+        {"device_id": "x", "scan": [{"bssid": "a", "rssi": 1000}]},  # rssi phi lý
+        {"device_id": "", "scan": []},                       # device_id rỗng
+    ]
+    with client.websocket_connect("/ws/location") as ws:
+        for goi in xau:
+            ws.send_json(goi)
+            assert "loi" in ws.receive_json()
+
+        # Kênh vẫn dùng được ngay sau chuỗi gói sai.
+        ws.send_json({"device_id": "van-song", "scan": quet_du_ap})
+        assert "x" in ws.receive_json()
+
+
+def test_ws_goi_khong_phai_json_khong_lam_dut_kenh(client, quet_du_ap):
+    with client.websocket_connect("/ws/location") as ws:
+        ws.send_text("xin chao")
+        assert ws.receive_json()["loi"] == "khong_phai_json"
+
+        ws.send_json({"device_id": "van-song", "scan": quet_du_ap})
+        assert "x" in ws.receive_json()

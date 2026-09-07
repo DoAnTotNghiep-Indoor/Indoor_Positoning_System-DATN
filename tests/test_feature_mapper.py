@@ -1,16 +1,11 @@
 """Kiểm thử hợp đồng dữ liệu giữa ML và Backend — bài test BẮT BUỘC.
 
-Đây là bài test tồn tại để chặn đúng lỗi mà đồ án CTK45 mắc phải: backend nhận
-`rssi: list[float]` — mảng số trần không kèm BSSID — rồi chỉ kiểm tra số lượng
-phần tử. Client gửi đủ 36 giá trị nhưng sai thứ tự thì mô hình vẫn chạy trơn tru
-và trả về toạ độ sai hoàn toàn, không một cảnh báo nào.
+Chặn đúng lỗi CTK45 mắc phải: backend nhận `rssi: list[float]` — mảng số trần
+không kèm BSSID — rồi chỉ kiểm số lượng phần tử, nên client gửi đủ 36 giá trị
+nhưng sai thứ tự thì mô hình vẫn chạy trơn và trả toạ độ sai hoàn toàn.
 
-Cách chặn: `artifacts/feature_list.json` là nguồn sự thật duy nhất về thứ tự cột.
-Mọi phía đều phải ánh xạ theo BSSID, không bao giờ theo vị trí trong mảng.
-
-`map_scan_to_vector` dưới đây từng là bản tham chiếu của phép ánh xạ. Nay
-`backend/services/preprocessing_service.py` đã được viết, nên bài test gọi vào
-service thật; bản tham chiếu giữ lại để đối chiếu hai bên cho ra kết quả y hệt.
+`artifacts/feature_list.json` là nguồn sự thật duy nhất về thứ tự cột.
+`map_scan_to_vector` dưới đây là bản tham chiếu, đối chiếu với service thật.
 """
 
 from __future__ import annotations
@@ -85,10 +80,8 @@ def test_service_dao_thu_tu_van_ra_ket_qua_giong_het(mapper, hop_dong):
 
 
 def test_dau_van_hop_dong_khop_model_metadata(mapper):
-    """Model và hợp đồng phải sinh ra từ cùng một lần chạy pipeline.
-
-    Lệch thì mọi toạ độ sai mà không có cảnh báo nào — Predictor từ chối khởi
-    động trong trường hợp đó.
+    """Model và hợp đồng phải sinh ra từ cùng một lần chạy pipeline. Lệch thì mọi
+    toạ độ sai mà không có cảnh báo nào — Predictor từ chối khởi động khi đó.
     """
     import json
 
@@ -148,8 +141,8 @@ def test_quet_du_ap_cho_dung_gia_tri(hop_dong):
 def test_dao_thu_tu_van_ra_ket_qua_giong_het(hop_dong):
     """ĐÂY LÀ BÀI TEST QUAN TRỌNG NHẤT.
 
-    Cùng một lần quét, gửi lên theo thứ tự đảo ngược, phải cho ra đúng cùng một
-    vector. Nếu test này hỏng nghĩa là hệ thống đã tụt về đúng lỗi của đồ án cũ.
+    Cùng một lần quét gửi lên theo thứ tự đảo ngược phải cho ra đúng cùng một
+    vector; hỏng nghĩa là hệ thống đã tụt về đúng lỗi của đồ án cũ.
     """
     thu_tu = hop_dong["ap_columns"]
     scan = [{"bssid": b, "rssi": -50 - i} for i, b in enumerate(thu_tu)]
@@ -220,3 +213,21 @@ def test_vector_qua_scaler_khong_loi(hop_dong):
     da_chuan_hoa = scaler.transform(vector)
     assert da_chuan_hoa.shape == (1, hop_dong["feature_count"])
     assert np.isfinite(da_chuan_hoa).all()
+
+
+def test_muc_quet_hong_bao_ro_muc_thu_may():
+    """Hai lối vào đã có schema pydantic chặn, nhưng đây là hàm giữ hợp đồng dữ
+    liệu: lỗi phải chỉ đúng mục nào hỏng thay vì ném `KeyError: 'bssid'` trần.
+    """
+    from backend.services.preprocessing_service import FeatureMapper
+
+    m = FeatureMapper()
+    tot = {"bssid": m.ap_columns[0], "rssi": -55.0}
+
+    for hong in ({"rssi": -70}, {"bssid": "x", "rssi": "manh"}, -70):
+        with pytest.raises(ValueError, match="mục quét thứ 1"):
+            m.map_scan_to_vector([tot, hong])
+
+    # Đường hợp lệ không được đụng tới.
+    v = m.map_scan_to_vector([tot])
+    assert v[0] == -55.0

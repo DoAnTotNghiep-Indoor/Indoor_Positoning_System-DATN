@@ -1,9 +1,8 @@
 """Kết nối SQLite bất đồng bộ và định nghĩa bảng.
 
-Chỉ hai bảng, không phải 16 như bản thiết kế đầy đủ. Lưu đúng thứ chưa có chỗ
-nào khác giữ: lịch sử vị trí đã dự đoán. Điểm tham chiếu và mô hình vẫn đọc từ
-`data/reference/` và `artifacts/` vì hai chỗ đó đã là nguồn sự thật rồi, chép
-vào CSDL chỉ tạo thêm một bản có thể lệch.
+Chỉ hai bảng, không phải 16 như bản thiết kế đầy đủ: lưu đúng thứ chưa có chỗ
+nào khác giữ, là lịch sử vị trí đã dự đoán. Điểm tham chiếu và mô hình vẫn đọc
+từ `data/reference/` và `artifacts/` vì hai chỗ đó đã là nguồn sự thật rồi.
 """
 
 from __future__ import annotations
@@ -25,15 +24,14 @@ def bay_gio() -> datetime:
 class MocThoiGian(TypeDecorator):
     """Cột thời điểm luôn đọc ra kèm múi giờ UTC.
 
-    SQLite không có kiểu ngày giờ riêng nên `DateTime(timezone=True)` KHÔNG có
-    tác dụng: giá trị ghi xuống là UTC nhưng đọc lên thành datetime trần, và
-    `/predictions` trả về chuỗi ISO không có hậu tố Z.
+    SQLite không có kiểu ngày giờ riêng nên `DateTime(timezone=True)` KHÔNG có tác
+    dụng: giá trị ghi xuống là UTC nhưng đọc lên thành datetime trần, và
+    `/predictions` trả chuỗi ISO không có hậu tố Z. Chuỗi ISO không mang offset bị
+    JavaScript hiểu là giờ ĐỊA PHƯƠNG nên cột "Lúc" trên Dashboard lệch đúng bằng
+    múi giờ máy — 7 tiếng ở Việt Nam.
 
-    Chuỗi ISO không mang offset bị JavaScript hiểu là giờ ĐỊA PHƯƠNG, nên cột
-    "Lúc" trên Dashboard lệch đúng bằng múi giờ máy — 7 tiếng ở Việt Nam.
-
-    Vẫn lưu xuống dạng trần (đã quy về UTC) chứ không lưu kèm offset, để SQLite
-    còn so sánh và sắp xếp được bằng thứ tự chuỗi.
+    Vẫn lưu dạng trần (đã quy về UTC) chứ không kèm offset, để SQLite còn so sánh
+    và sắp xếp được bằng thứ tự chuỗi.
     """
 
     impl = DateTime
@@ -73,10 +71,9 @@ class PhienDinhVi(Base):
 
 
 class DuDoanViTri(Base):
-    """Một toạ độ đã trả về cho client.
-
-    Giữ cả toạ độ thô lẫn toạ độ sau khi gộp: chênh lệch giữa hai cột này chính
-    là số liệu chứng minh hiệu quả của bước hậu xử lý trong báo cáo.
+    """Một toạ độ đã trả về cho client. Giữ cả toạ độ thô lẫn toạ độ sau khi gộp:
+    chênh lệch giữa hai cột này chính là số liệu chứng minh hiệu quả của bước hậu
+    xử lý trong báo cáo.
     """
 
     __tablename__ = "position_predictions"

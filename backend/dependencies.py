@@ -1,9 +1,8 @@
 """Những thứ dùng chung giữa các router.
 
 Predictor và BoGop nạp một lần lúc khởi động rồi giữ ở cấp module: Predictor
-phải trả giá chạy nóng khoảng 1.400 ms cho lần dự đoán đầu tiên (xem
-prediction_service.py), còn BoGop phải nhớ các lần quét trước nên không thể
-dựng mới mỗi lần.
+phải trả giá chạy nóng ~1.400 ms cho lần dự đoán đầu (xem prediction_service),
+còn BoGop phải nhớ các lần quét trước nên không thể dựng mới mỗi lần.
 """
 
 from __future__ import annotations

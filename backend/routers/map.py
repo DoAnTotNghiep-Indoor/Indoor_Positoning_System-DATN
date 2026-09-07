@@ -1,14 +1,11 @@
 """GET /map, GET /graph, POST /route — dữ liệu không gian và chỉ đường.
 
-Gộp toàn bộ dữ liệu bản đồ vào MỘT response. Đồ án CTK45 tách thành 6 endpoint
-GeoJSON riêng (`/geojson/POI`, `/Doors`, `/Hallways`, `/Paths`, `/Room`,
-`/Stair`) nên mở bản đồ một lần là 6 round-trip tới MongoDB Atlas trên cloud —
-đúng nguyên nhân "bản đồ load chậm" ghi trong tài liệu phân tích.
+Gộp toàn bộ dữ liệu bản đồ vào MỘT response; CTK45 tách thành 6 endpoint GeoJSON
+nên mở bản đồ một lần là 6 round-trip tới MongoDB Atlas.
 
-Mọi toạ độ ở đây đơn vị MÉT, cùng hệ với thứ /predict trả về. Client tự đổi
-sang khung vẽ của nó. Nếu máy chủ trả pixel thì client sẽ có hai phép đổi và
-chúng sẽ trôi khỏi nhau, lúc đó marker nằm sai phòng dù mô hình đúng tuyệt đối —
-triệu chứng nhìn y hệt "mô hình đoán sai".
+Mọi toạ độ đơn vị MÉT, cùng hệ với thứ /predict trả về; client tự đổi sang khung
+vẽ. Trả pixel thì client có hai phép đổi sẽ trôi khỏi nhau, marker nằm sai phòng
+dù mô hình đúng tuyệt đối.
 """
 
 from __future__ import annotations
@@ -24,10 +21,9 @@ from backend.dependencies import lay_do_thi
 
 router = APIRouter(tags=["map"])
 
-# Sơ đồ mặt bằng đã số hoá. Phục vụ thẳng từ data/reference/ thay vì chép một
-# bản vào frontend/: ứng dụng Flutter buộc phải giữ bản sao riêng (Flutter chỉ
-# đóng gói được asset nằm trong mobile/), nhưng Dashboard thì không — thêm bản
-# thứ ba là thêm một chỗ nữa để quên đồng bộ.
+# Sơ đồ mặt bằng đã số hoá, phục vụ thẳng từ data/reference/ thay vì chép vào
+# frontend/: Flutter buộc phải giữ bản sao riêng (chỉ đóng gói được asset trong
+# mobile/), nhưng Dashboard thì không — thêm bản thứ ba là thêm chỗ quên đồng bộ.
 SO_DO_PNG = settings.reference_dir / "Map.png"
 
 
@@ -69,20 +65,47 @@ async def do_thi() -> schemas.DoThi:
     return schemas.DoThi(
         **g.thong_ke(),
         canh=[
-            {"tu": a, "den": b, "khoang_cach_m": round(d, 2)}
+            {"tu": a, "den": b, "khoang_cach_m": round(d, 2),
+             "cua_gia_dinh": (a, b) in g.cua_gia_dinh}
             for (a, b), d in sorted(g.canh.items())
         ],
     )
+
+
+# Toạ độ được phép nằm ngoài hộp bao điểm tham chiếu ngần này mét. Hộp bao ấy
+# CHÍNH LÀ toà nhà; nới ra một chút cho phần rìa mà khảo sát chưa đặt điểm.
+LE_NGOAI_M = 10.0
+
+
+def _kiem_trong_nha(x: float, y: float) -> None:
+    """Chặn toạ độ không thể là vị trí trong thư viện.
+
+    Không chặn thì (9999, 9999) vẫn được neo im lặng vào góc gần nhất rồi trả về
+    một tuyến đường trông rất hợp lý — lại đúng họ lỗi "nhận dữ liệu vô nghĩa mà
+    vẫn trả kết quả tự tin".
+    """
+    pv = _du_lieu_ban_do()["pham_vi"]
+    if not (pv["x_min"] - LE_NGOAI_M <= x <= pv["x_max"] + LE_NGOAI_M
+            and pv["y_min"] - LE_NGOAI_M <= y <= pv["y_max"] + LE_NGOAI_M):
+        raise HTTPException(
+            422,
+            {"loi": "ngoai_pham_vi", "tu_x": x, "tu_y": y,
+             "pham_vi": pv, "le_ngoai_m": LE_NGOAI_M},
+        )
 
 
 @router.post("/route", response_model=schemas.KetQuaChiDuong)
 async def chi_duong(yeu_cau: schemas.YeuCauChiDuong) -> schemas.KetQuaChiDuong:
     g = lay_do_thi()
 
-    # Neo điểm đầu vào điểm tham chiếu gần nhất khi client gửi toạ độ. Vị trí
-    # do /predict trả về vốn đã luôn rơi đúng một điểm tham chiếu, nên bước này
-    # gần như không dịch chuyển gì — nó tồn tại để nhận được cả toạ độ tuỳ ý.
-    tu = yeu_cau.tu_rp or g.gan_nhat(yeu_cau.tu_x, yeu_cau.tu_y)
+    # Neo điểm đầu vào điểm tham chiếu gần nhất khi client gửi toạ độ. Vị trí do
+    # /predict trả về vốn đã luôn rơi đúng một điểm nên bước này gần như không
+    # dịch chuyển gì — nó tồn tại để nhận được cả toạ độ tuỳ ý.
+    if yeu_cau.tu_rp is not None:
+        tu = yeu_cau.tu_rp
+    else:
+        _kiem_trong_nha(yeu_cau.tu_x, yeu_cau.tu_y)
+        tu = g.gan_nhat(yeu_cau.tu_x, yeu_cau.tu_y)
     den = yeu_cau.den_rp
 
     # Kiểm CẢ HAI đầu. Bản trước chỉ kiểm đầu đến, nên tu_rp lạ lọt xuống

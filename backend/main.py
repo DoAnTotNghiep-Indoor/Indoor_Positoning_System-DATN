@@ -2,9 +2,8 @@
 
     uvicorn backend.main:app --reload
 
-Không chứa logic nghiệp vụ. Mô hình và bộ gộp nạp trong lifespan chứ không nạp
-lúc import, để import module không đòi artifacts/ phải có sẵn — kiểm thử và công
-cụ sinh tài liệu đều import được trước khi chạy pipeline lần nào.
+Không chứa logic nghiệp vụ. Mô hình và bộ gộp nạp trong lifespan chứ không lúc
+import, để import module không đòi artifacts/ phải có sẵn.
 """
 
 from __future__ import annotations
@@ -64,11 +63,9 @@ async def health() -> schemas.TrangThai:
     )
 
 
-# Dashboard web phục vụ ngay từ máy chủ API, nên một lệnh `uvicorn` là có cả
-# API lẫn giao diện, không vướng CORS.
-#
-# Mount ĐẶT CUỐI TỆP vì nó nhận mọi đường dẫn còn lại: đăng ký trước thì nó nuốt
-# luôn /health, /map và /predict.
+# Dashboard web phục vụ ngay từ máy chủ API, nên một lệnh `uvicorn` là có cả API
+# lẫn giao diện, không vướng CORS. Mount ĐẶT CUỐI TỆP vì nó nhận mọi đường dẫn
+# còn lại: đăng ký trước thì nó nuốt luôn /health, /map và /predict.
 if settings.frontend_dir.is_dir():
     app.mount(
         "/",

@@ -12,10 +12,9 @@ from ml import config
 def thieu_artifact() -> bool:
     """Thiếu tệp nào trong bộ artifact cần để dựng app hay không.
 
-    Kiểm cả .pkl chứ không chỉ model_metadata.json. Hai tệp json được commit,
-    còn scaler.pkl và model_*.pkl thì .gitignore chặn vì nặng và sinh lại
-    được — chỉ kiểm json thì người mới clone repo chạy pytest sẽ nhận một
-    loạt FileNotFoundError thay vì thông báo bỏ qua kèm hướng dẫn.
+    Kiểm cả .pkl chứ không chỉ model_metadata.json: hai tệp json được commit còn
+    scaler.pkl và model_*.pkl bị .gitignore chặn, nên chỉ kiểm json thì người mới
+    clone repo chạy pytest sẽ nhận một loạt FileNotFoundError.
     """
     meta = config.ARTIFACTS_DIR / "model_metadata.json"
     if not meta.exists():
@@ -37,12 +36,11 @@ def bo_qua_neu_chua_huan_luyen() -> None:
 def client(tmp_path_factory):
     """TestClient chứ không phải ASGITransport trần.
 
-    ASGITransport không chạy sự kiện lifespan, mà toàn bộ việc nạp mô hình và
-    tạo bảng nằm trong đó — dùng nó thì `_predictor` là None và CSDL không có
-    bảng nào. TestClient dùng như context manager sẽ chạy lifespan đầy đủ.
+    ASGITransport không chạy sự kiện lifespan, mà toàn bộ việc nạp mô hình và tạo
+    bảng nằm trong đó — dùng nó thì `_predictor` là None và CSDL không có bảng nào.
 
-    CSDL trỏ vào thư mục tạm do pytest cấp, nên chạy test không đụng vào
-    data/ips.db thật và mỗi mô-đun đều bắt đầu từ bảng rỗng.
+    CSDL trỏ vào thư mục tạm do pytest cấp nên chạy test không đụng data/ips.db
+    thật, và mỗi mô-đun đều bắt đầu từ bảng rỗng.
     """
     bo_qua_neu_chua_huan_luyen()
 

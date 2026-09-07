@@ -1,8 +1,7 @@
 """Mọi lệnh đọc ghi CSDL đi qua đây.
 
 Tách riêng để khi thêm MongoDB cho phần lưu lần quét thô, chỗ phải sửa chỉ nằm
-trong tệp này chứ không rải khắp router. Router chỉ gọi hàm, không biết phía
-dưới là SQLite hay gì khác.
+trong tệp này chứ không rải khắp router.
 """
 
 from __future__ import annotations
@@ -19,11 +18,9 @@ from backend.database import DuDoanViTri, PhienDinhVi, bay_gio
 async def lay_hoac_tao_phien(session: AsyncSession, device_id: str) -> PhienDinhVi:
     """Phiên đang mở của thiết bị, hoặc phiên mới nếu nó vừa vắng mặt quá lâu.
 
-    Ngưỡng dùng chung `reset_after_seconds` với bộ gộp: im lặng quá ngần ấy
-    giây thì `BoGop` đã coi như người dùng đi chỗ khác rồi quay lại và xoá lịch
-    sử gộp. Không mở phiên mới ở đây thì hai tầng hiểu "phiên" khác nhau —
-    `bat_dau` trở thành lần đầu thiết bị từng xuất hiện, và bảng
-    `positioning_sessions` không phân định được lượt ghé nào với lượt nào.
+    Dùng chung ngưỡng `reset_after_seconds` với bộ gộp: im lặng quá ngần ấy giây
+    thì `BoGop` đã coi như người dùng đi rồi quay lại và xoá lịch sử. Không mở
+    phiên mới ở đây thì hai tầng hiểu "phiên" khác nhau.
     """
     phien = await session.scalar(
         select(PhienDinhVi)

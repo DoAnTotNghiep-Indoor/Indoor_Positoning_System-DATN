@@ -1,12 +1,8 @@
 """ConnectionManager: quản lý các kết nối WebSocket đang mở.
 
-Hai nhóm client khác nhau dùng chung một kênh:
-
-- **Thiết bị được định vị** gửi lần quét lên và nhận lại toạ độ của chính nó.
-- **Dashboard** chỉ xem, không gửi gì, nhận mọi toạ độ để vẽ marker.
-
-Đồ án CTK45 chỉ có REST nên client muốn cập nhật vị trí liên tục phải polling —
-tốn pin, tốn băng thông, độ trễ cao. Đây là chỗ khắc phục.
+Hai nhóm client dùng chung một kênh: thiết bị được định vị gửi lần quét lên và
+nhận lại toạ độ của chính nó; dashboard chỉ xem, nhận mọi toạ độ để vẽ marker.
+CTK45 chỉ có REST nên client muốn cập nhật liên tục phải polling.
 """
 
 from __future__ import annotations
@@ -35,10 +31,8 @@ class ConnectionManager:
             self._xem.discard(ws)
 
     async def phat(self, du_lieu: dict, tru: WebSocket | None = None) -> None:
-        """Gửi cho mọi client đang xem, trừ chính client vừa gửi lần quét.
-
-        Client nào rớt hoặc treo thì bỏ khỏi danh sách chứ không để vòng lặp
-        vỡ hay đứng lại.
+        """Gửi cho mọi client đang xem, trừ chính client vừa gửi lần quét. Client nào
+        rớt hoặc treo thì bỏ khỏi danh sách chứ không để vòng lặp vỡ hay đứng lại.
         """
         async with self._khoa:
             dang_mo = list(self._xem)
@@ -49,9 +43,9 @@ class ConnectionManager:
                 continue
             try:
                 # Có hạn thời gian chứ không await trần: một client còn mở
-                # nhưng không đọc nữa sẽ làm bộ đệm gửi đầy, và `send_json`
+                # nhưng không đọc nữa sẽ làm bộ đệm gửi đầy và `send_json`
                 # treo vô hạn — lúc đó MỘT dashboard kẹt đóng băng luồng vị
-                # trí của mọi thiết bị. Quá hạn thì coi như đã rớt.
+                # trí của mọi thiết bị.
                 await asyncio.wait_for(ws.send_json(du_lieu), HAN_GUI_GIAY)
             except Exception:
                 hong.append(ws)

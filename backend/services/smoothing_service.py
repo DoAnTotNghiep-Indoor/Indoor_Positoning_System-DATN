@@ -1,8 +1,8 @@
 """Gộp nhiều lần quét gần nhau về thời gian trước khi trả toạ độ.
 
-Tầng này đưa sai số trung bình từ 1,92 m xuống 0,38 m trên tập test, và số vị
-trí sai từ 13/39 xuống 1/39. Gọi thẳng `ml.postprocess.gop` để backend và bảng
-số liệu trong báo cáo dùng chung một thuật toán; lý do chọn phép gộp nằm ở đó.
+Tầng này đưa sai số trung bình từ 1,90 m xuống 0,38 m trên tập test, số vị trí
+sai từ 13/39 xuống 1/39. Gọi thẳng `ml.postprocess.gop` để backend và bảng số
+liệu trong báo cáo dùng chung một thuật toán; lý do chọn phép gộp nằm ở đó.
 """
 
 from __future__ import annotations
@@ -47,11 +47,8 @@ class BoGop:
     def _don_thiet_bi_da_roi(self, bay_gio: float) -> None:
         """Bỏ hẳn thiết bị đã im lặng quá lâu, không chỉ xoá lịch sử của nó.
 
-        Thiếu bước này thì hai dict trên chỉ có lớn lên: device_id do client tự
-        đặt nên số khoá không bị chặn bởi số máy thật, và máy chủ chạy liên tục
-        sẽ giữ lại mọi thiết bị từng gọi tới dù chúng đã rời đi từ lâu.
-
-        Quét cả dict nên chỉ chạy giãn cách, không chạy mỗi lần quét.
+        Thiếu bước này thì hai dict trên chỉ có lớn lên: device_id do client tự đặt
+        nên số khoá không bị chặn bởi số máy thật. Quét cả dict nên chỉ chạy giãn cách.
         """
         if bay_gio - self._lan_don < self.reset_sau_giay:
             return

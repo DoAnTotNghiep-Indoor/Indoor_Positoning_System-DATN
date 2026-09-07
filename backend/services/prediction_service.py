@@ -1,10 +1,9 @@
 """Predictor: nạp mô hình một lần lúc khởi động rồi dự đoán toạ độ.
 
-Nạp một lần chứ không mỗi request. Mô hình đang phục vụ là fingerprint_knn,
-chỉ 198 KB, nên chi phí thật không nằm ở đọc đĩa mà ở lần dự đoán ĐẦU TIÊN:
-sklearn nạp muộn phần tính khoảng cách nên lần đó tốn khoảng 1.400 ms, các lần
-sau chỉ 0,3 ms. Dựng lại Predictor mỗi request là mỗi request lãnh trọn con số
-đó — vượt hẳn ngân sách 200 ms của yêu cầu phi chức năng.
+Nạp một lần chứ không mỗi request. Mô hình đang phục vụ là fingerprint_knn, chỉ
+198 KB, nên chi phí thật không nằm ở đọc đĩa mà ở lần dự đoán ĐẦU TIÊN: sklearn
+nạp muộn phần tính khoảng cách nên lần đó tốn ~1.400 ms, các lần sau chỉ 0,3 ms.
+Dựng lại Predictor mỗi request là mỗi request lãnh trọn con số đó.
 """
 
 from __future__ import annotations
@@ -16,7 +15,8 @@ from pathlib import Path
 import joblib
 
 from backend.config import settings
-from backend.services.preprocessing_service import FeatureMapper
+from backend.services.preprocessing_service import (FeatureMapper,
+                                                    doc_artifact)
 
 
 class HopDongLech(RuntimeError):
@@ -26,13 +26,10 @@ class HopDongLech(RuntimeError):
 class KhongDuAp(ValueError):
     """Lần quét bắt được quá ít AP quen để định vị.
 
-    Mô hình vẫn cho ra một toạ độ với mọi vector đầu vào, kể cả vector toàn giá
-    trị điền-khi-thiếu — và toạ độ đó cố định, không mang thông tin gì. Đo trên
-    máy thật ngoài thư viện: điện thoại thấy 23 AP, khớp 0, mô hình vẫn khẳng
-    định người dùng đang đứng ở RP01 "TV3,4" trong thư viện Đại học Đà Lạt.
-
-    Đúng họ lỗi mà cả đồ án lấy làm điểm cải tiến so với CTK45 — nhận thiếu dữ
-    liệu mà vẫn trả kết quả tự tin. Nên chặn ở đây thay vì để giao diện tự đoán.
+    Mô hình vẫn cho ra một toạ độ với mọi vector đầu vào, kể cả vector toàn giá trị
+    điền-khi-thiếu — và toạ độ đó cố định, không mang thông tin gì. Đo trên máy
+    thật ngoài thư viện: thấy 23 AP, khớp 0, mô hình vẫn khẳng định người dùng
+    đang đứng ở RP01 trong thư viện.
     """
 
     def __init__(self, so_ap: int, toi_thieu: int):
@@ -49,12 +46,11 @@ class Predictor:
 
         self.mapper = FeatureMapper(thu_muc)
         metadata = json.loads(
-            (thu_muc / "model_metadata.json").read_text(encoding="utf-8")
+            doc_artifact(thu_muc / "model_metadata.json").read_text(encoding="utf-8")
         )
 
-        # Đối chiếu dấu vân trước khi nạp model. Đây là chỗ duy nhất trong
-        # backend còn giữ lại một phép kiểm bắt buộc: lệch hợp đồng không làm
-        # chương trình sập, nó chỉ làm mọi toạ độ sai mà không ai biết.
+        # Đối chiếu dấu vân trước khi nạp model. Lệch hợp đồng không làm chương trình
+        # sập, nó chỉ làm mọi toạ độ sai mà không ai biết.
         cua_model = metadata["hop_dong_du_lieu"]
         cua_hop_dong = self.mapper.dau_van()
         if cua_model != cua_hop_dong:
@@ -64,12 +60,11 @@ class Predictor:
             )
 
         self.ten_mo_hinh: str = metadata["mo_hinh_active"]
-        self.model = joblib.load(thu_muc / metadata["file_active"])
+        self.model = joblib.load(doc_artifact(thu_muc / metadata["file_active"]))
 
-        # Chạy nóng ngay tại đây. Lần predict đầu tiên tốn khoảng 1.400 ms vì
-        # sklearn nạp muộn phần tính khoảng cách, các lần sau chỉ 0,3 ms. Không
-        # chạy nóng thì đúng request đầu của người dùng lãnh trọn con số đó —
-        # vượt hẳn ngưỡng 200 ms của yêu cầu phi chức năng.
+        # Chạy nóng ngay tại đây: lần predict đầu tốn ~1.400 ms vì sklearn nạp muộn
+        # phần tính khoảng cách, các lần sau chỉ 0,3 ms. Không chạy nóng thì đúng
+        # request đầu của người dùng lãnh trọn con số đó.
         self.du_doan([])
 
     @property
@@ -79,9 +74,8 @@ class Predictor:
     def du_doan(self, scan: list[dict]) -> tuple[float, float, int, float]:
         """Trả về (x, y, số AP khớp hợp đồng, độ trễ mili giây).
 
-        KHÔNG tự chặn khi quá ít AP: bước chạy nóng ở `__init__` gọi hàm này với
-        danh sách rỗng. Việc chặn nằm ở `_mot_lan_quet`, chỗ REST và WebSocket
-        dùng chung.
+        KHÔNG tự chặn khi quá ít AP: bước chạy nóng ở `__init__` gọi hàm này với danh
+        sách rỗng. Việc chặn nằm ở `_mot_lan_quet`, chỗ REST và WebSocket dùng chung.
         """
         bat_dau = time.perf_counter()
 

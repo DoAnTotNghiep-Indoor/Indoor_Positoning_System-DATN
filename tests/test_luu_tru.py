@@ -1,11 +1,11 @@
 """Kiểm thử tầng lưu trữ: múi giờ và ranh giới phiên định vị.
 
-Cả hai lỗi dưới đây đều KHÔNG làm chương trình đổ, chỉ làm số liệu sai lặng lẽ —
-đúng loại phải chốt bằng test chứ không phát hiện được khi bấm thử.
+Cả hai lỗi dưới đây đều KHÔNG làm chương trình đổ, chỉ làm số liệu sai lặng lẽ
+— đúng loại phải chốt bằng test chứ không phát hiện được khi bấm thử.
 
-Chạy coroutine bằng `asyncio.run` thay vì dùng pytest-asyncio: cả bộ kiểm thử
-hiện không cần plugin nào, và thêm một phụ thuộc chỉ để chạy bảy bài test thì
-máy chấm lại có thêm một thứ phải cài đúng phiên bản.
+Chạy coroutine bằng `asyncio.run` thay vì pytest-asyncio: cả bộ kiểm thử hiện
+không cần plugin nào, thêm một phụ thuộc chỉ để chạy bảy bài test là thêm một
+thứ máy chấm phải cài đúng phiên bản.
 """
 
 from __future__ import annotations
@@ -27,9 +27,8 @@ from .conftest import bo_qua_neu_chua_huan_luyen
 def chay(tmp_path):
     """Chạy một coroutine trên CSDL trống trong thư mục tạm.
 
-    Coroutine nhận vào một `AsyncSession` đang mở. Mọi thao tác của một bài test
-    phải nằm trong MỘT lần gọi: session bất đồng bộ gắn với vòng lặp sự kiện đã
-    tạo ra nó, gọi hai lần là hai vòng lặp khác nhau.
+    Mọi thao tác của một bài test phải nằm trong MỘT lần gọi: session bất đồng bộ
+    gắn với vòng lặp sự kiện đã tạo ra nó, gọi hai lần là hai vòng lặp khác nhau.
     """
     from backend import database
 

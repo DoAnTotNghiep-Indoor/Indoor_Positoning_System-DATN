@@ -1,16 +1,13 @@
 """Đồ thị đi lại và tìm đường giữa các điểm tham chiếu.
 
-Nút của đồ thị là chính 40 điểm tham chiếu chứ không phải GeoJSON, vì **RP nằm
-trên chỗ đi được theo định nghĩa**: phải có người đứng đúng đó cầm máy quét mới
-đo ra được toạ độ.
+Nút là chính các điểm tham chiếu chứ không phải GeoJSON, vì RP nằm trên chỗ đi
+được theo định nghĩa. Cạnh thì cần thêm sơ đồ mặt bằng vì hai RP gần nhau vẫn
+có thể có tường ở giữa; `tools/trich_ban_do.py` dò việc đó rồi ghi
+`ban_do_tang1.json` nên module này không cần thư viện ảnh. Cạnh dài nhất giảm
+21,0 m xuống 16,1 m.
 
-Cạnh thì cần thêm sơ đồ mặt bằng, vì hai RP gần nhau vẫn có thể có tường ở
-giữa. `tools/trich_ban_do.py` dò việc đó trên Map.png rồi ghi ra
-`ban_do_tang1.json`; module này chỉ đọc JSON nên không cần thư viện ảnh. Kết
-quả: cạnh dài nhất giảm từ 21,0 m xuống 17,2 m.
-
-`cua_gia_dinh` là sáu cạnh nối lại các mảnh bị tường cắt rời — Map.png không vẽ
-cửa nên phải suy ra. Chúng là GIẢ ĐỊNH chưa kiểm chứng thực địa.
+`cua_gia_dinh` là các cạnh nối lại mảnh bị tường cắt rời — GIẢ ĐỊNH chưa kiểm
+chứng thực địa; số lượng đọc từ JSON vì nó đổi theo bộ điểm tham chiếu.
 """
 
 from __future__ import annotations
@@ -23,8 +20,14 @@ import pandas as pd
 
 from ml import config
 
-# Mỗi điểm nối với bấy nhiêu điểm gần nhất. k=3 vừa đủ để đồ thị liên thông
-# thành một mảnh; k lớn hơn chỉ thêm cạnh dài xuyên tường.
+# Mỗi điểm nối với bấy nhiêu điểm gần nhất; k lớn hơn chỉ thêm cạnh xuyên tường.
+#
+# k=3 KHÔNG tự nó làm đồ thị liên thông: phần dò từ sơ đồ vỡ thành 8 mảnh cỡ
+# [16, 15, 6, 2, 2, 1, 1, 1], phải có `cua_gia_dinh` nối lại. Hệ quả: hành lang
+# nam đi được suốt chiều dài toà nhà nhưng hai đoạn giữa dài 28,1 m, xa hơn ba
+# láng giềng gần nhất của cả hai đầu nên không bao giờ thành cạnh — tuyến từ đầu
+# này sang đầu kia dài gấp 1,5 lần đường thẳng. Nâng k sẽ gỡ được nhưng phải đo
+# lại cạnh xuyên tường.
 SO_LANG_GIENG = 3
 
 BAN_DO_JSON = config.REFERENCE_DIR / "ban_do_tang1.json"
@@ -37,11 +40,9 @@ def _khoa(a: str, b: str) -> tuple[str, str]:
     return (a, b) if a < b else (b, a)
 
 
-# Ngưỡng phân loại góc quay, tính bằng độ.
-#
-# Dưới 20° là độ lệch người đi bộ không nhận ra là một cú rẽ — gọi nó là "rẽ"
-# thì chỉ dẫn kêu liên tục ở mọi chặng. Trên 135° là quay ngược lại chỗ vừa đi
-# qua, phải nói khác hẳn "rẽ" để người dùng biết mình đang vòng lại.
+# Ngưỡng phân loại góc quay, tính bằng độ. Dưới 20° là độ lệch người đi bộ
+# không nhận ra là một cú rẽ, gọi là "rẽ" thì chỉ dẫn kêu liên tục ở mọi chặng.
+# Trên 135° là quay ngược lại chỗ vừa đi qua, phải nói khác hẳn "rẽ".
 GOC_DI_THANG = 20.0
 GOC_CHECH = 60.0
 GOC_QUAY_DAU = 135.0
@@ -50,16 +51,12 @@ GOC_QUAY_DAU = 135.0
 def _goc_quay(truoc: float, sau: float) -> float:
     """Góc phải quay khi chuyển từ hướng [truoc] sang [sau], trong (-180, 180].
 
-    Dương là rẽ TRÁI: hệ toạ độ của dự án có x sang phải, y hướng lên, tức
-    thuận chiều toán học, nên góc tăng là quay ngược kim đồng hồ.
+    Dương là rẽ TRÁI: hệ toạ độ có x sang phải, y hướng lên, tức thuận chiều toán
+    học, nên góc tăng là quay ngược kim đồng hồ.
 
-    Trả về góc thay vì trả thẳng một nhãn như `getDirection` của CTK45, vì hai
-    lẽ. Một, hàm đó chỉ có ba kết quả thẳng/trái/phải nên một cú quay đầu 179°
-    đọc thành "rẽ trái". Hai, nó tính góc bằng `acos(dot / (mag1 * mag2))`, gặp
-    hai điểm trùng nhau thì mẫu số bằng 0, `angle` thành NaN, mọi phép so đều
-    sai và hàm rơi xuống nhánh cuối trả "Rẽ phải" cho một chặng không hề rẽ.
-    Có góc trong tay thì phân loại được bao nhiêu mức tuỳ ý, và điểm trùng chỉ
-    cho ra góc 0.
+    Trả về GÓC chứ không trả nhãn thẳng/trái/phải: có góc thì phân loại được bao
+    nhiêu mức tuỳ ý, quay đầu 179° không bị đọc thành "rẽ trái", và hai điểm
+    trùng nhau cho góc 0 thay vì NaN như cách tính bằng `acos`.
     """
     return (sau - truoc + 180.0) % 360.0 - 180.0
 
@@ -75,10 +72,9 @@ def _phan_loai(goc: float) -> str:
 
 
 def _doc_ban_do() -> tuple[set[tuple[str, str]], set[tuple[str, str]]]:
-    """(cạnh xuyên tường, cửa giả định) từ ban_do_tang1.json.
-
-    Thiếu tệp thì trả hai tập rỗng và đồ thị lùi về bản k=3 thuần khoảng cách:
-    sơ đồ là dữ liệu bổ sung, không phải phụ thuộc bắt buộc.
+    """(cạnh xuyên tường, cửa giả định) từ ban_do_tang1.json. Thiếu tệp thì trả hai
+    tập rỗng và đồ thị lùi về bản k=3 thuần khoảng cách: sơ đồ là dữ liệu bổ sung,
+    không phải phụ thuộc bắt buộc.
     """
     if not BAN_DO_JSON.exists():
         return set(), set()
@@ -147,9 +143,8 @@ class DoThiDiLai:
         )
 
     def tim_duong(self, tu: str, den: str) -> tuple[list[str], float]:
-        """Dijkstra. Trả ([], inf) khi không có đường — không xảy ra với đồ thị
-        hiện tại vì nó liên thông, nhưng sẽ xảy ra nếu CANH_LOAI_TRU cắt rời
-        một mảng.
+        """Dijkstra. Trả ([], inf) khi không có đường — không xảy ra với đồ thị hiện
+        tại vì nó liên thông, nhưng sẽ xảy ra nếu CANH_LOAI_TRU cắt rời một mảng.
         """
         if tu == den:
             return [tu], 0.0
@@ -188,12 +183,10 @@ class DoThiDiLai:
     def chi_dan(self, duong: list[str]) -> list[dict]:
         """Đường đi thành từng bước "đi thẳng / rẽ trái / rẽ phải" kèm số mét.
 
-        Trả dữ liệu có cấu trúc chứ KHÔNG trả câu dựng sẵn: ứng dụng di động
-        chạy hai ngôn ngữ, đóng cứng câu ở máy chủ là ép nó về một thứ tiếng.
-
-        Góc quay tính so với chặng LIỀN TRƯỚC nên bước đầu mang hướng
-        `bat_dau` — hệ biết người dùng đứng ở đâu nhưng không biết đang quay
-        mặt về đâu, muốn biết thì phải thêm từ kế chứ không sửa hàm này.
+        Trả dữ liệu có cấu trúc chứ KHÔNG trả câu dựng sẵn: ứng dụng chạy hai ngôn
+        ngữ, đóng cứng câu ở máy chủ là ép nó về một thứ tiếng. Góc quay tính so với
+        chặng LIỀN TRƯỚC nên bước đầu mang hướng `bat_dau` — hệ biết người dùng đứng
+        ở đâu nhưng không biết đang quay mặt về đâu.
         """
         if len(duong) < 2:
             return []
@@ -213,9 +206,8 @@ class DoThiDiLai:
                 goc = _goc_quay(chang[i - 1]["phuong_vi"], c["phuong_vi"])
                 huong = _phan_loai(goc)
 
-            # Gộp các chặng đi thẳng liên tiếp: "đi thẳng 12 m rồi đi thẳng 12 m"
-            # là hai câu cho cùng một hành động. Điểm giữa vẫn còn nguyên trong
-            # `duong_di` nếu client cần vẽ.
+            # Gộp các chặng đi thẳng liên tiếp: "đi thẳng 12 m rồi đi thẳng 12 m" là hai
+            # câu cho cùng một hành động. Điểm giữa vẫn còn trong `duong_di` nếu cần vẽ.
             if huong == "di_thang" and buoc:
                 buoc[-1]["den_rp"] = c["den_rp"]
                 buoc[-1]["khoang_cach_m"] += c["khoang_cach_m"]

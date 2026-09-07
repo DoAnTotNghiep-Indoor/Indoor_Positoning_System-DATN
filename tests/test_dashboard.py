@@ -1,14 +1,13 @@
 """Kiểm thử Dashboard web (nhóm 4, mục I).
 
 JavaScript không có trình biên dịch bắt lỗi trước khi chạy: gõ sai một id thì
-`document.querySelector` trả `null`, và trang chết lặng ở đúng chỗ đó mà không
-báo gì. Ba loại lệch dưới đây đều thuộc kiểu ấy nên phải chốt bằng test:
+`querySelector` trả `null` và trang chết lặng. Ba loại lệch thuộc kiểu ấy nên
+phải chốt bằng test:
 
 1. Selector trong JS trỏ tới id không có trong HTML.
 2. Import một tên mà mô-đun kia không export.
-3. Hằng số biến đổi mét↔pixel trôi khỏi nhau giữa ba nơi cùng dùng nó —
-   Python, Dart và JavaScript. Lệch ở đây thì cùng một toạ độ hiện ở hai chỗ
-   khác nhau trên hai màn hình, mà triệu chứng nhìn y hệt "mô hình đoán sai".
+3. Hằng số mét↔pixel trôi khỏi nhau giữa Python, Dart và JavaScript — cùng một
+   toạ độ hiện hai chỗ khác nhau, triệu chứng nhìn y hệt "mô hình đoán sai".
 """
 
 from __future__ import annotations
@@ -153,7 +152,7 @@ def test_hai_ban_so_do_giong_het_nhau():
 
 
 def test_ca_ba_noi_deu_lay_y_huong_len(luoi):
-    """Lật trục y là 40 điểm sai phòng mà không có lỗi nào được ném ra."""
+    """Lật trục y là mọi điểm sai phòng mà không có lỗi nào được ném ra."""
     assert luoi["truc_y_huong_len"] is True
     assert "gocYPx - y" in _doc(FRONTEND / "src/js/coordinate.js")
     assert "gocYPx - y" in _doc(FLOOR_MAP_DART)
@@ -191,7 +190,7 @@ def test_moi_phuong_thuc_trong_api_js_deu_co_noi_goi():
     """Khai một lối gọi API rồi không dùng thì endpoint sống mà không ai thấy.
 
     `api.doThi` từng nằm im như vậy: `GET /graph` chạy tốt, có test, nhưng
-    Dashboard không vẽ cạnh nào nên 58 cạnh của đồ thị đi lại không lên màn hình.
+    Dashboard không vẽ cạnh nào.
     """
     api_js = _doc(FRONTEND / "src" / "js" / "api.js")
     khai = set(re.findall(r"^\s{2}(\w+):", api_js, re.M))
@@ -213,13 +212,81 @@ def test_dashboard_ve_canh_do_thi_len_so_do():
 
 
 def test_moi_canh_do_thi_deu_noi_hai_diem_co_that(client):
-    """Cạnh chỉ mang mã điểm; Dashboard tra toạ độ từ GET /map.
-
-    Một mã lệch giữa hai endpoint là cạnh biến mất khỏi sơ đồ mà không báo gì.
+    """Cạnh chỉ mang mã điểm; Dashboard tra toạ độ từ GET /map. Một mã lệch giữa
+    hai endpoint là cạnh biến mất khỏi sơ đồ mà không báo gì.
     """
     canh = client.get("/graph").json()["canh"]
     co = {d["rp_id"] for d in client.get("/map").json()["diem_tham_chieu"]}
 
-    assert len(canh) == 58
+    # Số cạnh suy ra từ chính đồ thị chứ không viết cứng: thêm một điểm tham
+    # chiếu là con số ấy đổi, mà bài này không kiểm số cạnh — nó kiểm mã điểm.
+    assert len(canh) == client.get("/graph").json()["so_canh"]
     thieu = {c[k] for c in canh for k in ("tu", "den")} - co
     assert not thieu, f"cạnh trỏ tới điểm không có trong /map: {sorted(thieu)}"
+
+
+def test_cua_gia_dinh_duoc_danh_dau_rieng(client):
+    """Cạnh nhóm tự nối tay phải phân biệt được với cạnh đo từ Map.png.
+
+    Chúng vào kết quả `/route` như mọi cạnh khác mà chưa ai đối chiếu thực địa,
+    nên client phải vẽ khác — trộn chung là trình bày giả định như thể đo được.
+    """
+    import json
+
+    from ml import config
+
+    canh = client.get("/graph").json()["canh"]
+    assert all("cua_gia_dinh" in c for c in canh), "thiếu cờ trên một số cạnh"
+
+    # Đối chiếu với chính nguồn sự thật thay vì một con số viết cứng.
+    that = {tuple(sorted(c)) for c in json.loads(
+        (config.REFERENCE_DIR / "ban_do_tang1.json").read_text(encoding="utf-8")
+    )["cua_gia_dinh"]}
+    danh_dau = {tuple(sorted((c["tu"], c["den"]))) for c in canh if c["cua_gia_dinh"]}
+    assert danh_dau == that
+    assert 0 < len(danh_dau) < len(canh), "cửa giả định phải là thiểu số"
+
+
+def test_bo_ve_va_chu_giai_dung_cung_mot_bang_mau():
+    """Chú giải nói về chính hình ngay trên nó nên màu phải khớp từng chữ. Hai tệp
+    khác ngôn ngữ, không chia sẻ được hằng số, nên chốt bằng test.
+    """
+    renderer = _doc(FRONTEND / "src" / "js" / "map-renderer.js")
+    css = _doc(FRONTEND / "src" / "css" / "style.css")
+    html = _doc(FRONTEND / "index.html")
+
+    for ten, lop in (("canh", "mau-canh"), ("cuaGiaDinh", "mau-cua")):
+        mau = re.search(rf"{ten}:\s*'([^']+)'", renderer)
+        assert mau, f"không thấy màu {ten} trong map-renderer.js"
+        khoi = re.search(rf"\.{lop}\s*\{{[^}}]*\}}", css)
+        assert khoi, f"không thấy .{lop} trong style.css"
+        assert mau.group(1) in khoi.group(0), (
+            f".{lop} không dùng đúng màu {ten} của bộ vẽ")
+        assert lop in html, f"chú giải trong HTML thiếu .{lop}"
+
+    # Cửa giả định phải là nét ĐỨT, cả ở hình lẫn ở chú giải.
+    assert "setLineDash" in renderer
+    assert "dashed" in re.search(r"\.mau-cua\s*\{[^}]*\}", css).group(0)
+
+
+def test_phuong_vi_toa_nha_khop_giua_dart_va_python():
+    """Phương vị toà nhà nằm ở hai nơi, hai ngôn ngữ, và phải lệch đúng 90°.
+
+    `LaBan.gocBacSoDo` là phương vị trục +y sơ đồ, `ve_khoi_nha` khai trục dài
+    tức +x. Lệch đi thì nón hướng trong app và hình khối trong báo cáo nói hai
+    điều khác nhau về cùng một toà nhà, mà không có gì báo.
+    """
+    from tools import ve_khoi_nha
+
+    dart = _doc(config.ROOT_DIR / "mobile" / "lib" / "services" / "la_ban.dart")
+    m = re.search(r"gocBacSoDo\s*=\s*([\d.]+)", dart)
+    assert m, "không thấy gocBacSoDo trong la_ban.dart"
+
+    goc_y = float(m.group(1))
+    goc_x = ve_khoi_nha.PHUONG_VI_TRUC_DAI
+    assert (goc_x - goc_y) % 360 == pytest.approx(90.0, abs=0.01), (
+        f"+x = {goc_x}°, +y = {goc_y}° — hai trục phải vuông góc")
+
+    # Và góc nghiêng lưới nhà phải suy ra được từ chính phương vị đó, không
+    # phải một con số viết cứng độc lập.
+    assert ve_khoi_nha.NGHIENG == pytest.approx(360.0 - goc_x, abs=0.01)

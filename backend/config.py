@@ -1,10 +1,9 @@
 """Cấu hình đọc từ biến môi trường, không hardcode thông tin nhạy cảm.
 
-Chọn SQLite chứ không phải PostgreSQL: không cần cài server, chạy được ngay
-trên máy cá nhân lẫn máy chấm. Schema tránh cú pháp riêng của mọi engine nên
-đổi engine chỉ phải đổi DATABASE_URL. Hướng mở rộng đã tính trước là MongoDB
-cho phần lưu lần quét thô, và mọi truy cập CSDL đi qua backend/repository.py
-để chỗ phải đổi chỉ nằm ở một tệp.
+Chọn SQLite chứ không phải PostgreSQL: không cần cài server, chạy được ngay trên
+máy cá nhân lẫn máy chấm. Schema tránh cú pháp riêng của mọi engine nên đổi
+engine chỉ phải đổi DATABASE_URL, và mọi truy cập CSDL đi qua
+backend/repository.py để chỗ phải đổi chỉ nằm ở một tệp.
 """
 
 from __future__ import annotations
@@ -24,7 +23,7 @@ class Settings(BaseSettings):
     reference_dir: Path = ROOT_DIR / "data" / "reference"
     frontend_dir: Path = ROOT_DIR / "frontend"
 
-    # Số lần quét gộp lại trước khi trả toạ độ: 1,92 m xuống 0,38 m trên tập
+    # Số lần quét gộp lại trước khi trả toạ độ: 1,90 m xuống 0,38 m trên tập
     # test, xem ml/postprocess.py.
     cua_so_gop: int = 3
 
