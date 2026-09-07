@@ -32,6 +32,7 @@ ICON = {
     "Hành lang": "Icons.linear_scale_outlined",
     "Bàn thủ thư": "Icons.support_agent_outlined",
     "Phòng tạp chí": "Icons.article_outlined",
+    "WC": "Icons.wc_outlined",
 }
 
 
@@ -66,12 +67,9 @@ def sinh() -> str:
 
 import 'khu_vuc.dart';
 
-/// {len(khoi)} khu vực của thư viện, nhúng sẵn làm bản dự phòng.
-///
-/// Nguồn là `data/reference/reference_points.csv`, cũng chính là thứ `GET /map`
-/// trả về. Nhúng vào ứng dụng để danh sách khu vực, ảnh và mô tả vẫn dùng được
-/// khi chưa nối được máy chủ — lúc demo trước hội đồng, backend có thể chưa kịp
-/// bật.
+/// {len(khoi)} khu vực của thư viện, nhúng sẵn làm bản dự phòng khi chưa nối được
+/// máy chủ — lúc demo trước hội đồng, backend có thể chưa kịp bật. Nguồn là
+/// `data/reference/reference_points.csv`, cũng là thứ `GET /map` trả về.
 ///
 /// SINH TỰ ĐỘNG bằng `python -m tools.sinh_khu_vuc`, đừng sửa tay.
 class KhuVucThuVien {{

@@ -1,33 +1,26 @@
 """Trích hình học toà nhà từ data/reference/Map.png ra ban_do_tang1.json.
 
 Chạy một lần rồi commit kết quả; backend chỉ đọc JSON nên không cần Pillow hay
-SciPy lúc chạy thật (hai gói này KHÔNG có trong requirements.txt):
+SciPy lúc chạy thật (hai gói này KHÔNG có trong requirements.txt)::
 
     pip install pillow scipy
     python -m tools.trich_ban_do
 
-Map.png do nhóm CTK45 số hoá, chỉ có hai màu trên nền trong suốt: nét đen là
-tường, xám #D9D9D9 vừa là lưới chấm toạ độ vừa là vách ngăn và kệ sách. Phân
-biệt hai loại xám bằng kích thước — chấm lưới đều đúng 16 px.
+Map.png chỉ hai màu trên nền trong suốt: nét đen là tường, xám #D9D9D9 vừa là
+lưới chấm toạ độ vừa là vách ngăn và kệ sách — phân biệt bằng kích thước, chấm
+lưới đều đúng 16 px.
 
-PHÉP BIẾN ĐỔI MÉT ↔ PIXEL. Lưới chấm trải 1000 px ngang và 605 px dọc, hộp bao
-40 điểm tham chiếu là 86 m × 52 m, cho 11,628 và 11,635 px/m — khớp tới 4 chữ
-số có nghĩa. Đó là căn cứ khẳng định lưới chấm chính là hệ toạ độ mét.
+MÉT ↔ PIXEL: lưới chấm trải 1000 × 605 px, hộp bao điểm tham chiếu 86 × 52 m,
+cho 11,628 và 11,635 px/m — khớp tới 4 chữ số, đó là căn cứ khẳng định lưới
+chấm chính là hệ toạ độ mét. Trục y HƯỚNG LÊN và trục x KHÔNG lật, mỗi chiều
+chốt bằng một bằng chứng độc lập: đoạn thắt eo của toà nhà chỉ lọt theo chiều
+y đó, và khớp 39 điểm với GPS trong POI.geojson cho RMS 3,15 m khi không lật
+so với 13,84 m khi lật.
 
-CHIỀU TRỤC, chốt bằng hai bằng chứng độc lập:
-
-* Trục y HƯỚNG LÊN. Toà nhà thắt eo ở giữa (1000 px hai đầu, 775 px đoạn giữa).
-  Theo chiều này, đoạn eo ứng với y ∈ [6,4; 21,3] m và cả 8 điểm trong khoảng
-  đó đều có |x| ≤ 30 m — vừa lọt. Chiều ngược lại buộc đoạn eo chứa RP22, RP25
-  ở |x| = 43 m, rộng hơn cả eo.
-* Trục x KHÔNG lật. Khớp 39 điểm với GPS trong POI.geojson bằng phép quay-co-
-  tịnh tiến: không lật cho RMS 3,15 m, lật cho 13,84 m. (Tỉ lệ khớp ra 0,39 nên
-  bản GeoJSON đó không đúng tỉ lệ thật, chỉ dùng được để xét chiều.)
-
-CỬA GIẢ ĐỊNH. Map.png vẽ tường nhưng không vẽ cửa, chặn hết cạnh cắt tường thì
-đồ thị vỡ 7 mảnh. Công cụ nối lại bằng số cạnh ít nhất, mỗi lần chọn cạnh NGẮN
-NHẤT giữa hai mảnh — chỗ nhiều khả năng có cửa nhất. Sáu cạnh đó ghi riêng vào
-`cua_gia_dinh` để ra thực địa đối chiếu, không trộn vào phần suy ra từ ảnh.
+CỬA GIẢ ĐỊNH: Map.png vẽ tường nhưng không vẽ cửa, chặn hết cạnh cắt tường thì
+đồ thị vỡ thành mảnh rời. Công cụ nối lại bằng số cạnh ít nhất, mỗi lần chọn
+cạnh NGẮN NHẤT giữa hai mảnh, ghi riêng vào `cua_gia_dinh` để ra thực địa đối
+chiếu chứ không trộn vào phần suy từ ảnh.
 """
 
 from __future__ import annotations
@@ -63,6 +56,19 @@ BO_QUA_DAU_PX = 3.0
 BAN_KINH_GHI_M = 25.0
 
 SO_LANG_GIENG = 3
+
+# Hai cầu thang đầu hành lang nam, nhóm 2025 bổ sung: (x tâm, y tâm, rộng, cao)
+# tính bằng mét. Map.png của CTK45 không vẽ chúng nên RP44/RP45 chỉ có chấm.
+#
+# LỚP HÌNH thuần, không ghi vào mặt nạ vật cản nên đồ thị và khoảng cách không
+# đổi. Cỡ 5 × 5 m theo hộp vẽ tay, không theo lõi 7,5 × 8,4 m của RP20/RP21 vì
+# dải hành lang nam chỉ cao chừng 6 m.
+KHOI_CAU_THANG_BO_SUNG = [(28.0, 2.5, 5.0, 5.0), (-28.0, 2.5, 5.0, 5.0)]
+
+# Vật cản trong Map.png tô sắc xám này; hai nơi vẽ lại khối bổ sung đều lấy từ
+# đây để không lệch tông với 12 cầu thang có sẵn.
+SAC_VAT_CAN_PNG = (217 / 255, 217 / 255, 217 / 255)
+ALPHA_NEN_ANH = 0.55
 
 
 def _tach_ba_lop(anh: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -105,10 +111,9 @@ def _luoi_toa_do(cham: np.ndarray) -> dict:
 def _vung_di_duoc(tuong: np.ndarray) -> np.ndarray:
     """Nhãn các mảng sàn đi được. 0 là tường hoặc bên ngoài toà nhà.
 
-    Đường bao trong Map.png hở vài pixel ở chỗ các nét gặp nhau, nên phải nở
-    tường thêm 1 px trước khi loang rồi co lại — không thì "bên ngoài" tràn vào
-    khắp nhà. Loang từ ba mầm: góc trên trái và hai điểm trên mép phải, vì mảng
-    trời bên phải bị nét vẽ cắt rời khỏi mảng trời bên trái.
+    Đường bao Map.png hở vài pixel chỗ các nét gặp nhau nên phải nở tường 1 px
+    trước khi loang rồi co lại. Loang từ ba mầm vì mảng trời bên phải bị nét vẽ
+    cắt rời khỏi mảng bên trái.
     """
     lien_thong = np.ones((3, 3), bool)
     day = ndimage.binary_dilation(tuong, lien_thong)
@@ -151,13 +156,10 @@ class BanDo:
     def _dich_ve_cho_di_duoc(self) -> None:
         """Kéo điểm rơi trúng nét vẽ về ô đi được gần nhất.
 
-        Bảy điểm rơi trúng vật cản, và đó là XÁC NHẬN chứ không phải lỗi: RP20,
-        RP21, RP05, RP06 tên "Cầu thang" rơi đúng các khối cầu thang; RP22, RP25
-        tên "Khu vực đọc" rơi trúng kệ sách dọc tường.
-
-        Phải dịch tới ô thuộc vùng ĐỦ LỚN chứ không phải ô trống gần nhất: RP25
-        cách mép ngoài kệ sách 2 px, mà khe đó là vùng cụt — dịch vào đấy thì
-        điểm mất hết đường nối.
+        Bảy điểm rơi trúng vật cản, và đó là XÁC NHẬN chứ không phải lỗi: RP20, RP21,
+        RP05, RP06 tên "Cầu thang" rơi đúng khối cầu thang; RP22, RP25 "Khu vực đọc"
+        rơi trúng kệ sách. Phải dịch tới ô thuộc vùng ĐỦ LỚN chứ không phải ô trống
+        gần nhất: khe 2 px cạnh kệ sách là vùng cụt, vào đấy thì điểm mất đường nối.
         """
         xa, chi_so = ndimage.distance_transform_edt(self.vung == 0,
                                                     return_indices=True)
@@ -180,9 +182,8 @@ class BanDo:
     def di_duoc(self, a: str, b: str) -> bool:
         """Đoạn thẳng a–b có nằm trọn trong MỘT mảng sàn không.
 
-        Không dùng ngưỡng "dày bao nhiêu mét thì coi là tường": vách mỏng nhất
-        trong ảnh chỉ 1 px nên mọi ngưỡng đều hoặc bỏ sót vách mỏng, hoặc cắt
-        nhầm cạnh chỉ chạm mép. Xét theo mảng sàn thì không cần ngưỡng nào.
+        Không dùng ngưỡng "dày bao nhiêu mét thì là tường": vách mỏng nhất chỉ 1 px
+        nên mọi ngưỡng đều hoặc bỏ sót vách mỏng, hoặc cắt nhầm cạnh chỉ chạm mép.
         """
         vung = self.vung[self.px[a][1], self.px[a][0]]
         if vung != self.vung[self.px[b][1], self.px[b][0]]:
@@ -275,8 +276,19 @@ def tinh(bd: "BanDo") -> dict:
     }
 
 
+def _ve_khoi_bo_sung(ax, bd: "BanDo") -> None:
+    """Khối cầu thang bổ sung, vẽ trong hệ PIXEL của Map.png."""
+    from matplotlib.patches import Rectangle
+
+    for x, y, rong, cao in KHOI_CAU_THANG_BO_SUNG:
+        u, w = bd.sang_pixel(x - rong / 2, y + cao / 2)
+        ax.add_patch(Rectangle((u, w), rong * bd.px_moi_met_x, cao * bd.px_moi_met_y,
+                               facecolor=SAC_VAT_CAN_PNG, alpha=ALPHA_NEN_ANH,
+                               edgecolor="none", zorder=1))
+
+
 def ve_hinh(bd: BanDo, kq: dict) -> Path:
-    """Hình kiểm chứng: 40 điểm phải nằm gọn trong lòng nhà, cạnh đỏ (bị loại)
+    """Hình kiểm chứng: mọi điểm phải nằm gọn trong lòng nhà, cạnh đỏ (bị loại)
     phải cắt qua nét vẽ, cạnh xanh thì không.
     """
     import matplotlib
@@ -289,7 +301,8 @@ def ve_hinh(bd: BanDo, kq: dict) -> Path:
     ten = list(bd.toa_do)
 
     fig, ax = plt.subplots(figsize=(13.2, 8.4), dpi=110)
-    ax.imshow(Image.open(ANH), alpha=0.55)
+    ax.imshow(Image.open(ANH), alpha=ALPHA_NEN_ANH)
+    _ve_khoi_bo_sung(ax, bd)
 
     def doan(a: str, b: str, **kw) -> None:
         xa, ya = bd.sang_pixel(*bd.toa_do[a])

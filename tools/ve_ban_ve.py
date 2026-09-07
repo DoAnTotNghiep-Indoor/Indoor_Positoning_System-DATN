@@ -23,12 +23,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
+from matplotlib.patches import Rectangle
 from matplotlib.transforms import Affine2D
 
 from ml import config
-from tools.trich_ban_do import ANH, BanDo, _tach_ba_lop
+from tools.trich_ban_do import (ANH, KHOI_CAU_THANG_BO_SUNG, BanDo,
+                                _tach_ba_lop)
 
 RA = config.REPORTS_DIR / "figures"
+
+# Vật cản là mặt nạ nhị phân, đưa qua thang Greys với vmax này thì ra đúng
+# sắc xám nhạt của bản vẽ CTK45.
+SAC_VAT_CAN = 2.6
 
 # Hai điểm cùng nhóm xa hơn ngưỡng này thì tách cụm, mỗi cụm một nhãn riêng.
 #
@@ -108,9 +114,15 @@ class Ve:
         if vat_can:
             ax.imshow(
                 np.ma.masked_where(~self.vat_can, self.vat_can),
-                extent=self.khung, cmap="Greys", vmin=0, vmax=2.6,
+                extent=self.khung, cmap="Greys", vmin=0, vmax=SAC_VAT_CAN,
                 interpolation="nearest", zorder=1,
             )
+            # Lấy màu từ chính thang màu trên, không viết cứng mã hex: đổi
+            # SAC_VAT_CAN mà quên chỗ này thì hai cầu thang lệch tông.
+            mau = plt.get_cmap("Greys")(1 / SAC_VAT_CAN)
+            for x, y, rong, cao in KHOI_CAU_THANG_BO_SUNG:
+                ax.add_patch(Rectangle((x - rong / 2, y - cao / 2), rong, cao,
+                                       facecolor=mau, edgecolor="none", zorder=1))
         ax.imshow(
             np.ma.masked_where(~self.net, self.net),
             extent=self.khung, cmap="Greys", vmin=0, vmax=1.05,
@@ -144,7 +156,7 @@ def hinh_mat_bang(v: Ve) -> Path:
     xs, ys = v.rp["x"], v.rp["y"]
     x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
 
-    # Đường kích thước: hộp bao 40 điểm đã đo chính là hệ quy chiếu của cả dự án
+    # Đường kích thước: hộp bao các điểm đã đo chính là hệ quy chiếu của cả dự án
     for (ax0, ay0), (ax1, ay1), chu, doi in (
         ((x0, y1 + 3.4), (x1, y1 + 3.4), f"{x1 - x0:.0f} m", (0, 1.2)),
         ((x1 + 5.2, y0), (x1 + 5.2, y1), f"{y1 - y0:.0f} m", (1.8, 0)),
@@ -175,7 +187,7 @@ def hinh_mat_bang(v: Ve) -> Path:
 
 
 def hinh_khu_vuc(v: Ve) -> Path:
-    """Hình 2 — 40 điểm khảo sát, nhãn đặt theo CỤM chứ không theo trọng tâm."""
+    """Hình 2 — điểm khảo sát, nhãn đặt theo CỤM chứ không theo trọng tâm."""
     fig, ax = plt.subplots(figsize=(13.6, 8.6), dpi=130)
     v._nen(ax)
 
@@ -198,7 +210,7 @@ def hinh_khu_vuc(v: Ve) -> Path:
     da_dich = _go_chong(fig, ax, nhan)
     v._thuoc(ax)
     ax.set_title(
-        f"40 điểm khảo sát theo khu vực — {v.rp['nhom'].nunique()} nhóm, "
+        f"{len(v.rp)} điểm khảo sát theo khu vực — {v.rp['nhom'].nunique()} nhóm, "
         f"{so_nhan} nhãn đặt theo cụm\n"
         f"tách cụm khi hai điểm cùng nhóm cách nhau quá {NGUONG_CUM_M:.0f} m"
         f"  ·  {da_dich} nhãn đã đẩy lên cho khỏi chồng",
@@ -307,6 +319,13 @@ MAU_CTK45 = {
 }
 
 # Góc nghiêng toà nhà trên bản đồ Mapbox của họ, đo từ ảnh chụp trong báo cáo.
+#
+# Về sau đo lại trên ảnh Google Maps: lưới nhà nghiêng 21,75° so với trục bắc-nam
+# (mục 2.5.1 tài liệu thiết kế), nên con số này đúng — và cũng cho thấy khung
+# nhìn Mapbox của họ để hướng bắc lên trên, không xoay.
+#
+# Đây CHỈ là góc nghiêng để vẽ lại hình cho giống của họ. Phương vị của trục +y
+# sơ đồ là một đại lượng khác, bằng 248,5°; xem `LaBan.gocBacSoDo`.
 GOC_NGHIENG = -22.0
 
 
@@ -314,13 +333,10 @@ def hinh_kieu_ctk45(v: Ve) -> Path:
     """Hình 5 — dựng lại Hình 21 của báo cáo CTK45 trên hình học đo thực địa.
 
     Ba đặc điểm định danh bản đồ của họ đều tái hiện được: toà nhà nghiêng 22°,
-    chấm đỏ cho từng điểm, và MỖI ĐIỂM MỘT NHÃN MANG TÊN NHÓM — nên "Cầu thang"
-    in ra 12 lần, "Khu vực tự học" 10 lần. Nhãn ở đây KHÔNG gỡ chồng, vì chính
-    chỗ chồng nhau mới là thứ cần thấy.
-
-    Không dựng được: đa giác WC và bốn hành lang có nhãn `Hallway1–4`. Chúng chỉ
-    tồn tại trong GeoJSON vẽ tay của họ, mà bộ ấy lệch hình học (mục 2.5.1 tài
-    liệu thiết kế) nên không đặt vào hệ mét này được.
+    chấm đỏ từng điểm, và MỖI ĐIỂM MỘT NHÃN MANG TÊN NHÓM — nên "Cầu thang" in
+    12 lần. Nhãn ở đây KHÔNG gỡ chồng, vì chính chỗ chồng nhau mới là thứ cần
+    thấy. Không dựng được đa giác WC và bốn `Hallway1–4`: chúng chỉ có trong
+    GeoJSON vẽ tay vốn lệch hình học (mục 2.5.1 tài liệu thiết kế).
     """
     xoay = Affine2D().rotate_deg(GOC_NGHIENG)
     q = np.array([xoay.transform((x, y)) for x, y in zip(v.rp["x"], v.rp["y"])])
