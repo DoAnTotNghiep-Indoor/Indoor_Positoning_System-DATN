@@ -104,6 +104,41 @@ def test_hampel_bo_qua_nhom_khong_bien_thien():
     assert so_thay == 0
 
 
+def test_hampel_khong_duoc_bien_o_dien_thieu_thanh_tin_hieu_that():
+    """Ô mang giá trị điền-khi-thiếu phải giữ nguyên sau khi lọc nhiễu.
+
+    Với AP bắt được ở hơn nửa số lần quét tại một điểm, trung vị nhóm là số đo
+    THẬT và MAD > 0, nên ô điền thiếu lệch xa và bị coi là ngoại lai — lọc nhiễu
+    hoá thành điền khuyết. Trước khi chặn: 820 ô, tức 26,1% toàn bộ ô −96 trong
+    train, bị đổi thành RSSI thật, trong khi lúc suy luận `FeatureMapper` giữ
+    nguyên −96.
+    """
+    DIEN = -96.0
+    df = pd.DataFrame({
+        "rp_id": ["RP01"] * 6,
+        "AP": [-60.0, -61.0, -59.0, -60.0, DIEN, DIEN],
+    })
+
+    ket_qua, _ = pre.hampel_filter(df, ["AP"], gia_tri_dien=DIEN)
+    assert ket_qua["AP"].iloc[-2:].tolist() == [DIEN, DIEN]
+
+    # Không khai giá trị điền thì hàm không có cách nào biết, và ô ấy bị vá.
+    khong_khai, _ = pre.hampel_filter(df, ["AP"])
+    assert khong_khai["AP"].iloc[-1] != DIEN
+
+
+def test_hampel_van_bat_ngoai_lai_that_khi_da_mien_o_dien_thieu():
+    """Miễn ô điền thiếu không được làm hỏng chức năng chính của bộ lọc."""
+    df = pd.DataFrame({
+        "rp_id": ["RP01"] * 7,
+        "AP": [-60.0, -61.0, -59.0, -60.0, -62.0, 20.0, -96.0],
+    })
+    ket_qua, so_thay = pre.hampel_filter(df, ["AP"], gia_tri_dien=-96.0)
+    assert so_thay == 1
+    assert ket_qua["AP"].iloc[5] == pytest.approx(-60.0)
+    assert ket_qua["AP"].iloc[6] == -96.0
+
+
 # --- Bước 4: ghép toạ độ ---
 
 def test_bo_mau_thieu_toa_do(bang_van_tay):

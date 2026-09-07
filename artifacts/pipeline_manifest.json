@@ -1,6 +1,6 @@
 {
-  "chay_luc": "2026-09-01T18:29:54",
-  "thoi_gian_giay": 0.26,
+  "chay_luc": "2026-09-07T10:03:25",
+  "thoi_gian_giay": 0.22,
   "tham_so": {
     "min_appear_rate": 0.2,
     "min_ap_per_scan": 6,
@@ -51,13 +51,13 @@
     }
   },
   "chuan_hoa": {
-    "nho_nhat": -0.33333333333333326,
+    "nho_nhat": 0.0,
     "lon_nhat": 1.1470588235294115,
     "so_dac_trung": 36
   },
   "so_o_trong_da_dien": 4469,
   "gia_tri_dien_thieu": -96.0,
-  "so_ngoai_lai_hampel": 1274,
+  "so_ngoai_lai_hampel": 454,
   "kich_thuoc_cuoi": [
     782,
     45

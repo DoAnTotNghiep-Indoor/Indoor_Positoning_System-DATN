@@ -1,19 +1,12 @@
 """Chạy toàn bộ pipeline tiền xử lý bằng một lệnh.
 
     python -m ml.pipeline
-    python -m ml.pipeline --min-appear-rate 0.10      # thí nghiệm so sánh ngưỡng
+    python -m ml.pipeline --min-appear-rate 0.10      # so sánh ngưỡng
 
-Sinh ra đầy đủ artifact, không phụ thuộc Google Colab:
-
-    artifacts/feature_list.json      hợp đồng dữ liệu với backend
-    artifacts/scaler.pkl             tham số chuẩn hoá học từ tập train
-    artifacts/pipeline_manifest.json nhật ký lần chạy, phục vụ tái lập
-    data/processed/fingerprint_dataset_raw.csv     bản CHƯA chuẩn hoá
-    data/processed/fingerprint_dataset_sorted.csv  bản đã chuẩn hoá
-    data/splits/{train,validation,test}.csv
-
-Bản chưa chuẩn hoá được giữ lại có chủ đích: mất nó thì không quay về đơn vị dBm
-được nữa, đúng tình huống đã xảy ra khi chạy trên Colab lần trước.
+Sinh đủ artifact, không phụ thuộc Colab: `feature_list.json` (hợp đồng dữ liệu
+với backend), `scaler.pkl`, `pipeline_manifest.json`, hai bản
+`fingerprint_dataset_{raw,sorted}.csv` và `data/splits/*.csv`. Bản CHƯA chuẩn
+hoá giữ có chủ đích: mất nó thì không quay về đơn vị dBm được nữa.
 """
 
 from __future__ import annotations
@@ -76,9 +69,22 @@ def run(
               + (f" · bỏ {tk_toa_do['scan_bi_bo']} mẫu của {tk_toa_do['rp_chua_do']}"
                  if tk_toa_do["scan_bi_bo"] else ""))
 
+    # --- Bước 9 TRƯỚC 5, 7 và 8 ---
+    # Ba bước dưới đều học một tham số từ dữ liệu: bộ cột giữ lại, giá trị điền
+    # thiếu, và trung vị nhóm. Chia tập trước rồi chỉ học trên train, nếu không
+    # cả ba đều nhìn thấy val/test.
+    fingerprint, tk_chia = pre.split_dataset(fingerprint)
+    _log("9", f"{tk_chia['chien_luoc']} · " +
+              " · ".join(f"{k} {v}" for k, v in tk_chia["so_mau"].items()))
+    if "canh_bao" in tk_chia:
+        _log("!", tk_chia["canh_bao"])
+
+    la_train = fingerprint["split"] == "train"
+
     # --- Bước 5: lọc AP hiếm gặp ---
     fingerprint, ap_cols, ty_le_xuat_hien = pre.filter_access_points(
-        fingerprint, ap_cols, min_appear_rate=ty_le_ap
+        fingerprint, ap_cols, min_appear_rate=ty_le_ap,
+        tinh_tren=fingerprint.loc[la_train],
     )
     _log("5", f"giữ {len(ap_cols)}/{len(ty_le_xuat_hien)} AP (ngưỡng ≥ {ty_le_ap:.0%})")
 
@@ -88,25 +94,24 @@ def run(
               f"AP mỗi mẫu: min {tk_scan['ap_moi_scan_min']}, "
               f"trung vị {tk_scan['ap_moi_scan_trung_vi']:.0f}")
 
-    # --- Bước 7: điền RSSI thiếu ---
-    fingerprint, gia_tri_thieu, so_o_trong = pre.fill_missing(fingerprint, ap_cols)
-    _log("7", f"điền {so_o_trong:,} ô trống bằng {gia_tri_thieu:.0f} dBm")
+    # Bước 6 vừa xoá dòng nên phải lấy lại mặt nạ train.
+    la_train = fingerprint["split"] == "train"
 
-    # --- Bước 9 trước bước 8 khi lọc nhiễu riêng cho tập train ---
-    fingerprint, tk_chia = pre.split_dataset(fingerprint)
-    _log("9", f"{tk_chia['chien_luoc']} · " +
-              " · ".join(f"{k} {v}" for k, v in tk_chia["so_mau"].items()))
-    if "canh_bao" in tk_chia:
-        _log("!", tk_chia["canh_bao"])
+    # --- Bước 7: điền RSSI thiếu ---
+    gia_tri_thieu = pre.compute_missing_value(fingerprint.loc[la_train], ap_cols)
+    fingerprint, gia_tri_thieu, so_o_trong = pre.fill_missing(
+        fingerprint, ap_cols, missing_value=gia_tri_thieu)
+    _log("7", f"điền {so_o_trong:,} ô trống bằng {gia_tri_thieu:.0f} dBm")
 
     # --- Bước 8: lọc nhiễu Hampel ---
     if hampel_rieng:
-        la_train = fingerprint["split"] == "train"
-        da_loc, so_ngoai_lai = pre.hampel_filter(fingerprint.loc[la_train], ap_cols)
+        da_loc, so_ngoai_lai = pre.hampel_filter(
+            fingerprint.loc[la_train], ap_cols, gia_tri_dien=gia_tri_thieu)
         fingerprint = pd.concat([da_loc, fingerprint.loc[~la_train]], ignore_index=True)
         _log("8", f"thay {so_ngoai_lai:,} giá trị ngoại lai — chỉ trên tập train")
     else:
-        fingerprint, so_ngoai_lai = pre.hampel_filter(fingerprint, ap_cols)
+        fingerprint, so_ngoai_lai = pre.hampel_filter(
+            fingerprint, ap_cols, gia_tri_dien=gia_tri_thieu)
         _log("8", f"thay {so_ngoai_lai:,} giá trị ngoại lai — trên toàn bộ dữ liệu")
 
     # Lưu bản chưa chuẩn hoá TRƯỚC khi scale — không có bản này thì mất đơn vị dBm.

@@ -1,20 +1,9 @@
-# ==============================================================================
-# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
-#
-# Phần tính toán đã chuyển vào kho mã, gọi bằng:
-#   ml.preprocess.missing.fill_missing()
-#
-# Chạy toàn bộ pipeline:  python -m ml.pipeline
-# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
-#
-# Giữ lại file này làm tài liệu mô tả bước 7 cho báo cáo.
-# ==============================================================================
+# THAM KHẢO bước 7, đừng chạy lại: tính toán nay ở ml.preprocess.missing.fill_missing(),
+# chạy bằng `python -m ml.pipeline`. Giữ lại để mô tả bước này cho báo cáo.
 
-# Bước 7: Xử lý giá trị RSSI thiếu (missing value) bằng hằng số ĐỘNG
-# Thay vì gán cố định -98 (cách phổ biến nhưng có thể trùng/gần tín hiệu yếu thật),
-# tính missing_value = min(RSSI toàn bộ dữ liệu) - 1.
-# Theo nghiên cứu tham khảo trên bộ dữ liệu UJIIndoorLoc, cách gán động này cải thiện
-# độ chính xác định vị rõ rệt so với hằng số cố định tùy chọn.
+# Bước 7: Điền RSSI thiếu bằng hằng số ĐỘNG min(RSSI) - 1, thay vì cố định -98
+# vốn có thể trùng tín hiệu yếu thật. Cách gán động này theo nghiên cứu trên bộ
+# UJIIndoorLoc cho độ chính xác tốt hơn rõ rệt.
 
 missing_value = float(np.nanmin(fingerprint[ap_cols_selected].values)) - 1
 print("missing_value (RSSI gán cho AP không phát hiện):", missing_value)

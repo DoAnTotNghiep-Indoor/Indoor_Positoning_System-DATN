@@ -1,23 +1,13 @@
-# ==============================================================================
-# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
-#
-# Phần tính toán đã chuyển vào kho mã, gọi bằng:
-#   ml.pipeline.run()
-#
-# Chạy toàn bộ pipeline:  python -m ml.pipeline
-# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
-#
-# Giữ lại file này làm tài liệu mô tả bước 12 cho báo cáo.
-# ==============================================================================
+# THAM KHẢO bước 12, đừng chạy lại: tính toán nay ở ml.pipeline.run(),
+# chạy bằng `python -m ml.pipeline`. Giữ lại để mô tả bước này cho báo cáo.
 
-# Bước 12: Sắp xếp lại thứ tự cột đặc trưng (AP) và thứ tự dòng theo rp_id, tăng dần
-# Chạy sau khi đã có fingerprint_dataset.csv (kết quả bước 11 - xuatketqua_11.py)
+# Bước 12: Sắp lại thứ tự cột đặc trưng (AP) và thứ tự dòng theo rp_id, tăng dần.
+# Chạy sau bước 11 (xuatketqua_11.py) vì cần fingerprint_dataset.csv.
 
 import pandas as pd
 import os
 
-# Nếu đang chạy tiếp session cũ (đã có sẵn fingerprint_dataset.csv trong /content) thì đọc luôn.
-# Nếu chạy session Colab MỚI (file chưa tồn tại), sẽ hiện nút Choose Files để bạn upload lại.
+# Session cũ đã có sẵn tệp thì đọc luôn; session mới sẽ hiện nút Choose Files.
 if not os.path.exists("fingerprint_dataset.csv"):
     print("Chưa thấy fingerprint_dataset.csv trong session này — hãy chọn file để upload:")
     from google.colab import files
@@ -34,7 +24,7 @@ print("Tổng số giá trị rp_id duy nhất:", fingerprint_full["rp_id"].nuni
 # Sắp xếp cột AP tăng dần theo tên (BSSID)
 ap_cols_sorted = sorted(ap_cols)
 
-# Sắp xếp dòng dữ liệu theo rp_id tăng dần (RP01 -> RP41)
+# Sắp xếp dòng theo rp_id tăng dần (RP01 -> RP41)
 fingerprint_sorted = fingerprint_full.sort_values("rp_id", kind="stable").reset_index(drop=True)
 fingerprint_sorted = fingerprint_sorted[meta_cols + ap_cols_sorted]
 
@@ -42,7 +32,7 @@ OUT_NAME = "fingerprint_dataset_sorted.csv"
 fingerprint_sorted.to_csv(OUT_NAME, index=False)
 print(f"\nĐã lưu {OUT_NAME} trong Colab. Đang tải về máy...")
 
-# Tải file về máy — nếu không thấy hộp thoại tải xuống, kiểm tra trình duyệt có chặn popup không
+# Tải về máy — không thấy hộp thoại thì kiểm tra trình duyệt có chặn popup không
 from google.colab import files
 files.download(OUT_NAME)
 

@@ -1,18 +1,8 @@
-# ==============================================================================
-# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
-#
-# Phần tính toán đã chuyển vào kho mã, gọi bằng:
-#   ml.preprocess.split.split_dataset()
-#
-# Chạy toàn bộ pipeline:  python -m ml.pipeline
-# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
-#
-# Giữ lại file này làm tài liệu mô tả bước 9 cho báo cáo.
-# ==============================================================================
+# THAM KHẢO bước 9, đừng chạy lại: tính toán nay ở ml.preprocess.split.split_dataset(),
+# chạy bằng `python -m ml.pipeline`. Giữ lại để mô tả bước này cho báo cáo.
 
-# Bước 9: Chia train / validation / test theo tỉ lệ 70/15/15
-# Stratify theo rp_id để mỗi RP đều có đại diện đều ở cả 3 tập (tránh lệch phân bố).
-# QUAN TRỌNG: chia tập TRƯỚC khi chuẩn hóa (bước sau) để tránh rò rỉ dữ liệu (data leakage).
+# Bước 9: Chia train / validation / test 70/15/15, stratify theo rp_id để mỗi RP
+# đều có đại diện ở cả ba tập. Chia TRƯỚC khi chuẩn hoá, nếu không là rò rỉ.
 
 from sklearn.model_selection import train_test_split
 

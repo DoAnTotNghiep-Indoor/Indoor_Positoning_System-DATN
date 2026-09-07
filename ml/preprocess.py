@@ -1,11 +1,10 @@
-"""12 bước tiền xử lý, xếp theo đúng thứ tự `ml/pipeline.py` gọi.
+"""12 bước tiền xử lý. Hàm xếp theo số bước, `ml/pipeline.py` gọi theo thứ tự
+1-2-3-4-**9**-5-6-7-8-10.
 
-Thứ tự không tuỳ tiện, ba chỗ bắt buộc:
-
-- Bước 5 trước bước 6: lọc AP xong mới biết mẫu nào còn quá ít AP hợp lệ.
-- Bước 9 trước bước 10: chia tập trước khi chuẩn hoá. Đảo lại là rò rỉ dữ liệu —
-  scaler học được cả phân bố tập kiểm thử, kết quả đẹp giả tạo và sụp khi chạy thật.
-- Bước 9 trước bước 8: Hampel chỉ chạy trên tập train, xem `config.HAMPEL_ON_TRAIN_ONLY`.
+Bước 9 chạy sớm vì bốn bước sau nó đều học một tham số từ dữ liệu — bộ cột giữ
+lại (5), giá trị điền thiếu (7), trung vị nhóm (8), min/max của scaler (10) — và
+cả bốn chỉ được nhìn tập train. Bước 5 vẫn phải trước 6: lọc AP xong mới biết
+mẫu nào còn quá ít AP hợp lệ.
 """
 
 from __future__ import annotations
@@ -45,11 +44,9 @@ def describe_raw(df: pd.DataFrame) -> dict:
 # ================== Bước 2 + 3 — gom theo lần quét rồi pivot ==================
 
 def build_scan_id(df: pd.DataFrame) -> pd.DataFrame:
-    """Gán `scan_id` cho từng lần quét.
-
-    Cột `Time` đã kiểm chứng là duy nhất theo từng lần quét khi thu bằng một máy.
-    Thu bằng nhiều máy cùng lúc thì `Time` có thể trùng và pivot sẽ âm thầm lấy
-    trung bình — lúc đó phải ghép thêm mã người thu vào khoá.
+    """Gán `scan_id` cho từng lần quét. `Time` duy nhất theo lần quét khi thu bằng
+    MỘT máy; thu nhiều máy cùng lúc thì `Time` có thể trùng và pivot âm thầm lấy
+    trung bình.
     """
     df = df.copy()
     df["scan_id"] = df[config.COL_TIME].astype(str)
@@ -80,9 +77,8 @@ def build_scan_meta(df: pd.DataFrame) -> pd.DataFrame:
 def to_wide(df: pd.DataFrame, scan_meta: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     """Pivot sang bảng vân tay. Trả về (bảng, danh sách cột AP đã sắp xếp).
 
-    Thứ tự cột sắp xếp tường minh bằng `sorted()` chứ không phó mặc hành vi mặc
-    định của `pivot_table`: thứ tự này là hợp đồng dữ liệu với backend nên không
-    được để nó phụ thuộc phiên bản pandas.
+    Thứ tự cột sắp bằng `sorted()` tường minh vì đây là hợp đồng dữ liệu với
+    backend, không được phụ thuộc phiên bản pandas.
     """
     rong = df.pivot_table(
         index="scan_id",
@@ -99,12 +95,9 @@ def to_wide(df: pd.DataFrame, scan_meta: pd.DataFrame) -> tuple[pd.DataFrame, li
 
 
 # ===================== Bước 4 — ghép toạ độ thật (x, y) =====================
-#
-# File thô KHÔNG chứa toạ độ cục bộ (GPS trong nhà gần như không đổi — biên độ
-# dao động đo được chỉ khoảng 22 m, vô dụng cho bài toán này). Toạ độ lấy từ
-# data/reference/reference_points.csv, nguồn gốc là Bảng 4 trang 46 đồ án CTK45.
-# Không có (x, y) thì chỉ phân lớp được điểm tham chiếu chứ không hồi quy được
-# toạ độ, tức mất luôn cải tiến chính so với đồ án cũ.
+# File thô KHÔNG có toạ độ cục bộ (GPS trong nhà chỉ dao động ~22 m). Lấy từ
+# reference_points.csv, nguồn là Bảng 4 trang 46 đồ án CTK45. Không có (x, y)
+# thì chỉ phân lớp được điểm chứ không hồi quy được toạ độ.
 
 def load_reference_points(csv_path: Path | str | None = None) -> pd.DataFrame:
     path = Path(csv_path) if csv_path else config.REFERENCE_POINTS_CSV
@@ -146,15 +139,19 @@ def filter_access_points(
     fingerprint: pd.DataFrame,
     ap_cols: list[str],
     min_appear_rate: float | None = None,
+    tinh_tren: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, list[str], pd.Series]:
-    """Giữ lại AP xuất hiện đủ thường xuyên.
+    """Giữ lại AP xuất hiện đủ thường xuyên. Trả về (bảng đã lọc, danh sách AP giữ
+    lại, tỉ lệ xuất hiện của mọi AP) — tỉ lệ trả kèm để vẽ biểu đồ biện minh cho
+    ngưỡng đã chọn trong báo cáo.
 
-    Trả về (bảng đã lọc, danh sách AP giữ lại, tỉ lệ xuất hiện của mọi AP).
-    Tỉ lệ trả kèm để vẽ biểu đồ biện minh cho ngưỡng đã chọn trong báo cáo.
+    `tinh_tren` giới hạn phần dữ liệu dùng để TÍNH tỉ lệ; bộ cột chọn ra vẫn áp
+    cho toàn bảng. Truyền tập train vào để việc chọn đặc trưng không nhìn val/test.
     """
     rate = min_appear_rate if min_appear_rate is not None else config.MIN_APPEAR_RATE
+    nguon = fingerprint if tinh_tren is None else tinh_tren
 
-    ty_le_xuat_hien = (fingerprint[ap_cols].notna().sum() / len(fingerprint)).sort_values()
+    ty_le_xuat_hien = (nguon[ap_cols].notna().sum() / len(nguon)).sort_values()
     giu_lai = sorted(ty_le_xuat_hien[ty_le_xuat_hien >= rate].index)
 
     cot_meta = [c for c in fingerprint.columns if c not in ap_cols]
@@ -186,15 +183,10 @@ def filter_sparse_scans(
 
 
 # ======================== Bước 7 — điền RSSI thiếu ========================
-#
-# Ô trống nghĩa là AP đó không được phát hiện trong lần quét, cần một con số đại
-# diện cho "yếu hơn mọi tín hiệu từng đo được": min(RSSI toàn tập) - 1, với bộ
-# dữ liệu hiện tại ra -96 dBm. Cách gán động này tốt hơn hằng số cố định -98 (có
-# thể trùng tín hiệu yếu thật).
-#
-# Giá trị PHẢI được ghi vào feature_list.json: backend gặp BSSID không có trong
-# lần quét cũng phải điền đúng con số đó, nếu không vector lúc dự đoán sẽ lệch
-# phân bố so với lúc huấn luyện.
+# Ô trống = AP không được phát hiện, cần số đại diện cho "yếu hơn mọi tín hiệu
+# từng đo": min(RSSI) - 1, ra -96 dBm; hơn hằng số -98 vốn có thể trùng tín
+# hiệu yếu thật. PHẢI ghi vào feature_list.json, nếu không vector lúc dự đoán
+# lệch phân bố so với lúc huấn luyện.
 
 def compute_missing_value(fingerprint: pd.DataFrame, ap_cols: list[str]) -> float:
     return float(np.nanmin(fingerprint[ap_cols].to_numpy(dtype=float))) - 1.0
@@ -216,18 +208,25 @@ def fill_missing(
 
 
 # ================= Bước 8 — lọc nhiễu bằng Hampel filter (MAD) =================
-#
 # Với mỗi AP, trong từng nhóm cùng rp_id, giá trị lệch quá k * MAD so với trung
-# vị bị thay bằng chính trung vị đó. Giảm nhiễu tức thời (đa đường, che khuất,
-# người đi ngang) mà KHÔNG xoá mẫu — quan trọng khi mỗi điểm chỉ có ~20 lần quét.
+# vị bị thay bằng chính trung vị đó — giảm nhiễu tức thời mà KHÔNG xoá mẫu,
+# quan trọng khi mỗi điểm chỉ có ~20 lần quét.
 
 def hampel_filter(
     df: pd.DataFrame,
     ap_cols: list[str],
     group_col: str = "rp_id",
     k: float | None = None,
+    gia_tri_dien: float | None = None,
 ) -> tuple[pd.DataFrame, int]:
-    """Thay giá trị ngoại lai bằng trung vị nhóm. Trả về (bảng, số ô bị thay)."""
+    """Thay giá trị ngoại lai bằng trung vị nhóm. Trả về (bảng, số ô bị thay).
+
+    `gia_tri_dien` là giá trị bước 7 điền vào ô trống. Ô mang giá trị ấy được
+    MIỄN: với AP bắt được ở hơn nửa số lần quét, trung vị nhóm là số đo thật nên
+    ô điền thiếu lệch xa và bị coi là ngoại lai — lọc nhiễu hoá thành điền khuyết,
+    biến "không bắt được AP" thành "bắt được ở mức trung bình". Lúc suy luận
+    `FeatureMapper` giữ nguyên giá trị điền, nên train và inference sẽ lệch nhau.
+    """
     he_so = k if k is not None else config.HAMPEL_K
 
     gia_tri = df[ap_cols]
@@ -240,6 +239,8 @@ def hampel_filter(
     # mad == 0 nghĩa là quá nửa số mẫu trong nhóm giống hệt nhau; lúc đó ngưỡng
     # bằng 0 sẽ đánh dấu nhầm mọi giá trị khác biệt dù nhỏ, nên bỏ qua nhóm đó.
     ngoai_lai = (mad > 0) & (do_lech > he_so * mad)
+    if gia_tri_dien is not None:
+        ngoai_lai &= gia_tri != gia_tri_dien
 
     ket_qua = df.copy()
     ket_qua[ap_cols] = gia_tri.where(~ngoai_lai, trung_vi)
@@ -248,12 +249,8 @@ def hampel_filter(
 
 
 # ============= Bước 9 — chia train / validation / test theo rp_id =============
-#
-# Tài liệu thiết kế còn yêu cầu hai phép chia nữa — để riêng một thiết bị
-# (device_holdout) và để riêng khoảng thời gian cuối (time_holdout). Cả hai KHÔNG
-# chạy được với dữ liệu hiện tại: chỉ có một máy, và mỗi điểm tham chiếu chỉ được
-# đo đúng một buổi nên tách theo thời gian cũng là tách theo vị trí. Viết lại sau
-# khi đo bổ sung.
+# Tài liệu còn yêu cầu device_holdout và time_holdout, cả hai KHÔNG chạy được:
+# chỉ có một máy, và mỗi điểm chỉ đo một buổi nên tách thời gian là tách vị trí.
 
 def split_random(fingerprint: pd.DataFrame) -> pd.DataFrame:
     # Phân tầng cần mỗi lớp có ít nhất 2 mẫu ở mỗi lần cắt.
@@ -310,22 +307,16 @@ def split_dataset(fingerprint: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
 
 
 # ============ Bước 10 — chuẩn hoá min-max, fit CHỈ trên tập train ============
-#
-#     fit scaler trên train  ->  transform train, validation, test bằng scaler đó.
-#
-# Giá trị của validation và test được phép nằm ngoài [0, 1]. Đó không phải lỗi mà
-# là bằng chứng scaler chưa từng nhìn thấy hai tập đó — bộ dữ liệu hiện tại cho
-# giá trị lớn nhất 1,147, nghĩa là tập test có tín hiệu mạnh hơn mọi mẫu train.
-#
-# scaler.pkl phải đi kèm feature_list.json: backend nạp lại đúng scaler này để
-# tiền xử lý lúc dự đoán khớp với lúc huấn luyện.
+# Validation và test được phép nằm ngoài [0, 1] — bằng chứng scaler chưa từng
+# nhìn thấy chúng (lớn nhất 1,147). scaler.pkl phải đi kèm feature_list.json để
+# backend tiền xử lý khớp lúc huấn luyện.
 
 def fit_scaler(fingerprint: pd.DataFrame, ap_cols: list[str]) -> MinMaxScaler:
     train = fingerprint[fingerprint["split"] == "train"]
 
-    # Fit trên mảng numpy chứ không phải DataFrame, để scaler KHÔNG ghi nhớ tên
-    # cột: backend dựng vector số thuần từ feature_list.json, mang theo tên cột
-    # chỉ tạo cảm giác an toàn giả — thứ tự cột mới là thứ phải kiểm soát.
+    # Fit trên mảng numpy chứ không phải DataFrame để scaler KHÔNG ghi nhớ tên cột:
+    # backend dựng vector số thuần từ feature_list.json, thứ tự cột mới là thứ
+    # phải kiểm soát.
     scaler = MinMaxScaler()
     scaler.fit(train[ap_cols].to_numpy(dtype=float))
     return scaler

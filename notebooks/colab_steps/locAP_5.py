@@ -1,20 +1,9 @@
-# ==============================================================================
-# FILE NÀY CHỈ CÒN GIÁ TRỊ THAM KHẢO — ĐỪNG CHẠY LẠI TRÊN COLAB
-#
-# Phần tính toán đã chuyển vào kho mã, gọi bằng:
-#   ml.preprocess.filter.filter_access_points()
-#
-# Chạy toàn bộ pipeline:  python -m ml.pipeline
-# Trên Colab:             notebooks/02_preprocessing_colab.ipynb
-#
-# Giữ lại file này làm tài liệu mô tả bước 5 cho báo cáo.
-# ==============================================================================
+# THAM KHẢO bước 5, đừng chạy lại: tính toán nay ở ml.preprocess.filter.filter_access_points(),
+# chạy bằng `python -m ml.pipeline`. Giữ lại để mô tả bước này cho báo cáo.
 
-# Bước 5: Lọc AP kém chất lượng (appearance rate thấp)
-# Loại AP xuất hiện trong dưới MIN_APPEAR_RATE số lần quét.
-# Khảo sát thực tế trên combined_data.csv: 48/89 AP xuất hiện dưới 10% số lần quét
-# (nhiễu / hotspot cá nhân / AP ở xa) -> nên loại để tránh làm nhiễu mô hình.
-# Nên thử nhiều cấu hình (0.0 = giữ hết, 0.10, 0.20) rồi so sánh kết quả model ở bước huấn luyện.
+# Bước 5: Loại AP xuất hiện dưới MIN_APPEAR_RATE số lần quét. Khảo sát trên
+# combined_data.csv: 48/89 AP xuất hiện dưới 10% (nhiễu, hotspot cá nhân, AP xa).
+# Nên thử 0.0 / 0.10 / 0.20 rồi so kết quả model ở bước huấn luyện.
 
 MIN_APPEAR_RATE = 0.20
 
