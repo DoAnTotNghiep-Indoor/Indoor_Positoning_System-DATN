@@ -70,8 +70,7 @@ h2 { margin: 0 0 12px; font-size: 14px; letter-spacing: 0.02em; }
 }
 
 /* Hai cột trên màn rộng, xếp chồng trên màn hẹp. minmax(0, ...) là bắt buộc:
-   mặc định của grid là min-content nên canvas không co lại được và tràn ra
-   ngoài khung thay vì thu nhỏ theo. */
+   mặc định của grid là min-content nên canvas không co lại được. */
 main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
@@ -105,6 +104,27 @@ main > .khung, main .cot-phai > .khung:last-child { margin-bottom: 0; }
 .ghi-chu { margin: 8px 0 0; color: var(--muc-nhat); font-size: 12px; }
 
 .hop-canvas { line-height: 0; }
+
+/* Chú giải sơ đồ. Mẫu màu phải khớp hằng MAU trong js/map-renderer.js —
+   lệch một chỗ là chú giải nói sai về chính hình ngay trên nó. */
+.chu-giai {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muc-nhat);
+  font-size: 12px;
+}
+.chu-giai li { display: flex; align-items: center; gap: 6px; }
+.chu-giai span { flex: none; }
+/* Mỗi mẫu một khối tự chứa, không gộp selector: gộp thì màu của một lớp nằm
+   ở khối khác với hình dạng của nó, test đối chiếu màu không đọc được. */
+.mau-diem { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+.mau-thiet-bi { width: 8px; height: 8px; border-radius: 50%; background: #2563eb; }
+.mau-canh { width: 20px; height: 0; border-top: 2px solid rgba(100, 116, 139, 0.42); }
+.mau-cua { width: 20px; height: 0; border-top: 2px dashed rgba(217, 119, 6, 0.75); }
 #so-do { max-width: 100%; }
 
 .luoi-the { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -175,8 +195,8 @@ th, td {
 th { font-size: 11px; color: var(--muc-nhat); font-weight: 600; }
 tbody tr:last-child td { border-bottom: none; }
 
-/* Số căn phải và dùng chữ số đều bề rộng: cột toạ độ nhảy qua nhảy lại mỗi
-   lần cập nhật nếu chữ số rộng hẹp khác nhau. */
+/* Chữ số đều bề rộng: cột toạ độ nhảy qua nhảy lại mỗi lần cập nhật nếu
+   chữ số rộng hẹp khác nhau. */
 .so { text-align: right; font-variant-numeric: tabular-nums; }
 
 .trong { margin: 4px 0; color: var(--muc-nhat); font-size: 13px; }

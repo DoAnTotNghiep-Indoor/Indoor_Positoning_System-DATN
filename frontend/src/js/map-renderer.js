@@ -4,6 +4,7 @@ import { SO_DO, metSangKhung } from './coordinate.js';
 
 const MAU = {
   canh: 'rgba(100, 116, 139, 0.42)',
+  cuaGiaDinh: 'rgba(217, 119, 6, 0.75)',
   diem: '#94a3b8',
   diemTuyen: '#e08a1e',
   tuyen: '#e08a1e',
@@ -39,8 +40,8 @@ export class SoDoCanvas {
   }
 
   // Cạnh chỉ mang mã điểm, toạ độ tra từ `diem` nạp bằng GET /map. Không tự
-  // tính lại cạnh ở client: phép lọc tường chạy trên mặt nạ ảnh, client không
-  // có ảnh đó và cũng không nên có hai bản luật đi lại.
+  // tính lại ở client: phép lọc tường chạy trên mặt nạ ảnh mà client không có,
+  // và cũng không nên có hai bản luật đi lại.
   datCanh(ds) {
     this.canh = ds;
     this.ve();
@@ -96,22 +97,31 @@ export class SoDoCanvas {
     const q = (d) => metSangKhung(d.x, d.y, rongCss);
     const tren = new Set(this.tuyen?.map((d) => d.rp_id) ?? []);
 
-    // Cạnh vẽ TRƯỚC chấm để chấm nằm đè lên đầu mút, không bị nét cắt ngang.
+    // Cạnh vẽ TRƯỚC chấm để chấm nằm đè lên đầu mút. Hai lượt vẽ chứ không
+    // một: cạnh đo được từ mặt nạ tường của Map.png đi nét liền, cửa giả
+    // định đi nét đứt — trộn chung là trình bày phần nhóm tự nối tay như
+    // thể cũng đo được.
     if (this.canh.length && this.diem.length) {
       const toaDo = new Map(this.diem.map((d) => [d.rp_id, d]));
-      ctx.strokeStyle = MAU.canh;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      for (const c of this.canh) {
-        const a = toaDo.get(c.tu);
-        const b = toaDo.get(c.den);
-        if (!a || !b) continue;
-        const pa = q(a);
-        const pb = q(b);
-        ctx.moveTo(pa.x, pa.y);
-        ctx.lineTo(pb.x, pb.y);
-      }
-      ctx.stroke();
+      const veLoat = (loc, mau, netDut) => {
+        ctx.strokeStyle = mau;
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash(netDut);
+        ctx.beginPath();
+        for (const c of this.canh.filter(loc)) {
+          const a = toaDo.get(c.tu);
+          const b = toaDo.get(c.den);
+          if (!a || !b) continue;
+          const pa = q(a);
+          const pb = q(b);
+          ctx.moveTo(pa.x, pa.y);
+          ctx.lineTo(pb.x, pb.y);
+        }
+        ctx.stroke();
+      };
+      veLoat((c) => !c.cua_gia_dinh, MAU.canh, []);
+      veLoat((c) => c.cua_gia_dinh, MAU.cuaGiaDinh, [5, 4]);
+      ctx.setLineDash([]);
     }
 
     for (const d of this.diem) {

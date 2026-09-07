@@ -1,6 +1,6 @@
 // Dashboard theo dõi thời gian thực: /health cho trạng thái mô hình, /map cho
-// 40 điểm tham chiếu, WS /ws/location cho toạ độ đang chảy về, /predictions
-// cho lịch sử.
+// điểm tham chiếu, WS /ws/location cho toạ độ đang chảy về, /predictions cho
+// lịch sử.
 
 import { api, LoiApi } from './api.js';
 import { KenhViTri } from './websocket.js';
@@ -23,7 +23,7 @@ const gio = new Intl.DateTimeFormat('vi-VN', {
 });
 
 const trangThai = {
-  diem: [],           // 40 điểm tham chiếu từ /map
+  diem: [],           // điểm tham chiếu từ /map
   thietBi: new Map(), // device_id -> gói mới nhất
   saiLech: [],        // độ dịch giữa toạ độ thô và toạ độ đã gộp, để vẽ đường
 };
@@ -76,8 +76,8 @@ async function napBanDo() {
   trangThai.diem = bd.diem_tham_chieu;
   soDo.datDiem(bd.diem_tham_chieu);
 
-  // Đồ thị đi lại: 58 cạnh còn lại sau khi lọc cạnh xuyên tường. Hỏng thì bỏ
-  // qua — sơ đồ mất phần cạnh nhưng vẫn còn điểm và thiết bị, còn hơn trang trắng.
+  // Đồ thị đi lại: các cạnh còn lại sau khi lọc cạnh xuyên tường. Hỏng thì bỏ
+  // qua — mất phần cạnh nhưng vẫn còn điểm và thiết bị, hơn là trang trắng.
   try {
     soDo.datCanh((await api.doThi()).canh);
   } catch {
@@ -109,8 +109,8 @@ function nhanViTri(goi) {
   trangThai.thietBi.set(goi.device_id, { ...goi, nhanLuc: Date.now() });
   soDo.capNhatThietBi(goi);
 
-  // Gộp càng ăn thì khoảng cách này càng lớn — thứ trực quan nhất cho thấy hậu
-  // xử lý đang làm việc.
+  // Gộp càng ăn thì khoảng cách này càng lớn — thứ trực quan nhất cho thấy
+  // hậu xử lý đang làm việc.
   trangThai.saiLech.push(
     khoangCach({ x: goi.x, y: goi.y }, { x: goi.x_smooth, y: goi.y_smooth }),
   );

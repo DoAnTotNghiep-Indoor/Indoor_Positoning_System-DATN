@@ -1,9 +1,8 @@
 // Quy đổi toạ độ mét <-> pixel.
 //
 // Cùng phép biến đổi với `SoDoThat` bên Dart và `tools/trich_ban_do.py`; số gốc
-// ở data/reference/ban_do_tang1.json và tests/test_dashboard.py đối chiếu cả ba
-// nơi. Lệch nhau thì cùng một toạ độ hiện ở hai chỗ khác nhau trên hai màn
-// hình, triệu chứng nhìn y hệt "mô hình đoán sai".
+// ở data/reference/ban_do_tang1.json, tests/test_dashboard.py đối chiếu cả ba
+// nơi. Lệch nhau thì cùng một toạ độ hiện ở hai chỗ khác nhau trên hai màn hình.
 
 export const SO_DO = {
   anh: 'map/so-do.png',
@@ -16,7 +15,7 @@ export const SO_DO = {
 
   // Toạ độ mét của cạnh trái sơ đồ. Có tên riêng chứ không viết thẳng vào công
   // thức: đây là số hạng duy nhất từng nằm trần ở cả ba ngôn ngữ mà không tệp
-  // nào khai nó, nên không bài test nào so được.
+  // nào khai nó.
   gocMetX: -43,
 };
 

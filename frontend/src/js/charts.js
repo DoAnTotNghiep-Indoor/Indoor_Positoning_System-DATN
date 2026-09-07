@@ -1,7 +1,6 @@
-// Biểu đồ nhỏ vẽ bằng canvas.
-//
-// Không nạp thư viện: cả dashboard chỉ cần một đường, mà thêm gói CDN là thêm
-// một thứ phải có mạng mới chạy — máy chấm có thể không nối Internet.
+// Biểu đồ nhỏ vẽ bằng canvas. Không nạp thư viện: cả dashboard chỉ cần một
+// đường, mà thêm gói CDN là thêm một thứ phải có mạng mới chạy — máy chấm
+// có thể không nối Internet.
 
 export function veDuong(canvas, gt, { mau = '#2563eb' } = {}) {
   const ctx = canvas.getContext('2d');

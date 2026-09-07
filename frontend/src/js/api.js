@@ -1,7 +1,6 @@
-// Gọi REST API.
-//
-// Mọi đường dẫn đều tương đối vì Dashboard do chính máy chủ API phục vụ (xem
-// app.mount ở backend/main.py): đổi cổng hay đưa lên máy khác vẫn chạy.
+// Gọi REST API. Mọi đường dẫn đều tương đối vì Dashboard do chính máy chủ API
+// phục vụ (xem app.mount ở backend/main.py): đổi cổng hay đưa lên máy khác
+// vẫn chạy.
 
 const HET_HAN_MS = 8000;
 
