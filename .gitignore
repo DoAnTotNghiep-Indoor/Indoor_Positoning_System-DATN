@@ -23,6 +23,11 @@ data/splits/*
 # CSDL SQLite sinh ra lúc chạy backend
 data/*.db
 data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+
+# Bản ghép của 7 tệp RPxx cùng thư mục — dựng lại được, không giữ hai bản.
+data/raw/nhom15_2026/*/tong_hop.csv
 
 # KHÔNG ignore data/raw/ và data/reference/:
 # đây là số liệu đo thực địa, không sinh lại được (README nguyên tắc 4).
@@ -31,6 +36,10 @@ data/*.db-journal
 # feature_list.json / model_metadata.json không khớp pattern dưới nên vẫn được commit.
 artifacts/*.pkl
 artifacts/*.joblib
+# Trừ đúng hai tệp backend cần để chạy ngay sau khi clone (~205 KB); năm mô hình
+# còn lại sinh lại bằng `python -m ml.train`.
+!artifacts/scaler.pkl
+!artifacts/model_fingerprint_knn.pkl
 
 # Node / build
 node_modules/
