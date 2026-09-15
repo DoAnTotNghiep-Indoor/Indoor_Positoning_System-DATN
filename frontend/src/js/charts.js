@@ -1,6 +1,4 @@
-// Biểu đồ nhỏ vẽ bằng canvas. Không nạp thư viện: cả dashboard chỉ cần một
-// đường, mà thêm gói CDN là thêm một thứ phải có mạng mới chạy — máy chấm
-// có thể không nối Internet.
+// Biểu đồ đường bằng canvas, không thư viện CDN để chạy được khi không có mạng.
 
 export function veDuong(canvas, gt, { mau = '#2563eb' } = {}) {
   const ctx = canvas.getContext('2d');
@@ -18,7 +16,7 @@ export function veDuong(canvas, gt, { mau = '#2563eb' } = {}) {
 
   const nho = Math.min(...gt);
   const lon = Math.max(...gt);
-  // Khoảng giá trị bằng 0 thì chia cho 0 ra NaN và canvas trống trơn, không lỗi.
+  // Tránh chia cho 0 khi mọi giá trị bằng nhau.
   const bien = lon - nho || 1;
   const buoc = rong / (gt.length - 1);
 

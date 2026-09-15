@@ -29,8 +29,7 @@ export class SoDoCanvas {
     this.anh.src = SO_DO.anh;
     this.anh.onload = () => this.ve();
 
-    // ResizeObserver chứ không nghe resize của cửa sổ: canvas còn co giãn khi
-    // cột bên cạnh đổi bề rộng, lúc đó cửa sổ không đổi kích thước nào cả.
+    // Theo khung chứa chứ không theo cửa sổ: cột bên đổi rộng thì canvas cũng đổi.
     new ResizeObserver(() => this.ve()).observe(canvas.parentElement);
   }
 
@@ -39,9 +38,7 @@ export class SoDoCanvas {
     this.ve();
   }
 
-  // Cạnh chỉ mang mã điểm, toạ độ tra từ `diem` nạp bằng GET /map. Không tự
-  // tính lại ở client: phép lọc tường chạy trên mặt nạ ảnh mà client không có,
-  // và cũng không nên có hai bản luật đi lại.
+  // Cạnh chỉ mang mã điểm, toạ độ tra từ `diem`; luật đi lại chỉ nằm ở máy chủ.
   datCanh(ds) {
     this.canh = ds;
     this.ve();
@@ -77,8 +74,7 @@ export class SoDoCanvas {
     if (rongCss <= 0) return;
     const caoCss = (rongCss * SO_DO.caoPx) / SO_DO.rongPx;
 
-    // Nhân devicePixelRatio rồi thu lại bằng CSS, không thì nét vẽ răng cưa
-    // trên màn HiDPI.
+    // Nhân devicePixelRatio để nét không răng cưa trên màn HiDPI.
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.round(rongCss * dpr);
     canvas.height = Math.round(caoCss * dpr);
@@ -97,10 +93,7 @@ export class SoDoCanvas {
     const q = (d) => metSangKhung(d.x, d.y, rongCss);
     const tren = new Set(this.tuyen?.map((d) => d.rp_id) ?? []);
 
-    // Cạnh vẽ TRƯỚC chấm để chấm nằm đè lên đầu mút. Hai lượt vẽ chứ không
-    // một: cạnh đo được từ mặt nạ tường của Map.png đi nét liền, cửa giả
-    // định đi nét đứt — trộn chung là trình bày phần nhóm tự nối tay như
-    // thể cũng đo được.
+    // Cạnh vẽ trước chấm. Cạnh đo được nét liền, cửa giả định nét đứt.
     if (this.canh.length && this.diem.length) {
       const toaDo = new Map(this.diem.map((d) => [d.rp_id, d]));
       const veLoat = (loc, mau, netDut) => {
