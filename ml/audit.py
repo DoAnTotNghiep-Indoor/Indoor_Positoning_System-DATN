@@ -29,6 +29,68 @@ for _luong in (sys.stdout, sys.stderr):
 NGUONG_RO_RI = 0.10          # khoảng cách đặc trưng dưới mức này coi là bản sao
 NGUONG_GIAY = 10             # cách nhau dưới mức này coi là cùng một phép đo
 BOI_PHAN_TAN = 2.0           # phân tán vượt bấy nhiêu lần trung vị thì cảnh báo
+GAN_TRONG_MAT_BANG_M = 10.0  # dưới mức này coi là cùng một chỗ trên mặt bằng
+
+
+def kiem_mot_tang(raw, ap, rp) -> tuple[bool, list[str]]:
+    """Bằng chứng dữ liệu nằm trên MỘT mặt phẳng. Trả (có vấn đề chặn, các dòng in).
+
+    Điểm ở tầng khác nhưng bị gán toạ độ tầng 1 lộ ra theo hai cách: trùng khít
+    toạ độ với một điểm khác, hoặc gần nhau trên bản vẽ mà vân tay lệch hẳn.
+    """
+    chan, ra = False, []
+
+    cot_tang = [c for c in rp.columns if c.lower() in ("tang", "floor", "floor_id")]
+    if cot_tang:
+        chan = True
+        ra.append(f"  [!] Bảng toạ độ có cột '{cot_tang[0]}' mà pipeline không đọc "
+                  f"— nhiều tầng đang bị trộn thành một mặt phẳng")
+
+    van = raw.groupby("rp_id")[ap].mean()
+    toa = raw.groupby("rp_id")[["x", "y"]].first().loc[van.index]
+    ten = list(van.index)
+    XY, VT = toa.to_numpy(float), van.to_numpy(float)
+    d2d = np.linalg.norm(XY[:, None] - XY[None], axis=2)
+    dvt = np.linalg.norm(VT[:, None] - VT[None], axis=2)
+    tren = np.triu_indices(len(ten), 1)
+
+    chong = [(ten[i], ten[j]) for i, j in zip(*tren) if d2d[i, j] == 0]
+    if chong:
+        chan = True
+        ra.append(f"  [!] {len(chong)} cặp điểm trùng khít toạ độ: {chong[:4]}")
+    else:
+        ra.append(f"  [ok] {len(ten)} điểm, không cặp nào trùng toạ độ")
+
+    gan = [(i, j) for i, j in zip(*tren) if d2d[i, j] < GAN_TRONG_MAT_BANG_M]
+    nguong = float(np.percentile(dvt[tren], 75))
+    la = [(ten[i], ten[j], d2d[i, j]) for i, j in gan if dvt[i, j] > nguong]
+    if la:
+        ra.append(f"  [.] {len(la)}/{len(gan)} cặp gần nhau nhưng vân tay khác hẳn: "
+                  + ", ".join(f"{p}-{q} ({k:.0f} m)" for p, q, k in la[:3]))
+    else:
+        ra.append(f"  [ok] {len(gan)} cặp cách dưới {GAN_TRONG_MAT_BANG_M:.0f} m đều "
+                  f"có vân tay tương ứng — nhất quán với một tầng")
+    return chan, ra
+
+def kiem_diem_thieu_van_tay(raw, rp) -> list[str]:
+    """Điểm có toạ độ nhưng không lần quét nào — mô hình không bao giờ báo ra được.
+
+    Không phải lỗi: `/route` vẫn dẫn tới chúng, và một cái WC thì cần chỉ đường
+    chứ không cần nhận dạng. Nhưng khoảng cách giữa số điểm trên bản đồ và số
+    điểm huấn luyện phải hiện ra, vì nó lặng lẽ giới hạn phạm vi định vị.
+    """
+    co_toa_do = rp.dropna(subset=["x", "y"])
+    thieu = sorted(set(co_toa_do["rp_id"]) - set(raw["rp_id"]))
+    if not thieu:
+        return [f"  [ok] cả {len(co_toa_do)} điểm trên bản đồ đều có vân tay"]
+
+    theo_nhom = {}
+    for r in co_toa_do[co_toa_do.rp_id.isin(thieu)].itertuples():
+        theo_nhom.setdefault(str(r.nhom), []).append(r.rp_id)
+    mo_ta = " · ".join(f"{n}: {', '.join(v)}" for n, v in sorted(theo_nhom.items()))
+    return [f"  [.] {len(thieu)}/{len(co_toa_do)} điểm trên bản đồ không có vân tay "
+            f"— chỉ đường tới được, định vị thì không",
+            f"      {mo_ta}"]
 
 
 def chay() -> int:
@@ -104,6 +166,17 @@ def chay() -> int:
     for n, r in buoi[buoi["phan_tan"] > tot * 1.5].iterrows():
         print(f"  [.] Buổi {n} nhiễu gấp {r.phan_tan / tot:.1f} lần buổi tốt nhất và bắt được "
               f"ít hơn {buoi['ap_tb'].max() - r.ap_tb:.1f} AP — nên thu lại")
+
+    print("\n4. GIẢ THIẾT MỘT TẦNG")
+    rp = pd.read_csv(config.REFERENCE_POINTS_CSV, encoding="utf-8-sig")
+    chan_tang, dong_in = kiem_mot_tang(raw, ap, rp)
+    ro_ri = ro_ri or chan_tang
+    for _d in dong_in:
+        print(_d)
+
+    print("\n5. PHẠM VI ĐỊNH VỊ")
+    for _d in kiem_diem_thieu_van_tay(raw, rp):
+        print(_d)
 
     print("\n" + ("KẾT LUẬN: có rò rỉ, không tin được kết quả đánh giá" if ro_ri
                   else "KẾT LUẬN: dữ liệu đạt yêu cầu, huấn luyện được"))

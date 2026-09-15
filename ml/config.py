@@ -18,7 +18,20 @@ ARTIFACTS_DIR = ROOT_DIR / "artifacts"
 REPORTS_DIR = ROOT_DIR / "reports"
 
 RAW_CSV = RAW_DIR / "combined_data.csv"
+
+# Buổi thu bổ sung. ĐANG TẮT: đã thử gộp và đo, mô hình xấu đi trên chính
+# những điểm cũ (2,30 → 4,08 m) vì bộ mới thu bằng Redmi K40 Pro còn bộ cũ
+# bằng Samsung SM-S908E. Bật lại sau khi đo được độ lệch hai máy — cách đo
+# ghi trong data/raw/nhom15_2026/README.md.
+GOP_BUOI_BO_SUNG = False
+RAW_BO_SUNG = (sorted((RAW_DIR / "nhom15_2026").glob("*/RP*.csv"))
+               if GOP_BUOI_BO_SUNG else [])
 REFERENCE_POINTS_CSV = REFERENCE_DIR / "reference_points.csv"
+
+# Nhãn điểm sai trong dữ liệu thô CTK45, sửa lúc nạp chứ không đụng tệp thô:
+# 20 lần quét "RP41" (13/01/2025, 14:28–14:42, giữa phiên RP27 và RP28) trùng khít
+# 20 dòng RP26 trong combined_data_sorted.csv của CTK45; báo cáo cũng chỉ có RP01–RP40.
+NHAN_RP_SUA = {"RP41": "RP26"}
 
 # --- Tên file artifact (hợp đồng với backend) ---
 FEATURE_LIST_JSON = "feature_list.json"
@@ -58,6 +71,12 @@ MIN_APPEAR_RATE = 0.20
 
 # Bước 6: loại mẫu quét có ít hơn số AP hợp lệ này
 MIN_AP_PER_SCAN = 6
+
+# Khoảng RSSI có thể có thật, cận trên KHÔNG gồm 0: trình điều khiển WiFi Android
+# thỉnh thoảng trả 0 cho AP quá gần, mà 0 dBm (1 mW thu được) không phải số đo
+# thật. Backend và pipeline lọc cùng một khoảng này.
+RSSI_NHO_NHAT = -100.0
+RSSI_LON_NHAT = 0.0
 
 # Bước 8: hệ số Hampel filter (k * MAD)
 HAMPEL_K = 3.0

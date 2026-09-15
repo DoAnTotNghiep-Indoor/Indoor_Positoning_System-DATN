@@ -28,6 +28,10 @@ pydantic-settings==2.15.0
 sqlalchemy==2.0.52
 aiosqlite==0.22.1
 
+# --- Công cụ chạy một lần (tools/) ---
+pillow==12.3.0
+scipy==1.18.1
+
 # --- Kiểm thử ---
 pytest==9.1.1
 httpx==0.28.1

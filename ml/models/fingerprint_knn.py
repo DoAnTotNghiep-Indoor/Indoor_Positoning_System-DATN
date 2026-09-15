@@ -19,11 +19,10 @@ from sklearn.neighbors import KNeighborsClassifier
 
 TEN = "kNN vân tay (Bray-Curtis)"
 
-# beta quét tới 3,5. Lưới cũ dừng ở 2,0 và tối ưu rơi đúng vào biên trên đó —
-# dấu hiệu điểm tốt hơn nằm ngoài lưới. Cực trị thật ở 2,75-3,0, sai số tăng
-# trở lại từ 3,5 nên lưới này đã bao trọn.
+# beta tới 4,0 để cực trị nằm trong lưới: tối ưu ở 3,5, sang 4,0 sai số
+# validation tăng lại (2,80 → 3,00 m).
 LUOI_THAM_SO = {
-    "beta": [1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.5],
+    "beta": [1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.5, 4.0],
     "n_neighbors": [1, 3, 5],
     "power": [1, 4, 8],
 }

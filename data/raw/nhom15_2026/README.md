@@ -22,6 +22,37 @@ Số liệu thô hiện có, đo bằng cách so RSSI trung bình trên 36 AP c�
 Chênh 1,9 dB, nhưng **không tách được khỏi yếu tố vị trí** vì bảy điểm mới đều ở
 hành lang nam, không trùng chỗ nào với buổi 2025.
 
+## Đã thử gộp một lần — kết quả xấu đi, đang hoãn
+
+Ngày 09/09/2026 đã gộp thật vào pipeline để đo chứ không đoán: thêm 7 toạ độ,
+`load_raw` đọc cả hai nguồn, chạy đủ pipeline → train → report.
+
+| | Chỉ CTK45 | Sau khi gộp |
+|---|---:|---:|
+| kNN vân tay | **2,299 m** | 3,535 m |
+| Giảm so với mô hình cơ sở | 58,2% | 21,7% |
+| Cửa sổ trượt (cách đo cũ, theo thứ tự dòng) | 1,40 m · 8/118 sai | 1,87 m · 37/139 sai |
+
+Tách theo bộ dữ liệu trên tập test cho thấy nguyên nhân không phải "điểm mới khó
+hơn":
+
+    điểm MỚI (Redmi)     21 mẫu · 0,488 m · sai  1/21   ← dễ nhất cả tập
+    điểm CŨ  (Samsung)  118 mẫu · 4,078 m · sai 44/118
+
+Sáu trong bảy điểm mới đạt 0,00 m. Thiệt hại nằm toàn bộ trên những điểm cũ:
+chính chúng xấu đi **2,299 → 4,078 m** dù dữ liệu của chúng không đổi dòng nào.
+Đó là chữ ký của lệch thiết bị — vân tay Redmi tách thành cụm riêng dễ tự nhận
+ra, và làm méo cấu trúc láng giềng của các điểm Samsung. `ml.audit` mục 4 bắt
+độc lập: RP46 lệch vân tay hẳn so với RP01 và RP04 dù chỉ cách 7–8 m.
+
+Kèm hai hệ quả nữa: `missing_rssi_value` đổi **−96,0 → −95,0** (chia tập lại làm
+lần quét mang −95 rơi khỏi train, tức giá trị điền phụ thuộc đúng một dòng), và
+7 điểm mới làm đỏ 7 bài test vì chúng chưa có `ten`/`nhom` mà `/map` thì bắt buộc.
+
+Công tắc `ml.config.GOP_BUOI_BO_SUNG` đang `False`. Bật lại sau khi đo được độ
+lệch hai máy theo cách nêu ở trên; lúc đó còn phải đặt tên/nhóm cho 7 điểm và
+sinh lại `khu_vuc_thu_vien.dart`.
+
 ## Buổi 06/09/2026
 
 Thu bằng `python -m tools.thu_van_tay RPxx`, đọc kết quả quét qua `adb` với máy
@@ -55,7 +86,20 @@ Nguyên nhân: `tools/thu_van_tay.py` từng đặt `--nguoi-thu` mặc định 
 Nay tham số ấy **bắt buộc phải gõ**, nên lỗi không lặp lại được nữa.
 
 Bảy tệp cũ thì chưa sửa vì phải biết ai thực sự đi thu. Sửa bằng cách thay giá
-trị cột `Student ID` trong 7 tệp và trong `tong_hop.csv`.
+trị cột `Student ID` trong 7 tệp.
+
+## `tong_hop.csv` không được theo dõi
+
+Tệp ấy là bản ghép nguyên văn của 7 tệp `RPxx.csv` cùng thư mục — 4.309 dòng,
+trùng khớp từng dòng. Giữ trong kho là công khai hai bản của cùng một tập số
+liệu, và ghép cả hai vào pipeline sẽ làm `to_wide` lấy trung bình mỗi giá trị
+với chính nó. Nay `.gitignore` chặn, hàng rào bước 1 cũng bắt được nếu lọt vào.
+
+Dựng lại khi cần:
+
+```bash
+python -c "import pandas as pd,glob; pd.concat([pd.read_csv(f) for f in sorted(glob.glob('data/raw/nhom15_2026/2026-09-06/RP*.csv'))]).to_csv('data/raw/nhom15_2026/2026-09-06/tong_hop.csv', index=False)"
+```
 
 ## Chín cột cảm biến
 

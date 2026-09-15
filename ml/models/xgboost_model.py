@@ -4,9 +4,9 @@ XGBoost không nhận nhãn hai cột nên bọc trong `MultiOutputRegressor`. L
 này huấn luyện HAI mô hình riêng biệt, một cho trục x một cho trục y — đúng
 thiết kế `model_x`, `model_y` ở mục 2.4.
 
-Lưới tham số đã nới rộng hơn tài liệu thiết kế (bản đó 324 tổ hợp): nay
-3 x 3 x 3 x 2 x 3 x 4 = 648 tổ hợp trên 547 mẫu huấn luyện, quét hết mất vài
-phút; dùng `--nhanh` của `ml/train.py` khi đang thử nghiệm.
+Lưới nới từ 324 tổ hợp của tài liệu thiết kế lên 648, quét hết khoảng 11 phút;
+dùng `--nhanh` của `ml/train.py` khi thử. Vài tham số tối ưu nằm ở biên lưới,
+nhưng nới thêm một nấc chỉ đổi sai số validation dưới 0,1 m.
 """
 
 from __future__ import annotations
@@ -18,7 +18,6 @@ from ml import config
 
 TEN = "XGBoost"
 
-# Lưới đầy đủ theo mục 2.4 tài liệu thiết kế
 LUOI_THAM_SO = {
     "n_estimators": [100, 300, 500],
     "max_depth": [3, 5, 7],

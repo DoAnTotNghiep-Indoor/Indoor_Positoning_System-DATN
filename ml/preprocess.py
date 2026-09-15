@@ -22,7 +22,51 @@ from ml import config
 # ========================= Bước 1 — nạp dữ liệu thô =========================
 
 def load_raw(csv_path: Path | str | None = None) -> pd.DataFrame:
-    return pd.read_csv(Path(csv_path) if csv_path else config.RAW_CSV)
+    """Nạp dữ liệu thô. Không truyền đường dẫn thì gộp luôn các buổi bổ sung."""
+    if csv_path is not None:
+        df = pd.read_csv(Path(csv_path))
+    else:
+        nguon = [config.RAW_CSV, *config.RAW_BO_SUNG]
+        df = pd.concat([pd.read_csv(f) for f in nguon], ignore_index=True)
+    df[config.COL_RP] = df[config.COL_RP].replace(config.NHAN_RP_SUA)
+    return df
+
+
+def kiem_du_lieu_tho(df: pd.DataFrame) -> list[str]:
+    """Những hỏng hóc mà các bước sau NUỐT LẶNG LẼ, không ném lỗi Python nào.
+
+    `scan_id` lấy từ cột thời gian, nên hai máy quét cùng lúc — hoặc một mốc
+    thời gian dính hai điểm — sẽ bị `to_wide` trộn RSSI thành một vân tay
+    không thuộc chỗ nào, còn `build_scan_meta` thì chọn bừa một `rp_id`.
+    """
+    thieu = [c for c in config.REQUIRED_RAW_COLS if c not in df.columns]
+    if thieu:
+        return [f"thiếu cột bắt buộc: {thieu}"]
+
+    loi = []
+    khoa = df[config.COL_TIME].astype(str)
+
+    for nhan, cot in (("thiết bị", config.COL_DEVICE),
+                      ("điểm tham chiếu", config.COL_RP)):
+        dem = df.groupby(khoa)[cot].nunique()
+        va = dem[dem > 1]
+        if len(va):
+            loi.append(f"{len(va)} mốc thời gian ứng với nhiều {nhan} "
+                       f"(ví dụ {list(va.index[:3])}) — pivot sẽ trộn chúng "
+                       f"thành một vân tay")
+
+    lap = df.groupby([khoa, df[config.COL_BSSID]]).size()
+    so_lap = int((lap > 1).sum())
+    if so_lap:
+        loi.append(f"{so_lap} cặp (thời gian, BSSID) lặp — pivot sẽ lấy trung bình")
+
+    return loi
+
+def loc_rssi_ngoai_khoang(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    """Bỏ số đọc ngoài [RSSI_NHO_NHAT, RSSI_LON_NHAT) — đúng phép lọc của backend."""
+    giu = df[config.COL_RSSI].between(config.RSSI_NHO_NHAT, config.RSSI_LON_NHAT,
+                                      inclusive="left")
+    return df.loc[giu].reset_index(drop=True), int((~giu).sum())
 
 
 def describe_raw(df: pd.DataFrame) -> dict:
@@ -252,10 +296,17 @@ def hampel_filter(
 # Tài liệu còn yêu cầu device_holdout và time_holdout, cả hai KHÔNG chạy được:
 # chỉ có một máy, và mỗi điểm chỉ đo một buổi nên tách thời gian là tách vị trí.
 
-def split_random(fingerprint: pd.DataFrame) -> pd.DataFrame:
-    # Phân tầng cần mỗi lớp có ít nhất 2 mẫu ở mỗi lần cắt.
+def split_random(fingerprint: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+    """Chia 70/15/15 phân tầng theo rp_id, trả kèm cảnh báo khi phải bỏ phân tầng.
+
+    sklearn cần mỗi lớp ≥ 2 mẫu ở MỖI lần cắt. Điểm chỉ 3 mẫu qua được lần đầu
+    nhưng tập tạm còn 1 mẫu, nên lần tách val/test lùi về chia thường.
+    """
+    canh_bao = []
     dem = fingerprint["rp_id"].value_counts()
     phan_tang = fingerprint["rp_id"] if dem.min() >= 3 else None
+    if phan_tang is None:
+        canh_bao.append(f"chia KHÔNG phân tầng: {dem.idxmin()} chỉ có {dem.min()} mẫu (cần ≥ 3)")
 
     ty_le_tam = config.TEST_SIZE + config.VALIDATION_SIZE
     train, tam = train_test_split(
@@ -265,10 +316,11 @@ def split_random(fingerprint: pd.DataFrame) -> pd.DataFrame:
         random_state=config.RANDOM_STATE,
     )
 
-    # Phải kiểm tra lại trên tập tạm: nó nhỏ hơn nhiều nên một điểm có thể rơi
-    # xuống còn 1 mẫu, lúc đó sklearn ném lỗi thay vì phân tầng.
     dem_tam = tam["rp_id"].value_counts()
     phan_tang_tam = tam["rp_id"] if (phan_tang is not None and dem_tam.min() >= 2) else None
+    if phan_tang is not None and phan_tang_tam is None:
+        canh_bao.append(f"tách val/test KHÔNG phân tầng: {dem_tam.idxmin()} chỉ còn "
+                        f"{dem_tam.min()} mẫu trong tập tạm")
 
     val, test = train_test_split(
         tam,
@@ -284,11 +336,11 @@ def split_random(fingerprint: pd.DataFrame) -> pd.DataFrame:
             test.assign(split="test"),
         ],
         ignore_index=True,
-    )
+    ), canh_bao
 
 
 def split_dataset(fingerprint: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
-    ket_qua = split_random(fingerprint)
+    ket_qua, canh_bao = split_random(fingerprint)
 
     thong_ke = {
         "chien_luoc": "random",
@@ -301,7 +353,9 @@ def split_dataset(fingerprint: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     rp_test = set(ket_qua.loc[ket_qua["split"] == "test", "rp_id"])
     thieu = sorted(rp_test - rp_train)
     if thieu:
-        thong_ke["canh_bao"] = f"{len(thieu)} điểm chỉ có trong test, không có trong train: {thieu}"
+        canh_bao.append(f"{len(thieu)} điểm chỉ có trong test, không có trong train: {thieu}")
+    if canh_bao:
+        thong_ke["canh_bao"] = " · ".join(canh_bao)
 
     return ket_qua, thong_ke
 

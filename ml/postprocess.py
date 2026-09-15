@@ -1,20 +1,7 @@
-"""Hậu xử lý vị trí — gộp nhiều lần quét trước khi trả về toạ độ.
+"""Hậu xử lý vị trí — gộp vài lần quét gần nhau trước khi trả toạ độ.
 
-Các ca sai nặng gần như luôn là MỘT lần quét dị thường lẻ loi, không phải sai
-lệch có hệ thống: ba lần quét tại RP39 (22, 52) cho ra RP39, RP40 và RP21
-(22, 34) — cách 18 m. Thiết bị quét mỗi 1-2 giây nên lúc chạy thật luôn có sẵn
-vài lần quét gần nhau để gộp.
-
-Đo trên tập test, gộp 3 lần quét:
-
-    một lần quét            1,90 m · lớn nhất 37,6 m · 13/39 điểm sai
-    bình chọn đa số         0,59 m · lớn nhất 18,0 m ·  2/39 điểm sai
-    trung vị toạ độ         0,38 m · lớn nhất 15,0 m ·  1/39 điểm sai
-    đồng thuận không gian   0,38 m · lớn nhất 15,0 m ·  1/39 điểm sai
-
-Bình chọn đa số kém hơn vì ba kết quả khác nhau thì không có đa số nào; hai cách
-còn lại dựa trên khoảng cách nên tự loại được điểm lạc. Điểm còn sai là RP35, ở
-đó hai trong ba lần quét đã nhầm nên gộp kiểu nào cũng không cứu được.
+Ca sai nặng thường là MỘT lần quét lạc lẻ loi nên gộp vài lần quét là đủ để
+loại. Số đo từng cách gộp nằm ở `hau_xu_ly_gop` trong model_metadata.json.
 """
 
 from __future__ import annotations
@@ -31,17 +18,15 @@ def trung_vi_toa_do(du_doan: np.ndarray) -> np.ndarray:
 
 
 def dong_thuan_khong_gian(du_doan: np.ndarray) -> np.ndarray:
-    """Chọn dự đoán có tổng khoảng cách tới các dự đoán còn lại nhỏ nhất.
+    """Dự đoán có tổng khoảng cách tới các dự đoán còn lại nhỏ nhất.
 
-    Khác trung vị ở chỗ luôn trả về một trong các toạ độ đã dự đoán, nên kết quả
-    luôn rơi đúng vào một điểm tham chiếu có thật. Với RP39: tổng khoảng cách của
-    RP39 là 25,0 m, RP40 là 26,3 m, RP21 là 37,3 m — điểm lạc bị loại.
+    Hoà thì lấy dự đoán MỚI nhất: đo ngoài phần trên train+val theo thứ tự thời
+    gian, cửa sổ 3, cả năm mô hình đều tốt hơn lấy cái cũ (kNN vân tay 1,18 →
+    0,78 m).
     """
     P = np.asarray(du_doan, dtype=float)
-    if len(P) == 1:
-        return P[0]
     tong = np.linalg.norm(P[:, None] - P[None], axis=2).sum(axis=1)
-    return P[int(tong.argmin())]
+    return P[len(P) - 1 - int(tong[::-1].argmin())]
 
 
 CACH_GOP = {

@@ -1,7 +1,7 @@
 """Giao thức đánh giá thứ hai: bỏ trọn một điểm tham chiếu ra khỏi lúc học.
 
 Cách chia hiện tại bốc ngẫu nhiên theo LẦN QUÉT, mà mỗi điểm chỉ được đo trong
-đúng một phiên ~15 phút, cùng máy cùng ngày. Hệ quả: cả 39 điểm đều có mặt ở cả
+đúng một phiên ~15 phút, cùng máy cùng ngày. Hệ quả: cả 40 điểm đều có mặt ở cả
 ba tập, 75% bản ghi test có láng giềng train gần nhất nằm ngay tại điểm của
 chính nó — bảng đó đo "nhận lại được lần quét vài phút trước", không phải
 "định vị được một người lạ". Giao thức này giữ nguyên mô hình và tham số, chỉ
@@ -23,15 +23,11 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.preprocessing import MinMaxScaler
 
 from ml import config, evaluate
+from ml import preprocess as pre
 from ml import models as goi_mo_hinh
-
-# Dữ liệu dBm thô. KHÔNG dùng data/splits/*.csv: ba tệp đó đã chuẩn hoá bằng
-# scaler khớp trên toàn tập train, tức đã thấy mọi điểm tham chiếu.
-NGUON_THO = "fingerprint_dataset_raw.csv"
 
 
 def _luoi_da_dung() -> str | None:
@@ -53,31 +49,54 @@ def _tham_so(khoa: str, mo_dun) -> dict:
     return {k: v[0] for k, v in mo_dun.LUOI_THAM_SO.items()}
 
 
-def chay_mot_mo_hinh(mo_dun, X: np.ndarray, Y: np.ndarray,
-                     nhom: np.ndarray, tham_so: dict) -> np.ndarray:
+def nap_bang_rong() -> tuple[pd.DataFrame, list[str]]:
+    """Bảng vân tay dBm sau bước 4, CHƯA học tham số nào từ dữ liệu.
+
+    Không đọc tệp pipeline ghi ra: bộ AP, giá trị điền và Hampel ở đó đều học từ
+    tập train có mặt MỌI điểm, kể cả điểm mà lần gấp định giữ lại.
+    """
+    df = pre.build_scan_id(pre.loc_rssi_ngoai_khoang(pre.load_raw())[0])
+    fp, ap_cols = pre.to_wide(df, pre.build_scan_meta(df))
+    fp, _ = pre.attach_coordinates(fp)
+    return fp, ap_cols
+
+
+def chuan_bi_lan_gap(fp: pd.DataFrame, ap_cols: list[str]) -> list[tuple]:
+    """Mỗi lần gấp giữ lại một điểm, làm lại bước 5-10 chỉ trên phần học.
+
+    Trả [(rp, X_học, Y_học, X_thử, Y_thử)], X đã chuẩn hoá. Phần thử không qua
+    Hampel: lúc chạy thật mỗi lần quét đứng một mình, không có nhóm để lọc.
+    """
+    ra = []
+    for rp in sorted(fp["rp_id"].unique()):
+        hoc, thu = fp[fp["rp_id"] != rp], fp[fp["rp_id"] == rp]
+        hoc, ap, _ = pre.filter_access_points(hoc, ap_cols, tinh_tren=hoc)
+        thu = thu[[c for c in thu.columns if c not in ap_cols] + ap]
+        hoc, _ = pre.filter_sparse_scans(hoc, ap)
+        thu, _ = pre.filter_sparse_scans(thu, ap)
+        if thu.empty:
+            continue
+        gt = pre.compute_missing_value(hoc, ap)
+        hoc, _, _ = pre.fill_missing(hoc, ap, missing_value=gt)
+        thu, _, _ = pre.fill_missing(thu, ap, missing_value=gt)
+        hoc, _ = pre.hampel_filter(hoc, ap, gia_tri_dien=gt)
+        can = MinMaxScaler().fit(hoc[ap].to_numpy(float))
+        ra.append((rp,
+                   can.transform(hoc[ap].to_numpy(float)),
+                   hoc[config.TARGET_COLS].to_numpy(float),
+                   can.transform(thu[ap].to_numpy(float)),
+                   thu[config.TARGET_COLS].to_numpy(float)))
+    return ra
+
+
+def chay_mot_mo_hinh(mo_dun, cac_gap: list[tuple], tham_so: dict) -> np.ndarray:
     """Sai số từng mẫu qua toàn bộ các lần gấp, đơn vị mét."""
     loi = []
-    for i_hoc, i_thu in LeaveOneGroupOut().split(X, Y, groups=nhom):
-        # Scaler khớp lại trong TỪNG lần gấp, chỉ trên phần huấn luyện. Khớp một lần
-        # bên ngoài vòng lặp là để min/max của điểm đang bị giữ lại lọt vào phép chuẩn
-        # hoá — đúng loại rò rỉ mà giao thức này sinh ra để loại bỏ.
-        can = MinMaxScaler().fit(X[i_hoc])
+    for _, Xh, Yh, Xt, Yt in cac_gap:
         mo_hinh = mo_dun.build(**tham_so)
-        mo_hinh.fit(can.transform(X[i_hoc]), Y[i_hoc])
-        loi.append(evaluate.khoang_cach_loi(
-            Y[i_thu], mo_hinh.predict(can.transform(X[i_thu]))))
+        mo_hinh.fit(Xh, Yh)
+        loi.append(evaluate.khoang_cach_loi(Yt, mo_hinh.predict(Xt)))
     return np.concatenate(loi)
-
-
-def nap_tho() -> tuple[np.ndarray, np.ndarray, np.ndarray, list[str]]:
-    ap_cols = json.loads(
-        (config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON).read_text(encoding="utf-8")
-    )["ap_columns"]
-    bang = pd.read_csv(config.PROCESSED_DIR / NGUON_THO)
-    return (bang[ap_cols].to_numpy(dtype=float),
-            bang[config.TARGET_COLS].to_numpy(dtype=float),
-            bang["rp_id"].to_numpy(),
-            ap_cols)
 
 
 def run(ten_mo_hinh: list[str] | None = None,
@@ -94,10 +113,10 @@ def run(ten_mo_hinh: list[str] | None = None,
             f"`--cho-phep-luoi-rut-gon` nếu chỉ xem thử."
         )
 
-    X, Y, nhom, ap_cols = nap_tho()
-    so_gap = len(np.unique(nhom))
-    print(f"Bỏ trọn một điểm tham chiếu: {so_gap} lần gấp · {len(X)} bản ghi "
-          f"· {len(ap_cols)} đặc trưng")
+    fp, ap_cols = nap_bang_rong()
+    cac_gap = chuan_bi_lan_gap(fp, ap_cols)
+    print(f"Bỏ trọn một điểm tham chiếu: {len(cac_gap)} lần gấp · {len(fp)} bản ghi "
+          f"· làm lại bước 5-10 trong từng lần gấp")
 
     chon = goi_mo_hinh.DANH_SACH
     if ten_mo_hinh:
@@ -108,7 +127,7 @@ def run(ten_mo_hinh: list[str] | None = None,
     ket_qua = []
     for mo_dun in chon:
         khoa = mo_dun.__name__.rsplit(".", 1)[-1]
-        loi = chay_mot_mo_hinh(mo_dun, X, Y, nhom, _tham_so(khoa, mo_dun))
+        loi = chay_mot_mo_hinh(mo_dun, cac_gap, _tham_so(khoa, mo_dun))
         # danh_gia() nhận toạ độ chứ không nhận sai số, nên dựng lại một cặp (thật,
         # dự đoán) lệch nhau đúng bằng sai số đã đo — mọi chỉ số khoảng cách và CDF
         # ra y hệt.

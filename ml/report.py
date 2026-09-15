@@ -12,6 +12,7 @@ nhau — vừa bù tương phản, vừa đọc được khi in đen trắng.
 
 from __future__ import annotations
 
+import importlib
 import json
 import sys
 
@@ -142,58 +143,77 @@ def cdf(loi: dict, thu_tu: list[str]) -> str:
     return _luu(fig, "cdf_error.png")
 
 
-def hieu_qua_gop(te: pd.DataFrame, du_doan: dict, thu_tu: list[str]) -> str:
-    """Bốn cách gộp lần quét, so trên sai số trung bình và lớn nhất."""
-    p = du_doan[thu_tu[0]]
-    y = te[["x", "y"]].to_numpy(float)
-    nhom = [nh["_i"].to_numpy() for _, nh in te.assign(_i=range(len(te))).groupby("rp_id")]
+def hieu_qua_gop(meta: dict, te: pd.DataFrame, ap: list[str], du_doan: dict) -> str:
+    """Bốn cách gộp của mô hình đang triển khai, theo hai chế độ.
 
-    def do(fn):
-        return np.array([np.linalg.norm(fn(p[i]) - y[i[0]]) for i in nhom])
+    `đứng yên` gộp mọi lần quét của một điểm test — chặn dưới lý tưởng. `cửa sổ
+    trượt` chạy như `BoGop` trên chuỗi dài của train+val theo thời gian, dự đoán
+    ngoài phần để mô hình chưa thấy mẫu nào nó đoán.
+    """
+    khoa = meta["mo_hinh_active"]
+    tt = meta["cac_mo_hinh"][khoa]
+    p, y = du_doan[tt["ten"]], te[["x", "y"]].to_numpy(float)
+    hoc = pd.concat([pd.read_csv(config.SPLITS_DIR / f"{t}.csv") for t in ("train", "validation")],
+                    ignore_index=True)
+    yh = hoc[["x", "y"]].to_numpy(float)
+    q = evaluate.du_doan_ngoai_phan(importlib.import_module(f"ml.models.{khoa}"), tt["tham_so"],
+                                    hoc[ap].to_numpy(float), yh, hoc["rp_id"])
+    w = postprocess.CUA_SO_MAC_DINH
+
+    def dung_yen(fn):
+        return np.array([np.linalg.norm(fn(p[i]) - y[i[0]]) for i in evaluate.nhom_theo_thoi_gian(te)])
+
+    def truot(fn):
+        return np.concatenate([
+            np.linalg.norm(np.array([fn(q[i][max(0, k - w + 1): k + 1]) for k in range(len(i))])
+                           - yh[i], axis=1)
+            for i in evaluate.nhom_theo_thoi_gian(hoc)])
 
     def binh_chon(P):
         u, c = np.unique(P, axis=0, return_counts=True)
         return u[c.argmax()]
 
-    cach = {
-        # Lấy sai số của TỪNG lần quét, không lấy trung bình theo điểm: cả bốn cột
-        # phải cùng trả lời một câu hỏi — hỏi một lần thì nhận sai số bao nhiêu —
-        # nên gộp trung bình trước sẽ giấu mất đúng những ca tệ nhất.
-        "Một lần quét": evaluate.khoang_cach_loi(y, p),
-        "Bình chọn đa số": do(binh_chon),
-        "Trung vị toạ độ": do(postprocess.trung_vi_toa_do),
-        "Đồng thuận không gian": do(postprocess.dong_thuan_khong_gian),
-    }
+    fn = {"Bình chọn đa số": binh_chon,
+          "Trung vị toạ độ": postprocess.trung_vi_toa_do,
+          "Đồng thuận không gian": postprocess.dong_thuan_khong_gian}
 
-    ten = list(cach)
-    tb = [cach[t].mean() for t in ten]
-    mx = [cach[t].max() for t in ten]
+    ten = ["Một lần quét", *fn]
+    dy = [np.linalg.norm(p - y, axis=1)] + [dung_yen(f) for f in fn.values()]
+    ct = [np.linalg.norm(q - yh, axis=1)] + [truot(f) for f in fn.values()]
+
     vt = np.arange(len(ten))
-    rong = 0.36
+    rong = 0.38
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.9))
-    for ax, gt, nhan, mau in ((ax1, tb, "Sai số trung bình (m)", SERIES[0]),
-                              (ax2, mx, "Sai số lớn nhất (m)", SERIES[1])):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.4, 4.1))
+    for ax, lay, nhan in ((ax1, lambda a: a.mean(), "Sai số trung bình (m)"),
+                          (ax2, lambda a: a.max(), "Sai số lớn nhất (m)")):
         _khung(ax)
-        ax.bar(vt, gt, rong * 1.6, color=mau, zorder=3)
-        for i, v in enumerate(gt):
-            ax.text(i, v + max(gt) * 0.03, f"{v:.2f}", ha="center",
-                    fontsize=9, color=MUC_CHINH, fontweight="bold")
+        a, b = [lay(v) for v in dy], [lay(v) for v in ct]
+        ax.bar(vt - rong / 2, a, rong, color=SERIES[0], label="đứng yên (test)", zorder=3)
+        ax.bar(vt + rong / 2, b, rong, color=SERIES[1], label="cửa sổ trượt (train+val, ngoài phần)", zorder=3)
+        cao = max(max(a), max(b))
+        for i in vt:
+            for x, v in ((i - rong / 2, a[i]), (i + rong / 2, b[i])):
+                ax.text(x, v + cao * 0.03, f"{v:.2f}", ha="center",
+                        fontsize=8, color=MUC_CHINH, fontweight="bold")
         ax.set_xticks(vt)
         ax.set_xticklabels([t.replace(" ", "\n", 1) for t in ten], fontsize=8.5)
         ax.set_ylabel(nhan, color=MUC_PHU, fontsize=9.5)
-        ax.set_ylim(0, max(gt) * 1.18)
+        ax.set_ylim(0, cao * 1.2)
+    ax1.legend(frameon=False, fontsize=9, labelcolor=MUC_PHU)
 
-    fig.suptitle("Hiệu quả của việc gộp 3 lần quét tại cùng vị trí",
+    fig.suptitle("Hiệu quả gộp lần quét — chặn dưới lý tưởng so với lúc chạy thật",
                  color=MUC_CHINH, fontsize=11.5, fontweight="bold", x=0.06, ha="left", y=1.02)
     fig.tight_layout()
     return _luu(fig, "aggregation_effect.png")
 
 
-def ban_do_loi(te: pd.DataFrame, du_doan: dict, thu_tu: list[str]) -> str:
-    """Sai số theo vị trí. Độ lớn liên tục nên dùng ramp một sắc."""
+def ban_do_loi(meta: dict, te: pd.DataFrame, du_doan: dict) -> str:
+    """Sai số theo vị trí của mô hình đang triển khai. Độ lớn liên tục nên dùng
+    ramp một sắc."""
+    ten = meta["cac_mo_hinh"][meta["mo_hinh_active"]]["ten"]
     theo_diem = evaluate.loi_theo_diem(
-        te["rp_id"], te[["x", "y"]].to_numpy(float), du_doan[thu_tu[0]])
+        te["rp_id"], te[["x", "y"]].to_numpy(float), du_doan[ten])
 
     from matplotlib.colors import LinearSegmentedColormap
     cmap = LinearSegmentedColormap.from_list("xanh", RAMP_XANH)
@@ -217,7 +237,7 @@ def ban_do_loi(te: pd.DataFrame, du_doan: dict, thu_tu: list[str]) -> str:
     ax.set_xlabel("x (m)", color=MUC_PHU, fontsize=9.5)
     ax.set_ylabel("y (m)", color=MUC_PHU, fontsize=9.5)
     ax.set_aspect("equal", adjustable="datalim")
-    ax.set_title(f"Sai số theo vị trí — {thu_tu[0]}",
+    ax.set_title(f"Sai số theo vị trí — {ten}",
                  color=MUC_CHINH, fontsize=11.5, fontweight="bold", loc="left", pad=12)
     return _luu(fig, "error_heatmap.png")
 
@@ -281,6 +301,10 @@ def ti_le_xuat_hien_ap() -> str | None:
     """Biện minh cho ngưỡng lọc AP: đường cong dốc đứng ngay tại ngưỡng đã chọn.
     Đọc bảng do ml/pipeline.py ghi ra chứ không tự tính lại, để hình luôn khớp
     đúng lần chạy pipeline hiện tại.
+
+    Bảng ấy tính TRÊN TẬP TRAIN — bước 5 chỉ được học từ train để việc chọn đặc
+    trưng không nhìn val/test. Nhãn phải nói rõ, nếu không hình đọc như thể tính
+    trên toàn bộ dữ liệu.
     """
     tep = config.REPORTS_DIR / "tables" / "ap_appearance_rate.csv"
     if not tep.exists():
@@ -298,11 +322,12 @@ def ti_le_xuat_hien_ap() -> str | None:
     ax.axhline(nguong, color=MUC_CHINH, linestyle="--", linewidth=1.2, zorder=4)
     ax.text(0, nguong + 2.5, f"ngưỡng {nguong:.0f}%", color=MUC_CHINH, fontsize=9)
 
-    ax.set_xlabel("Access point, xếp theo tỉ lệ xuất hiện", color=MUC_PHU, fontsize=9.5)
-    ax.set_ylabel("Tỉ lệ xuất hiện (%)", color=MUC_PHU, fontsize=9.5)
+    ax.set_xlabel("Access point, xếp theo tỉ lệ xuất hiện trên tập train",
+                  color=MUC_PHU, fontsize=9.5)
+    ax.set_ylabel("Tỉ lệ xuất hiện trên tập train (%)", color=MUC_PHU, fontsize=9.5)
     ax.set_xlim(-1, len(ty_le))
     ax.set_ylim(0, 104)
-    ax.set_title("Tỉ lệ xuất hiện của access point — cơ sở chọn ngưỡng lọc",
+    ax.set_title("Tỉ lệ xuất hiện của access point trên tập train — cơ sở chọn ngưỡng",
                  color=MUC_CHINH, fontsize=11.5, fontweight="bold", loc="left", pad=12)
     ax.legend(frameon=False, fontsize=9, labelcolor=MUC_PHU, loc="upper left")
     return _luu(fig, "ap_appearance_rate.png")
@@ -325,11 +350,13 @@ def chay(cho_phep_luoi_rut_gon: bool = False) -> None:
     print(f"Huấn luyện lúc {meta['huan_luyen_luc']} · {len(thu_tu)} mô hình · "
           f"{len(te)} mẫu test\n")
 
+    # Hình của MỘT mô hình vẽ mô hình đang triển khai (chọn theo validation),
+    # không lấy mô hình tốt nhất trên test.
     ket_qua = [
         so_sanh_mo_hinh(loi, thu_tu),
         cdf(loi, thu_tu),
-        hieu_qua_gop(te, du_doan, thu_tu),
-        ban_do_loi(te, du_doan, thu_tu),
+        hieu_qua_gop(meta, te, ap, du_doan),
+        ban_do_loi(meta, te, du_doan),
         do_quan_trong(ap),
         phan_bo_sai_so(loi, thu_tu),
         ti_le_xuat_hien_ap(),

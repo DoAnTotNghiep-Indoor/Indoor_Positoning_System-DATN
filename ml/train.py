@@ -133,7 +133,6 @@ def huan_luyen_mot(module, tap: dict, ap_cols: list[str], nhanh: bool) -> dict:
 def chon_theo_validation(ket_qua: list[dict], loc=None) -> dict | None:
     """Chọn mô hình tốt nhất theo sai số VALIDATION, không bao giờ theo test.
 
-    Tách thành hàm riêng để bất biến này kiểm thử được — xem tests/test_train.py.
     Chọn trên chính tập dùng để công bố kết quả thì lập luận hỏng và sẽ âm thầm
     sai khi thêm dữ liệu hoặc thêm mô hình. `loc` lọc bớt ứng viên; trả None
     khi hết ứng viên.
@@ -243,17 +242,20 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
     print(f"\nĐiểm sai nhiều nhất: " + ", ".join(
         f"{r.rp_id} ({r.loi_trung_binh:.1f} m)" for r in theo_diem.head(3).itertuples()))
 
-    # Hậu xử lý: gộp các lần quét tại cùng một vị trí. Thiết bị quét mỗi 1-2 giây
-    # nên lúc chạy thật luôn có sẵn vài lần quét gần nhau về thời gian.
-    gop = _danh_gia_sau_khi_gop(tap["test"], tot_nhat["y_pred"])
+    hoc = pd.concat([tap["train"], tap["validation"]], ignore_index=True)
+    y_ngoai = evaluate.du_doan_ngoai_phan(
+        tot_nhat["module"], tot_nhat["tham_so"], hoc[ap_cols].to_numpy(dtype=float),
+        hoc[config.TARGET_COLS].to_numpy(dtype=float), hoc["rp_id"])
+    gop = _danh_gia_sau_khi_gop(tap["test"], tot_nhat["y_pred"], hoc, y_ngoai)
+    dy, ct, cd = gop["dung_yen"], gop["cua_so_truot"], gop["chuoi_dai"]
     print("\n" + "-" * 66)
-    print(f"Sau khi gộp {gop['so_lan_quet']} lần quét mỗi vị trí "
-          f"({postprocess.CUA_SO_MAC_DINH} là mặc định lúc chạy thật):")
-    print(f"  sai số trung bình {gop['loi_trung_binh']:.2f} m "
-          f"(một lần quét: {tot:.2f} m)")
-    print(f"  sai số lớn nhất   {gop['loi_lon_nhat']:.1f} m "
-          f"(một lần quét: {tot_nhat['ket_qua_test']['loi_lon_nhat']:.1f} m)")
-    print(f"  số vị trí còn sai {gop['so_vi_tri_sai']}/{gop['so_vi_tri']}")
+    print(f"Sau khi gộp, cửa sổ {gop['cua_so']} lần quét, theo thứ tự thời gian:")
+    for nhan, g in ((f"test, {gop['so_lan_quet']} lần quét/điểm", ct),
+                    ("chuỗi dài train+val, ngoài phần", cd)):
+        print(f"  {nhan:32s} {g['khong_gop']:5.2f} → {g['loi_trung_binh']:5.2f} m · "
+              f"sai {g['so_mau_sai_khong_gop']} → {g['so_mau_sai']}/{g['so_mau']}")
+    print(f"  {'đứng yên (chặn dưới)':32s} {dy['loi_trung_binh']:5.2f} m · "
+          f"sai {dy['so_vi_tri_sai']}/{dy['so_vi_tri']} vị trí")
 
     metadata["hau_xu_ly_gop"] = gop
     config.ghi_json(config.ARTIFACTS_DIR / "model_metadata.json", metadata)
@@ -261,26 +263,55 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
     return bang
 
 
-def _danh_gia_sau_khi_gop(tap_test: pd.DataFrame, y_pred: np.ndarray) -> dict:
-    """Gộp các lần quét tại cùng một điểm rồi đo lại sai số."""
-    ds, so_lan = [], []
-    y_that = tap_test[config.TARGET_COLS].to_numpy(dtype=float)
-
-    for _, nhom in tap_test.assign(_i=range(len(tap_test))).groupby("rp_id"):
-        idx = nhom["_i"].to_numpy()
-        so_lan.append(len(idx))
-        ds.append(float(np.linalg.norm(postprocess.gop(y_pred[idx]) - y_that[idx[0]])))
-
-    ds = np.array(ds)
+def _cua_so_truot(tap: pd.DataFrame, y_pred: np.ndarray) -> dict:
+    """Chạy như `BoGop`: từng điểm, các lần quét theo thứ tự thời gian."""
+    P = np.asarray(y_pred, dtype=float)
+    Y = tap[config.TARGET_COLS].to_numpy(dtype=float)
+    loi = np.concatenate([
+        np.linalg.norm(postprocess.gop_cua_so_truot(P[i]) - Y[i], axis=1)
+        for i in evaluate.nhom_theo_thoi_gian(tap)
+    ])
+    mot = np.linalg.norm(P - Y, axis=1)
     return {
-        "cach_gop": "dong_thuan",
-        "so_lan_quet": int(np.median(so_lan)),
-        "so_vi_tri": int(len(ds)),
-        "so_vi_tri_sai": int((ds > 1).sum()),
-        "loi_trung_binh": float(ds.mean()),
-        "loi_trung_vi": float(np.median(ds)),
-        "loi_lon_nhat": float(ds.max()),
+        "so_mau": int(len(loi)),
+        "khong_gop": float(mot.mean()),
+        "so_mau_sai_khong_gop": int((mot > 1).sum()),
+        "loi_trung_binh": float(loi.mean()),
+        "loi_trung_vi": float(np.median(loi)),
+        "loi_lon_nhat": float(loi.max()),
+        "so_mau_sai": int((loi > 1).sum()),
     }
+
+
+def _danh_gia_sau_khi_gop(tap_test: pd.DataFrame, y_pred: np.ndarray,
+                          tap_hoc: pd.DataFrame | None = None,
+                          y_ngoai_phan: np.ndarray | None = None) -> dict:
+    """Sai số sau khi gộp, đo ba cách.
+
+    `dung_yen` gộp mọi lần quét của một điểm — chặn dưới lý tưởng. `cua_so_truot`
+    chạy như backend trên tập test, nhưng mỗi điểm chỉ ~3 lần quét. `chuoi_dai`
+    chạy trên ~17 lần quét mỗi điểm của train+val, dự đoán ngoài phần — gần với
+    lúc quét liên tục hơn.
+    """
+    y_that = tap_test[config.TARGET_COLS].to_numpy(dtype=float)
+    nhom = evaluate.nhom_theo_thoi_gian(tap_test)
+    ds = np.array([np.linalg.norm(postprocess.gop(y_pred[i]) - y_that[i[0]]) for i in nhom])
+    kq = {
+        "cach_gop": "dong_thuan",
+        "cua_so": postprocess.CUA_SO_MAC_DINH,
+        "so_lan_quet": int(np.median([len(i) for i in nhom])),
+        "dung_yen": {
+            "so_vi_tri": int(len(ds)),
+            "so_vi_tri_sai": int((ds > 1).sum()),
+            "loi_trung_binh": float(ds.mean()),
+            "loi_trung_vi": float(np.median(ds)),
+            "loi_lon_nhat": float(ds.max()),
+        },
+        "cua_so_truot": _cua_so_truot(tap_test, y_pred),
+    }
+    if tap_hoc is not None:
+        kq["chuoi_dai"] = _cua_so_truot(tap_hoc, y_ngoai_phan)
+    return kq
 
 
 def main() -> None:

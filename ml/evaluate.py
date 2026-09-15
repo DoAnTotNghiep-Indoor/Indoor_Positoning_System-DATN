@@ -133,3 +133,23 @@ def duong_cdf(loi: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     da_sap = np.sort(np.asarray(loi, dtype=float))
     ty_le = np.arange(1, len(da_sap) + 1) / len(da_sap) * 100
     return da_sap, ty_le
+
+
+def nhom_theo_thoi_gian(tap: pd.DataFrame) -> list[np.ndarray]:
+    """Chỉ số dòng của từng điểm, xếp theo thời điểm quét — đúng thứ tự backend nhận."""
+    t = pd.to_datetime(tap["scan_id"], format="%Y:%m:%d:%H:%M:%S").to_numpy()
+    rp = tap["rp_id"].to_numpy()
+    thu_tu = np.lexsort((t, rp))
+    return [thu_tu[rp[thu_tu] == r] for r in pd.unique(rp[thu_tu])]
+
+
+def du_doan_ngoai_phan(module, tham_so: dict, X, Y, nhan, so_phan: int = 5) -> np.ndarray:
+    """Mỗi mẫu được dự đoán bởi mô hình chưa thấy nó, để có chuỗi quét dài mà
+    không cần chạm tập test."""
+    from sklearn.model_selection import StratifiedKFold
+
+    X, Y = np.asarray(X, dtype=float), np.asarray(Y, dtype=float)
+    P = np.zeros_like(Y)
+    for hoc, thu in StratifiedKFold(so_phan, shuffle=True, random_state=0).split(X, nhan):
+        P[thu] = module.build(**tham_so).fit(X[hoc], Y[hoc]).predict(X[thu])
+    return P

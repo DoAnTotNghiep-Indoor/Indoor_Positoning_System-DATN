@@ -17,6 +17,7 @@ import sys
 from datetime import datetime
 
 import joblib
+import numpy as np
 import pandas as pd
 
 from ml import config
@@ -29,6 +30,10 @@ for _luong in (sys.stdout, sys.stderr):
             _luong.reconfigure(encoding="utf-8", errors="replace")
         except (ValueError, OSError):
             pass
+
+
+BIEN_HOP_DONG = 0.03         # AP cách ngưỡng dưới mức này thì cảnh báo
+NGUONG_TROI_TY_LE = 0.01     # tỉ lệ ba tập trôi quá mức này thì cảnh báo
 
 
 def _log(buoc: str, noi_dung: str) -> None:
@@ -49,10 +54,22 @@ def run(
 
     # --- Bước 1: nạp dữ liệu thô ---
     df = pre.load_raw()
+
+    # Dừng ở đây chứ không để chạy tiếp: ba lỗi này không ném ngoại lệ nào mà
+    # sinh ra artifact trông bình thường nhưng sai.
+    loi_tho = pre.kiem_du_lieu_tho(df)
+    if loi_tho:
+        raise ValueError("Dữ liệu thô không dùng được:\n  - "
+                         + "\n  - ".join(loi_tho))
+
+    df, so_bo_rssi = pre.loc_rssi_ngoai_khoang(df)
     mo_ta = pre.describe_raw(df)
     _log("1", f"{mo_ta['so_dong']:,} dòng · {mo_ta['so_lan_quet']} lần quét · "
               f"{mo_ta['so_rp']} điểm · {mo_ta['so_bssid']} BSSID · "
               f"RSSI {mo_ta['rssi_min']:.0f}…{mo_ta['rssi_max']:.0f} dBm")
+    if so_bo_rssi:
+        _log("!", f"bỏ {so_bo_rssi} số đọc RSSI ngoài [{config.RSSI_NHO_NHAT:.0f}, "
+                  f"{config.RSSI_LON_NHAT:.0f}] dBm — backend cũng bỏ y như vậy")
 
     # --- Bước 2: gom theo lần quét ---
     df = pre.build_scan_id(df)
@@ -88,13 +105,29 @@ def run(
     )
     _log("5", f"giữ {len(ap_cols)}/{len(ty_le_xuat_hien)} AP (ngưỡng ≥ {ty_le_ap:.0%})")
 
+    # Bộ cột này là hợp đồng với backend: một AP vượt ngưỡng ở lần thu sau sẽ đổi
+    # `feature_count` và làm mọi model cũ lệch hợp đồng mà không báo gì.
+    sat = ty_le_xuat_hien[(ty_le_xuat_hien < ty_le_ap)
+                          & (ty_le_xuat_hien >= ty_le_ap - BIEN_HOP_DONG)]
+    if len(sat):
+        thieu = int(np.ceil(ty_le_ap * int(la_train.sum()))) - int(
+            round(float(sat.max()) * int(la_train.sum())))
+        _log("!", f"{len(sat)} AP cách ngưỡng dưới {BIEN_HOP_DONG:.0%} — gần nhất "
+                  f"{sat.max():.1%}, chỉ cần {thieu} lần bắt được nữa là đổi hợp đồng")
+
     # --- Bước 6: loại mẫu quét quá nghèo ---
+    ty_truoc = fingerprint["split"].value_counts(normalize=True)
     fingerprint, tk_scan = pre.filter_sparse_scans(fingerprint, ap_cols)
     _log("6", f"loại {tk_scan['scan_bi_loai']} mẫu · còn {tk_scan['scan_sau']} · "
               f"AP mỗi mẫu: min {tk_scan['ap_moi_scan_min']}, "
               f"trung vị {tk_scan['ap_moi_scan_trung_vi']:.0f}")
 
-    # Bước 6 vừa xoá dòng nên phải lấy lại mặt nạ train.
+    # Bước 6 xoá dòng SAU khi đã chia tập (thứ tự bị ép: nó cần ap_cols của bước
+    # 5, mà bước 5 cần split), nên tỉ lệ ba tập trôi đi mà không ai thấy.
+    troi = (fingerprint["split"].value_counts(normalize=True) - ty_truoc).abs().max()
+    if troi > NGUONG_TROI_TY_LE:
+        _log("!", f"tỉ lệ train/val/test trôi {troi:.1%} sau bước 6")
+
     la_train = fingerprint["split"] == "train"
 
     # --- Bước 7: điền RSSI thiếu ---
