@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../widgets/blob_background.dart';
-import 'package:intl/intl.dart' as intl;
 
 import '../data/anh_khu_vuc.dart';
 import '../data/khu_vuc.dart';
@@ -14,6 +13,7 @@ import '../theme/app_metrics.dart';
 import '../widgets/so_do_that.dart';
 import '../widgets/tap_feedback.dart';
 import 'map_screen.dart';
+import '../main.dart';
 
 /// Màn chi tiết khu vực: sơ đồ phía trên, tấm thông tin phía dưới.
 ///
@@ -307,8 +307,11 @@ class _NutChiDuongState extends State<_NutChiDuong> {
 
     setState(() => _dangTim = true);
     try {
-      final kq = await theoDoi.chiDuongToi(widget.khuVuc);
-      if (mounted) _hienChiDan(context, widget.khuVuc, kq);
+      await theoDoi.chiDuongToi(widget.khuVuc);
+      if (!mounted) return;
+      // Tuyến đã nằm trong TheoDoiViTri: về khung chính, sang Bản đồ là thấy.
+      Navigator.of(context).popUntil((r) => r.isFirst);
+      AppShell.moBanDo();
     } on NgoaiLeApi catch (e) {
       if (mounted) {
         GlassToast.show(context,
@@ -376,92 +379,6 @@ class _NutChiDuongState extends State<_NutChiDuong> {
       },
     );
   }
-}
-
-/// Câu chữ cho từng mã hướng. Máy chủ trả mã để ứng dụng còn dịch được.
-const _cauHuong = <String, String Function(L)>{
-  'bat_dau': _diThang,
-  'di_thang': _diThang,
-  'chech_trai': _chechTrai,
-  'chech_phai': _chechPhai,
-  're_trai': _reTrai,
-  're_phai': _rePhai,
-  'quay_dau': _quayDau,
-};
-
-String _diThang(L t) => t.stepStraight;
-String _chechTrai(L t) => t.stepSlightLeft;
-String _chechPhai(L t) => t.stepSlightRight;
-String _reTrai(L t) => t.stepLeft;
-String _rePhai(L t) => t.stepRight;
-String _quayDau(L t) => t.stepUTurn;
-
-void _hienChiDan(BuildContext context, KhuVuc khuVuc, KetQuaChiDuong kq) {
-  final t = L.of(context);
-  final so = intl.NumberFormat('#0.#', t.localeName);
-
-  showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Semantics(
-              header: true,
-              child: Text(khuVuc.nhom,
-                  style: Theme.of(context).textTheme.titleLarge),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              t.routeSummary(so.format(kq.quangDuongM), kq.buoc.length),
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.inkOf(context).withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: kq.buoc.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) {
-                  final b = kq.buoc[i];
-                  final huong = (_cauHuong[b.huong] ?? _diThang)(t);
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${i + 1}.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.inkOf(context)
-                                .withValues(alpha: 0.45),
-                          )),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          t.routeStep(huong, so.format(b.khoangCachM),
-                              b.denTen.isEmpty ? b.denRp : b.denTen),
-                          style: const TextStyle(fontSize: 14, height: 1.35),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 /// Dải ảnh thật của khu vực, vuốt ngang để xem hết. `PageView` chứ không

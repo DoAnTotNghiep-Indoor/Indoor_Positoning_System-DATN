@@ -39,6 +39,9 @@ class IpsDluApp extends StatefulWidget {
 class _IpsDluAppState extends State<IpsDluApp> {
   final _tuyChon = AppSettings(kho: const KhoMacDinh());
 
+  // Tạm tắt WebSocket, cùng máy chủ để `WEBSOCKET=false`: gửi lần quét qua REST.
+  static const _dungWebSocket = false;
+
   // Dựng ApiDinhVi ở đây chứ không để TheoDoiViTri tự dựng: kênh WebSocket cần
   // đúng thể hiện ấy, vừa để lấy địa chỉ máy chủ hiện hành vừa để rơi về REST
   // khi kênh hỏng.
@@ -46,7 +49,7 @@ class _IpsDluAppState extends State<IpsDluApp> {
   late final _theoDoi = TheoDoiViTri(
     diaChiMayChu: _tuyChon.diaChiMayChu,
     api: _api,
-    kenh: KenhViTri(api: _api),
+    kenh: _dungWebSocket ? KenhViTri(api: _api) : null,
   );
 
   late final AppLifecycleListener _vongDoi;
@@ -117,6 +120,11 @@ class _IpsDluAppState extends State<IpsDluApp> {
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
+  static final _yeuCauBanDo = ValueNotifier<int>(0);
+
+  /// Chuyển sang tab Bản đồ từ màn khác, ví dụ nút "Đi tới đây".
+  static void moBanDo() => _yeuCauBanDo.value++;
+
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -127,7 +135,19 @@ class _AppShellState extends State<AppShell> {
   final _timKiem = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    AppShell._yeuCauBanDo.addListener(_moBanDo);
+  }
+
+  void _moBanDo() => setState(() {
+        _index = 1;
+        _searching = false;
+      });
+
+  @override
   void dispose() {
+    AppShell._yeuCauBanDo.removeListener(_moBanDo);
     _timKiem.dispose();
     super.dispose();
   }
@@ -174,6 +194,26 @@ class _AppShellState extends State<AppShell> {
       ),
     ];
 
+    // Back đóng tìm kiếm, rồi về Trang chủ, rồi mới thoát app — tìm kiếm chỉ là
+    // một cờ chứ không phải route nên Navigator không tự lùi được.
+    return PopScope(
+      canPop: !_searching && _index == 0,
+      onPopInvokedWithResult: (daPop, _) {
+        if (daPop) return;
+        setState(() {
+          if (_searching) {
+            _searching = false;
+          } else {
+            _index = 0;
+          }
+        });
+      },
+      child: _khung(tabs),
+    );
+  }
+
+  Widget _khung(List<GlassTab> tabs) {
+    final t = L.of(context);
     return GlassScaffold(
       background: BlobBackground(blobs: _blobs),
       // KHÔNG dùng GlassStatusBarStyle.auto: nó chọn theo độ sáng của HỆ ĐIỀU

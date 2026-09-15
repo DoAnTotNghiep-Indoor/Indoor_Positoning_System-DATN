@@ -31,14 +31,14 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
   late final LaBan _laBan = widget.laBan ?? LaBan();
 
   // Bề rộng nhãn đã đo, khoá theo (chữ, cỡ, hệ số phóng chữ). Không có bộ nhớ
-  // đệm này thì mỗi khung hình phải `TextPainter.layout()` cho cả 26 nhãn.
+  // đệm này thì mỗi khung hình phải `TextPainter.layout()` cho cả 44 nhãn.
   final _demRongChu = <String, double>{};
 
   @override
   void initState() {
     super.initState();
     // KHÔNG addListener ở đây: từ kế chỉ đổi nón hướng, mà nón nằm trong
-    // `_NetSoDo`. Nghe ở cấp State thì mỗi số đọc dựng lại cả Stack — kể cả 26
+    // `_NetSoDo`. Nghe ở cấp State thì mỗi số đọc dựng lại cả Stack — kể cả 44
     // nhãn và phép đo bề rộng của chúng. Nay chỉ `CustomPaint` nghe, xem `_ve`.
     _laBan.batDau();
   }
@@ -81,8 +81,10 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapUp: (e) {
-        final k = _khuVucTaiDiem(e.localPosition, theoDoi.khuVuc, rong);
-        if (k != null) hienTomTatKhuVuc(context, k);
+        final d = _diemTaiCham(e.localPosition, theoDoi.banDo, rong);
+        if (d == null) return;
+        final k = theoDoi.khuVuc.where((k) => k.nhom == d.nhom).firstOrNull;
+        if (k != null) hienTomTatKhuVuc(context, k, rpId: d.rpId);
       },
       child: Stack(
         children: [
@@ -115,7 +117,9 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
                 builder: (context, _) => CustomPaint(
                   painter: _NetSoDo(
                     diem: theoDoi.banDo,
-                    tuyen: theoDoi.tuyen?.duongDi ?? const [],
+                    tuyen: theoDoi.daToi
+                        ? const []
+                        : theoDoi.tuyen?.duongDi ?? const [],
                     loc: widget.loc,
                     rong: rong,
                     mau: AppColors.accentOf(context),
@@ -138,16 +142,14 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
     );
   }
 
-  /// Chỗ đặt nhãn: MỘT NHÃN MỖI CỤM (xem [KhuVuc.tamCum]), đã đẩy ra cho khỏi
-  /// chồng nhau. Đặt ở trọng tâm cả nhóm thì "Hành lang" rơi xuống giữa sảnh,
-  /// cách hai điểm hành lang thật 42 m. Cụm gần nhau vẫn trùng nên xếp dọc.
+  /// Mỗi điểm tham chiếu một nhãn ngay trên chấm; nhãn chồng nhau thì xếp dọc.
   List<(KhuVuc, Offset)> _viTriNhan(List<KhuVuc> khu, double rong) {
     final cao = _caoChu(rong) * 1.6;
     final ra = <(KhuVuc, Offset)>[];
 
     final sap = [
       for (final k in khu)
-        for (final t in k.tamCum)
+        for (final t in k.diem)
           (k, SoDoThat.sangKhung(t.dx, t.dy, rong)),
     ]..sort((a, b) =>
         a.$2.dy != b.$2.dy ? a.$2.dy.compareTo(b.$2.dy)
@@ -169,21 +171,21 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
   double _caoChu(double rong) =>
       (rong / SoDoThat.rongPx * 15).clamp(7.0, 12.0);
 
-  /// Khu vực gần chỗ vừa chạm nhất, hoặc null nếu chạm ra ngoài toà nhà.
-  KhuVuc? _khuVucTaiDiem(Offset cham, List<KhuVuc> khu, double rong) {
-    if (khu.isEmpty) return null;
+  /// Điểm tham chiếu gần chỗ vừa chạm nhất, hoặc null nếu chạm ra ngoài toà nhà.
+  DiemThamChieu? _diemTaiCham(Offset cham, List<DiemThamChieu> ds, double rong) {
+    if (ds.isEmpty) return null;
 
-    // Đổi ngược về mét rồi mới so khoảng cách, để ngưỡng "quá xa" tính bằng mét
-    // chứ không bằng pixel — pixel đổi theo cỡ màn hình.
+    // Đổi ngược về đơn vị lưới rồi mới so, để ngưỡng "quá xa" không đổi theo cỡ
+    // màn hình.
     final met = SoDoThat.sangMet(cham, rong);
 
-    var gan = khu.first;
+    var gan = ds.first;
     var min = double.infinity;
-    for (final k in khu) {
-      final l = k.khoangCach(met.dx, met.dy);
+    for (final d in ds) {
+      final l = (Offset(d.x, d.y) - met).distance;
       if (l < min) {
         min = l;
-        gan = k;
+        gan = d;
       }
     }
     // Chạm cách mọi khu vực quá xa thì coi như chạm nhầm, không mở gì cả.
@@ -385,11 +387,13 @@ class _NetSoDo extends CustomPainter {
     const daiM = 10.0;
     final dai = daiM * SoDoThat.pxMoiMetX * (rong / SoDoThat.rongPx);
     final le = rong * 0.03;
+    // Lùi vào 1/4 bề rộng: góc trái dưới là nhãn TV3,4.
+    final trai = rong * 0.24;
     final y = size.height - le;
 
     canvas.drawLine(
-      Offset(le, y),
-      Offset(le + dai, y),
+      Offset(trai, y),
+      Offset(trai + dai, y),
       Paint()
         ..color = muc.withValues(alpha: 0.65)
         ..strokeWidth = (rong / SoDoThat.rongPx * 3).clamp(1.4, 3.0),
@@ -406,7 +410,7 @@ class _NetSoDo extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    chu.paint(canvas, Offset(le + (dai - chu.width) / 2, y - chu.height - 2));
+    chu.paint(canvas, Offset(trai + (dai - chu.width) / 2, y - chu.height - 2));
   }
 
   void _veDiem(Canvas canvas) {

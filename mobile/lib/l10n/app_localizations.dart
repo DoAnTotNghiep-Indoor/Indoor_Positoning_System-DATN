@@ -454,7 +454,7 @@ abstract class L {
   /// No description provided for @liveCoords.
   ///
   /// In vi, this message translates to:
-  /// **'x {x} m · y {y} m'**
+  /// **'x {x} · y {y}'**
   String liveCoords(String x, String y);
 
   /// No description provided for @liveMatched.
@@ -636,6 +636,24 @@ abstract class L {
   /// In vi, this message translates to:
   /// **'Quay đầu'**
   String get stepUTurn;
+
+  /// No description provided for @stepStart.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đi'**
+  String get stepStart;
+
+  /// No description provided for @mapArrived.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã tới {noi}'**
+  String mapArrived(String noi);
+
+  /// No description provided for @liveStale.
+  ///
+  /// In vi, this message translates to:
+  /// **'Vị trí cập nhật {giay} giây trước'**
+  String liveStale(int giay);
 
   /// No description provided for @mapOpenDetail.
   ///

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// Sơ đồ mặt bằng THẬT và phép đổi mét ↔ pixel. Lưới chấm `Map.png` trải
-/// 1000 × 605 px, đúng hộp bao 86 × 52 m của bộ điểm tham chiếu, nên lưới
-/// chấm chính là hệ toạ độ mét. Trục y hướng LÊN, y = 0 ở cạnh dưới ảnh.
+/// Sơ đồ mặt bằng THẬT và phép đổi toạ độ ↔ pixel. Lưới chấm `Map.png` trải
+/// 1000 × 605 px, đúng hộp bao 86 × 52 đơn vị của bộ điểm tham chiếu, nên lưới
+/// chấm chính là hệ toạ độ Bảng 4. Trục y hướng LÊN, y = 0 ở cạnh dưới ảnh.
+/// Một đơn vị lưới là [metMoiDonVi] mét, không phải một mét.
 ///
-/// Số do `tools/trich_ban_do.py` đo; `tests/test_dashboard.py` đối chiếu.
+/// Số do `tools/trich_ban_do.py` đo.
 class SoDoThat {
   SoDoThat._();
 
@@ -22,6 +23,9 @@ class SoDoThat {
   /// Có tên riêng để test đối chiếu được: từng nằm trần ở cả ba ngôn ngữ mà
   /// không tệp nào khai, sửa lệch một nơi thì lệch 86 m mà test vẫn xanh.
   static const gocMetX = -43.0;
+
+  /// Hình 7 báo cáo CTK45: toà nhà cao 19,6 m trên 55,87 đơn vị lưới.
+  static const metMoiDonVi = 0.3508;
 
   /// Bán kính quầng khu vực: nửa trung vị khoảng cách tới điểm gần nhất (7,07 m
   /// trên 44 điểm). Quầng nói "đây là điểm đã đo và vùng quanh nó", không nói

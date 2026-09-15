@@ -143,7 +143,7 @@
   "@liveUnknown": {
     "description": "Dòng tiêu đề màn Trang chủ khi chưa có toạ độ. Trước đây chỗ này hiện một tên phòng có sẵn, khiến ứng dụng trông như đã biết người dùng đang ở đâu trong khi chưa quét lần nào"
   },
-  "liveCoords": "x {x} m · y {y} m",
+  "liveCoords": "x {x} · y {y}",
   "@liveCoords": {
     "placeholders": {
       "x": {
@@ -274,6 +274,23 @@
   "stepLeft": "Rẽ trái",
   "stepRight": "Rẽ phải",
   "stepUTurn": "Quay đầu",
+  "stepStart": "Đi",
+  "mapArrived": "Đã tới {noi}",
+  "@mapArrived": {
+    "placeholders": {
+      "noi": {
+        "type": "String"
+      }
+    }
+  },
+  "liveStale": "Vị trí cập nhật {giay} giây trước",
+  "@liveStale": {
+    "placeholders": {
+      "giay": {
+        "type": "int"
+      }
+    }
+  },
   "mapOpenDetail": "Mở chi tiết khu vực",
   "mapFilterAll": "Tất cả",
   "mapFilterHint": "Lọc sơ đồ theo loại khu vực",

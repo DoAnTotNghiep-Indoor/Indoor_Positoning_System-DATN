@@ -59,7 +59,7 @@
   "liveScanning": "Scanning WiFi…",
   "liveIdle": "Tracking is off",
   "liveUnknown": "Location unknown",
-  "liveCoords": "x {x} m · y {y} m",
+  "liveCoords": "x {x} · y {y}",
   "@liveCoords": {
     "placeholders": {
       "x": {
@@ -133,6 +133,9 @@
   "routeSummary": "{met} m · {buoc} steps",
   "routeStep": "{huong} {met} m to {noi}",
   "stepStraight": "Go straight",
+  "stepStart": "Go",
+  "mapArrived": "Arrived at {noi}",
+  "liveStale": "Location from {giay} s ago",
   "stepSlightLeft": "Bear left",
   "stepSlightRight": "Bear right",
   "stepLeft": "Turn left",

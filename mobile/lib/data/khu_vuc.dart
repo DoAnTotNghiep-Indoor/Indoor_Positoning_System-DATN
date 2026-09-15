@@ -10,9 +10,6 @@ import 'khu_vuc_thu_vien.dart';
 /// Khác với điểm tham chiếu, đây mới là thứ người dùng nghĩ tới khi tìm đường:
 /// không ai muốn "đi tới RP27", họ muốn "đi tới Khu vực đọc".
 class KhuVuc {
-  /// Hai điểm cùng nhóm xa hơn ngần này thì tách cụm, mỗi cụm mang nhãn riêng.
-  static const nguongCumM = 15.0;
-
   final String nhom;
 
   /// Câu một dòng, dùng cho danh sách.
@@ -48,35 +45,6 @@ class KhuVuc {
       if (l < min) min = l;
     }
     return min == double.infinity ? min : math.sqrt(min);
-  }
-
-  /// Tâm của từng CỤM điểm, mỗi cụm một chỗ đặt nhãn. Không dùng trọng tâm cả
-  /// nhóm: 5 trong 11 nhóm có trọng tâm rơi cách điểm gần nhất hơn 8 m. Gom
-  /// theo liên kết đơn trong [nguongCumM].
-  List<Offset> get tamCum {
-    final cha = List.generate(diem.length, (i) => i);
-    int goc(int i) {
-      while (cha[i] != i) {
-        cha[i] = cha[cha[i]];
-        i = cha[i];
-      }
-      return i;
-    }
-
-    for (var i = 0; i < diem.length; i++) {
-      for (var j = i + 1; j < diem.length; j++) {
-        if ((diem[i] - diem[j]).distance <= nguongCumM) cha[goc(i)] = goc(j);
-      }
-    }
-
-    final gom = <int, List<Offset>>{};
-    for (var i = 0; i < diem.length; i++) {
-      gom.putIfAbsent(goc(i), () => []).add(diem[i]);
-    }
-    return [
-      for (final c in gom.values)
-        c.reduce((a, b) => a + b) / c.length.toDouble(),
-    ];
   }
 
   /// Gộp danh sách điểm của `GET /map` thành khu vực.

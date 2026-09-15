@@ -303,9 +303,7 @@ class _HangChip extends StatelessWidget {
   }
 }
 
-/// Thẻ tổng quãng đường của tuyến đang hiện, kèm nút xoá. Số mét là đường
-/// Dijkstra cộng trên các cạnh ĐÃ LỌC TƯỜNG, trong hệ mét đo thực địa —
-/// khác CTK45 cộng trên hình học vẽ tay, nơi 12,8 m thật bị ghi thành 7,3 m.
+/// Thẻ quãng đường CÒN LẠI tới đích, kèm nút xoá; tới nơi thì báo đã tới.
 class _TheTuyen extends StatelessWidget {
   const _TheTuyen();
 
@@ -327,16 +325,25 @@ class _TheTuyen extends StatelessWidget {
           child: GlassCard(
             radius: 20,
             padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
-            child: MergeSemantics(
+            // Không gộp ngữ nghĩa: gộp thì chạm đúp vào dòng chữ lại xoá tuyến.
+            child: Semantics(
+              explicitChildNodes: true,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.turn_right_rounded,
-                      size: 18, color: AppColors.accentOf(context)),
+                  Icon(
+                      theoDoi.daToi
+                          ? Icons.flag_rounded
+                          : Icons.turn_right_rounded,
+                      size: 18,
+                      color: AppColors.accentOf(context)),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      t.mapRouteChip(so.format(tuyen.quangDuongM), dich.nhom),
+                      theoDoi.daToi
+                          ? t.mapArrived(dich.nhom)
+                          : t.mapRouteChip(
+                              so.format(tuyen.quangDuongM), dich.nhom),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

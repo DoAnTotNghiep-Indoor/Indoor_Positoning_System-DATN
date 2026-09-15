@@ -22,11 +22,20 @@ Android SDK 36.0.0.
 ## Chạy
 
 ```bash
-cd D:\Nam5\DATN\System_Indoor\mobile
+cd mobile
 flutter pub get
 flutter run                  # chọn thiết bị Android
 flutter analyze
 flutter test
+```
+
+Bản cài lên điện thoại để demo — chỉ arm64 (mọi máy Android đời mới), tách thông
+tin gỡ lỗi Dart ra `build/app/symbols`: APK 19,6 MB thay vì 55 MB của bản gộp ba
+kiến trúc. Bản debug chậm hơn nhiều, không dùng để đánh giá tốc độ.
+
+```bash
+flutter build apk --release --target-platform android-arm64 --obfuscate --split-debug-info=build/app/symbols
+adb install -r build/app/outputs/flutter-apk/app-release.apk
 ```
 
 Máy chủ phải chạy trước (`uvicorn backend.main:app --host 0.0.0.0` ở thư mục
@@ -51,7 +60,7 @@ lib/
 │   ├── quet_wifi.dart            # gọi wifi_scan, phân loại lý do không quét được
 │   ├── quyen_truy_cap.dart       # quyền vị trí / NEARBY_WIFI_DEVICES
 │   ├── api_dinh_vi.dart          # POST /predict, GET /map, POST /route
-│   ├── kenh_vi_tri.dart          # WS /ws/location, hỏng kênh thì rơi về REST
+│   ├── kenh_vi_tri.dart          # WS /ws/location — tạm tắt, app đi REST
 │   ├── la_ban.dart               # từ kế → hướng quy về trục sơ đồ
 │   └── theo_doi_vi_tri.dart      # vòng lặp quét 5 giây, giữ trạng thái cho UI
 ├── data/
@@ -71,8 +80,7 @@ lib/
 ```
 
 `khu_vuc_thu_vien.dart` **không sửa tay**: sinh bằng `python -m tools.sinh_khu_vuc`
-từ `data/reference/reference_points.csv`, và `tests/test_khu_vuc.py` so từng byte
-tệp sinh ra với CSV.
+từ `data/reference/reference_points.csv`.
 
 ## Ghi chú kỹ thuật
 
@@ -81,8 +89,8 @@ tệp sinh ra với CSV.
 này là giới hạn hệ điều hành chứ không phải tuỳ chọn.
 
 **Hệ toạ độ.** Sơ đồ dùng phép đổi mét ↔ pixel trong `lib/data/floor_map.dart`, cùng
-một phép với backend và Dashboard web. Ba nơi giữ cùng bộ hằng số và
-`tests/test_dashboard.py` đối chiếu cả ba với `data/reference/ban_do_tang1.json`.
+một phép với backend và Dashboard web. Ba nơi giữ cùng bộ hằng số lấy từ
+`data/reference/ban_do_tang1.json`.
 
 **Không đủ AP thì không đoán.** Máy chủ trả 422 khi lần quét khớp ít AP hơn
 ngưỡng trong hợp đồng dữ liệu; ứng dụng xoá toạ độ cũ và nói rõ "chưa xác định
@@ -97,20 +105,12 @@ tăng dần của Kotlin 2.x làm hỏng build. Gỡ dòng này khi nâng đư�
 | Lệnh | Kết quả |
 |---|---|
 | `flutter analyze` | `No issues found!` |
-| `flutter test` | `All tests passed!` (101 bài) |
+| `flutter test` | `All tests passed!` |
 | `flutter build apk --debug` | `✓ Built app-debug.apk` |
 
 | Tệp test | Nội dung |
 |---|---|
-| `dinh_vi_test.dart` | Vòng quét, phân loại lỗi API, huỷ giữa chừng, mốc cập nhật |
-| `quyen_va_dia_chi_test.dart` | Quyền truy cập, ô địa chỉ máy chủ, ghi nhớ tuỳ chọn |
-| `so_do_that_test.dart` | Phép đổi mét ↔ pixel và vị trí chấm trên sơ đồ |
-| `anh_khu_vuc_test.dart` | Số ảnh mỗi thư mục khớp `AssetManifest` |
-| `widget_test.dart` | Điều hướng, và không bịa vị trí khi chưa định vị |
-| `tuyen_va_loc_test.dart` | Vẽ tuyến lên sơ đồ và bộ lọc loại khu vực |
-| `kenh_vi_tri_test.dart` | Kênh WebSocket: lọc theo `device_id`, rơi về REST khi hỏng |
-| `la_ban_test.dart` | Quy đổi bắc từ → trục sơ đồ, lọc số đọc rung |
-| `uxui_test.dart`, `interaction_test.dart`, `settings_test.dart` | Trợ năng, cỡ chữ lớn, viewport thấp, song ngữ |
+| `api_test.dart` | Gọi `/predict`, `/map`, đọc JSON của `/route`, phân loại mã lỗi, địa chỉ máy chủ sai |
 
 Đã chạy trên máy Android thật — **Redmi K40 Pro (M2012K11C), Android 14** — nối
 qua `adb reverse tcp:8000`. Đứng ngoài thư viện nên khớp 0 trong 36 BSSID đã
@@ -146,6 +146,7 @@ app Windows desktop, không ảnh hưởng Android hay web.
 
 - Tuyến đường vẽ lên sơ đồ bằng chuỗi chấm theo mét thật (`so_do_that.dart`).
 - La bàn: nón hướng mở 40° quanh chấm vị trí (`la_ban.dart`).
-- `WS /ws/location`: ứng dụng gửi lần quét qua kênh, **hỏng kênh thì tự rơi về
-  REST** (`kenh_vi_tri.dart`). Kênh không làm vị trí cập nhật dày hơn — nhịp 5
+- `WS /ws/location`: **tạm tắt** (`_dungWebSocket = false` trong `main.dart`, máy
+  chủ `WEBSOCKET=false`), ứng dụng gửi lần quét qua `POST /predict`. Bật lại thì
+  gửi qua kênh, hỏng kênh tự rơi về REST (`kenh_vi_tri.dart`). Kênh không làm vị trí cập nhật dày hơn — nhịp 5
   giây do Android chặn quét WiFi quyết định, không do đường truyền.

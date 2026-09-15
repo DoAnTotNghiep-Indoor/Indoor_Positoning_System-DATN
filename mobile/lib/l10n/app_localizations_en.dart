@@ -207,7 +207,7 @@ class LEn extends L {
 
   @override
   String liveCoords(String x, String y) {
-    return 'x $x m · y $y m';
+    return 'x $x · y $y';
   }
 
   @override
@@ -332,6 +332,19 @@ class LEn extends L {
 
   @override
   String get stepUTurn => 'Turn around';
+
+  @override
+  String get stepStart => 'Go';
+
+  @override
+  String mapArrived(String noi) {
+    return 'Arrived at $noi';
+  }
+
+  @override
+  String liveStale(int giay) {
+    return 'Location from $giay s ago';
+  }
 
   @override
   String get mapOpenDetail => 'Open area detail';

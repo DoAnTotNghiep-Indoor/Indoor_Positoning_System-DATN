@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 
 import '../data/demo_data.dart';
+import '../data/floor_map.dart';
 import '../data/khu_vuc.dart';
 import '../l10n/app_localizations.dart';
 import '../services/api_dinh_vi.dart';
@@ -131,10 +132,13 @@ class _KhoiViTri extends StatelessWidget {
     final dangChay = theoDoi.trangThai != TrangThai.dung;
     final coLoi = theoDoi.trangThai == TrangThai.loi;
 
+    final giay = theoDoi.giayTuCapNhat;
     final phu = <String>[
-      if (coLoi)
-        _cauLoi(t, theoDoi, mayChu)
-      else if (vt == null)
+      if (coLoi) ...[
+        _cauLoi(t, theoDoi, mayChu),
+        // Mất kết nối thì toạ độ cũ vẫn hiện, nên phải nói nó cũ bao lâu.
+        if (vt != null && giay != null) t.liveStale(giay),
+      ] else if (vt == null)
         dangChay ? t.liveScanning : t.liveIdle
       else ...[
         t.liveMatched(vt.soApKhop),
@@ -145,7 +149,10 @@ class _KhoiViTri extends StatelessWidget {
       ],
     ];
 
-    return MergeSemantics(
+    // Không gộp ngữ nghĩa cả khối: gộp thì nút định vị và tên khu vực thành MỘT
+    // nút, TalkBack chỉ kích hoạt được một trong hai.
+    return Semantics(
+      explicitChildNodes: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -333,7 +340,8 @@ class _QuickTile extends StatelessWidget {
 /// sát, không phải thứ người dùng cần thấy ở Trang chủ. Màn Chi tiết vẫn giữ.
 String? _khoangCach(L t, KhuVuc k, ViTri? vt) {
   if (vt == null) return null;
-  return t.distanceMeters(k.khoangCach(vt.xGop, vt.yGop).round());
+  return t.distanceMeters(
+      (k.khoangCach(vt.xGop, vt.yGop) * SoDoThat.metMoiDonVi).round());
 }
 
 class _NearbyRow extends StatelessWidget {

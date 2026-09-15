@@ -10,8 +10,7 @@ class ViTri {
   final double x;
   final double y;
 
-  /// Toạ độ sau khi máy chủ gộp vài lần quét gần nhau. Đây mới là toạ độ nên
-  /// hiển thị: gộp 3 lần quét đưa sai số từ 1,90 m xuống 0,38 m trên tập test.
+  /// Toạ độ sau khi máy chủ gộp vài lần quét gần nhau — toạ độ nên hiển thị.
   final double xGop;
   final double yGop;
 
@@ -210,7 +209,7 @@ class ApiDinhVi {
 
     // 422 là "quét được nhưng không đủ AP quen để định vị" — khác hẳn lỗi máy
     // chủ. Máy chủ chặn thay vì trả một toạ độ không dựa trên dữ liệu nào.
-    if (tra.statusCode == 422) throw _khongDuAp(tra);
+    if (tra.statusCode == 422) throw _loi422(tra);
 
     if (tra.statusCode != 200) {
       throw NgoaiLeApi(LoiApi.mayChuLoi, maHttp: tra.statusCode);
@@ -224,16 +223,24 @@ class ApiDinhVi {
     }
   }
 
-  /// Bóc số AP khớp ra khỏi thân 422 để giao diện nói được "khớp 2/6". Thân
-  /// hỏng thì vẫn trả đúng loại lỗi với số đếm rỗng.
-  NgoaiLeApi _khongDuAp(http.Response tra) {
+  /// Máy chủ dùng 422 cho HAI chuyện: `detail` là object khi thiếu AP, là danh
+  /// sách khi pydantic bắt thân sai schema. Coi mọi 422 là thiếu AP thì ca thứ
+  /// hai hiện thành "khớp 0, cần ít nhất 0" — câu vô nghĩa, lại đổ lỗi cho vùng
+  /// phủ WiFi trong khi lỗi nằm ở gói tin gửi lên.
+  NgoaiLeApi _loi422(http.Response tra) {
+    Object? d;
     try {
-      final d = jsonDecode(utf8.decode(tra.bodyBytes))['detail'];
-      return NgoaiLeApi(LoiApi.khongDuAp,
-          maHttp: 422, soAp: d['so_ap'] as int, toiThieu: d['toi_thieu'] as int);
+      d = (jsonDecode(utf8.decode(tra.bodyBytes)) as Map)['detail'];
     } catch (_) {
-      return const NgoaiLeApi(LoiApi.khongDuAp, maHttp: 422);
+      return const NgoaiLeApi(LoiApi.saiDinhDang, maHttp: 422);
     }
+    if (d is! Map || d['loi'] != 'khong_du_ap') {
+      return const NgoaiLeApi(LoiApi.saiDinhDang, maHttp: 422);
+    }
+    return NgoaiLeApi(LoiApi.khongDuAp,
+        maHttp: 422,
+        soAp: (d['so_ap'] as num?)?.toInt(),
+        toiThieu: (d['toi_thieu'] as num?)?.toInt());
   }
 
   /// Điểm tham chiếu kèm tên, tải một lần rồi giữ lại. Nhờ nó giao diện nói
@@ -264,12 +271,13 @@ class ApiDinhVi {
     }
   }
 
-  /// Đường đi từ toạ độ hiện tại tới một điểm tham chiếu. Gửi toạ độ mét chứ
-  /// không gửi rp_id: máy chủ tự neo vào điểm gần nhất, ứng dụng khỏi nhân đôi.
+  /// Đường đi từ toạ độ hiện tại tới khu vực [denNhom], hoặc đúng điểm [denRp]
+  /// khi có. Gửi toạ độ chứ không gửi rp_id: máy chủ tự neo vào điểm gần nhất.
   Future<KetQuaChiDuong> chiDuong({
     required double tuX,
     required double tuY,
-    required String denRp,
+    required String denNhom,
+    String? denRp,
   }) async {
     final url = _url('/route');
 
@@ -279,7 +287,11 @@ class ApiDinhVi {
           .post(
             url,
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'tu_x': tuX, 'tu_y': tuY, 'den_rp': denRp}),
+            body: jsonEncode({
+              'tu_x': tuX,
+              'tu_y': tuY,
+              if (denRp != null) 'den_rp': denRp else 'den_nhom': denNhom,
+            }),
           )
           .timeout(quaHan);
     } on TimeoutException {

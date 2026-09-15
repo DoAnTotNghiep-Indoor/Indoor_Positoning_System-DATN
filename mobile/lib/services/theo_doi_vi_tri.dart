@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../data/floor_map.dart';
 import '../data/khu_vuc.dart';
 import 'api_dinh_vi.dart';
 import 'kenh_vi_tri.dart';
@@ -15,6 +16,11 @@ enum TrangThai { dung, dangChay, loi }
 /// Chu kỳ 5 giây vì Android chặn 4 lần `startScan` mỗi 2 phút.
 class TheoDoiViTri extends ChangeNotifier {
   static const chuKy = Duration(seconds: 5);
+
+  /// Đi được ngần này mét kể từ lần hỏi tuyến trước thì hỏi lại, kể cả khi vẫn
+  /// gần cùng một điểm tham chiếu — không thì quãng đường còn lại đứng im suốt
+  /// một khu vực rộng.
+  static const nguongTinhLaiM = 1.0;
 
   final MayQuetWifi _mayQuet;
   final ApiDinhVi _api;
@@ -55,11 +61,14 @@ class TheoDoiViTri extends ChangeNotifier {
 
   List<DiemThamChieu> _banDo = const [];
 
-  /// Tuyến đang hiện trên sơ đồ, null khi chưa chỉ đường. Giữ ở đây để tuyến
-  /// sống sót khi rời màn Chi tiết. Neo ở điểm xuất phát và KHÔNG tự tính lại:
-  /// chấm vị trí vẫn chạy, còn tính lại thì tuyến nhảy mỗi vòng quét.
+  /// Tuyến đang hiện trên sơ đồ, null khi chưa chỉ đường. Tính lại mỗi khi điểm
+  /// gần nhất đổi, nên `quangDuongM` luôn là quãng đường CÒN LẠI.
   KetQuaChiDuong? _tuyen;
   KhuVuc? _dichTuyen;
+  String? _rpDich;
+  String? _neoTuyen;
+  Offset? _viTriNeo;
+  bool _daToi = false;
 
   /// Chốt lượt riêng cho tuyến, cùng vai trò với `_luot` của vòng quét: một
   /// tuyến về muộn không được đè lên tuyến mới, cũng không được dựng lại sau
@@ -71,6 +80,7 @@ class TheoDoiViTri extends ChangeNotifier {
   List<DiemThamChieu> get banDo => _banDo;
   KetQuaChiDuong? get tuyen => _tuyen;
   KhuVuc? get dichTuyen => _dichTuyen;
+  bool get daToi => _daToi;
 
   /// Số giây kể từ lần có toạ độ gần nhất, null nếu chưa có lần nào. Giao diện
   /// phải hỏi giá trị này chứ không viết cứng như header cũ "2 giây trước".
@@ -84,8 +94,7 @@ class TheoDoiViTri extends ChangeNotifier {
   List<KhuVuc> get khuVuc =>
       sapTheoKhoangCach(KhuVuc.tuDiem(_banDo), _viTri);
 
-  /// Điểm tham chiếu gần nhất, null nếu chưa định vị hoặc chưa có bản đồ. Mô
-  /// hình luôn trả đúng toạ độ một điểm nên phép tìm này khớp tuyệt đối.
+  /// Điểm tham chiếu gần nhất, null nếu chưa định vị hoặc chưa có bản đồ.
   DiemThamChieu? get diemGanNhat {
     final vt = _viTri;
     if (vt == null || _banDo.isEmpty) return null;
@@ -127,42 +136,64 @@ class TheoDoiViTri extends ChangeNotifier {
     _kenh?.dong();
   }
 
-  /// Đường đi tới khu vực [k]. Ném [NgoaiLeApi] `khongKetNoi` khi chưa định vị:
-  /// đoán một điểm xuất phát sẽ cho ra tuyến sai trông rất hợp lý.
-  Future<KetQuaChiDuong> chiDuongToi(KhuVuc k) async {
+  /// Đường đi tới khu vực [k], hoặc đúng điểm [rpId] khi người dùng chạm một
+  /// điểm trên sơ đồ. Ném [NgoaiLeApi] `khongKetNoi` khi chưa định vị: đoán một
+  /// điểm xuất phát sẽ cho ra tuyến sai trông rất hợp lý.
+  Future<KetQuaChiDuong> chiDuongToi(KhuVuc k, {String? rpId}) async {
     final vt = _viTri;
     if (vt == null) throw const NgoaiLeApi(LoiApi.khongKetNoi);
 
-    // Đích là điểm GẦN NHẤT thuộc khu vực đó, không phải điểm đầu danh sách:
-    // "Cầu thang" có 12 điểm rải hai đầu toà nhà.
-    String? den;
-    var min = double.infinity;
-    for (final d in _banDo) {
-      if (d.nhom != k.nhom) continue;
-      final l = (d.x - vt.xGop) * (d.x - vt.xGop) +
-          (d.y - vt.yGop) * (d.y - vt.yGop);
-      if (l < min) {
-        min = l;
-        den = d.rpId;
-      }
+    // Gửi TÊN khu vực để máy chủ chọn điểm gần nhất THEO ĐƯỜNG ĐI: điểm gần nhất
+    // theo đường thẳng có thể nằm sau tường.
+    if (!_banDo.any((d) => d.nhom == k.nhom)) {
+      throw const NgoaiLeApi(LoiApi.saiDinhDang);
     }
-    if (den == null) throw const NgoaiLeApi(LoiApi.saiDinhDang);
 
     final luot = ++_luotTuyen;
-    final kq = await _api.chiDuong(tuX: vt.xGop, tuY: vt.yGop, denRp: den);
+    _neoTuyen = diemGanNhat?.rpId;
+    _viTriNeo = Offset(vt.xGop, vt.yGop);
+    final kq = await _api.chiDuong(
+        tuX: vt.xGop, tuY: vt.yGop, denNhom: k.nhom, denRp: rpId);
     if (luot != _luotTuyen) return kq;
     _tuyen = kq;
     _dichTuyen = k;
+    _rpDich = rpId;
+    _daToi = kq.soChang == 0;
     _bao();
     return kq;
   }
 
   void xoaTuyen() {
     _luotTuyen++;
+    _neoTuyen = null;
+    _daToi = false;
     if (_tuyen == null) return;
     _tuyen = null;
     _dichTuyen = null;
+    _rpDich = null;
     _bao();
+  }
+
+  /// Đi tới đâu tính lại tuyến từ đó; vào khu vực đích thì báo đã tới.
+  void _bamTuyen() {
+    final dich = _dichTuyen, gan = diemGanNhat;
+    if (dich == null || gan == null) return;
+    if (_rpDich != null ? gan.rpId == _rpDich : gan.nhom == dich.nhom) {
+      _daToi = true;
+      return;
+    }
+    if (_daToi) {
+      // Tới rồi mà đi khỏi thì tính lại, không để chip báo "đã tới" sai chỗ.
+      _daToi = false;
+      _neoTuyen = null;
+    }
+    final vt = _viTri!, neo = _viTriNeo;
+    final diChuyenM = neo == null
+        ? double.infinity
+        : (Offset(vt.xGop, vt.yGop) - neo).distance * SoDoThat.metMoiDonVi;
+    if (gan.rpId == _neoTuyen && diChuyenM < nguongTinhLaiM) return;
+    _neoTuyen = gan.rpId;
+    unawaited(chiDuongToi(dich, rpId: _rpDich).then((_) {}, onError: (_) {}));
   }
 
   void batDau() {
@@ -231,6 +262,7 @@ class TheoDoiViTri extends ChangeNotifier {
       _loiQuet = null;
       _loiApi = null;
       _trangThai = TrangThai.dangChay;
+      _bamTuyen();
     } on NgoaiLeQuet catch (e) {
       if (luot != _luot) return;
       _loiQuet = e.loai;

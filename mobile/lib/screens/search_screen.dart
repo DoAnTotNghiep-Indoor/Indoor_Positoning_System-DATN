@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lg;
 import '../data/demo_data.dart';
+import '../data/floor_map.dart';
 import '../data/khu_vuc.dart';
 import '../services/api_dinh_vi.dart';
 import '../services/theo_doi_vi_tri.dart';
@@ -308,7 +309,11 @@ class _ResultCard extends StatelessWidget {
       radius: 24,
       semanticLabel: khuVuc.nhom,
       semanticHint: t.a11yOpenArea,
-      onTap: () => moChiTietKhuVuc(context, khuVuc),
+      onTap: () {
+        // Ô tìm kiếm còn giữ focus thì con trỏ mờ dần liên tục, kính vẽ lại mỗi khung.
+        FocusManager.instance.primaryFocus?.unfocus();
+        moChiTietKhuVuc(context, khuVuc);
+      },
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
@@ -353,8 +358,9 @@ class _ResultCard extends StatelessWidget {
           if (viTri != null) ...[
             const SizedBox(width: 8),
             Text(
-              t.distanceMeters(
-                  khuVuc.khoangCach(viTri!.xGop, viTri!.yGop).round()),
+              t.distanceMeters((khuVuc.khoangCach(viTri!.xGop, viTri!.yGop) *
+                      SoDoThat.metMoiDonVi)
+                  .round()),
               maxLines: 1,
               // Thiếu overflow thì Text cắt ngang không để lại dấu gì.
               overflow: TextOverflow.ellipsis,

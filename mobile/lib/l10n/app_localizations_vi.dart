@@ -207,7 +207,7 @@ class LVi extends L {
 
   @override
   String liveCoords(String x, String y) {
-    return 'x $x m · y $y m';
+    return 'x $x · y $y';
   }
 
   @override
@@ -329,6 +329,19 @@ class LVi extends L {
 
   @override
   String get stepUTurn => 'Quay đầu';
+
+  @override
+  String get stepStart => 'Đi';
+
+  @override
+  String mapArrived(String noi) {
+    return 'Đã tới $noi';
+  }
+
+  @override
+  String liveStale(int giay) {
+    return 'Vị trí cập nhật $giay giây trước';
+  }
 
   @override
   String get mapOpenDetail => 'Mở chi tiết khu vực';

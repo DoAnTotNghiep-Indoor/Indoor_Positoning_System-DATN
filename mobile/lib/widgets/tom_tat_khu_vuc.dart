@@ -15,7 +15,7 @@ import 'tap_feedback.dart';
 /// Chỉ màn Bản đồ dùng tấm này. Trang chủ vào thẳng màn Chi tiết vì ở đó người
 /// dùng đã đọc tên và mô tả trên danh sách rồi; còn chạm một chấm trên sơ đồ thì
 /// chưa biết đó là chỗ nào nên cần một bước trả lời trước.
-void hienTomTatKhuVuc(BuildContext context, KhuVuc k) {
+void hienTomTatKhuVuc(BuildContext context, KhuVuc k, {String? rpId}) {
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: Theme.of(context).colorScheme.surface,
@@ -27,6 +27,7 @@ void hienTomTatKhuVuc(BuildContext context, KhuVuc k) {
     // nó chỉ thấy được scope nào nằm trên Navigator.
     builder: (sheet) => _TomTat(
       khuVuc: k,
+      rpId: rpId,
       ngoai: context,
       theoDoi: TheoDoiViTriScope.of(context),
     ),
@@ -35,6 +36,10 @@ void hienTomTatKhuVuc(BuildContext context, KhuVuc k) {
 
 class _TomTat extends StatefulWidget {
   final KhuVuc khuVuc;
+
+  /// Điểm vừa chạm trên sơ đồ: chỉ đường tới đúng điểm này, không tới điểm gần
+  /// nhất của cả khu vực.
+  final String? rpId;
 
   /// Context của màn Bản đồ, không phải của tấm này. Mở màn Chi tiết phải đẩy
   /// lên Navigator đó — đẩy lên context của tấm thì màn mới bị gỡ ngay cùng lúc
@@ -45,6 +50,7 @@ class _TomTat extends StatefulWidget {
 
   const _TomTat({
     required this.khuVuc,
+    this.rpId,
     required this.ngoai,
     required this.theoDoi,
   });
@@ -64,7 +70,7 @@ class _TomTatState extends State<_TomTat> {
 
     setState(() => _dangTim = true);
     try {
-      await theoDoi.chiDuongToi(widget.khuVuc);
+      await theoDoi.chiDuongToi(widget.khuVuc, rpId: widget.rpId);
       // Đóng tấm để lộ sơ đồ: tuyến vừa tìm được đã nằm trong TheoDoiViTri nên
       // nó tự vẽ lên, kèm thẻ tổng quãng đường ở đầu màn.
       if (mounted) Navigator.of(context).pop();
