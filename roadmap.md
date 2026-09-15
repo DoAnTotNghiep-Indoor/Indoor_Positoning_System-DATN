@@ -336,8 +336,8 @@ RP22 và RP25 ở |x| = 43 m — rộng hơn cả eo, bất khả. Vậy **y = 0
 vào** (hàng RP01–RP03), y = 52 ở đầu kia.
 
 *Trục x không lật.* Khớp 39 điểm với toạ độ GPS trong `POI.geojson` bằng phép
-quay–co–tịnh tiến: không lật cho RMS 3,15 m, lật cho 13,84 m. (Tỉ lệ khớp ra
-0,39 nên bản GeoJSON đó không đúng tỉ lệ thật, chỉ dùng được để xét chiều.)
+quay–co–tịnh tiến: không lật cho RMS 3,15, lật cho 13,84. (Tỉ lệ khớp ra 0,39 —
+về sau hoá ra gần đúng: một đơn vị lưới là 0,3508 m, xem mục ngày 14/09/2026.)
 
 **Kiểm chứng.** Phủ cả 40 điểm lên ảnh: 33 điểm rơi gọn trong lòng nhà, 7 điểm
 còn lại lệch nhiều nhất 1,63 m và đều rơi trúng một cấu trúc **đúng tên của
@@ -680,9 +680,17 @@ cuối tài liệu.*
 - 📄 **`/ws/location` phát toạ độ của mọi thiết bị cho mọi kênh đang mở**, kèm cả
   `device_id`. Không sửa: Dashboard cần đúng như thế. Đã ghi vào mục "Hạn chế đã
   biết" của README.
-- ⏳ **RP26 có toạ độ nhưng không có mẫu đo nào** — 40 điểm trên bản đồ, 39 điểm
-  có dữ liệu. Mô hình vĩnh viễn không báo được RP26 dù `/route` vẫn dẫn tới đó.
-  Muốn sửa phải đo bổ sung tại chỗ.
+- ⏸ **Gộp buổi thu 06/09/2026 — đã thử, đang hoãn.** Gộp làm kNN vân tay xấu đi
+  2,30 → 3,54 m, và thiệt hại nằm trên chính những điểm cũ (2,30 → 4,08 m) chứ
+  không phải điểm mới (0,49 m). Nguyên nhân là lệch thiết bị Samsung/Redmi. Công
+  tắc `ml.config.GOP_BUOI_BO_SUNG = False`; bằng chứng đầy đủ ở
+  `data/raw/nhom15_2026/README.md`. Mở lại sau khi đo độ lệch hai máy.
+
+- ⏳ **Năm điểm có toạ độ nhưng không có mẫu đo nào** — 44 điểm trên bản đồ, 39
+  điểm có dữ liệu: RP26 (Khu vực đọc, kế thừa CTK45 nhưng buổi thu 2025 bỏ sót),
+  RP42/RP43 (WC) và RP44/RP45 (cầu thang) do nhóm 2025 thêm. `/route` dẫn tới cả
+  năm, mô hình thì vĩnh viễn không báo được chúng. Muốn sửa phải đo tại chỗ.
+  `ml.audit` mục 5 theo dõi con số này để nó không trôi.
 
 ### Đã kiểm, sạch
 
@@ -858,3 +866,357 @@ huấn luyện — dữ liệu vẫn là 782 mẫu trên 39 điểm.
   Hội trường vì thế vòng lên giữa nhà, dài gấp 1,5 lần đường thẳng.
 - **Lưới tham số chạm biên trở lại**: cả 5 mô hình đều có tham số tối ưu rơi vào
   mép lưới, riêng XGBoost tì biên ở 5 chiều cùng lúc.
+
+## Rà soát 11/09/2026 — lỗi tiềm tàng giai đoạn 1, 2
+
+- **Giao thức bỏ trọn một điểm rò rỉ**: nó đọc `fingerprint_dataset_raw.csv`, mà
+  bộ AP, giá trị điền và Hampel trong tệp đó đã học từ tập train có mặt mọi
+  điểm. Nay mỗi lần gấp làm lại bước 5-10 chỉ trên phần học. XGBoost 14,60 →
+  **15,01 m**, vẫn đứng đầu, thấp hơn kNN 11,6% và WKNN 5,4%; bảng 05/09 ở trên
+  giữ nguyên làm mốc lịch sử.
+- **0 dBm không còn là số đo hợp lệ**, ở cả backend lẫn pipeline — đó là số trình
+  điều khiển trả khi AP quá gần. Dữ liệu thô không có số đọc nào như vậy nên
+  artifact không đổi.
+- **Cảnh báo phân tầng bỏ sót lần tách val/test**: điểm có 3 mẫu qua được lần cắt
+  đầu nhưng tập tạm chỉ còn 1, sklearn lặng lẽ chia thường. Dữ liệu hiện tại mỗi
+  điểm 20-21 mẫu nên chưa dính.
+- Ba chú thích khẳng định "luôn rơi đúng một điểm tham chiếu" nay ghi rõ đó là
+  hệ quả của mô hình k=1 hiện tại, không phải bất biến.
+
+## Rà soát 11/09/2026 — lỗi tiềm tàng giai đoạn 3, 4
+
+- **Số vô hạn làm 422 hoá 500**: `1e999` là JSON hợp lệ và đọc ra inf. `/route`
+  nhận nó làm `tu_x`, còn mọi lỗi schema chép lại giá trị gửi lên vào thân 422,
+  mà inf/NaN không tuần tự hoá được. Nay `tu_x`/`tu_y` từ chối số không hữu hạn
+  và thân 422 bỏ trường `input`.
+- **Khung WebSocket nhị phân làm đứt kênh** (`KeyError: 'text'` trong
+  `receive_json`). Nay đọc được cả khung chữ lẫn khung nhị phân.
+- **Phát toạ độ lần lượt**: mỗi dashboard treo cộng thêm 2 s vào độ trễ của
+  `POST /predict`. Nay gửi song song, tối đa một hạn giờ.
+- Dashboard: `api.js` huỷ hẹn giờ trước khi đọc xong thân và để lỗi đọc JSON
+  lọt ra dạng `SyntaxError`; bấm "Tìm đường" hai lần có thể vẽ tuyến của lần
+  trước; socket cũ bắn `onclose` sau khi đã mở socket mới thì sinh thêm một
+  chuỗi nối lại.
+- Đã kiểm, sạch: chạy test không ghi vào `data/ips.db` thật; máy chủ chỉ phục vụ
+  đúng 11 tệp của `frontend/`; mọi chỗ hiện dữ liệu máy chủ đều qua `textContent`.
+
+Vòng hai, cùng ngày:
+
+- **Một lần CSDL lỗi làm đứt kênh WebSocket.** Nay trả `{"loi": "may_chu_loi"}`
+  rồi nghe tiếp; ứng dụng di động vốn xếp mã lạ vào `mayChuLoi`.
+- **Client bị loại khỏi danh sách phát không bị đóng**, nên Dashboard vẫn báo
+  "Đang kết nối" mà không nhận gì và không tự nối lại. Nay đóng mã 1011.
+- **Mã không giới hạn độ dài**: `tu_rp` 2 MB được trả nguyên văn trong thân 404.
+  Nay `bssid`, `tu_rp`, `den_rp`, `den_nhom` tối đa 64 ký tự; `den_rp`,
+  `den_nhom` cũng cắt khoảng trắng như `tu_rp`.
+- **`CUA_SO_GOP=0` làm mọi `/predict` vỡ `IndexError`**. Nay cấu hình từ chối
+  ngay lúc khởi động.
+- Dashboard tự thử lại khi mở trang lúc máy chủ chưa lên.
+- Đã đo, KHÔNG phải lỗi: 5 yêu cầu đồng thời của một thiết bị mới vẫn chỉ mở 1
+  phiên.
+- Chú thích và docstring ở `backend/`, `frontend/` giảm từ 424 xuống 187 dòng;
+  AST Python và các dòng mã JS so với trước khi nén y hệt.
+
+## Sửa theo mức ưu tiên — 11/09/2026
+
+- **Cửa sổ trượt đo sai thứ tự.** Phép mô phỏng chạy theo thứ tự dòng trong
+  `test.csv` chứ không theo thời gian; chỉ 6/39 điểm tình cờ đúng thứ tự. Nay
+  chạy theo thời gian, và đo thêm trên chuỗi dài train+val đoán ngoài phần.
+- **Hoà thì lấy dự đoán mới nhất.** Chọn trên train+val theo thời gian, cả bốn
+  mô hình đều tốt hơn lấy cái cũ. kNN vân tay, cửa sổ 3: test 2,30 → 1,72 m
+  (sai 18 → 14/118), chuỗi dài 1,69 → 0,86 m (sai 76 → 40/664). Con số 1,40 m
+  cũ bỏ ở mọi nơi.
+- **Bảng qua 10 seed** (`python -m ml.on_dinh`, `model_stability.csv`): seed 42
+  xấu bất thường cho kNN (5,50 m so với 3,61 ± 0,78); XGBoost thua kNN ở 10/10
+  seed; riêng seed 42 hai mô hình chồng khoảng tin cậy.
+- `ml.report` vẽ theo mô hình đang triển khai, không chọn theo sai số test.
+- Lưới `beta` thêm 4,0 để cực trị 3,5 nằm trong lưới; nới biên XGBoost và RF
+  thêm một nấc đổi validation dưới 0,1 m nên giữ nguyên lưới.
+- Backend bật thực thi khoá ngoại SQLite; Swagger khai mã 404/409/422.
+- CSDL local dọn còn 37 dự đoán của điện thoại thật, có sao lưu trước khi dọn.
+- Tài liệu: 7 cửa giả định, 12 khu vực, 40 ảnh/12 thư mục, bỏ các con số dễ lỗi
+  thời; `.env.example`; `requirements.txt` thêm Pillow, scipy cho `tools/`.
+- Giữ nguyên, có lý do: giá trị điền −96 (đổi dữ liệu thì mã băm hợp đồng bắt
+  được); 32/36 đặc trưng là BSSID ảo — chất liệu phân tích, chưa phải lỗi.
+
+## Chỉ đường theo đồ thị tầm nhìn — 11/09/2026
+
+- **Tuyến vòng vo vì đồ thị quá thưa.** Mỗi điểm chỉ nối 3 điểm gần nhất nên
+  RP20 (cầu thang tây) tới Căn tin đi 111 m qua 10 chặng, trong khi đường thẳng
+  là 65,8 m. Nay nối thẳng mọi cặp điểm nhìn thấy nhau trên sơ đồ (246 cặp, dò
+  bằng `tools/trich_ban_do.py`) cộng 7 cửa giả định cũ: còn 72,6 m qua 2 điểm
+  mốc. Trên 946 cặp: độ vòng trung vị 1,50 → 1,11, số chặng 6,3 → 2,6, không
+  cặp nào dài ra. Chọn đích theo chim bay sai 16,1% → 5,1%. Cầu thang sát Căn
+  tin là RP44, 11 m.
+- **Khoảng cách hiển thị là quãng đường còn lại.** App tính lại tuyến mỗi khi
+  điểm gần nhất đổi; vào khu vực đích thì chip báo "Đã tới …" và ẩn tuyến, đi
+  khỏi thì tính lại.
+- Back ở màn Tìm kiếm đóng tìm kiếm rồi về Trang chủ, không thoát app.
+- Thẻ "Bạn đang ở" và chip tuyến đường thôi gộp ngữ nghĩa cả khối: TalkBack
+  chạm được riêng nút định vị, tên khu vực và nút xoá tuyến.
+- Mất máy chủ thì Trang chủ ghi vị trí đang hiện đã cập nhật cách đây bao lâu.
+- Bước đầu của chỉ dẫn nói "Đi", không "Đi thẳng" — chưa biết người dùng quay
+  mặt về đâu.
+- Giữ nguyên: tìm kiếm không phân biệt dấu ("tin" khớp "tính"), để gõ không dấu
+  vẫn tìm được.
+
+## Chỉ đường trên lưới đi lại, tỉ lệ mét — 14/09/2026
+
+- **Một đơn vị lưới không phải một mét.** Hình 7 báo cáo CTK45 ghi toà nhà cao
+  4 + 5,2 + 8,8 + 1,6 = 19,6 m trên 55,87 đơn vị: 0,3508 m/đơn vị. Đa giác
+  OpenStreetMap chỉ chứa trọn mặt bằng khi ≤ 0,35 (ở 1,0 chỉ 74% lọt); GPS của
+  `POI.geojson` cho trung vị 0,40. Câu "cách nhau 7 mét" từng dùng làm căn cứ nằm
+  trong đoạn CTK45 chép từ bài báo khác. Tuyến Cầu thang → Căn tin: 72,6 → 23,2 m.
+- **A* và Dijkstra chạy trên góc vật cản.** Nút là 417 góc lồi dò từ `Map.png`
+  cộng 44 RP, 17.209 cạnh nhìn thấy nhau; tuyến đi từ đúng vị trí người dùng.
+  Sai so với mốc (Dijkstra lưới điểm ảnh 80 hướng), 4.400 cặp: trung bình 2,40 →
+  0,03 m, lớn nhất 31,1 → 0,17 m. A* mở 32,7 nút, Dijkstra 253,7, cùng quãng đường.
+- **Trên tập test:** quãng đường hiển thị từ vị trí dự đoán so với quãng đường
+  thật, cửa sổ 3: ứng dụng cũ sai trung bình 31,5 m, nay 0,44 m (trung vị 0,03).
+- Chỉ dẫn: góc vật cản mang tên đích; chặng dưới 0,5 m dồn vào chặng kề.
+- App: "cách X m" nhân tỉ lệ; đi từ 1 m cũng tính lại quãng đường còn lại.
+- `/map` trả `don_vi: don_vi_luoi` và `met_moi_don_vi`; `/route` nhận `thuat_toan`.
+- Chưa đổi: bảng sai số định vị ở mục 2.4 vẫn là đơn vị lưới dưới nhãn "m".
+
+## Thu gọn kiểm thử — 14/09/2026
+
+- Chỉ giữ kiểm thử REST API, bỏ phần còn lại (kể cả kiểm thử WebSocket) theo yêu cầu.
+  Tính năng WebSocket vẫn giữ, chỉ không còn kiểm thử.
+- Backend: 277 → 58 ca. `tests/test_api.py` gom 52 kiểm thử endpoint HTTP từ 9 tệp.
+- Flutter: 112 → 19 ca, `test/api_test.dart` (lớp gọi API).
+- Không còn kiểm thử cho tiền xử lý, huấn luyện, đánh giá chéo, hậu xử lý, đồ thị
+  và lưới chỉ đường, hằng số đổi toạ độ giữa ba ngôn ngữ, giao diện ứng dụng.
+
+## Tạm tắt WebSocket, dùng REST — 14/09/2026
+
+- Backend: `WEBSOCKET` (mặc định `false`). Tắt thì `/ws/location` đóng ngay bằng
+  403 thay vì rơi xuống StaticFiles vỡ 500, `/predict` không phát tin; `/health`
+  trả `websocket`. Mã WebSocket giữ nguyên, bật lại không phải sửa gì.
+- `/predictions` thêm `device_id` và `do_tre_ms` để Dashboard vẽ được thiết bị.
+- Dashboard: tắt WebSocket thì hỏi `/predictions` mỗi 2 giây; lượt đầu chỉ lấy mốc để
+  lịch sử cũ không hiện thành thiết bị đang định vị.
+- Ứng dụng: `_dungWebSocket = false`, gửi lần quét qua `POST /predict`.
+- Kiểm chứng: 59 kiểm thử REST đạt, kiểm thử công tắc đỏ khi bật WebSocket; máy chủ
+  thật trả 403 cho `/ws/location`; logic hỏi định kỳ chạy thử bằng Node. Chưa xem
+  Dashboard trên trình duyệt thật.
+
+## Toạ độ RP01, RP03, RP09 theo Bảng 4 — 14/09/2026
+
+- Dữ liệu chép từ CTK45 nên toạ độ theo đúng Bảng 4 và `combined_data_sorted.csv`
+  của họ: RP01 (−16, 0), RP03 (16, 0), RP09 (30, 14). Giá trị ±41 và (38, 7) từng
+  được đổi trong commit `8de69f7` mà không ghi căn cứ. Cột `note` nay ghi nguồn.
+- Sinh lại pipeline, mô hình, báo cáo, 10 seed, bỏ trọn một điểm, bản đồ,
+  `khu_vuc_thu_vien.dart`. Hợp đồng dữ liệu không đổi (chỉ `created_at`).
+- Mô hình (test seed 42): kNN vân tay 2,32 · WKNN 4,60 · kNN 5,41 · XGBoost 5,82 ·
+  RF 6,69. Bỏ trọn một điểm: XGBoost 14,26 đứng đầu. Chuỗi dài sau gộp 0,82 m.
+- Bản đồ: cửa giả định 7 → 6, cặp nhìn thấy nhau 246 → 257, lưới đi lại 347 góc.
+  RP20 → Căn tin nay nối thẳng 55,7 đơn vị = 19,4 m.
+- Chỉ đường: sai so với mốc 0,03 m; A* mở 36,2 nút, Dijkstra 195,2.
+- `test_route_chon_thuat_toan` đổi điểm xuất phát: (30, 14) nay chính là Căn tin.
+
+## Rà dữ liệu đầu vào, giai đoạn 1 và huấn luyện lại — 14/09/2026
+
+- Dữ liệu thô sạch: 25.712 dòng, 802 lần quét, không trùng, RSSI −95…−19, mỗi lần quét
+  một điểm; 237 ô trống đều là SSID ẩn (không dùng). 40 toạ độ khớp dữ liệu CTK45.
+- Lỗi thật: nhãn "RP41" là RP26 — 20/20 lần quét trùng khít RP26 trong
+  `combined_data_sorted.csv` của CTK45, đo giữa phiên RP27 và RP28. Pipeline bỏ 20
+  lần quét và mất vị trí RP26. Sửa lúc nạp (`NHAN_RP_SUA`), không sửa tệp thô.
+- Mã giai đoạn 1 không có lỗi logic mới. Hợp đồng dữ liệu giữ nguyên 36 AP, −96 dBm.
+- Huấn luyện lại trên 802 lần quét, 40 điểm (train 561 · val 120 · test 121):
+  test seed 42 kNN 3,44 · kNN vân tay 3,47 · WKNN 3,52 · XGBoost 6,28 · RF 6,67;
+  10 seed kNN vân tay 2,44 ± 0,34 dẫn 9/10; bỏ trọn một điểm XGBoost 14,21 đứng đầu.
+- Seed 42 nay xấu bất thường cho kNN vân tay chứ không cho kNN.
+- Sinh lại 7 biểu đồ đánh giá; chỉ đường đầu–cuối 0,59 m (trung vị 0,03 m).
+
+## Rà soát giai đoạn 3, 4 sau khi huấn luyện lại — 14/09/2026
+
+- Hợp đồng giai đoạn 1 → 3: 121/121 lần quét test dựng lại từ dữ liệu thô, gửi qua
+  `POST /predict`, trùng khít dự đoán ngoại tuyến (lệch 0); suy luận trung vị 0,9 ms.
+- Chạy mọi endpoint trên máy chủ thật: `/route` 528 cặp x A*/Dijkstra khớp nhau, các ca
+  lỗi đúng mã 404/422, `/ws/location` 403, tệp tĩnh Dashboard 200, log không traceback.
+- Gọi `localhost` trên Windows chậm 2 s mỗi yêu cầu do thử IPv6 trước — lỗi phía gọi,
+  `127.0.0.1` còn 6 ms. App và Dashboard dùng IP LAN nên không bị.
+- Sửa nhãn đơn vị: toạ độ là đơn vị lưới nhưng Dashboard ghi phạm vi "86 × 52 m" (nay
+  30,2 × 18,2 m), cột "x (m)"/"y (m)" hai bảng, thông báo ngoài phạm vi; app ghi
+  "x … m · y … m".
+- Chạy `api.js` và vòng hỏi REST thật của Dashboard bằng Node với máy chủ thật: đạt.
+
+
+## Toạ độ RP01, RP03, RP09 theo bản vẽ mặt bằng, nhãn từng điểm — 14/09/2026
+
+- Nhóm chốt toạ độ theo `reports/figures/ban_ve_kieu_ctk45.png`: RP01 (−41, 0),
+  RP03 (41, 0), RP09 (38, 7). Bảng 4 và dữ liệu CTK45 ghi (−16, 0), (16, 0), (30, 14);
+  cột `note` ghi cả hai.
+- Sơ đồ app: mỗi điểm một nhãn (44 nhãn) thay vì một nhãn mỗi cụm; thước 10 m lùi vào
+  để khỏi đè nhãn TV3,4.
+- Sinh lại bản đồ (7 cửa giả định, 246 cặp nhìn thấy nhau, lưới 417 góc / 17.275 cạnh),
+  `khu_vuc_thu_vien.dart`, pipeline, mô hình, báo cáo, 10 seed, bỏ trọn một điểm, hình.
+- Test seed 42: kNN 3,44 · kNN vân tay 3,45 · WKNN 3,51 · RF 6,92 · XGBoost 7,02;
+  10 seed kNN vân tay 2,58 ± 0,36 dẫn 9/10; bỏ trọn một điểm XGBoost 14,80 đứng đầu.
+- Chỉ đường: sai so với mốc 0,03 m; A* mở 32,7 nút, Dijkstra 253,7; đầu–cuối 0,59 m.
+- 59 kiểm thử backend, 19 Flutter đạt; kiểm trên máy thật.
+
+## Nối thêm 5 cạnh nhóm chỉ định — 15/09/2026
+
+- `CUA_NHOM_CHI_DINH` trong `tools/trich_ban_do.py`: RP26-RP19, RP27-RP19, RP29-RP20,
+  RP32-RP21, RP06-RP02. Mở trên mặt nạ đi lại như cửa giả định, `/graph` gắn cờ
+  `cua_gia_dinh`, hình `do_thi_di_lai.png` vẽ nét đỏ riêng. Cửa giả định 7 → 12.
+- Lưới đi lại 512 góc / 23.009 cạnh. Tuyến qua cạnh mới dài bằng đường thẳng
+  (RP26→RP19 5,37 m; RP06→RP02 4,51 m).
+- Chỉ đường: sai so với mốc 0,03 m; A* mở 26,0 nút, Dijkstra 290,3; đầu–cuối 0,52 m.
+
+## Luật nối RP01, RP03, RP18-RP20 và cạnh 20-26, 21-27 — 15/09/2026
+
+- `CHI_NOI`: RP01 chỉ nối RP45, RP02; RP03 chỉ nối RP44, RP02 — áp cho cạnh nhìn thấy,
+  lưới đi lại (không nối góc nào) và điểm xuất phát (không đi thẳng vào hai điểm này).
+- `CAM_NOI` bỏ RP18-RP20; `CUA_NHOM_CHI_DINH` thêm RP20-RP26, RP21-RP27.
+- Cửa giả định cố định: `CUA_CU` giữ 6 cửa tự động cũ để luật mới không làm vòng nối
+  chọn lại khác (thử thì sinh cửa lạ RP04-RP43 xuyên tường). Tổng 13 cửa.
+- Cửa đổi từ khoét lối 3 px trên mặt nạ sang cạnh nối đúng hai điểm: khoét lối thì
+  RP18 đi tắt vào giữa lối 20-26, tới RP20 chỉ 3,67 m; nay phải qua RP26, 7,21 m.
+- Lưới 286 góc / 9.460 cạnh. Sai so với mốc: 0,03 m trên 3.492 cặp không chịu luật;
+  908 cặp qua RP01/RP03 lệch TB 1,07 m có chủ ý. A* 28,9 nút, Dijkstra 165,7.
+
+## WC không nối điểm nào, bỏ cạnh quanh RP44/RP45 — 15/09/2026
+
+- `KHONG_NOI` = RP42, RP43: không cạnh tới điểm tham chiếu nào, vẫn là đích (tới qua
+  góc lối đi); không tuyến nào đi xuyên qua WC.
+- `CAM_NOI` thêm 45-12, 45-13, 45-20, 44-14, 44-15, 44-21 (yêu cầu ghi "45-10": cạnh
+  45-10 không tồn tại, đường kẻ sát RP10 là 45-13, đối xứng với 44-14).
+  `CUA_NHOM_CHI_DINH` thêm 05-45, 06-44 (bị tường chặn nên thành cửa). Tổng 15 cửa.
+- Điểm xuất phát theo luật của RP gần nhất (`cam_noi`, `khong_noi` trong JSON): đứng ở
+  RP20 không đi thẳng vào nút RP45. Nhưng hai điểm nhìn thấy nhau trên sơ đồ nên tuyến
+  qua một góc sát bên vẫn gần thẳng (10,70 m so với 10,67 m).
+- 59 kiểm thử backend đạt.
+
+## Đánh giá lại các mốc vừa đổi với dữ liệu hiện có — 15/09/2026
+
+- Vân tay WiFi KHÔNG phân biệt được tường: cặp cách ≤ 8 m bị tường chặn lệch RSSI TB
+  7,4 dB, nhìn thấy nhau 7,3 dB (p = 0,39; cùng ngày đo p = 0,99). Nên dữ liệu không
+  xác nhận hay bác bỏ được cạnh nào; 05-45, 06-44, mọi cạnh của RP42–45 còn không có
+  lần quét. Cạnh là quyết định của nhóm, cần đối chiếu thực địa.
+- Toạ độ RP01 (−41, 0), RP03 (41, 0) hợp vân tay hơn ±16 một chút (Spearman +0,04, thắng
+  76–79% lượt bootstrap) nhưng KTC95 chứa 0; RP09 hoà. Không đủ để kết luận.
+- Sửa lỗi phát hiện khi đánh giá: áp `khong_noi` cho điểm xuất phát làm người đứng cạnh
+  WC tới Căn tin cách 0,97 m bị vòng 4,31 m. Bỏ; WC vẫn không có cạnh.
+- Chỉ đường: 3.492 cặp không chịu luật RP01/RP03 sai TB 0,03 m, lớn nhất 0,30 m; 908 cặp
+  chịu luật lệch TB 1,01 m có chủ ý. Đầu–cuối 0,79 m (trung vị 0,03). A* 27,4 nút,
+  Dijkstra 165,8. Đồ thị RP cũ không còn tới được WC.
+
+## Đối chiếu kỹ các mốc vừa đổi với vân tay — 15/09/2026
+
+- (A) Hồi quy lệch RSSI theo log khoảng cách + cùng ngày + "sơ đồ chặn", 321 cặp ≤ 12 m,
+  hoán vị trong dải 2 m: độ đo MAE cho hệ số tường −0,8 dB (cặp bị chặn lại GIỐNG nhau
+  hơn, p 0,001), độ đo tương quan 0,00 (p 0,93). (B) Tỉ lệ nhầm lẫn giữ-trọn-một-điểm, so
+  trong cùng dải 1,5 m và cùng tình trạng ngày: cặp nhìn thấy nhau không nhầm nhiều hơn cặp
+  bị chặn (p 0,84). Kết luận: tường trên `Map.png` không để lại dấu vết đo được trong vân
+  tay, nên dữ liệu không xác nhận hay bác bỏ được cạnh nào (thêm hay xoá). RP42–RP45 không
+  có lần quét.
+- (C) Mô hình suy hao log-khoảng cách mỗi AP, khớp trên 37 điểm; hiệu chuẩn giữ-một-điểm
+  sai trung vị 4,3 m. RP01: ước lượng (−37, 16), gần (−41, 0) hơn (5,8 so với 9,3 m), thắng
+  100% bootstrap theo radio; nhầm nhiều nhất với RP16, RP08, RP04 (đều phía tây) — hai
+  cách cùng ủng hộ (−41, 0). RP03: ước lượng (29, 10), cách hai phương án 5,5 và 5,8 m — không
+  phân định. RP09: ước lượng (24, 18), gần (30, 14) hơn (2,5 so với 6,2 m), (30, 14) thắng 99%;
+  nhầm nhiều nhất với RP15 (26, 22), RP14 — hai cách cùng nghiêng về toạ độ Bảng 4, trái
+  với (38, 7) đang dùng. Hai phương án RP09 chỉ cách 3,7 m, dưới độ phân giải 4,3 m của
+  phương pháp, nên là dấu hiệu chứ chưa phải bằng chứng. Chưa sửa dữ liệu.
+
+## Chọn toạ độ RP01, RP03, RP09 theo kết quả chạy lại dữ liệu mẫu — 15/09/2026
+
+- `D:\Nam5\DATN\combined_data.csv` trùng từng byte `data/raw/combined_data.csv`, không có
+  cột toạ độ. Chạy 8 tổ hợp (bản vẽ / Bảng 4 cho từng điểm) trên bản sao: pipeline, 10 seed
+  và bỏ trọn một điểm, cùng tham số, cùng các lần chia; 5 mô hình.
+- RP09: (30, 14) tốt hơn (38, 7) ở cả 4 cặp so sánh, cả 10 seed (−0,09) lẫn bỏ-một-điểm
+  (−0,3), kể cả sau khi chia cho sai số đoán tâm. RP01: (−41, 0) tốt hơn (−16, 0) ở bỏ-một-
+  điểm (+0,1…+0,2 nếu dùng −16) dù −16 nằm giữa nhà. RP03: (16, 0) cho số thô thấp hơn nhưng
+  chia cho sai số đoán tâm thì hơn kém nhau đổi chiều — phần lợi là do điểm dời vào giữa.
+- Tổ hợp số thô tốt nhất: RP01 (−41, 0), RP03 (16, 0), RP09 (30, 14) — TB 5 mô hình 10 seed
+  4,49, bỏ-một-điểm 15,33 (đang dùng: 4,67 và 15,72). Nhóm chốt GIỮ NGUYÊN RP01 (−41, 0),
+  RP03 (41, 0), RP09 (38, 7) theo bản vẽ; không áp dụng.
+
+## Chạy lại giai đoạn 1, 2, báo cáo, bản đồ — 15/09/2026
+
+- Pipeline, huấn luyện, báo cáo, 10 seed, bỏ trọn một điểm, bản đồ, `khu_vuc_thu_vien.dart`,
+  đánh giá chỉ đường, hình: số liệu trùng khít lần trước (dữ liệu và toạ độ không đổi):
+  test seed 42 kNN 3,44 · kNN vân tay 3,45 · WKNN 3,51 · RF 6,92 · XGBoost 7,02; 10 seed kNN
+  vân tay 2,58 ± 0,36; bỏ trọn một điểm XGBoost 14,80; chỉ đường đầu–cuối 0,79 m. 59 test đạt.
+- Sửa nhãn đơn vị trong `tools/ve_ban_ve.py` (lỗi còn từ khi toạ độ đổi sang đơn vị lưới):
+  trục ghi "đơn vị lưới"; kích thước bao 86 × 52 → 30,2 × 18,2 m; tỉ lệ "px/m" → px/đơn vị
+  lưới; diện tích hai mảng sàn 149 và 338 m²; số trên chặng tuyến mẫu đổi sang mét (cộng
+  đúng 31,0 m); thước "10 m" trước dài 10 đơn vị (3,5 m), nay dài đúng 10 m, đặt góc phải dưới.
+
+## Chạy giai đoạn 3, 4 — 15/09/2026
+
+- Máy chủ thật (cổng 8123, CSDL tạm, WebSocket tắt). Hợp đồng giai đoạn 1 → 3: 121/121 lần
+  quét test qua `POST /predict` trùng dự đoán ngoại tuyến (lệch 0), sai TB 3,450 như bảng
+  huấn luyện, suy luận trung vị 1,1 ms.
+- 31/31 kiểm tra endpoint đạt: `/map` 44 điểm, `/graph` 238 cạnh / 15 cửa, luật nối qua API
+  (RP01 = {02, 45}, RP03 = {02, 44}, WC không cạnh, 18→20 qua 26, 43→01 qua 45), `/route`
+  528 cặp × A*/Dijkstra khớp, các ca lỗi 404/422, `/predictions`, tệp tĩnh. `/ws/location`
+  403. Log không traceback, không 5xx.
+- Dashboard: `api.js` và vòng hỏi REST thật chạy bằng Node đạt; chụp bằng Edge headless hiện
+  sơ đồ 30,17 × 18,24 m, 238 cạnh, 15 cửa nét đứt, huy hiệu "REST · 2 s".
+
+## Chạm một điểm trên sơ đồ thì dẫn tới đúng điểm đó — 15/09/2026
+
+- Lỗi nhóm phát hiện khi tự test trên máy: chạm "Cửa ra vào" tại RP02 rồi "Đi tới đây"
+  thì app dẫn tới RP34, vì chạm chỉ nhận ra KHU VỰC và máy chủ chọn điểm gần nhất của cả
+  khu vực theo đường đi.
+- Sửa: sơ đồ nhận điểm tham chiếu gần chỗ chạm nhất; tấm tóm tắt gửi `den_rp`; tính lại
+  tuyến khi di chuyển và báo "Đã tới" theo đúng điểm đó. Chỉ đường từ Trang chủ/Tìm kiếm
+  vẫn tới điểm gần nhất của khu vực.
+- Kiểm trên máy thật từ RP20: chip 13,7 m tới RP02 (máy chủ 13,74 m, qua RP05), tuyến kết
+  thúc ở RP02; tới RP02 báo "Đã tới Cửa ra vào"; sang RP34 (cùng khu vực) không báo tới
+  mà tính lại 20,6 m về RP02 (máy chủ 20,64 m). `flutter analyze` sạch, 19 test đạt.
+
+## "Đi tới đây" ở màn Chi tiết chuyển thẳng sang Bản đồ — 15/09/2026
+
+- Trước: nhấn "Đi tới đây" bật tấm chỉ dẫn từng bước đè lên màn Chi tiết. Nay tìm tuyến xong
+  thì đóng màn Chi tiết (`popUntil` về khung chính) và chuyển tab Bản đồ qua
+  `AppShell.moBanDo()`; tuyến và chip quãng đường tự hiện. Gỡ `_hienChiDan`, `_cauHuong`.
+  Các chuỗi `routeStep`, `routeSummary`, `step*` trong ARB không còn dùng.
+- Kiểm trên máy thật từ RP20: Trang chủ → Phòng tạp chí → "Đi tới đây" → tab Bản đồ, chip
+  "17,2 m tới Phòng tạp chí" (máy chủ 17,24 m), không có tấm bật lên. Analyze sạch, 19 test đạt.
+
+## Đo tốc độ phản hồi app trên máy thật — 15/09/2026
+
+- Gắn bộ ghi thời gian khung hình (tệp tạm, đã xoá), chạy cùng kịch bản: đổi tab, mở/đóng
+  chi tiết, chạm sơ đồ, "Đi tới đây", tìm kiếm.
+- Bản debug: build trung vị 9–14 ms, gần như mọi khung > 16,7 ms. Profile/release: build
+  1–4 ms, nhưng raster (GPU) vẫn 11–17 ms. Máy đang bật Tiết kiệm pin (`low_power=1`,
+  khoá 60 Hz, hạ CPU/GPU) — raster không đổi dù thử bỏ lớp làm mờ nền và hạ kính
+  premium → standard, nên hai thay đổi đó đã gỡ lại.
+- Khi đứng yên app không vẽ thừa (Trang chủ, Bản đồ, Cài đặt, Chi tiết ~0 khung/s), trừ ô
+  tìm kiếm đang focus: `CupertinoTextField` của thư viện kính cho con trỏ mờ dần, vẽ 61
+  khung/s. Sửa: mở kết quả tìm kiếm thì bỏ focus trước — Chi tiết mở từ tìm kiếm 60 → 0
+  khung/s, bàn phím tự đóng.
+- Cài bản release lên máy. Không tìm thấy trễ ở xử lý chạm (không có onDoubleTap).
+
+## Giảm dung lượng app — 15/09/2026
+
+- Trên máy 127 MB = APK 58,7 + dữ liệu 67,5 + cache 0,6. APK release gộp 3 kiến trúc 57,7 MB.
+- Chỉ arm64: 23,1 MB (engine 11,75 · Dart 6,10 · ảnh 4,17 · dex 0,39). Thêm `--obfuscate
+  --split-debug-info`: Dart 6,10 → 5,05 MB. 39 ảnh JPEG → WebP chất lượng 80, cùng kích
+  thước, không metadata: 4,06 → 2,58 MB (PSNR 40,6 dB). APK còn 19,6 MB, trên máy 20,6 MB.
+- Lệnh build ghi ở `mobile/README.md`. Dữ liệu 67,5 MB nghi là phần giải nén của các bản
+  debug/profile cài đè trước đó; cài đè bản release không xoá, cần gỡ app hoặc xoá dữ liệu.
+- Gỡ và cài lại bản release tối ưu (theo yêu cầu nhóm) để xoá 67,5 MB dữ liệu thừa; cấp lại
+  quyền vị trí/WiFi bằng `pm grant`, địa chỉ máy chủ vẫn `http://127.0.0.1:8000`. Định vị
+  chạy lại bình thường (Cầu thang, khớp 36 AP).
+
+## Kiểm tra clone về chạy được — 15/09/2026
+
+- Dựng đúng thứ GitHub sẽ trả về: chỉ mục git tạm + `git add -A` + `git archive` (238 tệp,
+  12 MB), môi trường Python 3.14 mới cài từ `requirements.txt`.
+- Sửa trước khi thử: `.gitignore` bỏ qua mọi `artifacts/*.pkl` nên clone về backend không
+  chạy → mở ngoại lệ cho `scaler.pkl`, `model_fingerprint_knn.pkl` (~205 KB).
+  `.gitattributes` thêm `*.webp binary`, `*.bat`/`*.cmd` giữ CRLF. `mobile/README.md` bỏ
+  đường dẫn tuyệt đối. AGENTS.md, .agents/ chặn bằng `.git/info/exclude` (cục bộ).
+- Trên bản sao: cài đặt đạt; 59 test đạt khi chưa chạy pipeline; backend chạy ngay
+  (`/predict` một lần quét RP20 ra đúng (−22, 34)); Dashboard, `/docs` 200; Flutter
+  pub get, analyze sạch, 19 test đạt, build APK release 19,5 MB. Pipeline + huấn luyện đầy
+  đủ trên bản sao cho bảng so sánh trùng máy này (lệch ≤ 2·10⁻¹⁵), `scaler.pkl` trùng từng byte.
+- Build APK hỏng khi bản sao nằm ở đường dẫn quá dài (biên dịch shader vượt 260 ký tự
+  của Windows); đường dẫn ngắn build được. Đã ghi lưu ý và yêu cầu phiên bản vào README.
+- Sửa tài liệu cấu trúc: artifacts commit 2 tệp, thêm `data/raw/nhom15_2026/`,
+  `diem_can_do.csv`, 39 ảnh WebP; README `/graph` 15 cửa.

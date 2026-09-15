@@ -25,10 +25,15 @@
 *.sh       text eol=lf
 gradlew    text eol=lf
 
+# Script Windows phải giữ CRLF, LF có thể làm cmd hiểu sai nhãn và lệnh nhảy
+*.bat      text eol=crlf
+*.cmd      text eol=crlf
+
 # File nhị phân - Git không được đụng vào
 *.png  binary
 *.jpg  binary
 *.jpeg binary
+*.webp binary
 *.otf  binary
 *.ttf  binary
 *.jar  binary

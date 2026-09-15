@@ -48,8 +48,8 @@ Dự án mới khác đồ án cũ ở chỗ: thêm **Web Dashboard** bên cạn
 > | `frontend/` HTML5 + Tailwind, 7 trang | một `index.html`, JS thuần không thư viện ngoài | Bảy trang kia không trang nào có nội dung, mà dữ liệu chúng định hiện thì máy chủ chưa có endpoint. Bỏ CDN vì phòng bảo vệ có thể không ra được Internet |
 > | `routers/models.py`, `routers/datasets.py` | đã xoá | Thuộc phần quản lý phiên bản mô hình, chưa làm |
 > | `map.py` — `GET /map/{floor_id}` | `GET /map`, `GET /graph`, `POST /route` | Chỉ có một tầng; thêm đồ thị đi lại và chỉ đường |
-> | `smoothing_service.py` — `PositionSmoother` (EMA) | `BoGop` (đồng thuận không gian) | Xem mục 2.4.1 của tài liệu thiết kế: 0,00 m thay vì kéo trung bình theo điểm lạc |
-> | `ml/preprocess/` gói 8 tệp | `ml/preprocess.py` một tệp 358 dòng | 12 bước gọi tuần tự đúng một lần, tách tệp chỉ thêm chỗ phải nhảy qua lại |
+> | `smoothing_service.py` — `PositionSmoother` (EMA) | `BoGop` (đồng thuận không gian) | Xem mục 2.4.1 của tài liệu thiết kế: loại được lần quét lạc thay vì kéo trung bình theo nó |
+> | `ml/preprocess/` gói 8 tệp | `ml/preprocess.py` một tệp | 12 bước gọi tuần tự đúng một lần, tách tệp chỉ thêm chỗ phải nhảy qua lại |
 > | `.env`: `API_KEY`, `SMOOTHING_ALPHA`, `MAX_JUMP_DISTANCE_M` | bỏ cả ba; thêm `CUA_SO_GOP` | API_KEY chưa dùng tới; hai tham số kia thuộc thiết kế EMA đã bỏ |
 
 ```
@@ -159,9 +159,7 @@ System_Indoor/                           # gốc dự án (git repository)
 │       └── icons/
 │
 ├── tests/
-│   ├── test_preprocess.py
-│   ├── test_feature_mapper.py           # ★ quan trọng nhất
-│   └── test_smoothing.py
+│   └── test_api.py                      # endpoint REST
 │
 ├── reports/                             # phục vụ viết báo cáo
 │   ├── figures/                         # biểu đồ CDF, heatmap lỗi
@@ -173,10 +171,9 @@ System_Indoor/                           # gốc dự án (git repository)
     └── Cau_Truc_Thu_Muc_Du_An.md
 ```
 
-### Cây thư mục THỰC TẾ (tính tới 03/09/2026)
+### Cây thư mục THỰC TẾ (tính tới 15/09/2026)
 
-Đây là những gì git đang theo dõi — 226 tệp đã commit cộng 9 tệp mới chưa
-commit, khoảng 12 MB.
+Những thư mục và tệp chính git đang theo dõi.
 
 ```
 System_Indoor/
@@ -184,17 +181,20 @@ System_Indoor/
 │
 ├── data/
 │   ├── raw/combined_data.csv            # 25.712 dòng RSSI thô, KHÔNG sinh lại được
+│   ├── raw/nhom15_2026/                 # 7 tệp RPxx nhóm tự thu, chưa vào huấn luyện
 │   ├── processed/fingerprint_dataset_sorted.csv
 │   ├── splits/                          # sinh bằng pipeline, không commit
 │   └── reference/
 │       ├── reference_points.csv         # 44 điểm, 10 cột (toạ độ + nhãn + mô tả)
 │       ├── reference_points_template.csv
+│       ├── diem_can_do.csv              # điểm nên đo tiếp (tools/ban_do_di_do.py)
 │       ├── Map.png                      # sơ đồ mặt bằng do CTK45 số hoá
 │       └── ban_do_tang1.json            # hình học trích từ Map.png
 │
 ├── artifacts/                           # ★ HỢP ĐỒNG giữa ML và Backend
 │   ├── feature_list.json  model_metadata.json  pipeline_manifest.json
-│   └── (scaler.pkl, model_*.pkl — sinh lại được nên không commit)
+│   ├── scaler.pkl  model_fingerprint_knn.pkl   # commit để clone về chạy backend ngay
+│   └── (4 model_*.pkl còn lại — sinh lại bằng ml.train, không commit)
 │
 ├── notebooks/                           # Colab: 2 notebook + 12 bước tiền xử lý
 │
@@ -202,6 +202,7 @@ System_Indoor/
 │   ├── config.py  preprocess.py  pipeline.py  train.py
 │   ├── evaluate.py  postprocess.py  report.py  audit.py
 │   ├── danh_gia_cheo.py                 # giao thức bỏ trọn một điểm tham chiếu
+│   ├── on_dinh.py                       # so sánh qua nhiều seed, khoảng tin cậy
 │   └── models/  knn.py  wknn.py  xgboost_model.py  random_forest.py
 │                fingerprint_knn.py
 │
@@ -221,22 +222,21 @@ System_Indoor/
 │
 ├── mobile/                              # NGOÀI đề cương — xem mobile/README.md
 │   ├── lib/  services/  data/  screens/  widgets/  theme/  l10n/
-│   ├── assets/  map/Map.png  images/ (37 ảnh, 11 thư mục)
-│   └── test/                            # 101 bài
+│   ├── assets/  map/Map.png  images/ (39 ảnh WebP, 12 thư mục)
+│   └── test/
 │
 ├── tools/                               # chạy một lần rồi commit kết quả
 │   ├── trich_ban_do.py                  # Map.png → ban_do_tang1.json
+│   ├── danh_gia_chi_duong.py            # sai số tuyến so với đường ngắn nhất thật
 │   ├── sinh_khu_vuc.py                  # CSV → khu_vuc_thu_vien.dart
-│   ├── ve_ban_ve.py                     # bản vẽ tầng 1 cho báo cáo
-│   └── ve_khoi_nha.py                   # sơ đồ khối nhìn từ trên cao
+│   ├── thu_van_tay.py  cam_bien_adb.py  # thu vân tay qua adb, kèm cảm biến
+│   ├── thu_van_tay_termux.py            # bản chạy trên Termux
+│   ├── ban_do_di_do.py                  # chọn chỗ nên đo tiếp
+│   └── ve_ban_ve.py  ve_khoi_nha.py     # hình cho báo cáo
 │
-├── tests/                               # 160 bài
-│   ├── test_preprocess.py  test_feature_mapper.py  test_postprocess.py
-│   ├── test_train.py  test_api.py  test_route.py
-│   └── test_luu_tru.py  test_dashboard.py  test_khu_vuc.py
-│       test_danh_gia_cheo.py
+├── tests/                               # test_api.py
 │
-├── reports/  figures/ (14 biểu đồ)  tables/ (4 bảng)
+├── reports/  figures/  tables/
 └── docs/     3 tài liệu .md + frame thiết kế
 ```
 
@@ -308,7 +308,9 @@ Tránh tình trạng logic bị kẹt trong ô notebook, không chạy lại đ�
 
 Khắc phục vấn đề C-"toàn bộ logic dồn vào `main.py`" của đồ án cũ.
 
-### 3.6. `tests/test_feature_mapper.py` là bài test bắt buộc
+### 3.6. Kiểm thử bắt buộc: AP lạ không làm lệch cột
+
+Đã cài ở mức endpoint trong `tests/test_api.py` (`test_predict_bo_qua_bssid_la`).
 
 Đây là điểm sinh lỗi nghiêm trọng nhất (xem vấn đề V2 trong tài liệu phân tích kỹ thuật). Test tối thiểu:
 
@@ -384,6 +386,6 @@ Riêng `.gitignore` và `.env.example` nên tạo **ngay từ ngày đầu** —
 | C7 — Lỗi chính tả `ultils/` | `src/js/`, `src/components/` |
 | C8 — Commit rác | `.gitignore` đầy đủ ngay từ đầu |
 | C9 — `.env` không dùng | `config.py` với `pydantic-settings`, có `.env.example` |
-| C10 — Không có test | `tests/`, ưu tiên `test_feature_mapper.py` |
+| C10 — Không có test | `tests/test_api.py` |
 | C11 — Không có nơi chứa artifact ML | `artifacts/` là hợp đồng ML ↔ Backend |
 | C12 — Không có tài liệu trong dự án | `docs/` chứa toàn bộ tài liệu thiết kế |

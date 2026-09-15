@@ -203,37 +203,51 @@ sai nặng gần như luôn là *một* lần quét dị thường lẻ loi ch�
 chọn dự đoán có tổng khoảng cách tới các dự đoán còn lại nhỏ nhất, nên luôn trả
 về một điểm tham chiếu có thật và tự loại điểm lạc.
 
-Đo trên tập test, gộp 3 lần quét:
+Đo theo đúng thứ tự thời gian backend nhận, cửa sổ 3. *Đứng yên* gộp mọi lần
+quét của một điểm — chặn dưới lý tưởng. *Test* chạy cửa sổ trượt trên tập test,
+nhưng mỗi điểm chỉ 3 lần quét. *Chuỗi dài* chạy trên ~17 lần quét mỗi điểm của
+train+val, dự đoán ngoài phần nên mô hình chưa thấy mẫu nó đoán — gần với lúc app
+quét liên tục nhất, nên là con số nên trích:
 
-| Cách gộp | Sai số trung bình | Lớn nhất | Số điểm sai |
+| Cách gộp | Đứng yên (40 điểm) | Test (121 mẫu) | Chuỗi dài (681 mẫu) |
 |---|---|---|---|
-| Một lần quét, không gộp | 2,28 m | 15,0 m | 15/39 |
-| Trung vị toạ độ | 0,46 m | 9,0 m | 2/39 |
-| **Đồng thuận không gian** | **0,00 m** | **0,0 m** | **0/39** |
+| Một lần quét, không gộp | 3,45 m | 3,45 m · sai 24 | 1,58 m · sai 75 |
+| **Đồng thuận không gian** | **1,10 m · sai 3** | **2,69 m · sai 20** | **0,83 m · sai 43** |
+
+Bản trước báo 1,40 m cho cột test vì chạy theo thứ tự dòng trong tệp chứ không
+theo thời gian; chạy đúng thứ tự thì cách hoà cũ (lấy dự đoán cũ hơn) còn tệ hơn
+không gộp. Nay hoà thì lấy dự đoán mới nhất — chọn trên train+val, cả năm mô
+hình đều tốt hơn (kNN vân tay 1,18 → 0,78 m).
 
 Hai tham số `α` và giới hạn bước nhảy vì thế không còn, thay bằng `cua_so_gop`
 (số lần quét gộp, mặc định 3) và `reset_after_seconds`.
 
-**2. Thêm mô hình thứ năm không có trong thiết kế.** Dữ liệu chỉ có 39 toạ độ
+**2. Thêm mô hình thứ năm không có trong thiết kế.** Dữ liệu chỉ có 40 toạ độ
 khác nhau vì thu đúng tại các điểm tham chiếu, nên bài toán gần với phân lớp hơn
-hồi quy. `kNN vân tay (Bray-Curtis)` khai thác đúng tính chất đó và cho 2,30 m,
-so với 5,50 m của mô hình cơ sở (kNN, chọn theo validation), 4,60 m của WKNN
-và 6,26 m của XGBoost.
+hồi quy. `kNN vân tay (Bray-Curtis)` khai thác đúng tính chất đó: tốt nhất trên
+validation (2,59 m) nên được triển khai; trên test seed 42 cho 3,45 m, sát kNN
+3,44 m và WKNN 3,51 m, còn XGBoost 7,02 m.
 
 Kèm theo đó là một kết quả ngược với giả thiết ban đầu, cần nói thẳng trong báo
 cáo: **XGBoost không đạt mục tiêu ở mục 2.1** — thay vì thấp hơn baseline
-10–20%, nó cao hơn kNN 14,0% và cao hơn WKNN 36,1%. Nguyên nhân là tính chất dữ
-liệu nêu trên chứ không
-phải thiếu tinh chỉnh: lưới tham số đã nới tới khi cực trị nằm hẳn bên trong.
+10–20%, nó cao hơn cả hai. Các con số trên là MỘT cách chia (seed 42). Chia lại
+10 seed với cùng tham số (`python -m ml.on_dinh`): kNN vân tay 2,58 ± 0,36 m, kNN
+3,41 ± 0,63, WKNN 3,88 ± 0,40, Random Forest 6,61 ± 0,66, XGBoost 6,87 ± 0,38 —
+XGBoost thua kNN ở cả 10 seed, kNN vân tay dẫn đầu 9/10. Seed 42 lại là cách chia
+xấu bất thường cho kNN vân tay (3,45 m, cao hơn cả 10 seed kia), nên riêng seed 42
+nó thua kNN 0,01 m và khoảng tin cậy 95% của hai mô hình chồng nhau (kNN vân tay
+2,05–4,96, kNN 2,22–4,74 m). Nguyên nhân là tính
+chất dữ liệu nêu trên chứ không phải thiếu tinh chỉnh: vài tham số tối ưu nằm ở
+biên lưới, nhưng nới thêm một nấc chỉ đổi sai số validation dưới 0,1 m.
 
 **Mọi con số trong hai đoạn trên đo bằng cách chia ngẫu nhiên theo lần quét, và
 cách chia đó có rò rỉ.** Mỗi điểm tham chiếu chỉ được đo trong đúng một phiên
-chừng 15 phút, cùng máy, cùng ngày, nên chia ngẫu nhiên khiến cả 39 điểm có mặt
-đồng thời ở train lẫn test; 75% bản ghi test có láng giềng train gần nhất nằm
-ngay tại điểm của chính nó, cách 0,023 theo Bray-Curtis. Đo lại bằng giao thức
+chừng 15 phút, cùng máy, cùng ngày, nên chia ngẫu nhiên khiến cả 40 điểm có mặt
+đồng thời ở train lẫn test; 75% bản ghi test có láng giềng train gần nhất (Bray-Curtis,
+dữ liệu đã chuẩn hoá) nằm ngay tại điểm của chính nó. Đo lại bằng giao thức
 bỏ trọn một điểm tham chiếu (`python -m ml.danh_gia_cheo`, bảng
 `reports/tables/model_comparison_bo_diem.csv`) thì **thứ hạng đảo ngược hoàn
-toàn**: XGBoost đứng đầu với 14,60 m, còn kNN vân tay tụt xuống 16,54 m.
+toàn**: XGBoost đứng đầu với 14,21 m, còn kNN vân tay tụt xuống 15,98 m.
 
 Hai con số là hai chặn của cùng một sự thật — chia ngẫu nhiên là chặn lạc quan,
 bỏ trọn một điểm là chặn bi quan — nên báo cáo phải nêu cả hai kèm giao thức đi
@@ -354,44 +368,44 @@ và tải về được. Trước khi dùng, nhóm khớp 40 điểm trong `POI.
 
 | Phép đo | Kết quả |
 |---|---|
-| Hộp bao 40 điểm POI của họ, quy ra mét thật | 30,5 × 34,4 m |
-| Hộp bao thật của khu khảo sát | **86 × 52 m** |
-| Khớp Procrustes (quay + co giãn đều + tịnh tiến) | RMS 5,99 m |
-| Khớp affine đầy đủ (hai trục co khác nhau) | RMS **5,08 m**, lệch lớn nhất 28,55 m |
-| 780 cặp điểm: khoảng cách trong GeoJSON so với khoảng cách thật | trung vị **0,40×** |
-| 143 cặp cách nhau dưới 20 m | sai số tuyệt đối trung bình **7,5 m** |
+| Hộp bao 40 điểm POI của họ, quy từ GPS ra mét | 30,5 × 34,4 m |
+| Hộp bao bộ điểm Bảng 4 | **86 × 52 đơn vị lưới** (30,2 × 18,2 m) |
+| Khớp Procrustes (quay + co giãn đều + tịnh tiến) | RMS 5,99 đơn vị |
+| Khớp affine đầy đủ (hai trục co khác nhau) | RMS **5,08 đơn vị**, lệch lớn nhất 28,55 |
+| 780 cặp điểm: khoảng cách GPS (m) ÷ khoảng cách đơn vị lưới | trung vị **0,40**, trải 0,06 đến 1,12 |
+| 143 cặp cách nhau dưới 20 đơn vị | sai số tuyệt đối trung bình **7,5 đơn vị** |
 
 Phép affine đầy đủ đã cho phép hai trục co giãn khác nhau và trượt tự do, mà vẫn
-còn lệch trung bình 5 m. Nghĩa là biến dạng **không tuyến tính**: toạ độ đặt bằng
+còn lệch trung bình 5 đơn vị (1,8 m). Nghĩa là biến dạng **không tuyến tính**: toạ độ đặt bằng
 tay chứ không theo một phép chiếu nào. Không có phép biến đổi nào sửa được.
 
-Hệ quả trực tiếp: mọi khoảng cách đo trên bản đồ ấy đều sai. Thẻ *"Tổng khoảng
-cách: 18.43 mét"* trong ứng dụng của họ là con số tính trên hình học này — ba
-cặp điểm có khoảng cách thật 16 m, 12,8 m và 18 m thì GeoJSON cho ra 14,1 m,
-7,3 m và 9,3 m.
+Hệ quả trực tiếp: khoảng cách đo trên bản đồ ấy méo không đều. Ba cặp điểm cách
+nhau 16, 12,8 và 18 đơn vị lưới (5,6, 4,5 và 6,3 m) thì GeoJSON cho ra 14,1, 7,3
+và 9,3 m. Riêng **trung vị tỉ lệ 0,40 m/đơn vị** của nó lại là một chứng cứ độc lập
+cho phép quy đổi ở mục dưới.
 
 Vì vậy nhóm **không** dùng lại `Room`, `Hallways`, `Stair` dù chúng có sẵn sáu đa
 giác phòng, năm hành lang và tám khối cầu thang. Vẽ chúng lên sẽ ra một bản đồ
-đẹp mà mọi thứ lệch chỗ 5 m. `POI.geojson` chỉ được dùng cho hai việc không cần
+đẹp mà mọi thứ lệch chỗ gần 2 m. `POI.geojson` chỉ được dùng cho hai việc không cần
 đúng tỉ lệ: lấy **tên và mô tả** của 40 điểm, và xét **chiều trục x** bằng phép
 quay-co-tịnh tiến.
 
 #### Nguồn hình học thay thế
 
 Nhóm trích hình học từ chính `Map.png` — sơ đồ mặt bằng tầng 1 do CTK45 số hoá,
-là thứ duy nhất của họ có tỉ lệ đúng. Công cụ `tools/trich_ban_do.py` chạy một
+là thứ duy nhất của họ có hình dạng đúng. Công cụ `tools/trich_ban_do.py` chạy một
 lần rồi commit kết quả vào `data/reference/ban_do_tang1.json`, nên backend chỉ
 đọc JSON và không cần thư viện xử lý ảnh lúc chạy thật.
 
-**Phép biến đổi mét ↔ pixel được kiểm bằng hai phép đo độc lập.** Lưới chấm trong
-ảnh trải đúng 1000 px ngang và 605 px dọc, trong khi hộp bao bộ điểm tham chiếu
-là 86 m × 52 m — cho 11,628 và 11,635 px/m. Hai trục tính riêng mà khớp tới 4 chữ
-số có nghĩa; đó là căn cứ khẳng định lưới chấm chính là hệ toạ độ mét của bộ dữ
-liệu, không phải một quy ước tự đặt.
+**Phép biến đổi toạ độ ↔ pixel được kiểm bằng hai phép đo độc lập.** Lưới chấm
+trong ảnh trải đúng 1000 px ngang và 605 px dọc, trong khi hộp bao bộ điểm tham
+chiếu là 86 × 52 đơn vị — cho 11,628 và 11,635 px/đơn vị. Hai trục tính riêng mà
+khớp tới 4 chữ số có nghĩa: lưới chấm chính là hệ toạ độ Bảng 4. Nó KHÔNG cho biết
+một đơn vị dài bao nhiêu mét — xem mục kế tiếp.
 
 **Chiều trục cũng chốt bằng bằng chứng, không bằng quy ước.** Trục y hướng lên:
-toà nhà thắt eo ở giữa, theo chiều này đoạn eo ứng với y ∈ [6,4; 21,3] m và cả 8
-điểm trong khoảng đó đều có |x| ≤ 30 m — vừa lọt; chiều ngược lại buộc đoạn eo
+toà nhà thắt eo ở giữa, theo chiều này đoạn eo ứng với y ∈ [6,4; 21,3] và cả 8
+điểm trong khoảng đó đều có |x| ≤ 30 — vừa lọt; chiều ngược lại buộc đoạn eo
 phải chứa hai điểm ở |x| = 43 m, rộng hơn cả eo. Trục x không lật: khớp 39 điểm
 với GPS trong `POI.geojson` cho RMS 3,15 m khi không lật và 13,84 m khi lật.
 
@@ -416,7 +430,7 @@ Ba chỗ khớp thêm, đều là kiểm chứng chứ không phải giả đị
 - Cả ba khối nhà nhìn thấy trong ảnh đều **cùng một phương vị**, đúng kiểu quy
   hoạch một khuôn viên.
 - Tỉ lệ hộp bao khối thư viện là **1,76**, so với **86/52 = 1,65** của bộ dữ
-  liệu — lệch 6%, tức hình dạng 86 × 52 m đứng vững trước một nguồn hoàn toàn
+  liệu — lệch 6%, tức hình dạng 86 × 52 đứng vững trước một nguồn hoàn toàn
   bên ngoài.
 - Trục +y chỉ về **tây-tây-nam**, đúng phía Google đặt *"Bãi Giữ Xe Cổng Sau"*.
   Mô tả của RP34 trong `reference_points.csv` ghi cửa sau *"dẫn ra bãi đỗ xe cổng
@@ -428,11 +442,34 @@ nghiêng của lưới nhà so với trục bắc-nam, nhưng nó không phải 
 +y** — dùng nhầm thì nón hướng trên sơ đồ lệch khoảng 226°, gần như ngược. Giá
 trị đúng là 248,5°.
 
-Giới hạn phải nói rõ: ảnh chụp không kèm thước tỉ lệ, nên **nguồn này chỉ kiểm
-được hướng và tỉ lệ hình dạng, không kiểm được kích thước tuyệt đối**. Khẳng
-định 86 × 52 m vẫn dựa vào lưới chấm trong `Map.png` và câu *"khoảng cách trung
-bình giữa hai vị trí tham chiếu lân cận là 7 mét"* ở trang 72 báo cáo CTK45 —
-đọc Bảng 4 thành mét cho trung vị đúng 7,00 m.
+Ảnh chụp không kèm thước tỉ lệ, nên **nguồn này chỉ kiểm được hướng và tỉ lệ
+hình dạng, không kiểm được kích thước tuyệt đối**.
+
+#### Một đơn vị lưới dài bao nhiêu mét
+
+Bản trước coi mỗi đơn vị Bảng 4 là một mét, dựa vào câu *"khoảng cách trung bình
+giữa hai vị trí tham chiếu lân cận là 7 mét"* của CTK45. Câu ấy nằm trong đoạn
+chép từ một bài báo khác — đoạn ở trang 72 mang tiêu đề "nhận diện ngôn ngữ ký
+hiệu" và ghi 3.200 vectơ, 4 thiết bị, không khớp bộ dữ liệu này. Trang 44 báo cáo
+viết "giá trị dùng để quy đổi theo:" rồi bỏ trống: chính CTK45 thừa nhận toạ độ
+cần quy đổi, nhưng con số bị mất.
+
+Hệ quả đo được: coi đơn vị là mét thì tuyến Cầu thang → Căn tin dài 55,7–72,6 m
+(tuỳ bản toạ độ), trong khi người đi thực địa ước 35–50 bước. Bốn nguồn độc lập cho cùng một câu trả lời:
+
+| Nguồn | m / đơn vị lưới |
+|---|---|
+| **Hình 7 CTK45** — bốn kích thước dọc 4 + 5,2 + 8,8 + 1,6 = 19,6 m trên đường bao cao 55,87 đơn vị | **0,3508** |
+| Đa giác toà thư viện trên OpenStreetMap (4.191 m²): mặt bằng lọt trọn trong nhà, đặt đúng phương vị 338,5° | ≤ 0,35 (ở 1,0 chỉ 74% lọt) |
+| GPS của 40 điểm trong `POI.geojson` CTK45 | trung vị 0,40; bề ngang 30,5 m / 86 = 0,355 |
+| Ước lượng thực địa 35–50 bước cho Cầu thang → Căn tin | 0,33–0,55 |
+
+Hệ thống dùng **0,3508**: công cụ tính lại từ đường bao `Map.png` và ghi vào khoá
+`ty_le_quy_doi`. Hai con số khác trong Hình 7 không dùng được: nhãn "0.9m" giữa
+hai chấm lưới cho 0,21 — mâu thuẫn với chính bốn kích thước dọc; nhãn chiều
+ngang bị chữ "O" che mất chữ số đầu. Toạ độ vẫn giữ đơn vị lưới để không đụng dữ
+liệu, mô hình và hợp đồng API; khoảng cách trả ra mới nhân tỉ lệ. Sai số định vị
+ở mục 2.4 tính trên toạ độ Bảng 4 nên cũng là đơn vị lưới.
 
 #### Đồ thị đi lại
 
@@ -440,15 +477,53 @@ Nút của đồ thị là chính các điểm tham chiếu, vì **RP nằm trê
 định nghĩa**: phải có người đứng đúng đó cầm máy quét mới đo ra được toạ độ.
 
 Cạnh thì cần thêm sơ đồ, vì hai điểm gần nhau vẫn có thể có tường ở giữa. Công cụ
-dựng mặt nạ tường từ `Map.png` rồi **gán nhãn vùng liên thông**: hai điểm cùng
-một vùng thì đi được, khác vùng thì không. Cách này không có tham số ngưỡng nào
-phải chỉnh tay. Kết quả: 103 cặp điểm trong bán kính 25 m bị loại, cạnh dài nhất
-giảm từ 21,0 m xuống 16,1 m.
+dựng mặt nạ tường từ `Map.png` rồi **gán nhãn vùng liên thông**; hai điểm nối
+thẳng khi đoạn thẳng giữa chúng nằm trọn trong một vùng — **đồ thị tầm nhìn**,
+223 cặp. Tuyến nhờ vậy chỉ rẽ qua điểm mốc khi thật sự có vật cản. Không có tham
+số ngưỡng nào phải chỉnh tay.
+
+So với bản trước (mỗi điểm chỉ nối 3 điểm gần nhất), trên cả 946 cặp: độ vòng
+(quãng đường ÷ đường thẳng) trung vị 1,62 → 1,12, trung bình 2,20 → 1,30; số
+chặng trung bình 7,0 → 2,6; không cặp nào dài ra vì đồ thị mới chứa trọn đồ thị
+cũ. RP20 (cầu thang tây) tới Căn tin từ 88,6 đơn vị qua 8 chặng còn nối thẳng 55,7.
+
+#### Chỉ đường trên lưới đi lại — A* và Dijkstra cải tiến
+
+Đồ thị điểm tham chiếu vẫn còn hai nguồn sai: tuyến bắt đầu từ RP gần nhất chứ
+không từ chỗ người dùng đứng, và buộc phải đi qua các RP. Đường ngắn nhất trong
+mặt bằng có vật cản chỉ bẻ hướng ở **góc lồi của vật cản**, nên đồ thị chỉ đường
+lấy nút là 286 góc lồi dò từ mặt nạ `Map.png` cộng 44 RP, cạnh là 9.449 cặp nhìn
+thấy nhau, kể cả 15 cạnh cửa giả định. Mỗi truy vấn thêm đúng vị trí người dùng (kéo vào lối đi nếu rơi trúng
+tường hay kệ) rồi chạy A* với heuristic khoảng cách thẳng tới đích gần nhất, hoặc
+Dijkstra — hai cách cho cùng quãng đường vì heuristic không bao giờ ước lượng quá.
+
+Đánh giá bằng `python -m tools.danh_gia_chi_duong`, mốc là Dijkstra trên lưới
+điểm ảnh 80 hướng cộng cạnh cửa — một phương pháp khác hẳn, sai số rời rạc tối đa
+khoảng 0,5%. Mốc không biết luật `chi_noi` (RP01, RP03) nên 908 cặp chịu luật đó
+lệch có chủ ý (TB 1,01 m); cột cuối bảng tính trên 3.492 cặp còn lại:
+
+| 4.400 cặp (vị trí ngẫu nhiên, khu vực), cùng tỉ lệ | Sai TB | p90 | Lớn nhất | Ca sai > 1 m |
+|---|---|---|---|---|
+| Đồ thị RP, neo RP gần nhất (không tới được WC) | ∞ (trung vị 1,57 m) | ∞ | ∞ | 66,4% |
+| Lưới đi lại, A* hoặc Dijkstra (cả 4.400 cặp) | 0,23 m | 0,68 m | 8,89 m | 7,4% |
+| **Lưới đi lại, bỏ cặp chịu luật `chi_noi`** | **0,03 m** | **0,06 m** | **0,30 m** | **0%** |
+
+A* mở trung bình 27,4 nút so với 165,8 của Dijkstra. Trên tập test của mô hình
+đang triển khai (cửa sổ trượt 3 lần quét, 1.331 cặp), quãng đường hiển thị từ vị
+trí DỰ ĐOÁN so với quãng đường thật từ vị trí THẬT: cách cũ đúng như ứng dụng từng
+hiện sai trung vị **27,6 m**; đồ thị RP đổi đúng tỉ lệ trung vị 0,78 m (không tới được
+WC); lưới đi lại sai trung bình **0,79 m**, trung vị 0,03 m. Phần còn lại gần như toàn bộ đến từ những lần mô
+hình đoán nhầm khu vực.
+
+Giới hạn: tuyến ôm sát góc vật cản nên là **cận dưới** của quãng đường đi bộ thật.
+Không chừa khoảng cách an toàn được: chừa 10 cm là RP22 đã bị kệ sách nhốt, tức
+bản vẽ không chính xác tới cỡ đó.
 
 `Map.png` vẽ tường nhưng **không vẽ cửa**, nên chặn hết cạnh cắt tường thì đồ thị
-vỡ thành 8 mảnh rời. Công cụ nối lại bằng số cạnh ít nhất, mỗi lần chọn cạnh ngắn
-nhất giữa hai mảnh — chỗ nhiều khả năng có cửa nhất. Sáu cạnh ấy ghi riêng vào
-khoá `cua_gia_dinh`, **không trộn** vào phần suy ra được từ ảnh, để ra thực địa
+k=3 vỡ thành mảnh rời. Vòng nối tự động (mỗi lần chọn cạnh ngắn nhất giữa hai mảnh —
+chỗ nhiều khả năng có cửa nhất) đã chọn sáu cửa nay cố định trong `CUA_CU`, cộng bảy
+cạnh nhóm chỉ định; cửa là cạnh nối đúng hai điểm, không mở lối trên mặt nạ. Tất cả
+ghi riêng vào khoá `cua_gia_dinh`, **không trộn** vào phần suy ra được từ ảnh, để ra thực địa
 còn biết cái nào cần đối chiếu. Đây là hạn chế đã biết, nêu trong README.
 
 Đối lập với CTK45 ở đúng chỗ này: mã của họ nạp `Paths.geojson` — tức hành lang
@@ -458,15 +533,15 @@ ngược với ý định. Chi tiết ở mục 2b.2 của
 
 #### Một phép biến đổi, ba ngôn ngữ
 
-Cùng phép đổi mét ↔ pixel được dùng ở Python (backend và công cụ), Dart (ứng dụng
-di động) và JavaScript (Dashboard). Lệch một hằng số ở một nơi thì cùng một toạ
+Cùng phép đổi toạ độ ↔ pixel được dùng ở Python (backend và công cụ), Dart (ứng
+dụng di động) và JavaScript (Dashboard); Dart còn giữ tỉ lệ mét để hiện khoảng cách
+tới từng khu vực. Lệch một hằng số ở một nơi thì cùng một toạ
 độ hiện ra hai chỗ khác nhau trên hai màn hình, mà triệu chứng nhìn y hệt "mô
 hình đoán sai" nên rất khó lần ra.
 
-`tests/test_dashboard.py` đối chiếu cả ba với `ban_do_tang1.json`, gồm cả số hạng
-dịch trục — số hạng này từng viết trần ở cả ba nơi mà không tệp nào khai nó, nên
-không bài test nào so được. Nay nó có tên (`goc_met_x`) và được neo vào chính giá
-trị `x` nhỏ nhất trong bảng toạ độ đã đo.
+Cả ba lấy số từ `ban_do_tang1.json`, gồm cả số hạng dịch trục — số hạng này từng
+viết trần ở cả ba nơi mà không tệp nào khai nó. Nay nó có tên (`goc_met_x`) và được
+neo vào chính giá trị `x` nhỏ nhất trong bảng toạ độ đã đo.
 
 ---
 
@@ -493,10 +568,10 @@ trị `x` nhỏ nhất trong bảng toạ độ đã đo.
 
 | Endpoint đề xuất | Tình trạng |
 |---|---|
-| `POST /predict`, `WS /ws/location`, `GET /map`, `GET /predictions` | Đã dựng, đúng hợp đồng dữ liệu ở trên |
-| `GET /graph`, `POST /route` | Đã dựng, dù bảng ghi là "mở rộng". `/route` trả kèm `chi_dan` — chỉ dẫn rẽ từng chặng |
+| `POST /predict`, `WS /ws/location`, `GET /map`, `GET /predictions` | Đã dựng, đúng hợp đồng dữ liệu ở trên. WebSocket đang tạm tắt (`WEBSOCKET=false`): Dashboard hỏi `/predictions` mỗi 2 giây, ứng dụng gửi `POST /predict` |
+| `GET /graph`, `POST /route` | Đã dựng, dù bảng ghi là "mở rộng". `/route` chạy A* và trả kèm `chi_dan` — chỉ dẫn rẽ từng chặng. Nhận `den_nhom` để chạy A* đa đích: tự chọn điểm đích theo đường chim bay thì sai ở 5,1% truy vấn trên đồ thị tầm nhìn (đồ thị k=3 cũ: 16,1%, tệ nhất gấp bốn) |
 | `GET /health`, `GET /map/so-do.png`, `GET /` | Thêm mới: trạng thái mô hình, ảnh sơ đồ, và trang Dashboard phục vụ ngay từ uvicorn |
-| `POST /wifi-scans/training` | Không làm. Dữ liệu khảo sát kế thừa từ CTK45, nhóm không tổ chức đợt thu mới nên không cần đường ghi dữ liệu huấn luyện qua API |
+| `POST /wifi-scans/training` | Không làm. Buổi thu bổ sung 06/09/2026 ghi thẳng ra CSV bằng `tools/thu_van_tay.py` qua `adb`, nên không cần đường ghi dữ liệu huấn luyện qua API |
 | `GET /floors/{id}/reference-points` | Không làm. Chỉ có một tầng, `GET /map` trả luôn mọi điểm |
 | `GET /models`, `/models/active`, `POST /models/{id}/activate`, `GET /model-evaluations` | Không làm. Thuộc phần quản lý phiên bản mô hình qua giao diện; mô hình active chọn lúc huấn luyện và ghi vào `model_metadata.json` |
 

@@ -194,21 +194,24 @@ Bản đồ Mapbox của CTK45 dựng từ `assets/geojson/`. Khớp 40 điểm 
 
 | Phép đo | Kết quả |
 |---|---|
-| Hộp bao 40 điểm POI, quy ra mét thật | **30,5 × 34,4 m** |
-| Hộp bao thật của khu khảo sát | **86 × 52 m** |
-| Khớp Procrustes (quay + co giãn đều + tịnh tiến) | RMS **5,99 m** |
-| Khớp affine đầy đủ (hai trục co khác nhau) | RMS **5,08 m**, lệch lớn nhất **28,55 m** |
-| 780 cặp điểm: khoảng cách GeoJSON / khoảng cách thật | trung vị **0,40×**, trải 0,06× đến 1,12× |
-| 143 cặp dưới 20 m (cỡ một tuyến chỉ đường) | sai số tuyệt đối trung bình **7,5 m** |
+| Hộp bao 40 điểm POI, quy từ GPS ra mét | **30,5 × 34,4 m** |
+| Hộp bao bộ điểm Bảng 4 | **86 × 52 đơn vị lưới** (30,2 × 18,2 m) |
+| Khớp Procrustes (quay + co giãn đều + tịnh tiến) | RMS **5,99 đơn vị** |
+| Khớp affine đầy đủ (hai trục co khác nhau) | RMS **5,08 đơn vị**, lệch lớn nhất **28,55** |
+| 780 cặp điểm: khoảng cách GPS (m) ÷ khoảng cách đơn vị lưới | trung vị **0,40**, trải 0,06 đến 1,12 |
+| 143 cặp dưới 20 đơn vị (cỡ một tuyến chỉ đường) | sai số tuyệt đối trung bình **7,5 đơn vị** |
 
-Affine đầy đủ vẫn còn 5 m nghĩa là biến dạng **không tuyến tính** — toạ độ đặt
-bằng tay chứ không theo phép chiếu nào. Hệ quả: thẻ "Tổng khoảng cách: 18.43
-mét" ở Hình 23 của báo cáo là con số tính trên hình học sai. Ba cặp điểm có
-khoảng cách thật 16 m, 12,8 m và 18 m thì GeoJSON cho ra 14,1 m, 7,3 m và 9,3 m.
+Affine đầy đủ vẫn còn 5 đơn vị (1,8 m) nghĩa là biến dạng **không tuyến tính** —
+toạ độ đặt bằng tay chứ không theo phép chiếu nào. Ba cặp điểm cách nhau 16, 12,8
+và 18 đơn vị (5,6, 4,5 và 6,3 m) thì GeoJSON cho ra 14,1, 7,3 và 9,3 m.
+
+**Đính chính:** bản trước đọc toạ độ Bảng 4 là mét nên kết luận GeoJSON "chỉ bằng
+0,40× thật". Hình 7 báo cáo CTK45 cho một đơn vị lưới là 0,3508 m, nên trung vị
+0,40 ấy lại gần đúng tỉ lệ; cái sai của GeoJSON là méo không đều, không phải co.
 
 **Đây là căn cứ để KHÔNG kế thừa `Room.geojson`, `Hallways.geojson`,
 `Stair.geojson`.** Sáu đa giác phòng, năm hành lang và tám khối cầu thang đều có
-sẵn và tải về được, nhưng đặt vào hệ mét của nhóm thì lệch chỗ 5 m — vẽ lên còn
+sẵn và tải về được, nhưng đặt vào hệ toạ độ của nhóm thì lệch chỗ gần 2 m — vẽ lên còn
 tệ hơn không vẽ. Nhóm tự trích hình học từ `Map.png`, xem `tools/trich_ban_do.py`.
 
 ### 2b.2. `walls` nạp từ `Paths.geojson` — V14
@@ -314,9 +317,9 @@ cú rẽ.
 | V10 | Dồn vào `main.py` | Tách `services/` theo trách nhiệm | 🟡 |
 | V11 | Commit rác | `.gitignore` chuẩn Python | 🟡 |
 | V12 | Sai số lượng tử hóa | Hồi quy tọa độ liên tục | ✅ Đã có trong đề cương |
-| V13 | Bản đồ GeoJSON lệch hình học, khoảng cách chỉ bằng 0,40× thật | Tự trích hình học từ `Map.png`, kiểm bằng lưới chấm 1000 px / 86 m | 🔴 Đã làm |
+| V13 | Bản đồ GeoJSON méo không đều, lệch affine RMS 1,8 m | Tự trích hình học từ `Map.png`, kiểm bằng lưới chấm 1000 px / 86 đơn vị; tỉ lệ mét lấy từ Hình 7 | 🔴 Đã làm |
 | V14 | `walls` nạp từ `Paths.geojson` — chặn ngược | Đọc mặt nạ tường từ ảnh, dùng vùng liên thông chứ không dùng ngưỡng | 🔴 Đã làm |
-| V15 | Cạnh POI → waypoint là mã chết, đồ thị rời rạc | Đồ thị k=3 láng giềng, có `test_duong_di_khong_chui_qua_tuong` | 🔴 Đã làm |
+| V15 | Cạnh POI → waypoint là mã chết, đồ thị rời rạc | Đồ thị tầm nhìn dò từ sơ đồ, có `test_duong_di_khong_chui_qua_tuong` | 🔴 Đã làm |
 | V16 | Làm mượt Catmull-Rom cắt qua tường | Không làm mượt; trả đúng dãy đỉnh của đồ thị đã lọc tường | 🟠 Đã làm |
 | V17 | Điền thiếu −98 lúc train, −100 lúc chạy | `missing_rssi_value` nằm trong `feature_list.json`, một nguồn duy nhất | 🔴 Đã làm |
 | V18 | Đòi cả `locationAlways` nên quét trả rỗng im lặng | Cấp MỘT trong hai quyền là đủ; phân biệt 5 lý do không quét được | 🟠 Đã làm |
@@ -333,20 +336,21 @@ Riêng **V7 đã làm khác đề xuất**: thay EMA bằng đồng thuận khô
 các ca sai nặng gần như luôn là một lần quét dị thường lẻ loi, mà EMA kéo trung
 bình nên vẫn bị điểm lạc lôi đi; đồng thuận không gian chọn dự đoán có tổng
 khoảng cách tới các dự đoán còn lại nhỏ nhất nên tự loại được điểm lạc và luôn
-trả về một điểm tham chiếu có thật. Đo trên tập test: 2,28 m xuống 0,00 m, số
-điểm sai từ 15/39 xuống 0/39. Chi tiết ở mục 2.4.1 của
-`Phan_Tich_Thiet_Ke_He_Thong.md`.
+trả về một điểm tham chiếu có thật. Chạy như backend — cửa sổ trượt 3 lần quét
+theo thứ tự thời gian, hoà thì lấy dự đoán mới nhất — trên chuỗi dài train+val
+đoán ngoài phần: 1,58 m xuống 0,83 m; trên tập test (3 lần quét mỗi điểm): 3,45
+xuống 2,69 m. Chi tiết ở mục 2.4.1 của `Phan_Tich_Thiet_Ke_He_Thong.md`.
 
 V12 cũng khác: bài toán vẫn là hồi quy toạ độ, nhưng mô hình tốt nhất
-(`kNN vân tay Bray-Curtis`) thực chất phân lớp 39 điểm tham chiếu rồi trả về toạ
-độ của điểm được chọn. Dữ liệu chỉ có 39 toạ độ khác nhau vì thu đúng tại các
-điểm tham chiếu, nên cách này khớp bản chất dữ liệu hơn — 2,30 m so với 6,26 m
+(`kNN vân tay Bray-Curtis`) thực chất phân lớp 40 điểm tham chiếu rồi trả về toạ
+độ của điểm được chọn. Dữ liệu chỉ có 40 toạ độ khác nhau vì thu đúng tại các
+điểm tham chiếu, nên cách này khớp bản chất dữ liệu hơn — 3,45 m so với 7,02 m
 của XGBoost hồi quy liên tục.
 
 Kèm một cảnh báo phải đọc cùng: hai con số ấy đo bằng cách chia ngẫu nhiên theo
-lần quét, mà cách chia đó để cả 39 điểm có mặt đồng thời ở train lẫn test. Đo
-lại bằng giao thức bỏ trọn một điểm tham chiếu thì thứ hạng đảo — XGBoost 14,60 m
-đứng đầu, kNN vân tay 16,54 m. Nói cách khác, lợi thế của cách phân lớp ở trên
+lần quét, mà cách chia đó để cả 40 điểm có mặt đồng thời ở train lẫn test. Đo
+lại bằng giao thức bỏ trọn một điểm tham chiếu thì thứ hạng đảo — XGBoost 14,21 m
+đứng đầu, kNN vân tay 15,98 m. Nói cách khác, lợi thế của cách phân lớp ở trên
 đúng khi hệ thống chỉ phải nhận lại chỗ đã có dữ liệu, chứ không phải khi nó
 phải nội suy sang chỗ chưa đo. Xem `ml/danh_gia_cheo.py`.
 
@@ -379,7 +383,7 @@ nguy hiểm: nó gán `vector[idx] = item["rssi"]`, tức ghi đè theo thứ t�
 đúng lỗi khiến cùng một lần quét gửi theo hai thứ tự cho ra hai toạ độ khác
 nhau. Bản thật lấy TRUNG BÌNH các BSSID trùng lặp (khớp
 `pivot_table(aggfunc="mean")` của bước 3) và lọc RSSI ngoài khoảng vật lý;
-`tests/test_feature_mapper.py` và `tests/test_api.py` khoá cả hai điều đó.
+`tests/test_api.py` khoá cả hai điều đó.
 
 Lợi ích: AP lạ không phá thứ tự cột; AP mất tín hiệu tự động gán `missing_value`; tiền xử lý lúc dự đoán **giống hệt** lúc huấn luyện.
 
