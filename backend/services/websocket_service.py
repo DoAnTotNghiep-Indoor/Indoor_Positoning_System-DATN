@@ -1,9 +1,4 @@
-"""ConnectionManager: quản lý các kết nối WebSocket đang mở.
-
-Hai nhóm client dùng chung một kênh: thiết bị được định vị gửi lần quét lên và
-nhận lại toạ độ của chính nó; dashboard chỉ xem, nhận mọi toạ độ để vẽ marker.
-CTK45 chỉ có REST nên client muốn cập nhật liên tục phải polling.
-"""
+"""Các kết nối WebSocket đang mở: thiết bị gửi lần quét, dashboard chỉ xem."""
 
 from __future__ import annotations
 
@@ -11,8 +6,7 @@ import asyncio
 
 from fastapi import WebSocket
 
-# Hạn gửi cho mỗi client. Đủ rộng cho một kết nối chậm bình thường, đủ ngắn để
-# một client kẹt không giữ chân cả vòng phát quá một nhịp quét.
+# Hạn gửi mỗi client: client kẹt không được giữ chân vòng phát quá một nhịp quét.
 HAN_GUI_GIAY = 2.0
 
 
@@ -20,6 +14,7 @@ class ConnectionManager:
     def __init__(self) -> None:
         self._xem: set[WebSocket] = set()
         self._khoa = asyncio.Lock()
+        self._dang_dong: set[asyncio.Task] = set()
 
     async def ket_noi(self, ws: WebSocket) -> None:
         await ws.accept()
@@ -31,28 +26,35 @@ class ConnectionManager:
             self._xem.discard(ws)
 
     async def phat(self, du_lieu: dict, tru: WebSocket | None = None) -> None:
-        """Gửi cho mọi client đang xem, trừ chính client vừa gửi lần quét. Client nào
-        rớt hoặc treo thì bỏ khỏi danh sách chứ không để vòng lặp vỡ hay đứng lại.
-        """
+        """Gửi cho mọi client trừ `tru`; client rớt hoặc treo bị loại và đóng."""
         async with self._khoa:
-            dang_mo = list(self._xem)
+            dang_mo = [ws for ws in self._xem if ws is not tru]
 
-        hong = []
-        for ws in dang_mo:
-            if ws is tru:
-                continue
+        # Song song: gửi lần lượt thì mỗi client treo cộng một hạn giờ vào /predict.
+        async def gui(ws: WebSocket) -> WebSocket | None:
             try:
-                # Có hạn thời gian chứ không await trần: một client còn mở
-                # nhưng không đọc nữa sẽ làm bộ đệm gửi đầy và `send_json`
-                # treo vô hạn — lúc đó MỘT dashboard kẹt đóng băng luồng vị
-                # trí của mọi thiết bị.
                 await asyncio.wait_for(ws.send_json(du_lieu), HAN_GUI_GIAY)
             except Exception:
-                hong.append(ws)
+                return ws
+            return None
+
+        hong = [ws for ws in await asyncio.gather(*map(gui, dang_mo)) if ws is not None]
 
         if hong:
             async with self._khoa:
                 self._xem.difference_update(hong)
+            # Đóng hẳn để client tự nối lại thay vì treo ở "Đang kết nối".
+            for ws in hong:
+                t = asyncio.create_task(self._dong(ws))
+                self._dang_dong.add(t)
+                t.add_done_callback(self._dang_dong.discard)
+
+    @staticmethod
+    async def _dong(ws: WebSocket) -> None:
+        try:
+            await asyncio.wait_for(ws.close(code=1011), HAN_GUI_GIAY)
+        except Exception:
+            pass
 
 
 manager = ConnectionManager()

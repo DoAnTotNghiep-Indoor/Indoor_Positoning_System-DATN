@@ -1,14 +1,11 @@
-"""Mọi lệnh đọc ghi CSDL đi qua đây.
-
-Tách riêng để khi thêm MongoDB cho phần lưu lần quét thô, chỗ phải sửa chỉ nằm
-trong tệp này chứ không rải khắp router.
-"""
+"""Mọi lệnh đọc ghi CSDL đi qua đây, để đổi kho lưu chỉ phải sửa một tệp."""
 
 from __future__ import annotations
 
 from datetime import timedelta
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import settings
@@ -16,12 +13,8 @@ from backend.database import DuDoanViTri, PhienDinhVi, bay_gio
 
 
 async def lay_hoac_tao_phien(session: AsyncSession, device_id: str) -> PhienDinhVi:
-    """Phiên đang mở của thiết bị, hoặc phiên mới nếu nó vừa vắng mặt quá lâu.
-
-    Dùng chung ngưỡng `reset_after_seconds` với bộ gộp: im lặng quá ngần ấy giây
-    thì `BoGop` đã coi như người dùng đi rồi quay lại và xoá lịch sử. Không mở
-    phiên mới ở đây thì hai tầng hiểu "phiên" khác nhau.
-    """
+    """Phiên đang mở của thiết bị, hoặc phiên mới nếu vắng quá
+    `reset_after_seconds` — cùng ngưỡng `BoGop` dùng để xoá lịch sử gộp."""
     phien = await session.scalar(
         select(PhienDinhVi)
         .where(PhienDinhVi.device_id == device_id)
@@ -72,7 +65,8 @@ async def ghi_du_doan(
 async def lich_su(
     session: AsyncSession, device_id: str | None = None, gioi_han: int = 100
 ) -> list[DuDoanViTri]:
-    cau = select(DuDoanViTri).order_by(DuDoanViTri.luc.desc()).limit(gioi_han)
+    cau = (select(DuDoanViTri).options(selectinload(DuDoanViTri.phien))
+           .order_by(DuDoanViTri.luc.desc()).limit(gioi_han))
     if device_id:
         cau = cau.join(PhienDinhVi).where(PhienDinhVi.device_id == device_id)
     return list(await session.scalars(cau))

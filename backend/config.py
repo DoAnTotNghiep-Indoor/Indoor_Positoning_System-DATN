@@ -1,15 +1,13 @@
-"""Cấu hình đọc từ biến môi trường, không hardcode thông tin nhạy cảm.
+"""Cấu hình đọc từ biến môi trường.
 
-Chọn SQLite chứ không phải PostgreSQL: không cần cài server, chạy được ngay trên
-máy cá nhân lẫn máy chấm. Schema tránh cú pháp riêng của mọi engine nên đổi
-engine chỉ phải đổi DATABASE_URL, và mọi truy cập CSDL đi qua
-backend/repository.py để chỗ phải đổi chỉ nằm ở một tệp.
+SQLite vì không cần cài server; đổi engine chỉ cần đổi DATABASE_URL.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -23,14 +21,16 @@ class Settings(BaseSettings):
     reference_dir: Path = ROOT_DIR / "data" / "reference"
     frontend_dir: Path = ROOT_DIR / "frontend"
 
-    # Số lần quét gộp lại trước khi trả toạ độ: 1,90 m xuống 0,38 m trên tập
-    # test, xem ml/postprocess.py.
-    cua_so_gop: int = 3
+    # Số lần quét gộp; số đo ở `hau_xu_ly_gop` trong model_metadata.json.
+    cua_so_gop: int = Field(3, ge=1)
 
     # Quá khoảng này coi như người dùng đã rời đi, bắt đầu lại cửa sổ gộp.
-    reset_after_seconds: int = 30
+    reset_after_seconds: int = Field(30, ge=1)
 
     allowed_origins: list[str] = ["*"]
+
+    # Tạm tắt: mọi client đi REST. Bật lại là có /ws/location như cũ.
+    websocket: bool = False
 
 
 settings = Settings()

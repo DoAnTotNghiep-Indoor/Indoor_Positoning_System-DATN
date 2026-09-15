@@ -1,9 +1,5 @@
-"""Những thứ dùng chung giữa các router.
-
-Predictor và BoGop nạp một lần lúc khởi động rồi giữ ở cấp module: Predictor
-phải trả giá chạy nóng ~1.400 ms cho lần dự đoán đầu (xem prediction_service),
-còn BoGop phải nhớ các lần quét trước nên không thể dựng mới mỗi lần.
-"""
+"""Đối tượng dùng chung, dựng một lần lúc khởi động: Predictor tốn ~1.400 ms
+chạy nóng, BoGop phải nhớ các lần quét trước."""
 
 from __future__ import annotations
 

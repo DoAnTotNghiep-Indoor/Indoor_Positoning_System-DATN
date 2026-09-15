@@ -1,10 +1,4 @@
-"""Predictor: nạp mô hình một lần lúc khởi động rồi dự đoán toạ độ.
-
-Nạp một lần chứ không mỗi request. Mô hình đang phục vụ là fingerprint_knn, chỉ
-198 KB, nên chi phí thật không nằm ở đọc đĩa mà ở lần dự đoán ĐẦU TIÊN: sklearn
-nạp muộn phần tính khoảng cách nên lần đó tốn ~1.400 ms, các lần sau chỉ 0,3 ms.
-Dựng lại Predictor mỗi request là mỗi request lãnh trọn con số đó.
-"""
+"""Predictor: nạp mô hình một lần lúc khởi động rồi dự đoán toạ độ."""
 
 from __future__ import annotations
 
@@ -24,13 +18,8 @@ class HopDongLech(RuntimeError):
 
 
 class KhongDuAp(ValueError):
-    """Lần quét bắt được quá ít AP quen để định vị.
-
-    Mô hình vẫn cho ra một toạ độ với mọi vector đầu vào, kể cả vector toàn giá trị
-    điền-khi-thiếu — và toạ độ đó cố định, không mang thông tin gì. Đo trên máy
-    thật ngoài thư viện: thấy 23 AP, khớp 0, mô hình vẫn khẳng định người dùng
-    đang đứng ở RP01 trong thư viện.
-    """
+    """Quá ít AP quen để định vị. Mô hình vẫn trả toạ độ cho vector toàn giá trị
+    điền: ngoài thư viện, khớp 0 AP, nó vẫn báo đang ở RP01."""
 
     def __init__(self, so_ap: int, toi_thieu: int):
         super().__init__(
@@ -49,8 +38,7 @@ class Predictor:
             doc_artifact(thu_muc / "model_metadata.json").read_text(encoding="utf-8")
         )
 
-        # Đối chiếu dấu vân trước khi nạp model. Lệch hợp đồng không làm chương trình
-        # sập, nó chỉ làm mọi toạ độ sai mà không ai biết.
+        # Lệch hợp đồng không làm sập gì, chỉ làm mọi toạ độ sai âm thầm.
         cua_model = metadata["hop_dong_du_lieu"]
         cua_hop_dong = self.mapper.dau_van()
         if cua_model != cua_hop_dong:
@@ -62,9 +50,7 @@ class Predictor:
         self.ten_mo_hinh: str = metadata["mo_hinh_active"]
         self.model = joblib.load(doc_artifact(thu_muc / metadata["file_active"]))
 
-        # Chạy nóng ngay tại đây: lần predict đầu tốn ~1.400 ms vì sklearn nạp muộn
-        # phần tính khoảng cách, các lần sau chỉ 0,3 ms. Không chạy nóng thì đúng
-        # request đầu của người dùng lãnh trọn con số đó.
+        # Chạy nóng: lần đầu ~1.400 ms, các lần sau 0,3 ms.
         self.du_doan([])
 
     @property
@@ -72,11 +58,8 @@ class Predictor:
         return self.mapper.min_ap_per_scan
 
     def du_doan(self, scan: list[dict]) -> tuple[float, float, int, float]:
-        """Trả về (x, y, số AP khớp hợp đồng, độ trễ mili giây).
-
-        KHÔNG tự chặn khi quá ít AP: bước chạy nóng ở `__init__` gọi hàm này với danh
-        sách rỗng. Việc chặn nằm ở `_mot_lan_quet`, chỗ REST và WebSocket dùng chung.
-        """
+        """(x, y, số AP khớp, độ trễ ms). Không tự chặn khi thiếu AP: chạy nóng gọi
+        với danh sách rỗng, việc chặn nằm ở `_mot_lan_quet`."""
         bat_dau = time.perf_counter()
 
         vector = self.mapper.map_scan_to_vector(scan)

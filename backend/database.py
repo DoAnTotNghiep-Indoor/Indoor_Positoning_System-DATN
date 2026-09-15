@@ -1,15 +1,15 @@
 """Kết nối SQLite bất đồng bộ và định nghĩa bảng.
 
-Chỉ hai bảng, không phải 16 như bản thiết kế đầy đủ: lưu đúng thứ chưa có chỗ
-nào khác giữ, là lịch sử vị trí đã dự đoán. Điểm tham chiếu và mô hình vẫn đọc
-từ `data/reference/` và `artifacts/` vì hai chỗ đó đã là nguồn sự thật rồi.
+Chỉ hai bảng lịch sử định vị; điểm tham chiếu và mô hình đã có nguồn ở
+`data/reference/` và `artifacts/`.
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, event
+from sqlalchemy.engine import Engine
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -22,16 +22,10 @@ def bay_gio() -> datetime:
 
 
 class MocThoiGian(TypeDecorator):
-    """Cột thời điểm luôn đọc ra kèm múi giờ UTC.
+    """Cột thời điểm luôn đọc ra kèm UTC.
 
-    SQLite không có kiểu ngày giờ riêng nên `DateTime(timezone=True)` KHÔNG có tác
-    dụng: giá trị ghi xuống là UTC nhưng đọc lên thành datetime trần, và
-    `/predictions` trả chuỗi ISO không có hậu tố Z. Chuỗi ISO không mang offset bị
-    JavaScript hiểu là giờ ĐỊA PHƯƠNG nên cột "Lúc" trên Dashboard lệch đúng bằng
-    múi giờ máy — 7 tiếng ở Việt Nam.
-
-    Vẫn lưu dạng trần (đã quy về UTC) chứ không kèm offset, để SQLite còn so sánh
-    và sắp xếp được bằng thứ tự chuỗi.
+    SQLite đọc lên datetime trần, mà JavaScript hiểu chuỗi không offset là giờ địa
+    phương nên Dashboard lệch 7 tiếng. Vẫn lưu trần để SQLite sắp xếp theo chuỗi.
     """
 
     impl = DateTime
@@ -40,8 +34,7 @@ class MocThoiGian(TypeDecorator):
     def process_bind_param(self, value, dialect):
         if value is None:
             return None
-        # Giá trị trần coi như đã là UTC: mọi chỗ trong dự án đều ghi bằng
-        # `bay_gio()`, và đoán sang giờ địa phương mới đúng là lỗi cần tránh.
+        # Giá trị trần coi như đã là UTC: mọi chỗ đều ghi bằng `bay_gio()`.
         if value.tzinfo is None:
             return value
         return value.astimezone(timezone.utc).replace(tzinfo=None)
@@ -71,10 +64,7 @@ class PhienDinhVi(Base):
 
 
 class DuDoanViTri(Base):
-    """Một toạ độ đã trả về cho client. Giữ cả toạ độ thô lẫn toạ độ sau khi gộp:
-    chênh lệch giữa hai cột này chính là số liệu chứng minh hiệu quả của bước hậu
-    xử lý trong báo cáo.
-    """
+    """Một toạ độ đã trả về; giữ cả thô lẫn đã gộp để đo hiệu quả bước gộp."""
 
     __tablename__ = "position_predictions"
 
@@ -92,6 +82,21 @@ class DuDoanViTri(Base):
     do_tre_ms: Mapped[float] = mapped_column(Float)
 
     phien: Mapped[PhienDinhVi] = relationship(back_populates="du_doan")
+
+    @property
+    def device_id(self) -> str:
+        return self.phien.device_id
+
+
+@event.listens_for(Engine, "connect")
+def _bat_wal(ket_noi, _) -> None:
+    """WAL: commit nhanh ~5 lần (0,47 so với 2,31 ms), đọc không chặn ghi. Khoá
+    ngoại phải bật tay vì SQLite mặc định KHÔNG thực thi."""
+    if "sqlite" in type(ket_noi).__module__:
+        con = ket_noi.cursor()
+        con.execute("PRAGMA journal_mode=WAL")
+        con.execute("PRAGMA foreign_keys=ON")
+        con.close()
 
 
 engine = create_async_engine(settings.database_url, echo=False)

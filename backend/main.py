@@ -1,9 +1,6 @@
-"""Khởi tạo FastAPI và đăng ký router.
+"""Khởi tạo FastAPI: `uvicorn backend.main:app --reload`.
 
-    uvicorn backend.main:app --reload
-
-Không chứa logic nghiệp vụ. Mô hình và bộ gộp nạp trong lifespan chứ không lúc
-import, để import module không đòi artifacts/ phải có sẵn.
+Mô hình nạp trong lifespan chứ không lúc import, để import không đòi artifacts/.
 """
 
 from __future__ import annotations
@@ -11,8 +8,11 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend import dependencies, schemas
@@ -36,7 +36,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Bản đồ và đồ thị là JSON text nên nén rất hiệu quả.
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.add_middleware(
@@ -50,6 +49,14 @@ app.include_router(predict.router)
 app.include_router(map_router.router)
 
 
+@app.exception_handler(RequestValidationError)
+async def loi_schema(_, exc: RequestValidationError) -> JSONResponse:
+    """Như mặc định của FastAPI nhưng bỏ `input`: pydantic chép lại giá trị gửi
+    lên, mà inf/NaN không tuần tự hoá được nên 422 hoá thành 500."""
+    return JSONResponse(status_code=422, content={"detail": jsonable_encoder(
+        [{k: v for k, v in e.items() if k != "input"} for e in exc.errors()])})
+
+
 @app.get("/health", response_model=schemas.TrangThai, tags=["health"])
 async def health() -> schemas.TrangThai:
     """Xác nhận model đã nạp và hợp đồng dữ liệu khớp."""
@@ -60,12 +67,11 @@ async def health() -> schemas.TrangThai:
         so_dac_trung=p.mapper.feature_count,
         gia_tri_dien_thieu=p.mapper.missing_rssi_value,
         cua_so_gop=settings.cua_so_gop,
+        websocket=settings.websocket,
     )
 
 
-# Dashboard web phục vụ ngay từ máy chủ API, nên một lệnh `uvicorn` là có cả API
-# lẫn giao diện, không vướng CORS. Mount ĐẶT CUỐI TỆP vì nó nhận mọi đường dẫn
-# còn lại: đăng ký trước thì nó nuốt luôn /health, /map và /predict.
+# Dashboard phục vụ cùng máy chủ API. Mount ĐẶT CUỐI vì nó nhận mọi đường dẫn còn lại.
 if settings.frontend_dir.is_dir():
     app.mount(
         "/",
