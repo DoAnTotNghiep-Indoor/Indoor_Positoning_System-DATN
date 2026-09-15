@@ -1,0 +1,10 @@
+phep_do,cach,so_cap,tb_m,trung_vi_m,p90_m,max_m,tuong_doi_tb,ty_le_tren_1m
+cua_so_truot,cu_1m,1331,inf,27.6207,62.5208,inf,inf,0.9985
+cua_so_truot,cu_m,1331,inf,0.7803,9.158,inf,inf,0.4891
+cua_so_truot,moi_m,1331,0.7937,0.0349,2.1644,14.7839,0.1069,0.2104
+mot_lan_quet,cu_1m,1331,inf,27.3814,62.96,inf,inf,0.9977
+mot_lan_quet,cu_m,1331,inf,1.1081,9.4977,inf,inf,0.5049
+mot_lan_quet,moi_m,1331,0.9039,0.0355,2.6792,14.7839,0.1189,0.2359
+thuat_toan,cu_m,4400,inf,1.5651,inf,inf,inf,0.6636
+thuat_toan,moi_m,4400,0.2304,0.028,0.6776,8.8941,0.0346,0.0736
+thuat_toan,dijkstra_m,4400,0.2304,0.028,0.6776,8.8941,0.0346,0.0736

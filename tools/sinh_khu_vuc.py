@@ -5,9 +5,6 @@
 Bản nhúng sẵn này để ứng dụng vẫn có danh sách khu vực, ảnh và mô tả khi chưa
 nối được máy chủ. Chỉ gồm phần DỮ LIỆU; lớp `KhuVuc` và phần gộp điểm viết tay
 ở `mobile/lib/data/khu_vuc.dart` để lần sinh lại không đè mất.
-
-`tests/test_khu_vuc.py` đối chiếu tệp sinh ra với CSV, nên sửa lệch một bên là
-bài test đỏ chứ không âm thầm trôi khỏi nhau.
 """
 
 from __future__ import annotations

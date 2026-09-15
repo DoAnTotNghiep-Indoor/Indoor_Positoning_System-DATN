@@ -5,7 +5,7 @@
 
 Khác `trich_ban_do.ve_hinh` ở mục đích: hình kia để KIỂM CHỨNG phép dò tường nên
 chồng thẳng lên ảnh gốc; bốn hình ở đây để ĐƯA VÀO BÁO CÁO nên vẽ lại nét trên
-nền trắng, trục đánh số bằng mét, có thước tỉ lệ.
+nền trắng, trục đánh số bằng đơn vị lưới, có thước tỉ lệ mét.
 
 Toàn bộ hình học lấy từ `Map.png` và `reference_points.csv`, không viết cứng số
 đo nào — sửa toạ độ là cả bốn hình đổi theo.
@@ -27,7 +27,7 @@ from matplotlib.patches import Rectangle
 from matplotlib.transforms import Affine2D
 
 from ml import config
-from tools.trich_ban_do import (ANH, KHOI_CAU_THANG_BO_SUNG, BanDo,
+from tools.trich_ban_do import (ANH, KHOI_CAU_THANG_BO_SUNG, BanDo, ty_le_quy_doi,
                                 _tach_ba_lop)
 
 RA = config.REPORTS_DIR / "figures"
@@ -129,8 +129,8 @@ class Ve:
             interpolation="nearest", zorder=2,
         )
         ax.set_facecolor("white")
-        ax.set_xlabel("x (mét)")
-        ax.set_ylabel("y (mét)")
+        ax.set_xlabel("x (đơn vị lưới)")
+        ax.set_ylabel("y (đơn vị lưới)")
         ax.set_aspect("equal")
         ax.grid(True, lw=0.4, color="#DDDDDD", zorder=0)
         ax.set_axisbelow(True)
@@ -141,10 +141,11 @@ class Ve:
         ax.set_ylim(self.khung[2] - 11, self.khung[3] + 8)
 
     def _thuoc(self, ax: plt.Axes, dai_m: float = 10.0) -> None:
-        x0, y0 = self.khung[0] + 4, self.khung[2] + 4
-        ax.plot([x0, x0 + dai_m], [y0, y0], lw=3, color="#111111",
+        dai = dai_m / ty_le_quy_doi(self.bd)["met_moi_don_vi"]
+        x0, y0 = self.khung[1] - dai, self.khung[2] - 6
+        ax.plot([x0, x0 + dai], [y0, y0], lw=3, color="#111111",
                 solid_capstyle="butt", zorder=6)
-        ax.text(x0 + dai_m / 2, y0 + 1.2, f"{dai_m:.0f} m", ha="center",
+        ax.text(x0 + dai / 2, y0 + 1.2, f"{dai_m:.0f} m", ha="center",
                 fontsize=9, zorder=6)
 
 
@@ -155,11 +156,12 @@ def hinh_mat_bang(v: Ve) -> Path:
 
     xs, ys = v.rp["x"], v.rp["y"]
     x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
+    met = ty_le_quy_doi(v.bd)["met_moi_don_vi"]
 
     # Đường kích thước: hộp bao các điểm đã đo chính là hệ quy chiếu của cả dự án
     for (ax0, ay0), (ax1, ay1), chu, doi in (
-        ((x0, y1 + 3.4), (x1, y1 + 3.4), f"{x1 - x0:.0f} m", (0, 1.2)),
-        ((x1 + 5.2, y0), (x1 + 5.2, y1), f"{y1 - y0:.0f} m", (1.8, 0)),
+        ((x0, y1 + 3.4), (x1, y1 + 3.4), f"{(x1 - x0) * met:.1f} m", (0, 1.2)),
+        ((x1 + 5.2, y0), (x1 + 5.2, y1), f"{(y1 - y0) * met:.1f} m", (1.8, 0)),
     ):
         ax.annotate("", (ax1, ay1), (ax0, ay0),
                     arrowprops=dict(arrowstyle="<->", lw=1.1, color="#B71C1C"))
@@ -177,7 +179,7 @@ def hinh_mat_bang(v: Ve) -> Path:
     ax.set_title(
         "Bản vẽ thiết kế tầng 1 — Trung tâm Thông tin – Thư viện, Đại học Đà Lạt\n"
         f"nét đen: tường  ·  xám: kệ sách và vật cản  ·  "
-        f"tỉ lệ {v.bd.px_moi_met_x:.2f} px/m",
+        f"{v.bd.px_moi_met_x:.2f} px/đơn vị lưới, 1 đơn vị = {met} m",
         fontsize=12.5, pad=14)
     ra = RA / "ban_ve_tang1.png"
     fig.tight_layout()
@@ -227,7 +229,7 @@ def hinh_vung_di_lai(v: Ve) -> Path:
     fig, ax = plt.subplots(figsize=(13.6, 8.6), dpi=130)
     v._nen(ax, vat_can=False)
 
-    dt_px = v.bd.px_moi_met_x * v.bd.px_moi_met_y
+    dt_px = v.bd.px_moi_met_x * v.bd.px_moi_met_y / ty_le_quy_doi(v.bd)["met_moi_don_vi"] ** 2
     chu = []
     for k, i in enumerate(sorted(np.unique(v.bd.vung))[1:]):
         mask = v.bd.vung == i
@@ -275,7 +277,7 @@ def hinh_tuyen(v: Ve, tu: str = "RP01", den: str = "RP39") -> Path:
 
     for a, b in zip(duong, duong[1:]):
         (xa, ya), (xb, yb) = g.toa_do[a], g.toa_do[b]
-        ax.text((xa + xb) / 2, (ya + yb) / 2, f"{math.dist((xa, ya), (xb, yb)):.1f}",
+        ax.text((xa + xb) / 2, (ya + yb) / 2, f"{math.dist((xa, ya), (xb, yb)) * g.met_moi_don_vi:.1f}",
                 fontsize=7.6, ha="center", va="center", zorder=8,
                 bbox=dict(boxstyle="round,pad=0.18", fc="white", ec="none",
                           alpha=0.9))
@@ -296,7 +298,7 @@ def hinh_tuyen(v: Ve, tu: str = "RP01", den: str = "RP39") -> Path:
     ax.set_title(
         f"Tuyến mẫu trên đồ thị đã lọc tường — {tu} → {den}: "
         f"{tong:.1f} m qua {len(duong) - 1} chặng\n"
-        "số trên mỗi chặng là mét thật, đo trong hệ toạ độ khảo sát",
+        f"số trên mỗi chặng là mét, 1 đơn vị lưới = {g.met_moi_don_vi} m",
         fontsize=12.5, pad=14)
     ra = RA / "ban_ve_tuyen_mau.png"
     fig.tight_layout()

@@ -10,23 +10,37 @@ Map.png chỉ hai màu trên nền trong suốt: nét đen là tường, xám #D
 lưới chấm toạ độ vừa là vách ngăn và kệ sách — phân biệt bằng kích thước, chấm
 lưới đều đúng 16 px.
 
-MÉT ↔ PIXEL: lưới chấm trải 1000 × 605 px, hộp bao điểm tham chiếu 86 × 52 m,
-cho 11,628 và 11,635 px/m — khớp tới 4 chữ số, đó là căn cứ khẳng định lưới
-chấm chính là hệ toạ độ mét. Trục y HƯỚNG LÊN và trục x KHÔNG lật, mỗi chiều
-chốt bằng một bằng chứng độc lập: đoạn thắt eo của toà nhà chỉ lọt theo chiều
-y đó, và khớp 39 điểm với GPS trong POI.geojson cho RMS 3,15 m khi không lật
-so với 13,84 m khi lật.
+ĐƠN VỊ LƯỚI ↔ PIXEL: lưới chấm trải 1000 × 605 px, hộp bao điểm tham chiếu
+86 × 52 đơn vị, cho 11,628 và 11,635 px/đơn vị — lưới chấm chính là hệ toạ độ
+Bảng 4. Khoá JSON vẫn tên `px_moi_met_*` để client cũ đọc được. Trục y HƯỚNG LÊN
+và trục x KHÔNG lật: đoạn thắt eo chỉ lọt theo chiều y đó, và khớp 39 điểm với
+GPS trong POI.geojson cho RMS 3,15 so với 13,84 khi lật.
+
+ĐƠN VỊ LƯỚI ↔ MÉT: một đơn vị KHÔNG phải một mét. Hình 7 báo cáo CTK45 ghi bốn
+đoạn dọc toà nhà 4 + 5,2 + 8,8 + 1,6 = 19,6 m, trên đường bao cao 55,87 đơn vị,
+nên 0,3508 m/đơn vị. Đối chứng ngoài: đa giác toà thư viện trên OpenStreetMap
+chỉ chứa trọn mặt bằng khi tỉ lệ ≤ 0,35 (đặt đúng phương vị đo từ Google Maps);
+ở 1 m/đơn vị chỉ 74% mặt bằng lọt vào trong nhà.
+
+LƯỚI ĐI LẠI: mặt nạ sàn đi được, góc lồi của vật cản, cặp nút nhìn thấy nhau và
+cạnh cửa giả định — backend tìm đường ngắn nhất trên đó.
+
+ĐỒ THỊ TẦM NHÌN: mọi cặp điểm có đoạn thẳng nằm trọn trong một mảng sàn ghi vào
+`canh_nhin_thay`; backend nối thẳng các cặp đó, nên tuyến chỉ rẽ qua điểm mốc
+khi thật sự có vật cản.
 
 CỬA GIẢ ĐỊNH: Map.png vẽ tường nhưng không vẽ cửa, chặn hết cạnh cắt tường thì
-đồ thị vỡ thành mảnh rời. Công cụ nối lại bằng số cạnh ít nhất, mỗi lần chọn
-cạnh NGẮN NHẤT giữa hai mảnh, ghi riêng vào `cua_gia_dinh` để ra thực địa đối
-chiếu chứ không trộn vào phần suy từ ảnh.
+đồ thị vỡ thành mảnh rời. `CUA_CU` là các cửa vòng nối tự động (mỗi lần chọn cạnh
+ngắn nhất giữa hai mảnh) đã chọn trước đây, `CUA_NHOM_CHI_DINH` là cạnh nhóm nối
+thêm; tất cả ghi riêng vào `cua_gia_dinh` để ra thực địa đối chiếu.
 """
 
 from __future__ import annotations
 
+import base64
 import json
 import math
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -57,12 +71,38 @@ BAN_KINH_GHI_M = 25.0
 
 SO_LANG_GIENG = 3
 
+# Hình 7 báo cáo CTK45 (trang 44): bốn kích thước dọc, từ cạnh dưới lên.
+CHIEU_DOC_HINH7_M = (4.0, 5.2, 8.8, 1.6)
+
+# Cửa do vòng nối tự động chọn ở các bản trước, nay cố định để luật nối bên dưới
+# không làm vòng đó chọn lại khác đi. Bỏ RP18-RP20 theo nhóm.
+CUA_CU = [("RP19", "RP28"), ("RP16", "RP22"), ("RP17", "RP25"), ("RP10", "RP12"),
+          ("RP02", "RP05"), ("RP20", "RP23")]
+
+# Luật nối nhóm chỉ định: cạnh mở thêm như cửa giả định, cạnh cấm, và điểm chỉ
+# được nối với đúng các điểm liệt kê.
+CUA_NHOM_CHI_DINH = [("RP26", "RP19"), ("RP27", "RP19"), ("RP29", "RP20"),
+                     ("RP32", "RP21"), ("RP06", "RP02"), ("RP20", "RP26"),
+                     ("RP21", "RP27"), ("RP05", "RP45"), ("RP06", "RP44")]
+CAM_NOI = [("RP18", "RP20"), ("RP45", "RP13"), ("RP45", "RP12"), ("RP45", "RP20"),
+           ("RP44", "RP14"), ("RP44", "RP15"), ("RP44", "RP21")]
+CHI_NOI = {"RP01": ("RP45", "RP02"), "RP03": ("RP44", "RP02")}
+# Chỉ là đích: không nối điểm tham chiếu nào, tới được qua góc lối đi.
+KHONG_NOI = {"RP42", "RP43"}
+
+
+def duoc_noi(a: str, b: str) -> bool:
+    if a in KHONG_NOI or b in KHONG_NOI or {a, b} in [set(c) for c in CAM_NOI]:
+        return False
+    return (a not in CHI_NOI or b in CHI_NOI[a]) and (b not in CHI_NOI or a in CHI_NOI[b])
+
+
 # Hai cầu thang đầu hành lang nam, nhóm 2025 bổ sung: (x tâm, y tâm, rộng, cao)
-# tính bằng mét. Map.png của CTK45 không vẽ chúng nên RP44/RP45 chỉ có chấm.
+# tính bằng đơn vị lưới. Map.png của CTK45 không vẽ chúng nên RP44/RP45 chỉ có chấm.
 #
 # LỚP HÌNH thuần, không ghi vào mặt nạ vật cản nên đồ thị và khoảng cách không
-# đổi. Cỡ 5 × 5 m theo hộp vẽ tay, không theo lõi 7,5 × 8,4 m của RP20/RP21 vì
-# dải hành lang nam chỉ cao chừng 6 m.
+# đổi. Cỡ 5 × 5 theo hộp vẽ tay, không theo lõi 7,5 × 8,4 của RP20/RP21 vì dải
+# hành lang nam chỉ cao chừng 6 đơn vị.
 KHOI_CAU_THANG_BO_SUNG = [(28.0, 2.5, 5.0, 5.0), (-28.0, 2.5, 5.0, 5.0)]
 
 # Vật cản trong Map.png tô sắc xám này; hai nơi vẽ lại khối bổ sung đều lấy từ
@@ -99,7 +139,7 @@ def _tach_lop(anh: Path) -> tuple[np.ndarray, np.ndarray]:
 
 
 def _luoi_toa_do(cham: np.ndarray) -> dict:
-    """Hộp bao tâm các chấm lưới — chính là hộp bao 86 m × 52 m của bộ dữ liệu."""
+    """Hộp bao tâm các chấm lưới — chính là hộp bao 86 × 52 đơn vị của bộ dữ liệu."""
     nhan, so = ndimage.label(cham, structure=np.ones((3, 3), bool))
     tam = ndimage.center_of_mass(cham, nhan, range(1, so + 1))
     ys = [t[0] for t in tam]
@@ -226,13 +266,15 @@ def tinh(bd: "BanDo") -> dict:
     ten = list(bd.toa_do)
     cap = [(a, b) for i, a in enumerate(ten) for b in ten[i + 1:]]
 
-    chan = [c for c in cap
-            if not bd.di_duoc(*c) and bd.khoang_cach(*c) <= BAN_KINH_GHI_M]
+    cap = [c for c in cap if duoc_noi(*c)]
+    thong = {c: bd.di_duoc(*c) for c in cap}
+    chan = [c for c in cap if not thong[c] and bd.khoang_cach(*c) <= BAN_KINH_GHI_M]
     chan_set = set(chan)
+    nhin_thay = sorted(tuple(sorted(c)) for c in cap if thong[c])
 
     canh: dict[tuple[str, str], float] = {}
     for a in ten:
-        gan = sorted((bd.khoang_cach(a, b), b) for b in ten if b != a)
+        gan = sorted((bd.khoang_cach(a, b), b) for b in ten if b != a and duoc_noi(a, b))
         for d, b in gan[:SO_LANG_GIENG]:
             khoa = (a, b) if a < b else (b, a)
             if khoa not in chan_set:
@@ -241,15 +283,25 @@ def tinh(bd: "BanDo") -> dict:
     roi = _MangRoi(ten)
     for a, b in canh:
         roi.gop(a, b)
-    so_manh = len({roi.goc(k) for k in ten})
+    ten_noi = [k for k in ten if k not in KHONG_NOI]
+    so_manh = len({roi.goc(k) for k in ten_noi})
 
     cua: list[tuple[str, str]] = []
-    while len({roi.goc(k) for k in ten}) > 1:
+    for a, b in CUA_CU + CUA_NHOM_CHI_DINH:
+        roi.gop(a, b)
+        canh[(a, b)] = bd.khoang_cach(a, b)
+        cua.append((a, b))
+    # Cố định danh sách trên thì vòng này không thêm gì; còn thêm là đồ thị vẫn đứt.
+    while len({roi.goc(k) for k in ten_noi}) > 1:
         khac = [c for c in cap if roi.goc(c[0]) != roi.goc(c[1])]
         a, b = min(khac, key=lambda c: bd.khoang_cach(*c))
         roi.gop(a, b)
         canh[(a, b)] = bd.khoang_cach(a, b)
         cua.append((a, b))
+
+    for a, ke in CHI_NOI.items():
+        for b in ke:
+            assert thong.get((a, b), thong.get((b, a))), f"{a}-{b} không nhìn thấy nhau"
 
     return {
         "nguon": "Map.png",
@@ -273,7 +325,73 @@ def tinh(bd: "BanDo") -> dict:
         "canh_xuyen_tuong": [list(c) for c in sorted(chan)],
         "so_manh_sau_khi_chan": so_manh,
         "cua_gia_dinh": [list(c) for c in cua],
+        "chi_noi": {k: list(v) for k, v in CHI_NOI.items()},
+        "cam_noi": [list(c) for c in CAM_NOI],
+        "canh_nhin_thay": [list(c) for c in nhin_thay],
+        "ty_le_quy_doi": ty_le_quy_doi(bd),
+        "luoi_di_lai": luoi_di_lai(bd, cua),
     }
+
+
+def ty_le_quy_doi(bd: "BanDo") -> dict:
+    net_den, _, _ = _tach_ba_lop(ANH)
+    hang = np.nonzero(net_den.any(axis=1))[0]
+    cao = float(hang.max() - hang.min()) / bd.px_moi_met_y
+    return {"met_moi_don_vi": round(sum(CHIEU_DOC_HINH7_M) / cao, 4),
+            "chieu_doc_hinh7_m": list(CHIEU_DOC_HINH7_M),
+            "chieu_doc_duong_bao_don_vi": round(cao, 2),
+            "nguon": "Hình 7, báo cáo CTK45 trang 44"}
+
+
+def luoi_di_lai(bd: "BanDo", cua: list[tuple[str, str]]) -> dict:
+    """Mặt nạ đi được, góc lồi vật cản và cặp nút nhìn thấy nhau.
+
+    Góc là ô trống kề chéo một ô vật cản mà hai ô kề cạnh đều trống. Giữ từng góc
+    riêng, không gom: hai phía đầu một vách 1 px nằm sát nhau, gom lại thì nút rơi
+    nhầm sang bên kia vách.
+    """
+    from backend.services.routing_service import nhin_thay
+
+    trong = bd.vung > 0
+    nha = ndimage.binary_fill_holes(ndimage.binary_dilation(trong, iterations=3))
+    o = trong & nha
+
+    cao, rong = o.shape
+    p = np.pad(o, 1)
+    goc = np.zeros_like(o)
+    for dy in (-1, 1):
+        for dx in (-1, 1):
+            goc |= (o & p[1 + dy:cao + 1 + dy, 1:-1] & p[1:-1, 1 + dx:rong + 1 + dx]
+                    & ~p[1 + dy:cao + 1 + dy, 1 + dx:rong + 1 + dx])
+    goc_px = [[int(c), int(r)] for r, c in np.argwhere(goc)]
+
+    nut = np.array(goc_px + [list(bd.px[k]) for k in bd.toa_do], float)
+    ten = [None] * len(goc_px) + list(bd.toa_do)
+    canh = []
+    for i in range(len(nut) - 1):
+        j = np.arange(i + 1, len(nut))
+        canh += [[i, int(k)] for k in j[nhin_thay(o, nut[i], nut[j])]
+                 if _noi_nut(ten[i], ten[k])]
+    # Cửa chỉ nối đúng hai đầu mút, không mở lối cho nút khác đi tắt vào giữa.
+    so = {k: len(goc_px) + i for i, k in enumerate(bd.toa_do)}
+    canh += [[so[a], so[b]] for a, b in cua]
+
+    return {"rong": rong, "cao": cao,
+            "mat_na": _nen(np.packbits(o)),
+            "rp_px": {k: list(bd.px[k]) for k in bd.toa_do},
+            "goc_px": _nen(np.array(goc_px, np.uint16)),
+            "canh": _nen(np.array(canh, np.uint16))}
+
+
+def _noi_nut(a: str | None, b: str | None) -> bool:
+    """Nút góc không mang tên; điểm trong CHI_NOI không nối với góc nào."""
+    if a is None or b is None:
+        return (a or b) not in CHI_NOI
+    return duoc_noi(a, b)
+
+
+def _nen(a: np.ndarray) -> str:
+    return base64.b64encode(zlib.compress(a.tobytes(), 9)).decode()
 
 
 def _ve_khoi_bo_sung(ax, bd: "BanDo") -> None:
@@ -288,17 +406,16 @@ def _ve_khoi_bo_sung(ax, bd: "BanDo") -> None:
 
 
 def ve_hinh(bd: BanDo, kq: dict) -> Path:
-    """Hình kiểm chứng: mọi điểm phải nằm gọn trong lòng nhà, cạnh đỏ (bị loại)
-    phải cắt qua nét vẽ, cạnh xanh thì không.
+    """Hình kiểm chứng: mọi điểm nằm gọn trong lòng nhà, cạnh xanh (nhìn thấy
+    nhau) không được cắt qua nét vẽ nào.
     """
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    chan = {tuple(c) for c in kq["canh_xuyen_tuong"]}
     cua = {tuple(c) for c in kq["cua_gia_dinh"]}
-    ten = list(bd.toa_do)
+    chi_dinh = set(CUA_NHOM_CHI_DINH)
 
     fig, ax = plt.subplots(figsize=(13.2, 8.4), dpi=110)
     ax.imshow(Image.open(ANH), alpha=ALPHA_NEN_ANH)
@@ -317,21 +434,15 @@ def ve_hinh(bd: BanDo, kq: dict) -> Path:
         da_ghi.add(loai)
         return chu
 
-    for a in ten:
-        gan = sorted(ten, key=lambda b: bd.khoang_cach(a, b))
-        for b in gan[1:1 + SO_LANG_GIENG]:
-            khoa = (a, b) if a < b else (b, a)
-            if khoa in cua:
-                continue
-            if khoa in chan:
-                doan(a, b, color="#d64545", lw=1.0, ls=":", zorder=2,
-                     label=nhan("chan", "cạnh xuyên tường (đã bỏ)"))
-            else:
-                doan(a, b, color="#2f6f4f", lw=1.6, zorder=3,
-                     label=nhan("giu", "cạnh giữ lại"))
-    for a, b in cua:
+    for a, b in kq["canh_nhin_thay"]:
+        doan(a, b, color="#2f6f4f", lw=0.6, alpha=0.45, zorder=3,
+             label=nhan("thay", "cặp nhìn thấy nhau — nối thẳng"))
+    for a, b in cua - chi_dinh:
         doan(a, b, color="#e08a1e", lw=2.0, ls="--", zorder=4,
              label=nhan("cua", "cửa giả định (chưa kiểm chứng thực địa)"))
+    for a, b in cua & chi_dinh:
+        doan(a, b, color="#c0392b", lw=2.0, ls="--", zorder=4,
+             label=nhan("chi_dinh", "nối thêm theo nhóm chỉ định"))
 
     for rp, (x, y) in bd.toa_do.items():
         u, w = bd.sang_pixel(x, y)
@@ -359,7 +470,8 @@ def main() -> None:
     RA.write_bytes(van.encode("utf-8"))
     hinh = ve_hinh(bd, kq)
 
-    print(f"{RA.name}: {len(kq['canh_xuyen_tuong'])} cặp bị tường chặn "
+    print(f"{RA.name}: {len(kq['canh_nhin_thay'])} cặp nhìn thấy nhau, "
+          f"{len(kq['canh_xuyen_tuong'])} cặp bị tường chặn "
           f"trong bán kính {BAN_KINH_GHI_M:.0f} m, "
           f"{len(kq['cua_gia_dinh'])} cửa giả định "
           f"(đồ thị vỡ thành {kq['so_manh_sau_khi_chan']} mảnh trước khi nối).")
