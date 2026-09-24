@@ -36,10 +36,12 @@ data/raw/nhom15_2026/*/tong_hop.csv
 # feature_list.json / model_metadata.json không khớp pattern dưới nên vẫn được commit.
 artifacts/*.pkl
 artifacts/*.joblib
-# Trừ đúng hai tệp backend cần để chạy ngay sau khi clone (~205 KB); năm mô hình
+# Trừ các tệp backend cần để chạy ngay sau khi clone: scaler và mô hình đang
+# triển khai (k động), giữ thêm kNN vân tay k = 1 để quay lui được. Các mô hình
 # còn lại sinh lại bằng `python -m ml.train`.
 !artifacts/scaler.pkl
 !artifacts/model_fingerprint_knn.pkl
+!artifacts/model_fingerprint_knn_dong.pkl
 
 # Node / build
 node_modules/
@@ -55,3 +57,4 @@ Thumbs.db
 # Nén
 *.zip
 *.rar
+tmp/

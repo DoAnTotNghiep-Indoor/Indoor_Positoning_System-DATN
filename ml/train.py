@@ -1,4 +1,4 @@
-"""Huấn luyện và so sánh năm mô hình định vị.
+"""Huấn luyện và so sánh sáu mô hình định vị.
 
     python -m ml.train                 # đầy đủ, lưới tham số theo tài liệu
     python -m ml.train --nhanh         # lưới rút gọn, dùng lúc thử nghiệm
@@ -167,9 +167,11 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
     config.ghi_csv(bang, config.REPORTS_DIR / "tables" / "model_comparison.csv",
                    index=False)
 
-    # Mô hình active chọn theo VALIDATION. Sai số test bên dưới chỉ dùng để báo
-    # cáo, không được tham gia vào bất kỳ quyết định nào.
-    tot_nhat = chon_theo_validation(tat_ca)
+    # Mô hình active: `config.MO_HINH_TRIEN_KHAI` nếu có trong lần chạy này, không
+    # thì chọn theo VALIDATION. Sai số test bên dưới chỉ dùng để báo cáo, không
+    # tham gia vào bất kỳ quyết định nào.
+    tot_nhat = next((r for r in tat_ca if r["module"].__name__.rsplit(".", 1)[-1]
+                     == config.MO_HINH_TRIEN_KHAI), None) or chon_theo_validation(tat_ca)
 
     for r in tat_ca:
         khoa = r["module"].__name__.rsplit(".", 1)[-1]
@@ -233,7 +235,7 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
     r_co_so = chon_theo_validation(tat_ca, lambda r: r["module"].TEN in ("kNN", "WKNN"))
     co_so = r_co_so["ket_qua_test"]["loi_trung_binh"] if r_co_so else 0.0
     tot = tot_nhat["ket_qua_test"]["loi_trung_binh"]
-    print(f"\nTốt nhất: {tot_nhat['module'].TEN} — {tot:.3f} m")
+    print(f"\nTriển khai: {tot_nhat['module'].TEN} — {tot:.3f} m")
     if co_so > 0:
         print(f"So với cơ sở tốt nhất ({co_so:.3f} m): "
               f"{'giảm' if tot < co_so else 'TĂNG'} {abs(tot - co_so) / co_so * 100:.1f}%")

@@ -97,6 +97,14 @@ TEST_SIZE = 0.15
 VALIDATION_SIZE = 0.15
 RANDOM_STATE = 42
 
+# Mô hình triển khai, chỉ định thay vì lấy mô hình có sai số validation thấp
+# nhất: validation chia ngẫu nhiên theo lần quét nên luôn ưu tiên mô hình nhớ
+# đúng điểm đã khảo sát (k = 1), trong khi người dùng thật còn đứng ở chỗ chưa
+# khảo sát. k động cân bằng hai trường hợp — xem `python -m ml.ket_hop`, đánh giá
+# trên 10 lần chia lại và bỏ trọn từng điểm, không dùng tập test seed 42.
+# Đặt None để quay về chọn theo validation.
+MO_HINH_TRIEN_KHAI = "fingerprint_knn_dong"
+
 
 # --- Ghi tệp văn bản ---
 # Trên Windows, `write_text` và `to_csv` tự đổi xuống dòng sang CRLF nên artifact

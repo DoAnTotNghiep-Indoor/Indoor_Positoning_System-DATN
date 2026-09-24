@@ -34,8 +34,8 @@ for _luong in (sys.stdout, sys.stderr):
             pass
 
 # --- Bảng màu đã qua validator (chế độ sáng, nền #fcfcfb) ---
-SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"]
-NET = ["-", "--", "-.", ":", (0, (3, 1, 1, 1, 1, 1))]
+SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#6b4fc7"]
+NET = ["-", "--", "-.", ":", (0, (3, 1, 1, 1, 1, 1)), (0, (5, 2))]
 
 SURFACE = "#fcfcfb"
 MUC_CHINH = "#0b0b0b"
