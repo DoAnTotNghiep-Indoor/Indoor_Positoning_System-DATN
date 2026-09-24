@@ -193,7 +193,8 @@ System_Indoor/
 │
 ├── artifacts/                           # ★ HỢP ĐỒNG giữa ML và Backend
 │   ├── feature_list.json  model_metadata.json  pipeline_manifest.json
-│   ├── scaler.pkl  model_fingerprint_knn.pkl   # commit để clone về chạy backend ngay
+│   ├── scaler.pkl  model_fingerprint_knn_dong.pkl   # commit để clone về chạy backend ngay
+│   ├── model_fingerprint_knn.pkl        # k = 1, giữ để quay lui
 │   └── (4 model_*.pkl còn lại — sinh lại bằng ml.train, không commit)
 │
 ├── notebooks/                           # Colab: 2 notebook + 12 bước tiền xử lý
@@ -203,8 +204,12 @@ System_Indoor/
 │   ├── evaluate.py  postprocess.py  report.py  audit.py
 │   ├── danh_gia_cheo.py                 # giao thức bỏ trọn một điểm tham chiếu
 │   ├── on_dinh.py                       # so sánh qua nhiều seed, khoảng tin cậy
+│   ├── quet_k.py                        # quét k = 1..61, ba cách đánh giá
+│   ├── mlp.py                           # thí nghiệm hai mạng MLP
+│   ├── ket_hop.py                       # so sánh các cách kết hợp mô hình
 │   └── models/  knn.py  wknn.py  xgboost_model.py  random_forest.py
 │                fingerprint_knn.py
+│                fingerprint_knn_dong.py # k động — mô hình đang triển khai
 │
 ├── backend/
 │   ├── main.py  config.py  database.py  repository.py  schemas.py
@@ -214,13 +219,13 @@ System_Indoor/
 │                   smoothing_service.py  routing_service.py
 │                   websocket_service.py
 │
-├── frontend/                            # Web Dashboard, JS thuần
+├── frontend/                            # Web Dashboard giám sát, JS thuần
 │   ├── index.html
 │   └── src/  js/{api,websocket,map-renderer,coordinate,charts,dashboard}.js
 │             css/style.css
 │             components/{status-badge,metric-card,data-table}.js
 │
-├── mobile/                              # NGOÀI đề cương — xem mobile/README.md
+├── mobile/                              # SẢN PHẨM CHÍNH — xem mobile/README.md
 │   ├── lib/  services/  data/  screens/  widgets/  theme/  l10n/
 │   ├── assets/  map/Map.png  images/ (39 ảnh WebP, 12 thư mục)
 │   └── test/
@@ -228,6 +233,7 @@ System_Indoor/
 ├── tools/                               # chạy một lần rồi commit kết quả
 │   ├── trich_ban_do.py                  # Map.png → ban_do_tang1.json
 │   ├── danh_gia_chi_duong.py            # sai số tuyến so với đường ngắn nhất thật
+│   ├── so_sanh_tim_duong.py             # so sánh 6 thuật toán tìm đường
 │   ├── sinh_khu_vuc.py                  # CSV → khu_vuc_thu_vien.dart
 │   ├── thu_van_tay.py  cam_bien_adb.py  # thu vân tay qua adb, kèm cảm biến
 │   ├── thu_van_tay_termux.py            # bản chạy trên Termux
@@ -237,7 +243,8 @@ System_Indoor/
 ├── tests/                               # test_api.py
 │
 ├── reports/  figures/  tables/
-└── docs/     3 tài liệu .md + frame thiết kế
+└── docs/     3 tài liệu .md, đề cương .docx, frame thiết kế,
+              tai_lieu_tham_khao/ (4 công trình liên quan)
 ```
 
 Đợt dọn ngày 02/09 đã xoá hẳn phần thừa của thiết kế cũ: hai thư mục rỗng
@@ -366,7 +373,7 @@ một trục khác.
 | 1 | `data/`, `notebooks/`, `ml/preprocess.py`, `artifacts/` | 20/08 – 31/08 (tiền xử lý) |
 | 2 | `ml/models/`, `ml/evaluate.py`, `reports/` | 01/09 – 15/10 (huấn luyện & đánh giá) |
 | 3 | `backend/` toàn bộ, `tests/` | 16/10 – 31/10 (backend) |
-| 4 | `frontend/` | 01/11 – 10/11 (dashboard) |
+| 4 | `mobile/` (sản phẩm chính), `frontend/` (giám sát) | 01/11 – 10/11 (ứng dụng) |
 | 5 | `docs/`, `README.md` hoàn chỉnh | 11/11 – 24/11 (hoàn thiện) |
 
 Riêng `.gitignore` và `.env.example` nên tạo **ngay từ ngày đầu** — để tránh lặp lại sự cố lộ mật khẩu database như đồ án cũ.

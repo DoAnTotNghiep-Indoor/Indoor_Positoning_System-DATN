@@ -26,10 +26,10 @@ Bản phân tích & thiết kế hệ thống tổng hợp từ: đề cương c
 | Dòng trong bảng | Đề xuất | Đã dựng | Xem thêm |
 |---|---|---|---|
 | Backend/CSDL | PostgreSQL | **SQLite** qua `aiosqlite` | mục 2.5 |
-| Sản phẩm đầu ra | Web Dashboard, không làm mobile | **cả hai**: app Flutter quét WiFi thật, và Dashboard web | mục 2.6, 2.7 |
+| Sản phẩm đầu ra | Web Dashboard, không làm mobile | **ứng dụng di động Flutter là sản phẩm chính** (đề cương bản 24.9); Dashboard web là công cụ giám sát | mục 2.6, 2.7 |
 | Hậu xử lý vị trí | EMA `alpha = 0.3` | **đồng thuận không gian** trên 3 lần quét | mục 2.4.1 |
 | Web Dashboard | HTML5 + Tailwind CSS | HTML/CSS/JS thuần, **không thư viện ngoài** — phòng bảo vệ có thể không ra được Internet | mục 2.7 |
-| Mô hình | XGBoost là mô hình chính | XGBoost **vẫn là mô hình chính của đề tài**; mô hình *đang triển khai* chọn theo validation và hiện là kNN vân tay | mục 2.4.1 |
+| Mô hình | XGBoost là mô hình chính | XGBoost vẫn được huấn luyện, đánh giá đầy đủ để đối chứng; mô hình *đang triển khai* là **kNN vân tay k động**, chỉ định bằng `MO_HINH_TRIEN_KHAI` | mục 2.4.1, điểm 6 |
 
 Mâu thuẫn SQLite ↔ PostgreSQL giữa đề cương (`Nhom15_DeCuong_DATN_edited.docx`, mục V) và tài liệu thiết kế CSDL riêng nay đã hết: chốt **SQLite**, đúng như đề cương ghi. Không cần sửa mục V nữa.
 
@@ -192,7 +192,12 @@ sequenceDiagram
 ### 2.4.1. Đối chiếu với bản đã thực hiện
 
 Mục 2.4 ở trên là **thiết kế ban đầu**, giữ nguyên làm dấu vết quá trình. Sau khi
-chạy thực nghiệm có năm chỗ khác đi. Mọi số liệu dưới đây đo trên tập test 118
+chạy thực nghiệm có sáu chỗ khác đi.
+
+> **Đơn vị.** Các con số ghi "m" ở điểm 1–5 dưới đây thực ra là **đơn vị lưới**
+> của Bảng 4 (toạ độ điểm tham chiếu), chưa nhân `0,3508`: ví dụ 3,45 "m" là
+> 1,21 m thật. Giữ nguyên để khớp với nhật ký cũ và `reports/tables/`. Điểm 6 đã
+> quy ra mét. Mọi số liệu dưới đây đo trên tập test 118
 mẫu, chọn mô hình chỉ dựa trên validation.
 
 **1. Hậu xử lý: EMA thay bằng đồng thuận không gian.**
@@ -253,9 +258,9 @@ Hai con số là hai chặn của cùng một sự thật — chia ngẫu nhiên
 bỏ trọn một điểm là chặn bi quan — nên báo cáo phải nêu cả hai kèm giao thức đi
 với từng con số. Điều này không gỡ bỏ kết luận ở trên, nhưng nó cho biết kết
 luận ấy chỉ đúng trong phạm vi cách chia đã dùng.
-XGBoost vẫn là mô hình chính của đề tài và vẫn được huấn luyện, đánh giá đầy đủ
-trong bảng so sánh; mô hình *đang triển khai* thì chọn theo sai số validation,
-và `GET /health` luôn cho biết mô hình nào đang chạy.
+XGBoost vẫn được huấn luyện, đánh giá đầy đủ trong bảng so sánh. Mô hình *đang
+triển khai* nay là kNN vân tay k động (điểm 6), và `GET /health` luôn cho biết mô
+hình nào đang chạy.
 
 **3. Giá trị điền thiếu: −98 thành −96, và nó chuyển vào hợp đồng dữ liệu.**
 Không đặt cứng nữa mà tính từ dữ liệu: `min(RSSI) − 1`. Dữ liệu thu được có RSSI
@@ -291,6 +296,37 @@ thời gian đồng nghĩa với tách theo vị trí — tập test sẽ chứa
 train chưa từng thấy, và bài toán vân tay không trả lời được. Đây là hạn chế của
 cách thu dữ liệu, cần khắc phục bằng một đợt đo lại có lặp điểm qua nhiều buổi và
 nhiều máy.
+
+
+**6. Mô hình triển khai đổi sang kNN vân tay k động (24/09/2026).**
+
+Quét k từ 1 đến 61 (`python -m ml.quet_k`) cho thấy không k cố định nào tốt cho cả
+hai giao thức: k = 1 tốt nhất khi điểm đã khảo sát, k lớn tốt nhất khi chưa.
+`ml/models/fingerprint_knn_dong.py` chọn k theo từng lần quét, dựa trên khoảng
+cách Bray-Curtis d1 tới vân tay gần nhất: d1 < ngưỡng thì k = 1, ngược lại k lớn.
+Ngưỡng và k lớn tự chọn trong `fit`, chỉ trên dữ liệu học, bằng hai tình huống
+giả lập nặng như nhau — chia ngẫu nhiên 80/20 và bỏ trọn từng điểm. Bản đang
+triển khai: beta 3,5, ngưỡng 0,19, k lớn 31; khoảng 70% lần quét test dùng k = 1.
+
+| Mô hình, sai số trung bình (mét) | Chia ngẫu nhiên, 10 seed | Bỏ trọn một điểm |
+|---|---:|---:|
+| kNN vân tay, k = 1 (triển khai cũ) | 0,91 ± 0,13 | 5,71 |
+| kNN vân tay, k = 41 | 2,75 ± 0,10 | 4,57 |
+| XGBoost | 2,46 ± 0,14 | 5,25 |
+| **kNN vân tay, k động** | 1,02 ± 0,12 | 4,84 |
+
+Đổi 0,11 m ở điểm đã khảo sát lấy 0,87 m ở điểm chưa khảo sát. Các cách kết hợp
+khác — trung bình hai k, trung bình kNN vân tay và XGBoost, trộn mềm theo hai
+ngưỡng — so ở `python -m ml.ket_hop`; trộn mềm chỉ hơn 0,02 m nên không dùng.
+
+Mô hình triển khai **không còn chọn theo validation**: validation chia ngẫu nhiên
+nên luôn ưu tiên k = 1. `ml/config.py` có `MO_HINH_TRIEN_KHAI =
+"fingerprint_knn_dong"`; đặt `None` để quay về cách cũ.
+
+Lần huấn luyện này XGBoost chọn bộ tham số khác (`colsample_bytree` 1,0,
+`reg_lambda` 0,5): các bộ trong lưới gần như hoà trên validation nên khác biệt số
+học nhỏ giữa môi trường (Python 3.13 so với 3.14 đã ghim) đủ đổi lựa chọn. Các
+mô hình họ kNN và Random Forest cho kết quả y hệt.
 
 ---
 
@@ -614,9 +650,10 @@ thuần. Tailwind qua CDN cần Internet mà phòng bảo vệ có thể không 
 ngoài; bản build tại chỗ thì phải thêm Node vào một dự án còn lại thuần Python.
 Giao diện chỉ có một trang nên phần tiện lợi của Tailwind cũng không còn nhiều.
 
-**Ngoài đề cương: ứng dụng di động Flutter** 5 màn hình (Trang chủ, Bản đồ, Chi
-tiết khu vực, Tìm kiếm, Cài đặt), song ngữ Việt/Anh, sáng/tối. Đây là nguồn quét
-WiFi thật cho hệ thống và là cách kiểm thử thực địa. Xem `mobile/README.md`.
+**Sản phẩm chính: ứng dụng di động Flutter** 5 màn hình (Trang chủ, Bản đồ, Chi
+tiết khu vực, Tìm kiếm, Cài đặt), song ngữ Việt/Anh, sáng/tối, theo đề cương bản
+24.9. Ứng dụng tự quét WiFi, hiển thị vị trí và chỉ đường; Web Dashboard ở trên
+chỉ là công cụ giám sát. Xem `mobile/README.md`.
 
 Màn Bản đồ dựng theo bố cục CTK45 ở mục 4.4.3 — hàng chip lọc loại khu vực trên
 sơ đồ mặt bằng — nhưng khác họ ở hai chỗ. Nhãn chip lấy thẳng từ trường `nhom`
@@ -668,7 +705,7 @@ Cột "Mốc" chép đúng mục VII của đề cương. Cột cuối là tình
 | 2 | Tìm hiểu dữ liệu RSSI, thống kê và tiền xử lý | 20/08–31/08 | `ml/preprocess.py`, 12 bước, `feature_list.json` | Xong |
 | 3 | Mô hình cơ sở kNN, WKNN | 01/09–08/09 | `ml/models/knn.py`, `wknn.py`, `evaluate.py` | Xong |
 | 4 | XGBoost và tinh chỉnh siêu tham số | 09/09–20/09 | `ml/models/xgboost_model.py`, quét lưới 648 tổ hợp | Xong |
-| 5 | Báo cáo tiến độ lần 1 | 25/09–30/09 | Bảng so sánh 5 mô hình + biểu đồ CDF | Sẵn sàng |
+| 5 | Báo cáo tiến độ lần 1 | 25/09–30/09 | Bảng so sánh mô hình, quét k, k động, lý thuyết tìm đường | Sẵn sàng |
 | 6 | Thực nghiệm, so sánh và đánh giá | 01/10–15/10 | Heatmap lỗi theo điểm, phân bố sai số, hậu xử lý gộp | Xong phần đo; còn mục 4.3 (mật độ người) chưa làm được |
 | 7 | Back-end FastAPI, tích hợp mô hình và WebSocket | 16/10–31/10 | 8 endpoint, `/ws/location`, `BoGop` | Xong |
 | 8 | Front-end Web Dashboard và ghép nối | 01/11–10/11 | `frontend/index.html`, phục vụ ngay từ uvicorn | Xong |
@@ -677,9 +714,8 @@ Cột "Mốc" chép đúng mục VII của đề cương. Cột cuối là tình
 | 11 | Sửa chữa, hoàn thiện đồ án | 19/11–24/11 | — | Chưa tới |
 | 12 | Báo cáo bảo vệ trước hội đồng | 25/11–30/11 | Demo Dashboard realtime + bảng so sánh mô hình | Chưa tới |
 
-Các mốc 7 và 8 đã làm xong sớm hơn kế hoạch. Phần làm thêm ngoài đề cương — ứng
-dụng di động Flutter, đồ thị đi lại và chỉ đường — không thay thế mốc nào, và
-được ghi riêng để không lẫn với phạm vi đề cương.
+Các mốc 7 và 8 đã làm xong sớm hơn kế hoạch. Theo đề cương bản 24.9, mốc 8 gồm
+ứng dụng di động Android (sản phẩm chính) cùng trang Web giám sát; cả hai đã chạy.
 
 ---|---|
 | 12/08–19/08: Phân tích đề tài | Chốt schema DB (đã chốt SQLite, mục 2.5), chốt kiến trúc ở mục 2.2 |

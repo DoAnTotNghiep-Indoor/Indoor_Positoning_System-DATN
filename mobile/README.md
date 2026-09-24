@@ -6,9 +6,9 @@ trên sơ đồ mặt bằng tầng 1 Thư viện Đại học Đà Lạt.
 Bố cục và bảng màu dựng theo frame thiết kế `ips-dlu-screens-v4.svg`; dữ liệu
 hiển thị thì lấy từ `GET /map` và `POST /predict`.
 
-> **Ngoài phạm vi đề cương.** Đề cương (mục I và chương 5) chỉ yêu cầu ứng dụng
-> **Web**. Ứng dụng di động là phần làm thêm, dùng làm nguồn quét WiFi cho hệ
-> thống và để kiểm thử thực địa — không thay thế Web Dashboard.
+> **Sản phẩm chính của đồ án** theo đề cương bản 24.9 (mục I, chương 5): người
+> dùng cuối định vị, xem bản đồ, tra cứu và được chỉ đường trên ứng dụng này. Web
+> Dashboard chỉ là công cụ giám sát cho quản trị viên.
 
 ## Yêu cầu
 

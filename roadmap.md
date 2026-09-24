@@ -17,18 +17,17 @@ nhất trong dự án ánh xạ giai đoạn sang mốc thời gian của đề 
 | Giai đoạn | Phạm vi | Mốc đề cương | Trạng thái |
 |---|---|---|---|
 | 1 | `data/`, `notebooks/`, `ml/preprocess.py`, `artifacts/` | 20/08–31/08 | Xong |
-| 2 | `ml/models/`, `ml/evaluate.py`, `reports/` | 01/09–15/10 | Xong. Năm mô hình, hai giao thức đánh giá, hậu xử lý gộp |
+| 2 | `ml/models/`, `ml/evaluate.py`, `reports/` | 01/09–15/10 | Xong. Sáu mô hình (triển khai k động), hai giao thức đánh giá, quét k, hậu xử lý gộp |
 | 3 | `backend/` toàn bộ, `tests/` | 16/10–31/10 | Xong. Đồ thị đi lại đã dò tường, chỉ đường có hướng rẽ |
-| 4 | `frontend/` | 01/11–10/11 | Xong. Dashboard web chạy được, phục vụ thẳng từ uvicorn |
+| 4 | `mobile/`, `frontend/` | 01/11–10/11 | Xong. Ứng dụng Flutter (sản phẩm chính) quét WiFi thật; Dashboard giám sát phục vụ thẳng từ uvicorn |
 | 5 | `docs/`, `README.md` | 11/11–24/11 | Xong ngày 01/09/2026; rà lại và sửa số liệu ngày 07/09/2026 |
 
-**Ngoài đề cương** — không thuộc giai đoạn nào vì đề cương không nhắc tới ứng
-dụng di động (mục I và VI chỉ nêu ứng dụng Web):
+Từ đề cương bản 24.9 (`docs/[24.9]Nhom15_DeCuong_DATN_edited_v3.docx`), ứng dụng
+di động là **sản phẩm chính** và thuộc giai đoạn 4; Web Dashboard là công cụ giám sát.
 
-| Phạm vi | Trạng thái |
+| Phạm vi ngoài bảng giai đoạn | Trạng thái |
 |---|---|
-| `mobile/` — ứng dụng Flutter 5 màn hình | Xong. Quét WiFi thật, nối `POST /predict`, sơ đồ và ảnh khu vực là dữ liệu thật, tuỳ chọn lưu xuống đĩa. Đây là nguồn quét thật cho hệ thống và là cách kiểm thử thực địa |
-| `tools/` — công cụ chạy một lần rồi commit kết quả | Xong. Trích hình học từ `Map.png`, sinh bản nhúng khu vực, thu vân tay qua cáp USB |
+| `tools/` — công cụ chạy một lần rồi commit kết quả | Xong. Trích hình học từ `Map.png`, sinh bản nhúng khu vực, thu vân tay qua cáp USB, so sánh thuật toán tìm đường |
 
 Đối chiếu với mục VII đề cương: các mốc 1–8 đã xong, mốc 7 và 8 (backend,
 Dashboard) làm sớm hơn kế hoạch. Đang ở mốc 9 — kiểm thử và viết báo cáo.
@@ -1220,3 +1219,31 @@ Vòng hai, cùng ngày:
   của Windows); đường dẫn ngắn build được. Đã ghi lưu ý và yêu cầu phiên bản vào README.
 - Sửa tài liệu cấu trúc: artifacts commit 2 tệp, thêm `data/raw/nhom15_2026/`,
   `diem_can_do.csv`, 39 ảnh WebP; README `/graph` 15 cửa.
+
+## Góp ý báo cáo lần 1, k động — 24/09/2026
+
+- Đề cương cập nhật thành bản 24.9 (`docs/[24.9]...v3.docx`): ứng dụng di động là sản phẩm
+  chính, Flutter, SQLite, chỉ đường A*/Dijkstra, Web Dashboard chỉ giám sát. Bản 24.8 giữ nguyên.
+- **Đơn vị**: phát hiện các bảng `reports/tables/` và README ghi "m" nhưng thực ra là đơn vị
+  lưới (× 0,3508 ra mét). README nay ghi mét; tài liệu thiết kế thêm ghi chú, giữ số cũ.
+- `ml/quet_k.py`: quét k = 1..61 cho kNN, WKNN, kNN vân tay. Chia ngẫu nhiên 10 seed thì k = 1
+  tốt nhất (kNN vân tay 0,91 m); bỏ trọn một điểm thì k lớn tốt nhất (k = 41: 4,57 m).
+- `ml/mlp.py`: MLP hồi quy 2,91 ± 0,18 m / 4,89 m, MLP phân lớp 2,27 ± 0,36 m / 5,04 m —
+  với 802 mẫu, học sâu chưa hơn họ kNN. Máy không có PyTorch nên dùng scikit-learn.
+- `ml/ket_hop.py`: so bốn cách kết hợp, chọn tham số lồng nhau. k động cho trung bình hai
+  giao thức thấp nhất (3,00 m, so với 3,31 m của k = 1); trộn mềm chỉ hơn 0,02 m.
+- **Triển khai k động**: `ml/models/fingerprint_knn_dong.py`, `MO_HINH_TRIEN_KHAI` trong
+  `ml/config.py`, `ml/train.py` dùng mô hình chỉ định. beta 3,5, ngưỡng d1 0,19, k lớn 31;
+  10 seed 1,02 ± 0,12 m, bỏ trọn một điểm 4,84 m (thấp nhất). `/health` báo
+  `fingerprint_knn_dong`; ba lần quét RP05, RP20, RP33 ra đúng toạ độ; 59 test đạt.
+  `.gitignore` thêm ngoại lệ cho `model_fingerprint_knn_dong.pkl`.
+- Huấn luyện lại trên Python 3.13: XGBoost chọn bộ tham số khác (các bộ gần hoà trên
+  validation), 10 seed 2,41 → 2,46 m, bỏ điểm 5,19 → 5,25 m. Họ kNN và RF y hệt.
+- `ml/report.py`: thêm màu thứ sáu. Biểu đồ vẫn ghi trục "m" cho đơn vị lưới — chưa sửa.
+- `tools/so_sanh_tim_duong.py`: 6 thuật toán trên đồ thị 330 nút, 1.892 truy vấn. A* mở
+  18 nút so với 173 của Dijkstra; BFS và tham lam chỉ tối ưu ~40% truy vấn. Slide lần này
+  chỉ trình bày lý thuyết tìm đường.
+- `docs/tai_lieu_tham_khao/`: Duong-Bao 2022 (Sensors, có GVHD), Peng 2020 (Electronics),
+  Lu 2023 (Sensors), tóm tắt luận án Dương Thị Hằng 2023. Không tìm được bài [1] ICT 2022.
+- Báo cáo nhóm hợp tác (few-shot, CCpos, kNN Sørensen trên UJIIndoorLoc): mô hình của họ
+  sẽ là một API riêng để thử; hệ thống vẫn dùng mô hình của nhóm.

@@ -4,56 +4,82 @@
 GVHD: TS. Nguyễn Thị Lương.
 
 Nghiên cứu hệ thống định vị trong nhà bằng kỹ thuật WiFi Fingerprinting và xây dựng
-Web Dashboard hiển thị vị trí người dùng theo thời gian thực — đúng hai mục tiêu
-ở mục I của đề cương.
+**ứng dụng di động Android** định vị theo thời gian thực, chỉ đường tới địa điểm
+được chọn (đề cương bản 24.9, `docs/[24.9]Nhom15_DeCuong_DATN_edited_v3.docx`).
+Ứng dụng di động là sản phẩm chính; Web Dashboard là công cụ giám sát cho quản
+trị viên.
 
 ## Bài toán
 
 - **Input**: vector cường độ tín hiệu RSSI từ các Access Point `[AP_1, ..., AP_n]`
-- **Output**: tọa độ người dùng `(x, y)` theo đơn vị mét
+- **Output**: tọa độ người dùng `(x, y)` trên lưới mặt bằng (đơn vị lưới của
+  Bảng 4 CTK45); nhân `0,3508` ra mét
 - **Đánh giá**: `error = sqrt((x_pred - x_true)² + (y_pred - y_true)²)`, kèm CDF
   tại các mức 50%, 75%, 90%
 
+> **Đơn vị.** Mọi bảng trong `reports/tables/` và mọi số in ra từ `ml.*` tính theo
+> **đơn vị lưới**, không phải mét, dù tên cột có chữ `_m`. Riêng `quet_k.csv`,
+> `mlp.csv` có thêm cột `*_m` đã quy đổi, và `ket_hop.csv` ghi thẳng mét. Các
+> bảng trong tài liệu này đã quy ra mét.
+
 Đề cương phát biểu bài toán dưới dạng **hồi quy toạ độ** chứ không phân lớp điểm
-tham chiếu, để đánh giá trực tiếp bằng mét. Mô hình chính: **XGBoost Regression**.
-Mô hình cơ sở đối chứng theo đề cương: **kNN và WKNN**; Random Forest và kNN vân
-tay là hai mô hình làm thêm, không nằm trong đề cương.
+tham chiếu, để đánh giá trực tiếp bằng mét. Mô hình cơ sở đối chứng theo đề cương:
+**kNN và WKNN**; mô hình đề xuất ban đầu: **XGBoost Regression**. Làm thêm: Random
+Forest, kNN vân tay (Bray-Curtis), hai mạng MLP, và **kNN vân tay k động** — mô
+hình kết hợp đang được triển khai.
 
 Kết quả **phụ thuộc vào cách chia dữ liệu**, nên báo cáo bằng hai giao thức chứ
-không một. Mỗi điểm tham chiếu chỉ được đo trong đúng một phiên chừng 15 phút,
+không một. Mỗi điểm tham chiếu chỉ được đo trong đúng một phiên chừng 14 phút,
 cùng máy, cùng ngày; chia ngẫu nhiên theo lần quét thì cả 40 điểm đều có mặt
 đồng thời ở train lẫn test, và 75% bản ghi test có láng giềng train gần nhất nằm
 ngay tại điểm của chính nó.
 
+Sai số trung bình, **mét**:
+
 | Mô hình | Chia ngẫu nhiên (seed 42) | Chia ngẫu nhiên, 10 seed | Bỏ trọn một điểm tham chiếu |
 |---|---:|---:|---:|
-| **XGBoost** | 7,02 m | 6,87 ± 0,38 m | **14,80 m** ① |
-| WKNN | 3,51 m | 3,88 ± 0,40 m | 15,44 m |
-| Random Forest | 6,92 m | 6,61 ± 0,66 m | 15,45 m |
-| kNN vân tay | 3,45 m | **2,58 ± 0,36 m** ① | 16,29 m |
-| kNN | **3,44 m** ① | 3,41 ± 0,63 m | 16,63 m |
+| **kNN vân tay, k động** (triển khai) | **1,13 m** ① | 1,02 ± 0,12 m | **4,84 m** ① |
+| XGBoost | 2,57 m | 2,46 ± 0,14 m | 5,25 m |
+| WKNN | 1,23 m | 1,36 ± 0,14 m | 5,42 m |
+| Random Forest | 2,43 m | 2,32 ± 0,23 m | 5,42 m |
+| kNN vân tay, k = 1 | 1,21 m | **0,91 ± 0,13 m** ① | 5,71 m |
+| kNN | 1,21 m | 1,20 ± 0,22 m | 5,83 m |
+| MLP phân lớp | — | 2,27 ± 0,36 m | 5,04 m |
+| MLP hồi quy | — | 2,91 ± 0,18 m | 4,89 m |
 
-Hai cột chia ngẫu nhiên là **chặn lạc quan**: chúng đo "nhận lại được lần quét vài phút trước, cùng
-chỗ, cùng máy không". Cột cuối là **chặn bi quan**: toạ độ cần đoán chưa từng
-xuất hiện lúc học, mà lưới điểm cách nhau trung vị 7 m; mỗi lần gấp làm lại bước
-5-10 chỉ trên phần học để điểm bị giữ không rò vào bộ AP, giá trị điền hay
-Hampel. Thứ hạng đảo ngược hoàn
-toàn giữa hai giao thức — cách chia ngẫu nhiên thưởng cho mô hình biết ghi nhớ phiên
-đo và phạt mô hình hồi quy liên tục, tức phạt đúng XGBoost. Cột giữa chia lại
-10 seed với cùng tham số: seed 42 là cách chia xấu bất thường cho kNN vân tay
-(3,45 m, cao hơn cả 10 seed kia, dẫn đầu 9/10 seed), nên con số tính từ riêng
-seed 42 phải đọc kèm cột này.
+Hai cột chia ngẫu nhiên là **chặn lạc quan**: chúng đo "nhận lại được lần quét vài
+phút trước, cùng chỗ, cùng máy không". Cột cuối là **chặn bi quan**: toạ độ cần
+đoán chưa từng xuất hiện lúc học, mà các điểm cách điểm gần nhất trung vị 2,5 m;
+mỗi lần gấp làm lại bước 5-10 chỉ trên phần học để điểm bị giữ không rò vào bộ
+AP, giá trị điền hay Hampel. Thứ hạng đảo ngược giữa hai giao thức — chia ngẫu
+nhiên thưởng cho mô hình biết ghi nhớ phiên đo. Seed 42 là cách chia xấu bất
+thường cho kNN vân tay (dẫn đầu 7/10 seed), nên con số của riêng seed 42 phải đọc
+kèm cột giữa. Hai dòng MLP chạy riêng bằng `ml.mlp`, không có cột seed 42.
 
 Sai số lúc triển khai nằm giữa hai chặn. Chốt được nó cần một đợt đo lần hai tại
 chính 40 điểm cũ, khác ngày và khác máy; xem mục **Hạn chế đã biết**. Sinh
 lại bảng bằng `python -m ml.train`, `python -m ml.on_dinh` và `python -m ml.danh_gia_cheo`.
 
-Mô hình **đang được triển khai** chọn theo sai số trên tập validation — mà tập
-validation chia theo cùng cách ngẫu nhiên nên mang cùng phần rò rỉ — và hiện là
-`kNN vân tay (Bray-Curtis)`. Ứng dụng chỉ đường cần toạ độ xuất phát sát nhất có
-căn cứ đo được, nên mô hình triển khai đi theo số đo; XGBoost vẫn là mô hình
-chính của phần nghiên cứu. `GET /health` luôn cho biết mô hình nào đang chạy.
-Chi tiết ở `docs/Phan_Tich_Thiet_Ke_He_Thong.md` §2.4.1.
+### Mô hình đang triển khai: kNN vân tay, k động
+
+`ml.quet_k` cho thấy không có một k cố định nào tốt cho cả hai giao thức: k = 1
+tốt nhất khi điểm đã khảo sát (0,91 m) nhưng tệ khi chưa (5,71 m); k = 41 ngược
+lại (2,75 m và 4,57 m). Máy chủ không biết người dùng đứng đâu, nhưng biết lần
+quét giống vân tay đã có tới mức nào — khoảng cách Bray-Curtis tới vân tay gần
+nhất, d1:
+
+    d1 < 0,19  ->  k = 1   (trả đúng toạ độ điểm đã khảo sát)
+    ngược lại  ->  k = 31  (nội suy giữa các điểm lân cận)
+
+Ngưỡng và k lớn **tự chọn lúc `fit`**, chỉ trên dữ liệu học, bằng hai tình huống
+giả lập nặng như nhau: chia ngẫu nhiên 80/20 (đã khảo sát) và bỏ trọn từng điểm
+(chưa khảo sát). Trên test khoảng 70% lần quét dùng k = 1; mỗi lần dự đoán ~10 ms.
+
+Mô hình triển khai **chỉ định** bằng `MO_HINH_TRIEN_KHAI` trong `ml/config.py`
+chứ không lấy mô hình có sai số validation thấp nhất: validation chia ngẫu nhiên
+nên luôn chọn k = 1. Đặt `None` để quay về chọn theo validation. So sánh các cách
+kết hợp khác (trung bình hai k, trung bình kNN + XGBoost, trộn mềm) ở
+`python -m ml.ket_hop`. `GET /health` luôn cho biết mô hình nào đang chạy.
 
 ## Cài đặt
 
@@ -72,7 +98,8 @@ python -m pytest tests/ -q       # 59 kiểm thử, không cần chạy pipeline
 uvicorn backend.main:app         # chạy được ngay: kho đã kèm scaler.pkl và mô hình đang triển khai
 ```
 
-Chỉ `scaler.pkl` và `model_fingerprint_knn.pkl` được commit. Muốn có đủ năm mô
+Chỉ `scaler.pkl`, `model_fingerprint_knn_dong.pkl` (đang triển khai) và
+`model_fingerprint_knn.pkl` (k = 1, để quay lui) được commit. Muốn có đủ sáu mô
 hình, biểu đồ và bảng thì chạy các lệnh ở mục dưới.
 
 ## Chạy phần máy học
@@ -84,7 +111,7 @@ python -m ml.pipeline
 # 2. Rà soát dữ liệu trước khi huấn luyện (rò rỉ, độ ổn định, chất lượng buổi thu)
 python -m ml.audit
 
-# 3. Huấn luyện và so sánh 5 mô hình -> artifacts/*.pkl + reports/tables/
+# 3. Huấn luyện và so sánh 6 mô hình -> artifacts/*.pkl + reports/tables/
 python -m ml.train
 python -m ml.train --nhanh              # lưới tham số rút gọn, dùng lúc thử
 python -m ml.train --mo-hinh knn wknn   # chỉ chạy một số mô hình
@@ -96,8 +123,14 @@ python -m ml.report
 python -m ml.on_dinh
 python -m ml.danh_gia_cheo
 
-# 6. Sai số quãng đường chỉ đường so với đường ngắn nhất thật -> reports/tables/
+# 6. Thí nghiệm bổ sung -> reports/tables/ (+ reports/figures/quet_k.png)
+python -m ml.quet_k      # quét k = 1..61 cho kNN, WKNN, kNN vân tay, ba cách đánh giá
+python -m ml.mlp         # hai mạng MLP (hồi quy, phân lớp), ~4 phút
+python -m ml.ket_hop     # các cách kết hợp mô hình, gồm k động, ~3,5 phút
+
+# 7. Chỉ đường: sai số quãng đường, và so sánh 6 thuật toán tìm đường -> reports/tables/
 python -m tools.danh_gia_chi_duong
+python -m tools.so_sanh_tim_duong
 
 # Kiểm thử
 python -m pytest tests/ -q
@@ -108,9 +141,9 @@ Chạy đúng thứ tự trên: `ml.train` cần artifact do `ml.pipeline` sinh 
 
 ## Chạy ứng dụng di động
 
-> Đề cương chỉ yêu cầu ứng dụng **Web**. Ứng dụng di động là phần làm thêm: nó
-> là nguồn quét WiFi cho hệ thống và là cách kiểm thử thực địa, không thay thế
-> Web Dashboard.
+> Ứng dụng di động là **sản phẩm chính** theo đề cương bản 24.9: người dùng cuối
+> định vị, xem bản đồ và được chỉ đường trên app. Web Dashboard chỉ là công cụ
+> giám sát.
 
 ```bash
 cd mobile
@@ -168,7 +201,7 @@ không nhận mảng số trần. Đây là chỗ đồ án CTK45 sai: client g�
 nhưng sai thứ tự thì mô hình vẫn chạy trơn và trả toạ độ sai không cảnh báo.
 `artifacts/feature_list.json` là nguồn sự thật duy nhất về thứ tự cột.
 
-## Web Dashboard
+## Web Dashboard (giám sát)
 
 Không cần máy chủ tĩnh riêng: chính `uvicorn` ở trên phục vụ luôn giao diện.
 
@@ -196,9 +229,9 @@ hai chỗ khác nhau trên hai màn hình.
 | `artifacts/` | **Hợp đồng giữa ML và Backend**: `feature_list.json`, `scaler.pkl`, model |
 | `notebooks/` | Notebook chạy trên Google Colab |
 | `ml/` | Mã nguồn tiền xử lý và huấn luyện, tái sử dụng được |
-| `mobile/` | Ứng dụng Flutter — 5 màn hình, song ngữ, sáng/tối, quét WiFi thật |
+| `mobile/` | **Sản phẩm chính**: ứng dụng Flutter — 5 màn hình, song ngữ, sáng/tối, quét WiFi thật |
 | `backend/` | FastAPI + SQLite, WebSocket tạm tắt — 8 endpoint, đã chạy |
-| `frontend/` | Web Dashboard — HTML/CSS/JS thuần, không thư viện ngoài |
+| `frontend/` | Web Dashboard giám sát — HTML/CSS/JS thuần, không thư viện ngoài |
 | `tools/` | Công cụ chạy một lần rồi commit kết quả (trích hình học từ sơ đồ) |
 | `tests/` | Kiểm thử endpoint REST API (`test_api.py`) |
 | `reports/` | Biểu đồ và bảng phục vụ viết báo cáo |
@@ -255,3 +288,4 @@ liệu kế thừa không ghi lại số người có mặt lúc đo, nên muố
 - `docs/Phan_Tich_Thiet_Ke_He_Thong.md` — phân tích & thiết kế hệ thống
 - `docs/Phan_Tich_Ky_Thuat_DoAnCu_va_Cai_Tien.md` — phân tích đồ án kế thừa và cải tiến
 - `docs/Cau_Truc_Thu_Muc_Du_An.md` — cấu trúc thư mục
+- `docs/tai_lieu_tham_khao/` — bốn công trình liên quan đã đọc, dùng trong slide khảo sát
