@@ -221,6 +221,41 @@ Phép đổi toạ độ ↔ pixel của sơ đồ nằm ở ba nơi (Python, Da
 lấy số từ `data/reference/ban_do_tang1.json`: lệch nhau thì cùng một toạ độ hiện ở
 hai chỗ khác nhau trên hai màn hình.
 
+## Đối chiếu với đề cương
+
+Đề cương bản v4 (`docs/[24.9]Nhom15_DeCuong_DATN_edited_v4.docx`) — từng mục ánh
+xạ sang chỗ nào trong kho:
+
+| Mục đề cương | Trong kho | Trạng thái |
+|---|---|---|
+| I.1. Ứng dụng di động Android là sản phẩm chính | `mobile/` | Đã làm |
+| I.2. Mô hình học máy sai số thấp hơn kNN, WKNN | `ml/models/fingerprint_knn_dong.py`, bảng ở đầu tài liệu | Đã làm; thấp hơn ở giao thức bỏ trọn một điểm, xem ghi chú dưới bảng |
+| I.3. Back-end phục vụ định vị, bản đồ, tìm đường; kèm Web giám sát | `backend/`, `frontend/` | Đã làm |
+| II. Phạm vi — tầng 1, định vị 2D, kết quả ở mức khu vực | Toàn bộ dữ liệu và bản đồ là tầng 1; `ml.audit` mục 4 kiểm giả thiết một mặt phẳng | Đúng phạm vi |
+| III + Chương 3.1. Tiền xử lý RSSI tái lập được | `ml/preprocess.py`, `ml/pipeline.py` — 12 bước | Đã làm |
+| III + Chương 3.2. Mô hình cơ sở và mô hình so sánh | `ml/models/`, `ml/mlp.py` | Đã làm |
+| III + Chương 3.3. Khảo sát k, đề xuất mô hình kết hợp k động | `ml/quet_k.py`, `ml/ket_hop.py`, `ml/models/fingerprint_knn_dong.py` | Đã làm |
+| Chương 2. Phân tích và thiết kế hệ thống | `docs/Phan_Tich_Thiet_Ke_He_Thong.md` | Đã làm |
+| Chương 3.4. Hậu xử lý gộp lần quét, ánh xạ về khu vực | `ml/postprocess.py`, `backend/services/smoothing_service.py` | Đã làm, **khác cách**: đồng thuận không gian thay EMA |
+| Chương 4.1–4.2. Thực nghiệm, CDF 50/75/90, hai giao thức | `reports/tables/`, `reports/figures/` | Đã làm |
+| Chương 4.3. Kiểm thử thực địa; đánh giá theo mật độ người | Đã kiểm luồng định vị và chỉ đường trên máy Android thật | **Chưa chạy trọn vẹn tại thư viện**, và phần mật độ người chưa làm được — xem Hạn chế đã biết |
+| Chương 5.1–5.2. Back-end và ứng dụng Flutter | `backend/`, `mobile/` | Đã làm |
+| Chương 5.3. Chỉ đường, so sánh thuật toán tìm đường | `backend/services/routing_service.py`, `tools/so_sanh_tim_duong.py` | Đã làm |
+| Chương 5.4–5.5. Web giám sát, kết quả giao diện | `frontend/`, `tests/` | Đã làm |
+| V. Công cụ | Python, FastAPI, Uvicorn, Flutter/Dart, scikit-learn, XGBoost, NumPy, Pandas, SQLite, Colab, Git | Đúng đề cương |
+| VI.1–VI.3. Dữ liệu sạch, mô hình kết hợp, bảng so sánh | `data/`, `artifacts/`, `reports/` | Đã làm |
+| VI.4–VI.7. Back-end, ứng dụng, chỉ đường, Web giám sát | `backend/`, `mobile/`, `frontend/` | Đã làm |
+
+Hai chỗ làm khác đề cương, đều cố ý:
+
+1. **Hậu xử lý dùng đồng thuận không gian thay cho EMA**: chọn dự đoán có tổng
+   khoảng cách tới các dự đoán còn lại nhỏ nhất, nên loại được lần quét dị
+   thường lẻ loi thay vì bị nó kéo trung bình. Lý do và số đo ở
+   `docs/Phan_Tich_Thiet_Ke_He_Thong.md` §2.4.1.
+2. **WebSocket là kênh dự phòng đúng như mục V của đề cương**: hai lối truyền
+   thời gian thực chọn bằng `WEBSOCKET` trong `.env`, cấu hình mặc định trong
+   kho đi REST theo chu kỳ quét.
+
 ## Cấu trúc thư mục
 
 | Thư mục | Nội dung |
@@ -230,7 +265,7 @@ hai chỗ khác nhau trên hai màn hình.
 | `notebooks/` | Notebook chạy trên Google Colab |
 | `ml/` | Mã nguồn tiền xử lý và huấn luyện, tái sử dụng được |
 | `mobile/` | **Sản phẩm chính**: ứng dụng Flutter — 5 màn hình, song ngữ, sáng/tối, quét WiFi thật |
-| `backend/` | FastAPI + SQLite, WebSocket tạm tắt — 8 endpoint, đã chạy |
+| `backend/` | FastAPI + SQLite — 8 endpoint, đã chạy |
 | `frontend/` | Web Dashboard giám sát — HTML/CSS/JS thuần, không thư viện ngoài |
 | `tools/` | Công cụ chạy một lần rồi commit kết quả (trích hình học từ sơ đồ) |
 | `tests/` | Kiểm thử endpoint REST API (`test_api.py`) |
@@ -239,6 +274,8 @@ hai chỗ khác nhau trên hai màn hình.
 
 Chi tiết đầy đủ: `docs/Cau_Truc_Thu_Muc_Du_An.md`
 
+
+## Hạn chế đã biết
 
 **Không có xác thực.** Dashboard phục vụ ở `/`, và `GET /predictions` (hoặc
 WebSocket khi bật) trả toạ độ của mọi thiết bị, kèm `device_id`. Ai vào được mạng LAN cũng xem
