@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend import database, repository, schemas
 from backend.config import settings
 from backend.database import lay_session
-from backend.dependencies import lay_bo_gop, lay_predictor
+from backend.dependencies import lay_bo_gop, lay_phat_lai, lay_predictor
 from backend.services.prediction_service import KhongDuAp
 from backend.services.websocket_service import manager
 
@@ -29,6 +29,11 @@ async def _mot_lan_quet(device_id: str, scan: list[dict]) -> dict:
     """Đường xử lý chung của REST và WebSocket, để hai lối không trôi khỏi nhau."""
     predictor = lay_predictor()
     bo_gop = lay_bo_gop()
+
+    phat_lai = lay_phat_lai()
+    if phat_lai is not None:
+        rp_demo, scan = phat_lai.quet_tiep(device_id)
+        log.info("DEMO %s: phát lại lần quét ở %s", device_id, rp_demo)
 
     # Threadpool: gọi thẳng thì chặn vòng lặp sự kiện, đuôi 1.243 ms với 40 request.
     x, y, so_ap, do_tre = await run_in_threadpool(predictor.du_doan, scan)

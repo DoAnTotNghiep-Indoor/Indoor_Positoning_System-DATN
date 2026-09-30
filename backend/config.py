@@ -32,5 +32,9 @@ class Settings(BaseSettings):
     # Tạm tắt: mọi client đi REST. Bật lại là có /ws/location như cũ.
     websocket: bool = False
 
+    # DEMO=true: bỏ lần quét của điện thoại, phát lại lần quét thật ở thư viện
+    # (xem services/demo_service.py). Chỉ để trình diễn ngoài thư viện.
+    demo: bool = False
+
 
 settings = Settings()

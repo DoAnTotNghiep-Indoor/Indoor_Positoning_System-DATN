@@ -4,6 +4,7 @@ chạy nóng, BoGop phải nhớ các lần quét trước."""
 from __future__ import annotations
 
 from backend.config import settings
+from backend.services.demo_service import PhatLaiQuet
 from backend.services.prediction_service import Predictor
 from backend.services.routing_service import DoThiDiLai
 from backend.services.smoothing_service import BoGop
@@ -11,11 +12,15 @@ from backend.services.smoothing_service import BoGop
 _predictor: Predictor | None = None
 _bo_gop: BoGop | None = None
 _do_thi: DoThiDiLai | None = None
+_phat_lai: PhatLaiQuet | None = None
 
 
 def khoi_dong() -> None:
-    global _predictor, _bo_gop, _do_thi
+    global _predictor, _bo_gop, _do_thi, _phat_lai
     _predictor = Predictor()
+    if settings.demo:
+        _phat_lai = PhatLaiQuet(_predictor.mapper.ap_columns,
+                                _predictor.mapper.missing_rssi_value)
     _do_thi = DoThiDiLai()
     _bo_gop = BoGop(
         cua_so=settings.cua_so_gop,
@@ -33,3 +38,7 @@ def lay_bo_gop() -> BoGop:
 
 def lay_do_thi() -> DoThiDiLai:
     return _do_thi
+
+
+def lay_phat_lai() -> PhatLaiQuet | None:
+    return _phat_lai
