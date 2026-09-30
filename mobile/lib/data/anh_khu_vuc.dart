@@ -20,7 +20,6 @@ class AnhKhuVuc {
     'wc': 2,
   };
 
-  /// Đường dẫn asset của mọi ảnh trong một khu vực, rỗng nếu không có ảnh.
   static List<String> duongDan(String thuMuc) => [
         for (var i = 1; i <= (soAnh[thuMuc] ?? 0); i++)
           'assets/images/$thuMuc/$i.webp',

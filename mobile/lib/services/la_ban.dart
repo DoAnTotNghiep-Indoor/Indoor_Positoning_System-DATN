@@ -28,19 +28,14 @@ class LaBan extends ChangeNotifier {
   final Stream<double?>? _nguon;
   StreamSubscription<double?>? _dang;
 
-  /// Truyền `nguon` trong kiểm thử để khỏi cần cảm biến thật.
   LaBan({Stream<double?>? nguon})
-      : _nguon = nguon ??
-            FlutterCompass.events?.map((e) => e.heading);
+      : _nguon = nguon ?? FlutterCompass.events?.map((e) => e.heading);
 
   double? _huong;
 
   /// Hướng đã quy về sơ đồ, độ theo chiều kim đồng hồ từ trục +y. Null khi máy
   /// không có từ kế hoặc chưa có số đọc nào.
-  double? get huongSoDo =>
-      _huong == null ? null : (_huong! - gocBacSoDo) % 360;
-
-  bool get coCamBien => _nguon != null;
+  double? get huongSoDo => _huong == null ? null : (_huong! - gocBacSoDo) % 360;
 
   void batDau() {
     if (_dang != null || _nguon == null) return;

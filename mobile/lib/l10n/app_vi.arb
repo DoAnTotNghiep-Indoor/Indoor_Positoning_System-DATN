@@ -1,148 +1,16 @@
 {
   "@@locale": "vi",
   "appTitle": "IPS DLU",
-  "@appTitle": {
-    "description": "Tên ứng dụng hiện trên trình quản lý tác vụ"
-  },
   "tabHome": "Trang chủ",
   "tabMap": "Bản đồ",
   "tabSettings": "Cài đặt",
   "searchHint": "Tìm phòng, khu vực…",
+  "floorLine": "Tầng 1 · Thư viện Đại học Đà Lạt",
   "homeYouAreAt": "Bạn đang ở",
-  "@homeYouAreAt": {
-    "description": "Nhãn phía trên tên khu vực hiện tại"
-  },
   "homeQuickAccess": "Truy cập nhanh",
   "homeNearby": "Gần bạn",
-  "mapFloorOne": "Tầng 1",
-  "mapRelocate": "Định vị lại",
-  "@mapRelocate": {
-    "description": "Nhãn trợ năng của nút định vị lại trên màn Bản đồ"
-  },
-  "mapAreaSummary": "{count} khu vực · cập nhật {giay} giây trước",
-  "@mapAreaSummary": {
-    "description": "Dòng phụ trên thẻ header của màn Bản đồ, khi đã có toạ độ",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "giay": {
-        "type": "int"
-      }
-    }
-  },
-  "mapAreaCount": "{count} khu vực",
-  "@mapAreaCount": {
-    "description": "Dòng phụ màn Bản đồ khi chưa định vị lần nào — không có mốc thời gian để nói 'cập nhật bao lâu trước'",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "mapFloorPlanLabel": "Sơ đồ mặt bằng tầng 1",
-  "@mapFloorPlanLabel": {
-    "description": "Nhãn trợ năng cho cả sơ đồ mặt bằng"
-  },
-  "mapFloorPlanHint": "Chụm hai ngón để phóng to, kéo để xem chi tiết",
-  "@mapFloorPlanHint": {
-    "description": "Gợi ý trợ năng cho thao tác trên sơ đồ"
-  },
-  "searchTitle": "Tìm kiếm",
-  "searchResultCount": "{count} kết quả",
-  "@searchResultCount": {
-    "description": "Số kết quả tìm được",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "searchEmpty": "Không tìm thấy khu vực nào phù hợp",
-  "searchEmptyHint": "Thử một từ khoá khác, hoặc bỏ bộ lọc đang bật.",
-  "@searchEmptyHint": {
-    "description": "Câu gợi ý cách xử lý khi không có kết quả"
-  },
-  "searchClearFilter": "Bỏ bộ lọc",
-  "@searchClearFilter": {
-    "description": "Nút đưa bộ lọc về \"Tất cả\""
-  },
-  "searchFilterAll": "Tất cả",
-  "searchFilterStudy": "Học tập",
-  "searchFilterFacility": "Tiện ích",
-  "searchFilterInternal": "Nội bộ",
-  "detailGoHere": "Đi tới đây",
-  "detailImagePlaceholder": "Ảnh khu vực",
-  "@detailImagePlaceholder": {
-    "description": "Chữ trong ô ảnh giữ chỗ ở màn Chi tiết"
-  },
-  "detailPhotos": "{so, plural, other{{so} ảnh của khu vực, vuốt ngang để xem}}",
-  "@detailPhotos": {
-    "description": "Nhãn trợ năng cho dải ảnh thật ở màn Chi tiết",
-    "placeholders": {
-      "so": {
-        "type": "int"
-      }
-    }
-  },
-  "settingsTitle": "Cài đặt",
-  "settingsGroupGeneral": "CHUNG",
-  "settingsGroupAppearance": "GIAO DIỆN",
-  "settingsGroupPositioning": "ĐỊNH VỊ",
-  "settingsGroupPermissions": "QUYỀN TRUY CẬP",
-  "settingsAppInfo": "Thông tin ứng dụng",
-  "settingsServer": "Máy chủ định vị",
-  "settingsTheme": "Giao diện",
-  "settingsThemeSystem": "Theo hệ thống",
-  "settingsThemeLight": "Sáng",
-  "settingsThemeDark": "Tối",
-  "settingsLanguage": "Ngôn ngữ",
-  "settingsLanguageVi": "Tiếng Việt",
-  "settingsLanguageEn": "English",
-  "settingsScanCycle": "Chu kỳ quét",
-  "settingsScanCycleSub": "Mỗi {giay} giây — mức Android cho phép",
-  "@settingsScanCycleSub": {
-    "description": "Chu kỳ quét, lấy từ TheoDoiViTri.chuKy chứ không viết cứng. Là dòng thông tin chứ không phải tuỳ chọn: Android chặn ứng dụng nền trước ở 4 lần quét mỗi 2 phút nên chu kỳ này không đổi được",
-    "placeholders": {
-      "giay": {
-        "type": "int"
-      }
-    }
-  },
-  "settingsPermission": "Vị trí và WiFi",
-  "settingsPermissionSub": "Cần thiết để định vị",
-  "settingsPermissionGranted": "Đã cấp",
-  "settingsPermissionMissing": "Chưa cấp",
-  "settingsPermissionBlocked": "Bị chặn",
-  "settingsPermissionChecking": "Đang kiểm tra…",
-  "settingsPermissionAsk": "Chạm để cấp quyền",
-  "settingsPermissionOpen": "Chạm để mở Cài đặt hệ thống",
-  "settingsFootnote": "Các tuỳ chọn khác sẽ được bổ sung ở phiên bản tiếp theo.",
-  "distanceMeters": "{met} m",
-  "@distanceMeters": {
-    "description": "Khoảng cách tính bằng mét",
-    "placeholders": {
-      "met": {
-        "type": "int"
-      }
-    }
-  },
-  "commonBack": "Quay lại",
-  "@commonBack": {
-    "description": "Nhãn trợ năng của nút quay lại"
-  },
-  "a11yOpenArea": "Mở chi tiết khu vực",
-  "@a11yOpenArea": {
-    "description": "Gợi ý trợ năng khi chạm vào một khu vực"
-  },
-  "liveStart": "Bắt đầu định vị",
-  "liveStop": "Dừng định vị",
-  "liveScanning": "Đang quét WiFi…",
-  "liveIdle": "Chưa bật định vị",
-  "liveUnknown": "Chưa xác định vị trí",
-  "@liveUnknown": {
-    "description": "Dòng tiêu đề màn Trang chủ khi chưa có toạ độ. Trước đây chỗ này hiện một tên phòng có sẵn, khiến ứng dụng trông như đã biết người dùng đang ở đâu trong khi chưa quét lần nào"
-  },
+  "homeAllAreas": "Tất cả khu vực",
+  "liveLocating": "Đang xác định vị trí…",
   "liveCoords": "x {x} · y {y}",
   "@liveCoords": {
     "placeholders": {
@@ -154,18 +22,13 @@
       }
     }
   },
-  "liveMatched": "Khớp {so} access point",
-  "@liveMatched": {
+  "liveInfo": "Khớp {so} AP · {moHinh} · {ms} ms",
+  "@liveInfo": {
     "placeholders": {
       "so": {
         "type": "int"
-      }
-    }
-  },
-  "liveModel": "Mô hình {ten} · {ms} ms",
-  "@liveModel": {
-    "placeholders": {
-      "ten": {
+      },
+      "moHinh": {
         "type": "String"
       },
       "ms": {
@@ -173,22 +36,100 @@
       }
     }
   },
-  "liveMerged": "Đã gộp {so} lần quét",
-  "@liveMerged": {
+  "liveStale": "Vị trí từ {giay} giây trước",
+  "@liveStale": {
     "placeholders": {
-      "so": {
+      "giay": {
         "type": "int"
       }
     }
   },
-  "errWifiPermission": "Chưa được cấp quyền vị trí. Ứng dụng sẽ hỏi lại khi bạn bấm bắt đầu.",
-  "errWifiBlocked": "Quyền vị trí đang bị chặn. Mở Cài đặt hệ thống để cấp lại.",
-  "errLocationOff": "Dịch vụ vị trí đang tắt. Bật lên rồi thử lại.",
+  "mapFloorOne": "Tầng 1",
+  "mapFloorPlanLabel": "Sơ đồ mặt bằng tầng 1",
+  "mapFilterAll": "Tất cả",
+  "mapRouteChip": "{met} m tới {noi}",
+  "@mapRouteChip": {
+    "placeholders": {
+      "met": {
+        "type": "String"
+      },
+      "noi": {
+        "type": "String"
+      }
+    }
+  },
+  "mapArrived": "Đã tới {noi}",
+  "@mapArrived": {
+    "placeholders": {
+      "noi": {
+        "type": "String"
+      }
+    }
+  },
+  "mapClearRoute": "Xoá tuyến đường",
+  "searchResultCount": "{count} kết quả",
+  "@searchResultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchEmpty": "Không tìm thấy khu vực nào phù hợp",
+  "searchEmptyHint": "Thử từ khoá khác hoặc chọn \"Tất cả\".",
+  "searchFilterAll": "Tất cả",
+  "searchFilterStudy": "Học tập",
+  "searchFilterService": "Tiện ích",
+  "searchFilterWays": "Lối đi",
+  "placeGo": "Chỉ đường",
+  "placeWaiting": "Đang chờ định vị…",
+  "placeRouting": "Đang tìm đường…",
+  "placeRouteFailed": "Không tìm được đường tới đây",
+  "placeHere": "Bạn đang ở đây",
+  "distanceMeters": "{met} m",
+  "@distanceMeters": {
+    "placeholders": {
+      "met": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yOpenArea": "Mở thông tin khu vực",
+  "settingsTitle": "Cài đặt",
+  "settingsGroupGeneral": "Chung",
+  "settingsGroupAppearance": "Giao diện",
+  "settingsGroupPositioning": "Định vị",
+  "settingsAppInfo": "Phiên bản",
+  "settingsServer": "Máy chủ định vị",
+  "settingsServerSub": "Máy ảo dùng 10.0.2.2, điện thoại thật dùng IP nội bộ",
+  "settingsServerHint": "http://<IP>:8000",
+  "settingsTheme": "Chế độ màu",
+  "settingsThemeSystem": "Hệ thống",
+  "settingsThemeLight": "Sáng",
+  "settingsThemeDark": "Tối",
+  "settingsLanguage": "Ngôn ngữ",
+  "settingsLanguageVi": "Tiếng Việt",
+  "settingsLanguageEn": "English",
+  "settingsScanCycle": "Định vị liên tục",
+  "settingsScanCycleSub": "Quét WiFi mỗi {giay} giây khi ứng dụng đang mở",
+  "@settingsScanCycleSub": {
+    "placeholders": {
+      "giay": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsPermission": "Vị trí và WiFi",
+  "settingsPermissionGranted": "Đã cấp",
+  "settingsPermissionMissing": "Chạm để cấp quyền",
+  "settingsPermissionBlocked": "Bị chặn — chạm để mở Cài đặt",
+  "errWifiPermission": "Cần quyền vị trí để quét WiFi. Chạm để cấp quyền.",
+  "errWifiBlocked": "Quyền vị trí đang bị chặn. Chạm để mở Cài đặt.",
+  "errLocationOff": "Dịch vụ vị trí đang tắt. Hãy bật lên để định vị.",
   "errWifiUnsupported": "Thiết bị không hỗ trợ quét WiFi.",
-  "errScanFailed": "Không quét được WiFi. Thử lại sau ít giây.",
-  "errNotEnoughAp": "Không đủ dữ liệu để định vị — chỉ khớp {so} access point quen thuộc, cần ít nhất {can}. Bạn có đang ở trong thư viện không?",
+  "errScanFailed": "Không quét được WiFi, đang thử lại…",
+  "errNotEnoughAp": "Chỉ khớp {so}/{can} access point cần thiết. Bạn có đang ở trong thư viện?",
   "@errNotEnoughAp": {
-    "description": "Quét được WiFi nhưng không đủ AP quen; máy chủ trả 422. {can} là NGƯỠNG tối thiểu, không phải tổng số AP của thư viện",
     "placeholders": {
       "so": {
         "type": "int"
@@ -198,9 +139,8 @@
       }
     }
   },
-  "errBadAddress": "Địa chỉ máy chủ không hợp lệ: {diaChi}. Cần đủ dạng http://<IP>:<cổng>",
+  "errBadAddress": "Địa chỉ máy chủ không hợp lệ: {diaChi}",
   "@errBadAddress": {
-    "description": "Địa chỉ trong Cài đặt thiếu http:// hoặc thiếu tên máy",
     "placeholders": {
       "diaChi": {
         "type": "String"
@@ -223,87 +163,8 @@
       }
     }
   },
-  "errServerNoCode": "Máy chủ báo lỗi khi xử lý lần quét.",
-  "@errServerNoCode": {
-    "description": "Dùng cho kênh WebSocket: lỗi không kèm mã HTTP nào."
-  },
-  "errBadFormat": "Ứng dụng và máy chủ chưa hiểu đúng gói tin của nhau.",
-  "settingsServerHint": "Nhập địa chỉ máy chủ",
-  "settingsServerSub": "Máy ảo dùng 10.0.2.2, điện thoại thật dùng IP nội bộ",
-  "a11yToggleTracking": "Bật hoặc tắt định vị theo thời gian thực",
-  "errTimeout": "Máy chủ không phản hồi kịp. Kiểm tra lại chất lượng mạng.",
-  "detailPhotoCount": "{so, plural, other{{so} ảnh}}",
-  "@detailPhotoCount": {
-    "placeholders": {
-      "so": {
-        "type": "int"
-      }
-    }
-  },
-  "detailNeedPosition": "Bật định vị để chỉ đường",
-  "detailRouteLoading": "Đang tìm đường…",
-  "detailRouteFailed": "Không tìm được đường tới đây",
-  "routeSummary": "{met} m · {buoc} bước",
-  "@routeSummary": {
-    "placeholders": {
-      "met": {
-        "type": "String"
-      },
-      "buoc": {
-        "type": "int"
-      }
-    }
-  },
-  "routeStep": "{huong} {met} m tới {noi}",
-  "@routeStep": {
-    "placeholders": {
-      "huong": {
-        "type": "String"
-      },
-      "met": {
-        "type": "String"
-      },
-      "noi": {
-        "type": "String"
-      }
-    }
-  },
-  "stepStraight": "Đi thẳng",
-  "stepSlightLeft": "Chếch trái",
-  "stepSlightRight": "Chếch phải",
-  "stepLeft": "Rẽ trái",
-  "stepRight": "Rẽ phải",
-  "stepUTurn": "Quay đầu",
-  "stepStart": "Đi",
-  "mapArrived": "Đã tới {noi}",
-  "@mapArrived": {
-    "placeholders": {
-      "noi": {
-        "type": "String"
-      }
-    }
-  },
-  "liveStale": "Vị trí cập nhật {giay} giây trước",
-  "@liveStale": {
-    "placeholders": {
-      "giay": {
-        "type": "int"
-      }
-    }
-  },
-  "mapOpenDetail": "Mở chi tiết khu vực",
-  "mapFilterAll": "Tất cả",
-  "mapFilterHint": "Lọc sơ đồ theo loại khu vực",
-  "mapRouteChip": "{met} m tới {noi}",
-  "@mapRouteChip": {
-    "placeholders": {
-      "met": {
-        "type": "String"
-      },
-      "noi": {
-        "type": "String"
-      }
-    }
-  },
-  "mapClearRoute": "Xoá tuyến đường"
+  "errBadFormat": "Ứng dụng và máy chủ không hiểu gói tin của nhau.",
+  "errTimeout": "Máy chủ không phản hồi kịp.",
+  "mapFilter": "Lọc khu vực",
+  "buildingFull": "Thư viện Đại học Đà Lạt"
 }

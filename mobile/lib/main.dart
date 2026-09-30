@@ -2,30 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'l10n/app_localizations.dart';
-import 'services/api_dinh_vi.dart';
-import 'services/kenh_vi_tri.dart';
-import 'services/theo_doi_vi_tri.dart';
-import 'theme/app_settings.dart';
-import 'theme/app_theme.dart';
-import 'widgets/blob_background.dart';
 import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/settings_screen.dart';
+import 'services/api_dinh_vi.dart';
+import 'services/theo_doi_vi_tri.dart';
+import 'theme/app_settings.dart';
+import 'theme/app_theme.dart';
+import 'widgets/the_khu_vuc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await LiquidGlassWidgets.initialize(enablePerformanceMonitor: false);
 
-  // Nạp trước shader để khung hình đầu tiên đã có kính thật, không bị nháy.
-  await LiquidGlassWidgets.initialize();
-
-  // brightnessResolver bắt buộc khi dùng MaterialApp: thiếu nó thì viền và bóng
-  // của kính đọc theo sáng/tối của HỆ ĐIỀU HÀNH chứ không theo ThemeMode của
-  // app, nên chọn "Sáng" trên máy đang để tối là kính biến mất. Cùng họ lỗi với
-  // GlassStatusBarStyle.auto ở AppShell bên dưới.
+  // brightnessResolver: thiếu nó kính đọc sáng/tối của HỆ ĐIỀU HÀNH chứ không
+  // theo ThemeMode của app, chọn "Sáng" trên máy để tối là viền kính biến mất.
   runApp(LiquidGlassWidgets.wrap(
     child: const IpsDluApp(),
     brightnessResolver: Theme.maybeBrightnessOf,
+    theme: glassTheme,
   ));
 }
 
@@ -37,29 +33,21 @@ class IpsDluApp extends StatefulWidget {
 }
 
 class _IpsDluAppState extends State<IpsDluApp> {
-  final _tuyChon = AppSettings(kho: const KhoMacDinh());
-
-  // Tạm tắt WebSocket, cùng máy chủ để `WEBSOCKET=false`: gửi lần quét qua REST.
-  static const _dungWebSocket = false;
-
-  // Dựng ApiDinhVi ở đây chứ không để TheoDoiViTri tự dựng: kênh WebSocket cần
-  // đúng thể hiện ấy, vừa để lấy địa chỉ máy chủ hiện hành vừa để rơi về REST
-  // khi kênh hỏng.
-  late final _api = ApiDinhVi(_tuyChon.diaChiMayChu);
-  late final _theoDoi = TheoDoiViTri(
-    diaChiMayChu: _tuyChon.diaChiMayChu,
-    api: _api,
-    kenh: _dungWebSocket ? KenhViTri(api: _api) : null,
-  );
-
+  final _tuyChon = AppSettings();
+  late final _theoDoi = TheoDoiViTri(api: ApiDinhVi(_tuyChon.diaChiMayChu));
   late final AppLifecycleListener _vongDoi;
 
   @override
   void initState() {
     super.initState();
-    _tuyChon.addListener(_dongBoMayChu);
-    _tuyChon.nap();
     _vongDoi = AppLifecycleListener(onStateChange: _theoDoi.doiVongDoi);
+    // Nạp địa chỉ máy chủ đã lưu TRƯỚC khi quét, không thì vòng đầu gọi nhầm
+    // địa chỉ mặc định.
+    _tuyChon.nap().whenComplete(() {
+      _dongBoMayChu();
+      _tuyChon.addListener(_dongBoMayChu);
+      _theoDoi.batDau();
+    });
   }
 
   void _dongBoMayChu() => _theoDoi.doiMayChu(_tuyChon.diaChiMayChu);
@@ -75,36 +63,25 @@ class _IpsDluAppState extends State<IpsDluApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Hai scope bọc NGOÀI MaterialApp, không phải trong `home:`. Route đẩy
-    // chồng lên — màn Chi tiết, tấm tóm tắt trên sơ đồ — dựng ở nhánh khác của
-    // cây nên chỉ thấy được scope nào nằm trên Navigator. Dời xuống dưới là
-    // chúng ném "Thiếu TheoDoiViTriScope" ngay lần chạm đầu tiên.
+    // Scope bọc NGOÀI MaterialApp để popup (route khác) cũng thấy được.
     return AppSettingsScope(
       settings: _tuyChon,
       child: TheoDoiViTriScope(
         theoDoi: _theoDoi,
-        child: AnimatedBuilder(
-          animation: _tuyChon,
+        child: ListenableBuilder(
+          listenable: _tuyChon,
           builder: (context, _) => MaterialApp(
             onGenerateTitle: (context) => L.of(context).appTitle,
             debugShowCheckedModeBanner: false,
-
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: _tuyChon.cheDo,
-
             locale: _tuyChon.ngonNgu,
             localizationsDelegates: L.localizationsDelegates,
             supportedLocales: L.supportedLocales,
-
-            // GlassScaffold không phải Material nên không cấp DefaultTextStyle:
-            // thiếu lớp này thì mọi Text không ghi rõ `style:` rơi về kiểu dự
-            // phòng monospace kèm gạch chân vàng. `transparency` trả lại
-            // DefaultTextStyle mà không vẽ nền che mất lớp kính.
-            builder: (context, child) => Material(
-              type: MaterialType.transparency,
-              child: child ?? const SizedBox.shrink(),
-            ),
+            // GlassScaffold không dựng Material nên thiếu DefaultTextStyle.
+            builder: (context, child) =>
+                Material(type: MaterialType.transparency, child: child),
             home: const AppShell(),
           ),
         ),
@@ -113,131 +90,113 @@ class _IpsDluAppState extends State<IpsDluApp> {
   }
 }
 
-/// Khung chính: nền blob + thanh điều hướng kính, đổi nội dung theo tab.
-///
-/// Kính khúc xạ theo thứ nằm phía sau scaffold, nên nền phải do scaffold cấp
-/// chứ không để từng màn hình tự dựng.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
-
-  static final _yeuCauBanDo = ValueNotifier<int>(0);
-
-  /// Chuyển sang tab Bản đồ từ màn khác, ví dụ nút "Đi tới đây".
-  static void moBanDo() => _yeuCauBanDo.value++;
 
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
-  int _index = 0;
-  bool _searching = false;
-  final _timKiem = TextEditingController();
+  int _tab = 0;
+  bool _dangTim = false;
+  final _tuKhoa = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    AppShell._yeuCauBanDo.addListener(_moBanDo);
+    yeuCauMoBanDo.addListener(_moBanDo);
   }
 
   void _moBanDo() => setState(() {
-        _index = 1;
-        _searching = false;
+        _tab = 1;
+        _dangTim = false;
       });
 
   @override
   void dispose() {
-    AppShell._yeuCauBanDo.removeListener(_moBanDo);
-    _timKiem.dispose();
+    yeuCauMoBanDo.removeListener(_moBanDo);
+    _tuKhoa.dispose();
     super.dispose();
-  }
-
-  /// Mỗi màn hình có bộ blob riêng để nền không lặp lại khi chuyển tab.
-  List<Blob> get _blobs {
-    if (_searching) return BlobBackground.listBlobs;
-    return switch (_index) {
-      0 => BlobBackground.homeBlobs,
-      1 => BlobBackground.mapBlobs,
-      _ => BlobBackground.listBlobs,
-    };
-  }
-
-  Widget get _noiDung {
-    if (_searching) return SearchScreen(tuKhoa: _timKiem.text);
-    return switch (_index) {
-      0 => const HomeScreen(),
-      1 => const MapScreen(),
-      _ => const SettingsScreen(),
-    };
   }
 
   @override
   Widget build(BuildContext context) {
     final t = L.of(context);
+    final m = Mau.of(context);
+    final toi = Theme.of(context).brightness == Brightness.dark;
 
-    // GlassTab nhận Widget chứ không IconData.
-    final tabs = <GlassTab>[
-      GlassTab(
-        icon: const Icon(Icons.home_outlined),
-        activeIcon: const Icon(Icons.home),
-        label: t.tabHome,
-      ),
-      GlassTab(
-        icon: const Icon(Icons.map_outlined),
-        activeIcon: const Icon(Icons.map),
-        label: t.tabMap,
-      ),
-      GlassTab(
-        icon: const Icon(Icons.settings_outlined),
-        activeIcon: const Icon(Icons.settings),
-        label: t.tabSettings,
-      ),
-    ];
+    // Giữ Trang chủ khi mở tìm kiếm: dựng lại lúc đóng tốn ~16 ms trên X300.
+    final trangChu = !_dangTim && _tab == 0;
+    final noiDung = Stack(
+      fit: StackFit.expand,
+      children: [
+        Offstage(
+          offstage: !trangChu,
+          child: TickerMode(enabled: trangChu, child: const HomeScreen()),
+        ),
+        if (_dangTim)
+          SearchScreen(tuKhoa: _tuKhoa)
+        else if (_tab == 1)
+          const MapScreen()
+        else if (_tab == 2)
+          const SettingsScreen(),
+      ],
+    );
 
-    // Back đóng tìm kiếm, rồi về Trang chủ, rồi mới thoát app — tìm kiếm chỉ là
-    // một cờ chứ không phải route nên Navigator không tự lùi được.
     return PopScope(
-      canPop: !_searching && _index == 0,
+      canPop: !_dangTim && _tab == 0,
       onPopInvokedWithResult: (daPop, _) {
         if (daPop) return;
-        setState(() {
-          if (_searching) {
-            _searching = false;
-          } else {
-            _index = 0;
-          }
-        });
+        setState(() => _dangTim ? _dangTim = false : _tab = 0);
       },
-      child: _khung(tabs),
-    );
-  }
-
-  Widget _khung(List<GlassTab> tabs) {
-    final t = L.of(context);
-    return GlassScaffold(
-      background: BlobBackground(blobs: _blobs),
-      // KHÔNG dùng GlassStatusBarStyle.auto: nó chọn theo độ sáng của HỆ ĐIỀU
-      // HÀNH chứ không theo ThemeMode, nên máy để sáng mà app đang tối thì biểu
-      // tượng tối đặt lên nền tối — đo được tương phản 0,3/255.
-      statusBarStyle: Theme.of(context).brightness == Brightness.dark
-          ? GlassStatusBarStyle.light
-          : GlassStatusBarStyle.dark,
-      body: _noiDung,
-      bottomBar: GlassTabBar.searchable(
-        tabs: tabs,
-        selectedIndex: _index,
-        isSearchActive: _searching,
-        onTabSelected: (i) => setState(() {
-          _index = i;
-          _searching = false;
-        }),
-        searchConfig: GlassSearchBarConfig(
-          hintText: t.searchHint,
-          controller: _timKiem,
-          // Mặc định thư viện là CupertinoIcons, cả app dùng bộ Material.
-          searchIcon: const Icon(Icons.search, size: 20),
-          onSearchToggle: (dangMo) => setState(() => _searching = dangMo),
-          onChanged: (_) => setState(() {}),
+      child: GlassScaffold(
+        background: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [m.nenTren, m.nenDuoi],
+            ),
+          ),
+        ),
+        // edgeFade vẽ một dải nền đè lên nội dung dưới thanh tab (thành "mảng"
+        // mà thanh nổi lên trên) và thêm một lớp ShaderMask mỗi khung hình.
+        edgeFade: false,
+        statusBarStyle:
+            toi ? GlassStatusBarStyle.light : GlassStatusBarStyle.dark,
+        body: noiDung,
+        bottomBar: GlassTabBar.searchable(
+          tabs: [
+            GlassTab(
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home_rounded),
+              label: t.tabHome,
+            ),
+            GlassTab(
+              icon: const Icon(Icons.map_outlined),
+              activeIcon: const Icon(Icons.map_rounded),
+              label: t.tabMap,
+            ),
+            GlassTab(
+              icon: const Icon(Icons.settings_outlined),
+              activeIcon: const Icon(Icons.settings_rounded),
+              label: t.tabSettings,
+            ),
+          ],
+          settings: kinhNoi(context),
+          selectedIndex: _tab,
+          isSearchActive: _dangTim,
+          onTabSelected: (i) => setState(() {
+            _tab = i;
+            _dangTim = false;
+          }),
+          searchConfig: GlassSearchBarConfig(
+            hintText: t.searchHint,
+            controller: _tuKhoa,
+            searchIcon: const Icon(Icons.search, size: 20),
+            onSearchToggle: (mo) => setState(() => _dangTim = mo),
+          ),
         ),
       ),
     );

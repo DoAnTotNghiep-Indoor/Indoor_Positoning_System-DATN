@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'quet_wifi.dart';
 
-/// Toạ độ trả về từ `POST /predict`, đơn vị mét.
+/// Toạ độ trả về từ `POST /predict`, đơn vị lưới của sơ đồ.
 class ViTri {
   final double x;
   final double y;
@@ -42,7 +42,6 @@ class ViTri {
       );
 }
 
-/// Một điểm tham chiếu trên bản đồ, kèm nhãn do `GET /map` trả về.
 class DiemThamChieu {
   final String rpId;
   final double x;
@@ -50,8 +49,7 @@ class DiemThamChieu {
   final String ten;
   final String nhom;
 
-  /// Mô tả và tên thư mục ảnh. Chỉ `GET /map` trả hai trường này; `POST /route`
-  /// cố tình bỏ chúng nên chặng đường về sẽ có chuỗi rỗng.
+  /// Chỉ `GET /map` trả ba trường này; nút trên tuyến của `POST /route` để rỗng.
   final String moTa;
   final String moTaChiTiet;
   final String thuMucAnh;
@@ -79,59 +77,23 @@ class DiemThamChieu {
       );
 }
 
-/// Một bước chỉ đường. `huong` là mã do máy chủ trả về, không phải câu chữ —
-/// ứng dụng chạy hai ngôn ngữ nên tự ghép câu lấy.
-class BuocChiDan {
-  final String tuRp;
-  final String denRp;
-  final String denTen;
-  final String huong;
-  final double gocDo;
-  final double khoangCachM;
-
-  const BuocChiDan({
-    required this.tuRp,
-    required this.denRp,
-    required this.denTen,
-    required this.huong,
-    required this.gocDo,
-    required this.khoangCachM,
-  });
-
-  factory BuocChiDan.tuJson(Map<String, dynamic> j) => BuocChiDan(
-        tuRp: j['tu_rp'] as String,
-        denRp: j['den_rp'] as String,
-        denTen: (j['den_ten'] ?? '') as String,
-        huong: j['huong'] as String,
-        gocDo: (j['goc_do'] as num).toDouble(),
-        khoangCachM: (j['khoang_cach_m'] as num).toDouble(),
-      );
-}
-
 class KetQuaChiDuong {
   final double quangDuongM;
   final int soChang;
-  final List<BuocChiDan> buoc;
 
-  /// Toạ độ mét của từng nút trên tuyến, theo đúng thứ tự đi. Dùng để vẽ tuyến
-  /// lên sơ đồ; `chi_dan` không thay thế được vì nó đã gộp các chặng đi thẳng
-  /// nên thiếu điểm giữa, vẽ theo nó sẽ ra đường cắt góc xuyên tường.
+  /// Mọi nút trên tuyến theo thứ tự đi. Không vẽ theo `chi_dan`: nó đã gộp các
+  /// chặng thẳng hàng nên thiếu điểm giữa, vẽ ra sẽ cắt góc xuyên tường.
   final List<DiemThamChieu> duongDi;
 
   const KetQuaChiDuong({
     required this.quangDuongM,
     required this.soChang,
-    required this.buoc,
     this.duongDi = const [],
   });
 
   factory KetQuaChiDuong.tuJson(Map<String, dynamic> j) => KetQuaChiDuong(
         quangDuongM: (j['quang_duong_m'] as num).toDouble(),
         soChang: j['so_chang'] as int,
-        buoc: [
-          for (final b in j['chi_dan'] as List)
-            BuocChiDan.tuJson(b as Map<String, dynamic>),
-        ],
         duongDi: [
           for (final d in (j['duong_di'] ?? const []) as List)
             DiemThamChieu.tuJson(d as Map<String, dynamic>),
@@ -139,13 +101,19 @@ class KetQuaChiDuong {
       );
 }
 
-enum LoiApi { diaChiSai, khongKetNoi, quaHan, saiDinhDang, khongDuAp, mayChuLoi }
+enum LoiApi {
+  diaChiSai,
+  khongKetNoi,
+  quaHan,
+  saiDinhDang,
+  khongDuAp,
+  mayChuLoi
+}
 
 class NgoaiLeApi implements Exception {
   final LoiApi loai;
   final int? maHttp;
 
-  /// Số AP khớp và ngưỡng tối thiểu, chỉ có với [LoiApi.khongDuAp].
   final int? soAp;
   final int? toiThieu;
 
@@ -153,8 +121,7 @@ class NgoaiLeApi implements Exception {
 }
 
 class ApiDinhVi {
-  /// Đổi được lúc chạy: dựng ApiDinhVi mới sẽ phải đóng client cũ, mà lần quét
-  /// đang bay dở dùng chính client đó.
+  /// Đổi tại chỗ thay vì dựng lại: lần quét đang bay dở dùng chính client này.
   String diaChi;
 
   final http.Client _client;
@@ -164,9 +131,8 @@ class ApiDinhVi {
       {http.Client? client, this.quaHan = const Duration(seconds: 8)})
       : _client = client ?? http.Client();
 
-  /// Dựng URL và chặn sớm địa chỉ không dùng được. `http` ném `ArgumentError`
-  /// khi URI thiếu host, mà đó là `Error` chứ không phải `Exception` nên
-  /// `on Exception` để lọt và vòng quét báo nhầm thành "quét WiFi thất bại".
+  /// `http` ném `ArgumentError` (một `Error`, không phải `Exception`) khi URI
+  /// thiếu host, nên phải chặn trước — gọi ngoài khối try của nơi dùng.
   Uri _url(String duong) {
     final u = Uri.tryParse('$diaChi$duong');
     if (u == null ||
@@ -177,56 +143,49 @@ class ApiDinhVi {
     return u;
   }
 
-  /// Gửi một lần quét, nhận toạ độ. Gửi `[{bssid, rssi}]` kèm cặp chứ KHÔNG
-  /// gửi mảng số trần như CTK45: mảng trần sai thứ tự thì mô hình vẫn chạy
-  /// trơn và trả toạ độ sai không một cảnh báo nào.
-  Future<ViTri> duDoan({
-    required String deviceId,
-    required List<DiemTruyCap> quet,
-  }) async {
-    // Dựng URL NGOÀI try: `_url` ném `NgoaiLeApi`, mà nó là `Exception` nên
-    // khối `on Exception` bên dưới sẽ nuốt mất và báo nhầm thành mất kết nối.
-    final url = _url('/predict');
-
-    final http.Response tra;
+  Future<http.Response> _gui(Future<http.Response> yeuCau) async {
     try {
-      tra = await _client
-          .post(
-            url,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'device_id': deviceId,
-              'scan': [for (final ap in quet) ap.toJson()],
-            }),
-          )
-          .timeout(quaHan);
+      return await yeuCau.timeout(quaHan);
     } on TimeoutException {
-      // Tách khỏi "không kết nối được": mạng yếu khác hẳn nhập sai địa chỉ.
       throw const NgoaiLeApi(LoiApi.quaHan);
     } on Exception {
       throw const NgoaiLeApi(LoiApi.khongKetNoi);
     }
+  }
 
-    // 422 là "quét được nhưng không đủ AP quen để định vị" — khác hẳn lỗi máy
-    // chủ. Máy chủ chặn thay vì trả một toạ độ không dựa trên dữ liệu nào.
-    if (tra.statusCode == 422) throw _loi422(tra);
-
+  /// Bắt cả `Error`: JSON thiếu trường thì phép ép kiểu ném `TypeError`.
+  T _doc<T>(http.Response tra, T Function(dynamic) doi) {
     if (tra.statusCode != 200) {
       throw NgoaiLeApi(LoiApi.mayChuLoi, maHttp: tra.statusCode);
     }
     try {
-      return ViTri.tuJson(jsonDecode(utf8.decode(tra.bodyBytes)));
+      return doi(jsonDecode(utf8.decode(tra.bodyBytes)));
     } catch (_) {
-      // Bắt cả Error chứ không chỉ Exception: JSON thiếu trường thì phép ép
-      // kiểu ném TypeError, mà TypeError là Error nên `on Exception` để lọt.
       throw const NgoaiLeApi(LoiApi.saiDinhDang);
     }
   }
 
-  /// Máy chủ dùng 422 cho HAI chuyện: `detail` là object khi thiếu AP, là danh
-  /// sách khi pydantic bắt thân sai schema. Coi mọi 422 là thiếu AP thì ca thứ
-  /// hai hiện thành "khớp 0, cần ít nhất 0" — câu vô nghĩa, lại đổ lỗi cho vùng
-  /// phủ WiFi trong khi lỗi nằm ở gói tin gửi lên.
+  /// Gửi `[{bssid, rssi}]` chứ không gửi mảng số trần như CTK45: mảng trần sai
+  /// thứ tự thì mô hình vẫn trả toạ độ sai mà không cảnh báo gì.
+  Future<ViTri> duDoan({
+    required String deviceId,
+    required List<DiemTruyCap> quet,
+  }) async {
+    final url = _url('/predict');
+    final tra = await _gui(_client.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'device_id': deviceId,
+        'scan': [for (final ap in quet) ap.toJson()],
+      }),
+    ));
+    if (tra.statusCode == 422) throw _loi422(tra);
+    return _doc(tra, (j) => ViTri.tuJson(j as Map<String, dynamic>));
+  }
+
+  /// 422 mang hai nghĩa: `detail` là object khi thiếu AP, là danh sách khi
+  /// pydantic bắt thân sai schema. Gộp làm một sẽ đổ lỗi nhầm cho vùng phủ WiFi.
   NgoaiLeApi _loi422(http.Response tra) {
     Object? d;
     try {
@@ -243,36 +202,17 @@ class ApiDinhVi {
         toiThieu: (d['toi_thieu'] as num?)?.toInt());
   }
 
-  /// Điểm tham chiếu kèm tên, tải một lần rồi giữ lại. Nhờ nó giao diện nói
-  /// được "Phòng tạp chí" thay vì "x 22,0 m · y 52,0 m".
   Future<List<DiemThamChieu>> layBanDo() async {
     final url = _url('/map');
-
-    final http.Response tra;
-    try {
-      tra = await _client.get(url).timeout(quaHan);
-    } on TimeoutException {
-      throw const NgoaiLeApi(LoiApi.quaHan);
-    } on Exception {
-      throw const NgoaiLeApi(LoiApi.khongKetNoi);
-    }
-
-    if (tra.statusCode != 200) {
-      throw NgoaiLeApi(LoiApi.mayChuLoi, maHttp: tra.statusCode);
-    }
-    try {
-      final ds =
-          jsonDecode(utf8.decode(tra.bodyBytes))['diem_tham_chieu'] as List;
-      return [
-        for (final m in ds) DiemThamChieu.tuJson(m as Map<String, dynamic>),
-      ];
-    } catch (_) {
-      throw const NgoaiLeApi(LoiApi.saiDinhDang);
-    }
+    final tra = await _gui(_client.get(url));
+    return _doc(
+        tra,
+        (j) => [
+              for (final m in j['diem_tham_chieu'] as List)
+                DiemThamChieu.tuJson(m as Map<String, dynamic>),
+            ]);
   }
 
-  /// Đường đi từ toạ độ hiện tại tới khu vực [denNhom], hoặc đúng điểm [denRp]
-  /// khi có. Gửi toạ độ chứ không gửi rp_id: máy chủ tự neo vào điểm gần nhất.
   Future<KetQuaChiDuong> chiDuong({
     required double tuX,
     required double tuY,
@@ -280,34 +220,16 @@ class ApiDinhVi {
     String? denRp,
   }) async {
     final url = _url('/route');
-
-    final http.Response tra;
-    try {
-      tra = await _client
-          .post(
-            url,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'tu_x': tuX,
-              'tu_y': tuY,
-              if (denRp != null) 'den_rp': denRp else 'den_nhom': denNhom,
-            }),
-          )
-          .timeout(quaHan);
-    } on TimeoutException {
-      throw const NgoaiLeApi(LoiApi.quaHan);
-    } on Exception {
-      throw const NgoaiLeApi(LoiApi.khongKetNoi);
-    }
-
-    if (tra.statusCode != 200) {
-      throw NgoaiLeApi(LoiApi.mayChuLoi, maHttp: tra.statusCode);
-    }
-    try {
-      return KetQuaChiDuong.tuJson(jsonDecode(utf8.decode(tra.bodyBytes)));
-    } catch (_) {
-      throw const NgoaiLeApi(LoiApi.saiDinhDang);
-    }
+    final tra = await _gui(_client.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'tu_x': tuX,
+        'tu_y': tuY,
+        if (denRp != null) 'den_rp': denRp else 'den_nhom': denNhom,
+      }),
+    ));
+    return _doc(tra, (j) => KetQuaChiDuong.tuJson(j as Map<String, dynamic>));
   }
 
   void dong() => _client.close();

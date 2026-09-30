@@ -1,226 +1,159 @@
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
-import '../data/demo_data.dart';
 import '../l10n/app_localizations.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_metrics.dart';
 import '../services/quyen_truy_cap.dart';
 import '../services/theo_doi_vi_tri.dart';
 import '../theme/app_settings.dart';
+import '../theme/app_theme.dart';
+import '../widgets/chung.dart';
+import '../widgets/tap_feedback.dart';
 
-/// Màn Cài đặt. `GlassGroupedSection` tự chèn đường kẻ giữa các dòng và bo góc
-/// đúng cho dòng đầu, dòng cuối.
-class SettingsScreen extends StatefulWidget {
-  /// Cho tiêm được để kiểm thử không phải đụng kênh nền tảng.
-  final QuyenTruyCap quyen;
+const _phienBan = 'v0.2';
 
-  const SettingsScreen({super.key, this.quyen = const QuyenTruyCap()});
-
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-/// Thứ tự này phải khớp thứ tự các đoạn trong segmented control bên dưới.
-const _cheDoTheoThuTu = <ThemeMode>[
-  ThemeMode.system,
-  ThemeMode.light,
-  ThemeMode.dark,
-];
-
-const _maNgonNgu = <String>['vi', 'en'];
-
-class _SettingsScreenState extends State<SettingsScreen> {
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final chuaCho = AppMetrics.chuaChoThanhTab(context);
     final t = L.of(context);
     final tuyChon = AppSettingsScope.of(context);
-    final muc = AppColors.inkOf(context);
 
-    return SafeArea(
-      bottom: false,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(16, 12, 16, chuaCho),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: Semantics(
-              header: true,
-              child: Text(t.settingsTitle,
-                  style: Theme.of(context).textTheme.headlineLarge),
-            ),
-          ),
-          const SizedBox(height: 30),
-          GlassGroupedSection(
-            header: _NhanNhom(t.settingsGroupGeneral),
+    return ListView(
+      padding: EdgeInsets.fromLTRB(20, MediaQuery.paddingOf(context).top + 16,
+          20, chuaThanhTab(context)),
+      children: [
+        Text(t.settingsTitle, style: Theme.of(context).textTheme.headlineLarge),
+        TieuDeMuc(t.settingsGroupPositioning),
+        BeMat(
+          child: Column(
             children: [
-              GlassListTile(
-                leading: const Icon(Icons.info_outline),
-                title: Text(t.settingsAppInfo),
-                trailing: const _GiaTri(DemoData.appVersion),
+              const _DongQuyen(),
+              const Divider(indent: 56),
+              _Dong(
+                icon: Icons.sync_rounded,
+                tieuDe: t.settingsScanCycle,
+                phu: t.settingsScanCycleSub(TheoDoiViTri.chuKy.inSeconds),
               ),
-              GlassListTile(
-                leading: const Icon(Icons.dns_outlined),
-                title: Text(t.settingsServer),
-                subtitle: Text(t.settingsServerSub),
-                trailing: const SizedBox(width: 150, child: _OMayChu()),
+              const Divider(indent: 56),
+              _Dong(
+                icon: Icons.dns_outlined,
+                tieuDe: t.settingsServer,
+                phu: t.settingsServerSub,
+                duoi: const _OMayChu(),
               ),
             ],
           ),
-          const SizedBox(height: 28),
-          GlassGroupedSection(
-            header: _NhanNhom(t.settingsGroupAppearance),
+        ),
+        TieuDeMuc(t.settingsGroupAppearance),
+        BeMat(
+          child: Column(
             children: [
-              // Ba lựa chọn ngắn nên dùng segmented control thay cho dòng bấm
-              // mở trang khác — đổi được tại chỗ và thấy kết quả tức thì.
-              _DongChon(
-                icon: Icons.brightness_6_outlined,
-                title: t.settingsTheme,
-                // Điều khiển này làm việc theo CHỈ SỐ chứ không theo giá trị.
-                // Không dùng .scrollable — bản đó dành cho 6 mục trở lên, nó
-                // dồn các mục về trái và để thừa rãnh xám bên phải.
-                child: GlassSegmentedControl(
-                  selectedIndex: _cheDoTheoThuTu.indexOf(tuyChon.cheDo),
+              _Dong(
+                icon: Icons.contrast_rounded,
+                tieuDe: t.settingsTheme,
+                duoi: SegmentedButton<ThemeMode>(
+                  showSelectedIcon: false,
                   segments: [
-                    GlassSegment(label: t.settingsThemeSystem),
-                    GlassSegment(label: t.settingsThemeLight),
-                    GlassSegment(label: t.settingsThemeDark),
+                    ButtonSegment(
+                        value: ThemeMode.system,
+                        label: Text(t.settingsThemeSystem)),
+                    ButtonSegment(
+                        value: ThemeMode.light,
+                        label: Text(t.settingsThemeLight)),
+                    ButtonSegment(
+                        value: ThemeMode.dark,
+                        label: Text(t.settingsThemeDark)),
                   ],
-                  onSegmentSelected: (i) =>
-                      tuyChon.datCheDo(_cheDoTheoThuTu[i]),
+                  selected: {tuyChon.cheDo},
+                  onSelectionChanged: (s) => tuyChon.datCheDo(s.first),
                 ),
               ),
-              _DongChon(
-                icon: Icons.language_outlined,
-                title: t.settingsLanguage,
-                child: GlassSegmentedControl(
-                  selectedIndex:
-                      _maNgonNgu.indexOf(tuyChon.ngonNgu.languageCode),
+              const Divider(indent: 56),
+              _Dong(
+                icon: Icons.translate_rounded,
+                tieuDe: t.settingsLanguage,
+                duoi: SegmentedButton<String>(
+                  showSelectedIcon: false,
                   segments: [
-                    GlassSegment(label: t.settingsLanguageVi),
-                    GlassSegment(label: t.settingsLanguageEn),
+                    ButtonSegment(
+                        value: 'vi', label: Text(t.settingsLanguageVi)),
+                    ButtonSegment(
+                        value: 'en', label: Text(t.settingsLanguageEn)),
                   ],
-                  onSegmentSelected: (i) =>
-                      tuyChon.datNgonNgu(Locale(_maNgonNgu[i])),
+                  selected: {tuyChon.ngonNgu.languageCode},
+                  onSelectionChanged: (s) =>
+                      tuyChon.datNgonNgu(Locale(s.first)),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 28),
-          GlassGroupedSection(
-            header: _NhanNhom(t.settingsGroupPositioning),
-            children: [
-              // Dòng THÔNG TIN, không phải tuỳ chọn. Trước đây là hai công tắc
-              // không nối vào gì: tắt "Tự động cập nhật" thì vòng quét vẫn chạy
-              // y nguyên. Chu kỳ đọc từ hằng số và không đổi được — lý do ở
-              // [TheoDoiViTri.chuKy].
-              GlassListTile(
-                leading: const Icon(Icons.sync),
-                title: Text(t.settingsScanCycle),
-                subtitle:
-                    Text(t.settingsScanCycleSub(TheoDoiViTri.chuKy.inSeconds)),
-              ),
-            ],
+        ),
+        TieuDeMuc(t.settingsGroupGeneral),
+        BeMat(
+          child: _Dong(
+            icon: Icons.info_outline_rounded,
+            tieuDe: t.settingsAppInfo,
+            cuoi: Text('${t.appTitle} $_phienBan',
+                style: Theme.of(context).textTheme.bodyMedium),
           ),
-          const SizedBox(height: 28),
-          GlassGroupedSection(
-            header: _NhanNhom(t.settingsGroupPermissions),
-            children: [
-              _DongQuyen(quyen: widget.quyen),
-            ],
-          ),
-          const SizedBox(height: 20),
-          GlassCard(
-            padding: const EdgeInsets.all(18),
-            shape: const LiquidRoundedSuperellipse(borderRadius: 24),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.info_outline,
-                    size: 18, color: muc.withValues(alpha: 0.45)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    t.settingsFootnote,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      height: 1.45,
-                      color: muc.withValues(alpha: 0.55),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-/// Dòng cài đặt có bộ chọn nằm bên dưới: segmented control cần cả chiều ngang,
-/// nhét vào ô `trailing` sẽ bị bóp lại và cắt chữ.
-class _DongChon extends StatelessWidget {
+class _Dong extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final Widget child;
+  final String tieuDe;
+  final String? phu;
+  final Widget? cuoi;
+  final Widget? duoi;
+  final VoidCallback? onTap;
 
-  const _DongChon({
+  const _Dong({
     required this.icon,
-    required this.title,
-    required this.child,
+    required this.tieuDe,
+    this.phu,
+    this.cuoi,
+    this.duoi,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final muc = AppColors.inkOf(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-      child: Column(
+    final tt = Theme.of(context).textTheme;
+    final noiDung = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 22, color: muc.withValues(alpha: 0.8)),
-              const SizedBox(width: 16),
-              Text(title, style: Theme.of(context).textTheme.bodyLarge),
-            ],
+          Icon(icon, color: Mau.of(context).nhan),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(tieuDe,
+                    style:
+                        tt.titleMedium?.copyWith(fontWeight: FontWeight.w500)),
+                if (phu != null)
+                  Text(phu!, style: tt.bodyMedium?.copyWith(fontSize: 13)),
+                if (duoi != null) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(width: double.infinity, child: duoi),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(width: double.infinity, child: child),
+          if (cuoi != null) ...[const SizedBox(width: 12), cuoi!],
         ],
       ),
     );
+    return TapFeedback(onTap: onTap, child: noiDung);
   }
 }
 
-/// Nhãn nhóm dạng chữ in hoa nhỏ, đặt phía trên mỗi khối cài đặt.
-class _NhanNhom extends StatelessWidget {
-  final String text;
-  const _NhanNhom(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, bottom: 8),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 1.1,
-          color: AppColors.inkOf(context).withValues(alpha: 0.45),
-        ),
-      ),
-    );
-  }
-}
-
-/// Giá trị chỉ đọc ở cuối dòng cài đặt.
-/// Ô nhập địa chỉ máy chủ. Chỉ ghi khi rời ô hoặc bấm xong, để mỗi ký tự gõ dở
-/// không dựng lại client HTTP.
+/// Ghi khi rời ô hoặc bấm xong để mỗi ký tự gõ dở không đổi máy chủ.
 class _OMayChu extends StatefulWidget {
   const _OMayChu();
 
@@ -229,18 +162,8 @@ class _OMayChu extends StatefulWidget {
 }
 
 class _OMayChuState extends State<_OMayChu> {
-  final _o = TextEditingController();
-  AppSettings? _tuyChon;
-
-  // Đọc InheritedWidget phải ở didChangeDependencies: lúc initState chạy thì
-  // widget chưa gắn vào cây nên chưa tra ngược lên được.
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_tuyChon != null) return;
-    _tuyChon = AppSettingsScope.of(context);
-    _o.text = _tuyChon!.diaChiMayChu;
-  }
+  late final _tuyChon = AppSettingsScope.of(context);
+  late final _o = TextEditingController(text: _tuyChon.diaChiMayChu);
 
   @override
   void dispose() {
@@ -249,34 +172,26 @@ class _OMayChuState extends State<_OMayChu> {
   }
 
   void _luu() {
-    final t = _tuyChon;
-    if (t == null) return;
-    t.datDiaChiMayChu(_o.text);
-
-    // Chuỗi rỗng bị từ chối; không đồng bộ lại thì ô hiện trống trong khi ứng
-    // dụng vẫn gọi địa chỉ cũ.
-    if (_o.text.trim() != t.diaChiMayChu) _o.text = t.diaChiMayChu;
+    _tuyChon.datDiaChiMayChu(_o.text);
+    _o.text = _tuyChon.diaChiMayChu;
   }
 
   @override
   Widget build(BuildContext context) {
-    final t = L.of(context);
+    final m = Mau.of(context);
     return TextField(
       controller: _o,
-      textAlign: TextAlign.end,
       keyboardType: TextInputType.url,
       autocorrect: false,
-      style: TextStyle(
-        fontSize: 13,
-        color: AppColors.inkOf(context).withValues(alpha: 0.7),
-      ),
+      style: TextStyle(fontSize: 15, color: m.chu),
       decoration: InputDecoration(
         isDense: true,
-        border: InputBorder.none,
-        hintText: t.settingsServerHint,
-        hintStyle: TextStyle(
-          fontSize: 13,
-          color: AppColors.inkOf(context).withValues(alpha: 0.35),
+        filled: true,
+        fillColor: m.nhanNhat,
+        hintText: L.of(context).settingsServerHint,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
       ),
       onTapOutside: (_) {
@@ -288,113 +203,58 @@ class _OMayChuState extends State<_OMayChu> {
   }
 }
 
-class _GiaTri extends StatelessWidget {
-  final String text;
-  const _GiaTri(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 14,
-        color: AppColors.inkOf(context).withValues(alpha: 0.5),
-      ),
-    );
-  }
-}
-
-
-/// Dòng quyền truy cập, đọc trạng thái THẬT thay vì viết cứng "Đã cấp".
-/// Bản trước luôn hiện "Đã cấp" nên app vừa báo thiếu quyền ở Trang chủ vừa
-/// báo đã cấp ở đây — đúng nơi người dùng tìm đến sau khi thấy lỗi kia.
 class _DongQuyen extends StatefulWidget {
-  final QuyenTruyCap quyen;
-
-  const _DongQuyen({required this.quyen});
+  const _DongQuyen();
 
   @override
   State<_DongQuyen> createState() => _DongQuyenState();
 }
 
-class _DongQuyenState extends State<_DongQuyen> with WidgetsBindingObserver {
-  TrangThaiQuyen? _trangThai;
+class _DongQuyenState extends State<_DongQuyen> {
+  static const _quyen = QuyenTruyCap();
+  TrangThaiQuyen? _tt;
+  late final AppLifecycleListener _vongDoi;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    // Đọc lại khi quay về từ Cài đặt hệ thống, nơi người dùng vừa cấp quyền.
+    _vongDoi = AppLifecycleListener(onResume: _doc);
     _doc();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _vongDoi.dispose();
     super.dispose();
   }
 
-  /// Đọc lại khi quay về từ màn Cài đặt hệ thống: người dùng vừa cấp quyền ở đó
-  /// mà dòng này vẫn hiện trạng thái cũ thì họ tưởng bấm không ăn.
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState trangThai) {
-    if (trangThai == AppLifecycleState.resumed) _doc();
-  }
-
   Future<void> _doc() async {
-    try {
-      final tt = await widget.quyen.kiemTra();
-      if (mounted) setState(() => _trangThai = tt);
-    } catch (_) {
-      // Kênh nền tảng không có (chạy trên web hoặc trong test) — để trống còn
-      // hơn hiện một trạng thái bịa ra.
-      if (mounted) setState(() => _trangThai = null);
-    }
-  }
-
-  Future<void> _cham() async {
-    if (_trangThai == TrangThaiQuyen.biChan) {
-      await widget.quyen.moCaiDat();
-      return;
-    }
-    try {
-      final tt = await widget.quyen.xin();
-      if (mounted) setState(() => _trangThai = tt);
-    } catch (_) {
-      /* không xin được thì giữ nguyên trạng thái đang hiện */
-    }
+    final tt = await _quyen.kiemTra().catchError((_) => TrangThaiQuyen.chuaCap);
+    if (mounted) setState(() => _tt = tt);
   }
 
   @override
   Widget build(BuildContext context) {
     final t = L.of(context);
-    final (chu, goiY) = switch (_trangThai) {
-      TrangThaiQuyen.daCap => (t.settingsPermissionGranted, null),
-      TrangThaiQuyen.chuaCap => (
-          t.settingsPermissionMissing,
-          t.settingsPermissionAsk
-        ),
-      TrangThaiQuyen.biChan => (
-          t.settingsPermissionBlocked,
-          t.settingsPermissionOpen
-        ),
-      null => (t.settingsPermissionChecking, null),
-    };
-
-    return GlassListTile(
-      leading: Icon(
-        _trangThai == TrangThaiQuyen.daCap
-            ? Icons.place_outlined
-            : Icons.error_outline,
-        color: _trangThai == TrangThaiQuyen.daCap
-            ? null
-            : Theme.of(context).colorScheme.error,
-      ),
-      title: Text(t.settingsPermission),
-      subtitle: Text(goiY ?? t.settingsPermissionSub),
-      trailing: _GiaTri(chu),
-      onTap: goiY == null ? null : _cham,
+    final m = Mau.of(context);
+    final daCap = _tt == TrangThaiQuyen.daCap;
+    return _Dong(
+      icon: daCap ? Icons.location_on_outlined : Icons.location_off_outlined,
+      tieuDe: t.settingsPermission,
+      phu: switch (_tt) {
+        TrangThaiQuyen.daCap => t.settingsPermissionGranted,
+        TrangThaiQuyen.biChan => t.settingsPermissionBlocked,
+        _ => t.settingsPermissionMissing,
+      },
+      cuoi: Icon(daCap ? Icons.check_circle_rounded : Icons.error_rounded,
+          color: daCap ? m.dich : m.loi),
+      onTap: daCap || _tt == null
+          ? null
+          : () async {
+              await TheoDoiViTriScope.doc(context).xuLyQuyen();
+              _doc();
+            },
     );
   }
 }

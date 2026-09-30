@@ -5,34 +5,43 @@
   "tabMap": "Map",
   "tabSettings": "Settings",
   "searchHint": "Search rooms, areas…",
+  "floorLine": "Floor 1 · Da Lat University Library",
   "homeYouAreAt": "You are at",
   "homeQuickAccess": "Quick access",
-  "homeNearby": "Near you",
+  "homeNearby": "Nearby",
+  "homeAllAreas": "All areas",
+  "liveLocating": "Locating you…",
+  "liveCoords": "x {x} · y {y}",
+  "liveInfo": "{so} APs matched · {moHinh} · {ms} ms",
+  "liveStale": "Location from {giay} s ago",
   "mapFloorOne": "Floor 1",
-  "mapRelocate": "Recentre on me",
-  "mapAreaSummary": "{count} areas · updated {giay}s ago",
-  "mapAreaCount": "{count} areas",
   "mapFloorPlanLabel": "Floor 1 plan",
-  "mapFloorPlanHint": "Pinch to zoom, drag to pan",
-  "searchTitle": "Search",
+  "mapFilterAll": "All",
+  "mapRouteChip": "{met} m to {noi}",
+  "mapArrived": "Arrived at {noi}",
+  "mapClearRoute": "Clear route",
   "searchResultCount": "{count} results",
   "searchEmpty": "No matching areas found",
-  "searchEmptyHint": "Try a different keyword, or clear the active filter.",
-  "searchClearFilter": "Clear filter",
+  "searchEmptyHint": "Try another keyword or pick \"All\".",
   "searchFilterAll": "All",
   "searchFilterStudy": "Study",
-  "searchFilterFacility": "Facilities",
-  "searchFilterInternal": "Staff only",
-  "detailGoHere": "Go here",
-  "detailImagePlaceholder": "Area photo",
-  "detailPhotos": "{so, plural, one{1 photo of this area, swipe to browse} other{{so} photos of this area, swipe to browse}}",
+  "searchFilterService": "Services",
+  "searchFilterWays": "Ways",
+  "placeGo": "Directions",
+  "placeWaiting": "Waiting for your location…",
+  "placeRouting": "Finding a route…",
+  "placeRouteFailed": "Could not find a route here",
+  "placeHere": "You are here",
+  "distanceMeters": "{met} m",
+  "a11yOpenArea": "Open area info",
   "settingsTitle": "Settings",
-  "settingsGroupGeneral": "GENERAL",
-  "settingsGroupAppearance": "APPEARANCE",
-  "settingsGroupPositioning": "POSITIONING",
-  "settingsGroupPermissions": "PERMISSIONS",
-  "settingsAppInfo": "App version",
+  "settingsGroupGeneral": "General",
+  "settingsGroupAppearance": "Appearance",
+  "settingsGroupPositioning": "Positioning",
+  "settingsAppInfo": "Version",
   "settingsServer": "Positioning server",
+  "settingsServerSub": "Emulator uses 10.0.2.2, a real phone needs the LAN IP",
+  "settingsServerHint": "http://<IP>:8000",
   "settingsTheme": "Theme",
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Light",
@@ -40,110 +49,23 @@
   "settingsLanguage": "Language",
   "settingsLanguageVi": "Tiếng Việt",
   "settingsLanguageEn": "English",
-  "settingsScanCycle": "Scan interval",
-  "settingsScanCycleSub": "Every {giay} seconds — the rate Android allows",
+  "settingsScanCycle": "Continuous positioning",
+  "settingsScanCycleSub": "Scans WiFi every {giay} s while the app is open",
   "settingsPermission": "Location and WiFi",
-  "settingsPermissionSub": "Required for positioning",
   "settingsPermissionGranted": "Granted",
-  "settingsPermissionMissing": "Not granted",
-  "settingsPermissionBlocked": "Blocked",
-  "settingsPermissionChecking": "Checking…",
-  "settingsPermissionAsk": "Tap to grant",
-  "settingsPermissionOpen": "Tap to open system settings",
-  "settingsFootnote": "More options will be added in the next version.",
-  "distanceMeters": "{met} m",
-  "commonBack": "Back",
-  "a11yOpenArea": "Open area details",
-  "liveStart": "Start positioning",
-  "liveStop": "Stop positioning",
-  "liveScanning": "Scanning WiFi…",
-  "liveIdle": "Tracking is off",
-  "liveUnknown": "Location unknown",
-  "liveCoords": "x {x} · y {y}",
-  "@liveCoords": {
-    "placeholders": {
-      "x": {
-        "type": "String"
-      },
-      "y": {
-        "type": "String"
-      }
-    }
-  },
-  "liveMatched": "Matched {so} access points",
-  "@liveMatched": {
-    "placeholders": {
-      "so": {
-        "type": "int"
-      }
-    }
-  },
-  "liveModel": "Model {ten} · {ms} ms",
-  "@liveModel": {
-    "placeholders": {
-      "ten": {
-        "type": "String"
-      },
-      "ms": {
-        "type": "String"
-      }
-    }
-  },
-  "liveMerged": "Merged {so} scans",
-  "@liveMerged": {
-    "placeholders": {
-      "so": {
-        "type": "int"
-      }
-    }
-  },
-  "errWifiPermission": "Location permission not granted. The app will ask again when you start.",
-  "errWifiBlocked": "Location permission is blocked. Open system Settings to grant it.",
-  "errLocationOff": "Location services are off. Turn them on and try again.",
+  "settingsPermissionMissing": "Tap to grant",
+  "settingsPermissionBlocked": "Blocked — tap to open Settings",
+  "errWifiPermission": "Location permission is needed to scan WiFi. Tap to grant.",
+  "errWifiBlocked": "Location permission is blocked. Tap to open Settings.",
+  "errLocationOff": "Location services are off. Turn them on to locate you.",
   "errWifiUnsupported": "This device cannot scan WiFi.",
-  "errScanFailed": "WiFi scan failed. Try again in a few seconds.",
-  "errNotEnoughAp": "Not enough data to locate you — only {so} known access points matched, at least {can} are needed. Are you inside the library?",
-  "errBadAddress": "Invalid server address: {diaChi}. It must look like http://<IP>:<port>",
+  "errScanFailed": "WiFi scan failed, retrying…",
+  "errNotEnoughAp": "Only {so} of the {can} required access points matched. Are you inside the library?",
+  "errBadAddress": "Invalid server address: {diaChi}",
   "errNoConnection": "Cannot reach the server at {diaChi}",
-  "@errNoConnection": {
-    "placeholders": {
-      "diaChi": {
-        "type": "String"
-      }
-    }
-  },
   "errServer": "Server returned error {ma}",
-  "@errServer": {
-    "placeholders": {
-      "ma": {
-        "type": "int"
-      }
-    }
-  },
-  "errServerNoCode": "The server reported an error while handling the scan.",
   "errBadFormat": "The app and the server could not parse each other's packets.",
-  "settingsServerHint": "Enter server address",
-  "settingsServerSub": "Emulator uses 10.0.2.2, a real phone needs the LAN IP",
-  "a11yToggleTracking": "Turn realtime positioning on or off",
-  "errTimeout": "The server did not respond in time. Check your network.",
-  "detailPhotoCount": "{so, plural, =1{1 photo} other{{so} photos}}",
-  "detailNeedPosition": "Turn on positioning to get directions",
-  "detailRouteLoading": "Finding a route…",
-  "detailRouteFailed": "No route to this area",
-  "routeSummary": "{met} m · {buoc} steps",
-  "routeStep": "{huong} {met} m to {noi}",
-  "stepStraight": "Go straight",
-  "stepStart": "Go",
-  "mapArrived": "Arrived at {noi}",
-  "liveStale": "Location from {giay} s ago",
-  "stepSlightLeft": "Bear left",
-  "stepSlightRight": "Bear right",
-  "stepLeft": "Turn left",
-  "stepRight": "Turn right",
-  "stepUTurn": "Turn around",
-  "mapOpenDetail": "Open area detail",
-  "mapFilterAll": "All",
-  "mapFilterHint": "Filter the floor plan by area type",
-  "mapRouteChip": "{met} m to {noi}",
-  "mapClearRoute": "Clear route"
+  "errTimeout": "The server did not respond in time.",
+  "mapFilter": "Filter areas",
+  "buildingFull": "Da Lat University Library"
 }

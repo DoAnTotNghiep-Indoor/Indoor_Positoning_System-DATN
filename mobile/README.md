@@ -50,34 +50,24 @@ bộ của máy chủ, hoặc nối USB rồi `adb reverse tcp:8000 tcp:8000` đ
 
 ```
 lib/
-├── main.dart                     # điểm vào, AppShell + bottom nav + hai Scope
-├── theme/
-│   ├── app_colors.dart           # bảng màu lấy từ frame thiết kế
-│   ├── app_theme.dart            # ThemeData, thang chữ
-│   ├── app_metrics.dart          # số đo co giãn theo cỡ chữ hệ thống
-│   └── app_settings.dart         # tuỳ chọn người dùng, lưu bằng shared_preferences
+├── main.dart                 App + AppShell: GlassScaffold, thanh tab kính, điều hướng bằng state
+├── theme/app_theme.dart      token màu sáng/tối (Mau), nhóm khu vực, ThemeData, cấu hình kính chung
+├── theme/app_settings.dart   chế độ màu, ngôn ngữ, địa chỉ máy chủ (lưu giữa hai lần mở)
 ├── services/
-│   ├── quet_wifi.dart            # gọi wifi_scan, phân loại lý do không quét được
-│   ├── quyen_truy_cap.dart       # quyền vị trí / NEARBY_WIFI_DEVICES
-│   ├── api_dinh_vi.dart          # POST /predict, GET /map, POST /route
-│   ├── kenh_vi_tri.dart          # WS /ws/location — tạm tắt, app đi REST
-│   ├── la_ban.dart               # từ kế → hướng quy về trục sơ đồ
-│   └── theo_doi_vi_tri.dart      # vòng lặp quét 5 giây, giữ trạng thái cho UI
-├── data/
-│   ├── floor_map.dart            # phép đổi mét ↔ pixel của sơ đồ thật
-│   ├── khu_vuc.dart              # gộp điểm tham chiếu thành khu vực
-│   ├── khu_vuc_thu_vien.dart     # SINH TỰ ĐỘNG — bản offline của khu vực
-│   ├── anh_khu_vuc.dart          # số ảnh mỗi thư mục, dựng đường dẫn asset
-│   └── demo_data.dart            # vài chuỗi cố định của toà nhà
+│   ├── theo_doi_vi_tri.dart  vòng quét 5 giây luôn bật khi app mở, trạng thái định vị và tuyến
+│   ├── api_dinh_vi.dart      POST /predict, GET /map, POST /route, phân loại lỗi
+│   ├── quet_wifi.dart        wifi_scan; quyen_truy_cap.dart; la_ban.dart (từ kế → hướng sơ đồ)
+├── data/                     floor_map (lưới ↔ pixel), khu_vuc, khu_vuc_thu_vien (SINH TỰ ĐỘNG), anh_khu_vuc
 ├── widgets/
-│   ├── so_do_that.dart           # vẽ Map.png, nhãn khu vực, chấm vị trí, nón hướng
-│   ├── tom_tat_khu_vuc.dart      # tấm trượt lên khi chạm một chấm trên sơ đồ
-│   ├── glass_card.dart           # thẻ kính dùng chung
-│   ├── blob_background.dart      # nền gradient
-│   └── tap_feedback.dart         # phản hồi chạm + nhãn trợ năng
-├── screens/                      # Trang chủ, Bản đồ, Chi tiết, Tìm kiếm, Cài đặt
-└── l10n/                         # app_vi.arb, app_en.arb và mã sinh từ chúng
+│   ├── so_do_that.dart       sơ đồ: Map.png + lớp vẽ tĩnh (RP, nhãn) + lớp động (vị trí, la bàn, tuyến)
+│   ├── the_khu_vuc.dart      popup khu vực duy nhất: ảnh, giới thiệu, nút Chỉ đường
+│   └── chung.dart            thẻ đặc, pill vị trí kính, dòng khu vực dùng chung
+├── screens/                  Trang chủ, Bản đồ, Tìm kiếm, Cài đặt
+└── l10n/                     app_vi.arb, app_en.arb và mã sinh từ chúng
 ```
+
+Liquid glass (`liquid_glass_widgets`) chỉ dùng cho chrome nổi (thanh tab, pill, nút lọc,
+thẻ tuyến); nội dung là bề mặt đặc. Font Inter tĩnh ở `assets/fonts/`.
 
 `khu_vuc_thu_vien.dart` **không sửa tay**: sinh bằng `python -m tools.sinh_khu_vuc`
 từ `data/reference/reference_points.csv`.
@@ -146,7 +136,6 @@ app Windows desktop, không ảnh hưởng Android hay web.
 
 - Tuyến đường vẽ lên sơ đồ bằng chuỗi chấm theo mét thật (`so_do_that.dart`).
 - La bàn: nón hướng mở 40° quanh chấm vị trí (`la_ban.dart`).
-- `WS /ws/location`: **tạm tắt** (`_dungWebSocket = false` trong `main.dart`, máy
-  chủ `WEBSOCKET=false`), ứng dụng gửi lần quét qua `POST /predict`. Bật lại thì
-  gửi qua kênh, hỏng kênh tự rơi về REST (`kenh_vi_tri.dart`). Kênh không làm vị trí cập nhật dày hơn — nhịp 5
-  giây do Android chặn quét WiFi quyết định, không do đường truyền.
+- `WS /ws/location`: ứng dụng **không dùng** (đã gỡ ngày 30/09/2026), gửi lần quét
+  qua `POST /predict`. Kênh không làm vị trí dày hơn — nhịp 5 giây do Android chặn
+  quét WiFi quyết định.

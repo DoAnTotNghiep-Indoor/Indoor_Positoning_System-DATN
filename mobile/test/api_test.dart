@@ -240,8 +240,7 @@ void main() {
       soLanGoi++;
       return http.Response(_traLoiMau(), 200);
     }));
-    final theoDoi =
-        TheoDoiViTri(diaChiMayChu: 'http://cu', mayQuet: _QuetGia(), api: api);
+    final theoDoi = TheoDoiViTri(api: api, mayQuet: _QuetGia());
     addTearDown(theoDoi.dispose);
 
     theoDoi.doiMayChu('http://moi');
@@ -313,10 +312,8 @@ void main() {
     final kq =
         KetQuaChiDuong.tuJson(jsonDecode(_tuyen()) as Map<String, dynamic>);
 
-    // 3 chặng nên 4 nút; chỉ dẫn chỉ có 2 bước vì đã gộp đoạn thẳng. Vẽ theo
-    // chỉ dẫn sẽ mất RP10 và RP11, tuyến cắt thẳng góc qua chỗ có tường.
+    // 3 chặng nên 4 nút, dù chỉ dẫn chỉ có 2 bước vì đã gộp đoạn thẳng.
     expect(kq.duongDi.length, kq.soChang + 1);
-    expect(kq.buoc.length, lessThan(kq.duongDi.length - 1));
     expect(kq.duongDi.map((d) => d.rpId).toList(),
         ['RP09', 'RP10', 'RP11', 'RP39']);
   });

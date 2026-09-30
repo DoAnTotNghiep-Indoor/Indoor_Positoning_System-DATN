@@ -32,18 +32,15 @@ class SoDoThat {
   /// ranh giới phòng — dữ liệu không có ranh giới phòng.
   static const banKinhQuangM = 3.5;
 
-  /// Mét sang toạ độ pixel trong ảnh gốc.
   static Offset sangPixel(double x, double y) =>
       Offset(gocXPx + (x - gocMetX) * pxMoiMetX, gocYPx - y * pxMoiMetY);
 
-  /// Mét sang toạ độ trong khung vẽ rộng [rong] pixel, giữ nguyên tỉ lệ ảnh.
   static Offset sangKhung(double x, double y, double rong) {
     final s = rong / rongPx;
     final p = sangPixel(x, y);
     return Offset(p.dx * s, p.dy * s);
   }
 
-  /// Phép nghịch của [sangKhung]: pixel trong khung rộng [rong] về mét.
   static Offset sangMet(Offset khung, double rong) {
     final s = rong / rongPx;
     return Offset(
@@ -52,5 +49,3 @@ class SoDoThat {
     );
   }
 }
-
-

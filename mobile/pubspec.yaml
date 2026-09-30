@@ -1,7 +1,7 @@
 name: ips_dlu
-description: Ứng dụng định vị trong nhà - Thư viện Đại học Đà Lạt (bản demo giao diện)
+description: Ứng dụng định vị trong nhà - Thư viện Đại học Đà Lạt
 publish_to: 'none'
-version: 0.1.0
+version: 0.2.0
 
 # Cần Dart >= 3.6 (Flutter >= 3.27) vì mã dùng Color.withValues().
 # Nếu dùng Flutter cũ hơn, thay toàn bộ .withValues(alpha: x) thành .withOpacity(x).
@@ -27,16 +27,28 @@ dependencies:
   # Nhớ địa chỉ máy chủ giữa hai lần mở app.
   shared_preferences: ^2.3.2
   flutter_compass: ^0.8.1
-  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  stream_channel: ^2.1.4
 
 flutter:
   uses-material-design: true
+
+  # Inter tĩnh 4 độ đậm, tạo từ bản biến thiên của app-compose (opsz 14) rồi cắt
+  # còn Latin + tiếng Việt. Không dùng bản biến thiên: Flutter không tự ánh xạ
+  # FontWeight sang trục wght, mọi chữ sẽ ra cùng một độ đậm.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
 
   # Bật sinh mã đa ngôn ngữ từ lib/l10n/*.arb theo cấu hình l10n.yaml
   generate: true
