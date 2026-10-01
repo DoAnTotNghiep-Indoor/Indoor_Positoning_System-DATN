@@ -1,6 +1,6 @@
 {
-  "chay_luc": "2026-09-15T10:09:37",
-  "thoi_gian_giay": 0.25,
+  "chay_luc": "2026-10-01T11:17:05",
+  "thoi_gian_giay": 1.01,
   "tham_so": {
     "min_appear_rate": 0.2,
     "min_ap_per_scan": 6,
@@ -21,26 +21,26 @@
     "so_dong_trung_lap": 0
   },
   "ghep_toa_do": {
-    "scan_truoc_khi_ghep": 802,
-    "scan_co_toa_do": 802,
+    "scan_truoc_khi_ghep": 3151,
+    "scan_co_toa_do": 3151,
     "scan_bi_bo": 0,
     "rp_chua_do": []
   },
   "loc_mau": {
     "nguong_ap_toi_thieu": 6,
-    "scan_truoc": 802,
-    "scan_sau": 802,
-    "scan_bi_loai": 0,
-    "ap_moi_scan_min": 15,
-    "ap_moi_scan_trung_vi": 31.0,
+    "scan_truoc": 3151,
+    "scan_sau": 3141,
+    "scan_bi_loai": 10,
+    "ap_moi_scan_min": 3,
+    "ap_moi_scan_trung_vi": 27.0,
     "ap_moi_scan_max": 36
   },
   "chia_tap": {
     "chien_luoc": "random",
     "so_mau": {
-      "train": 561,
-      "test": 121,
-      "validation": 120
+      "train": 2205,
+      "validation": 473,
+      "test": 473
     },
     "so_rp_moi_tap": {
       "test": 40,
@@ -50,14 +50,14 @@
   },
   "chuan_hoa": {
     "nho_nhat": 0.0,
-    "lon_nhat": 1.2142857142857142,
+    "lon_nhat": 1.5576923076923077,
     "so_dac_trung": 36
   },
-  "so_o_trong_da_dien": 4687,
-  "gia_tri_dien_thieu": -96.0,
-  "so_ngoai_lai_hampel": 484,
+  "so_o_trong_da_dien": 31645,
+  "gia_tri_dien_thieu": -100.0,
+  "so_ngoai_lai_hampel": 378,
   "kich_thuoc_cuoi": [
-    802,
-    45
+    3141,
+    46
   ]
 }

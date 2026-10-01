@@ -21,7 +21,7 @@ def dong_thuan_khong_gian(du_doan: np.ndarray) -> np.ndarray:
     """Dự đoán có tổng khoảng cách tới các dự đoán còn lại nhỏ nhất.
 
     Hoà thì lấy dự đoán MỚI nhất: đo ngoài phần trên train+val theo thứ tự thời
-    gian, cửa sổ 3, cả năm mô hình đều tốt hơn lấy cái cũ (kNN vân tay 1,18 →
+    gian, cửa sổ 3, cả năm mô hình đều tốt hơn lấy cái cũ (kNN k động 1,18 →
     0,78 m).
     """
     P = np.asarray(du_doan, dtype=float)

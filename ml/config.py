@@ -19,13 +19,12 @@ REPORTS_DIR = ROOT_DIR / "reports"
 
 RAW_CSV = RAW_DIR / "combined_data.csv"
 
-# Buổi thu bổ sung. ĐANG TẮT: đã thử gộp và đo, mô hình xấu đi trên chính
-# những điểm cũ (2,30 → 4,08 m) vì bộ mới thu bằng Redmi K40 Pro còn bộ cũ
-# bằng Samsung SM-S908E. Bật lại sau khi đo được độ lệch hai máy — cách đo
-# ghi trong data/raw/nhom15_2026/README.md.
-GOP_BUOI_BO_SUNG = False
-RAW_BO_SUNG = (sorted((RAW_DIR / "nhom15_2026").glob("*/RP*.csv"))
-               if GOP_BUOI_BO_SUNG else [])
+# Đợt B: phần dữ liệu CTK45 của ba máy còn lại, chỉ có ở dạng bảng rộng đã xử lý.
+# Nguồn và cách tách ghi trong data/raw/ctk45_xu_ly/README.md. Đặt False để chỉ
+# dùng đợt A (dữ liệu thô của một máy).
+CTK45_XU_LY_CSV = RAW_DIR / "ctk45_xu_ly" / "combined_data_sorted.csv"
+GOP_DOT_B = True
+GIA_TRI_KHONG_BAT_CTK45 = -100.0
 REFERENCE_POINTS_CSV = REFERENCE_DIR / "reference_points.csv"
 
 # Nhãn điểm sai trong dữ liệu thô CTK45, sửa lúc nạp chứ không đụng tệp thô:
@@ -53,16 +52,11 @@ REQUIRED_RAW_COLS = [
 ]
 
 META_COLS = [
-    "scan_id", "rp_id", "device_id", "collector_id",
+    "scan_id", "rp_id", "dot", "device_id", "collector_id",
     "total_ap_scanned", "azimuth_deg", "x", "y", "split",
 ]
 
 TARGET_COLS = ["x", "y"]
-
-# LƯU Ý: cột "Orientation Azimuth (°)" ghi đơn vị độ nhưng giá trị thực nằm
-# trong [-pi, pi], tức RADIAN. Pipeline đổi sang độ ở bước pivot để tên cột
-# `azimuth_deg` đúng với nội dung.
-AZIMUTH_IS_RADIAN = True
 
 # --- Tham số tiền xử lý ---
 # Bước 5: loại AP xuất hiện dưới ngưỡng này. Đổi bằng cờ dòng lệnh để có bảng
@@ -82,16 +76,6 @@ RSSI_LON_NHAT = 0.0
 HAMPEL_K = 3.0
 MAD_SCALE = 1.4826  # hệ số hiệu chỉnh cho phân phối Gaussian
 
-# Lọc nhiễu CHỈ trên tập train và chạy SAU khi chia tập, vì hai lý do:
-#
-# - Hampel thay giá trị lệch bằng trung vị của nhóm cùng rp_id; chạy trước khi
-#   chia thì trung vị tính cả trên mẫu test, tức test tự làm sạch chính nó.
-# - Lúc chạy thật backend chỉ nhận MỘT lần quét và không biết nó thuộc rp_id
-#   nào nên không lọc Hampel được; test đã lọc nhiễu là test dễ hơn thực tế.
-#
-# Đặt False để tái lập đúng hành vi bản Colab cũ.
-HAMPEL_ON_TRAIN_ONLY = True
-
 # Bước 9: tỉ lệ chia dữ liệu
 TEST_SIZE = 0.15
 VALIDATION_SIZE = 0.15
@@ -100,8 +84,8 @@ RANDOM_STATE = 42
 # Mô hình triển khai, chỉ định thay vì lấy mô hình có sai số validation thấp
 # nhất: validation chia ngẫu nhiên theo lần quét nên luôn ưu tiên mô hình nhớ
 # đúng điểm đã khảo sát (k = 1), trong khi người dùng thật còn đứng ở chỗ chưa
-# khảo sát. k động cân bằng hai trường hợp — xem `python -m ml.ket_hop`, đánh giá
-# trên 10 lần chia lại và bỏ trọn từng điểm, không dùng tập test seed 42.
+# khảo sát. k động cân bằng hai trường hợp, đánh giá trên 10 lần chia lại, bỏ trọn
+# từng điểm và khác đợt đo, không dùng tập test seed 42.
 # Đặt None để quay về chọn theo validation.
 MO_HINH_TRIEN_KHAI = "fingerprint_knn_dong"
 

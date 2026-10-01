@@ -22,12 +22,8 @@ from ml import config
 # ========================= Bước 1 — nạp dữ liệu thô =========================
 
 def load_raw(csv_path: Path | str | None = None) -> pd.DataFrame:
-    """Nạp dữ liệu thô. Không truyền đường dẫn thì gộp luôn các buổi bổ sung."""
-    if csv_path is not None:
-        df = pd.read_csv(Path(csv_path))
-    else:
-        nguon = [config.RAW_CSV, *config.RAW_BO_SUNG]
-        df = pd.concat([pd.read_csv(f) for f in nguon], ignore_index=True)
+    """Nạp dữ liệu thô (đợt A)."""
+    df = pd.read_csv(Path(csv_path) if csv_path is not None else config.RAW_CSV)
     df[config.COL_RP] = df[config.COL_RP].replace(config.NHAN_RP_SUA)
     return df
 
@@ -112,8 +108,7 @@ def build_scan_meta(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     # Cột gốc ghi đơn vị độ nhưng giá trị thực là radian trong [-pi, pi].
-    if config.AZIMUTH_IS_RADIAN:
-        meta["azimuth_deg"] = np.degrees(meta["azimuth_deg"])
+    meta["azimuth_deg"] = np.degrees(meta["azimuth_deg"])
 
     return meta
 
@@ -136,6 +131,55 @@ def to_wide(df: pd.DataFrame, scan_meta: pd.DataFrame) -> tuple[pd.DataFrame, li
 
     fingerprint = scan_meta.merge(rong, left_on="scan_id", right_index=True, how="left")
     return fingerprint, ap_cols
+
+
+# ============== Bước 3b — ghép đợt B (ba máy còn lại của CTK45) ==============
+
+def nap_dot_b(csv_path: Path | str | None = None) -> pd.DataFrame:
+    """Bảng vân tay của đợt B, cùng dạng với kết quả `to_wide`, cột `dot` = "B".
+
+    Lấy các dòng khác nhau của tệp đã xử lý CTK45 rồi bỏ những dòng trùng khít một lần
+    quét của đợt A — nhận diện bằng vector RSSI trên 72 cột của tệp, AP không bắt được
+    ghi −100 như cách CTK45 lưu. RSSI −100 hoặc ngoài khoảng hợp lệ thành ô trống.
+    """
+    ct = pd.read_csv(Path(csv_path) if csv_path is not None else config.CTK45_XU_LY_CSV)
+    ap = [c for c in ct.columns if c not in ("ID_RP", "X", "Y")]
+    ct = ct.drop_duplicates(subset=ap).reset_index(drop=True)
+
+    tho = load_raw()
+    a = (tho.pivot_table(index=config.COL_TIME, columns=config.COL_BSSID,
+                         values=config.COL_RSSI, aggfunc="max")
+         .reindex(columns=ap).fillna(config.GIA_TRI_KHONG_BAT_CTK45))
+    cua_a = set(map(tuple, a.to_numpy(float)))
+    b = ct[[tuple(r) not in cua_a for r in ct[ap].to_numpy(float)]].reset_index(drop=True)
+
+    rssi = b[ap].astype(float)
+    rssi = rssi.where((rssi > config.RSSI_NHO_NHAT) & (rssi < config.RSSI_LON_NHAT))
+    meta = pd.DataFrame({
+        "scan_id": [f"B{i:04d}" for i in range(len(b))],
+        "rp_id": b["ID_RP"].replace(config.NHAN_RP_SUA),
+        "dot": "B",
+        "device_id": "CTK45-dot-B",
+        "collector_id": np.nan,
+        "total_ap_scanned": rssi.notna().sum(axis=1),
+        "azimuth_deg": np.nan,
+    })
+    return pd.concat([meta, rssi[sorted(ap)]], axis=1)
+
+
+def gop_hai_dot(fingerprint: pd.DataFrame, ap_cols: list[str]) -> tuple[pd.DataFrame, list[str], int]:
+    """Gắn `dot` = "A" cho bảng của dữ liệu thô rồi nối đợt B nếu `GOP_DOT_B`.
+
+    Trả (bảng, cột AP sắp xếp theo hợp của hai đợt, số lần quét đợt B).
+    """
+    fingerprint = fingerprint.assign(dot="A")
+    if not config.GOP_DOT_B:
+        return fingerprint, ap_cols, 0
+    b = nap_dot_b()
+    ap = sorted(set(ap_cols) | set(c for c in b.columns if ":" in c))
+    gop = pd.concat([fingerprint, b], ignore_index=True)
+    cot_meta = [c for c in gop.columns if c not in ap]
+    return gop[cot_meta + ap], ap, len(b)
 
 
 # ===================== Bước 4 — ghép toạ độ thật (x, y) =====================

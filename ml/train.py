@@ -149,7 +149,7 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
 
     print(f"Dữ liệu: train {len(tap['train'])} · validation {len(tap['validation'])} "
           f"· test {len(tap['test'])} · {len(ap_cols)} đặc trưng")
-    print(f"Lưới tham số: {'rút gọn' if nhanh else 'đầy đủ theo tài liệu thiết kế'}")
+    print(f"Lưới tham số: {'rút gọn' if nhanh else 'đầy đủ'}")
 
     chon = goi_mo_hinh.DANH_SACH
     if ten_mo_hinh:
@@ -239,7 +239,7 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
     if co_so > 0:
         print(f"So với cơ sở tốt nhất ({co_so:.3f} m): "
               f"{'giảm' if tot < co_so else 'TĂNG'} {abs(tot - co_so) / co_so * 100:.1f}%")
-        print("Mục tiêu tài liệu thiết kế: thấp hơn cơ sở 10-20%")
+        print("Mục tiêu: thấp hơn cơ sở 10-20%")
 
     print(f"\nĐiểm sai nhiều nhất: " + ", ".join(
         f"{r.rp_id} ({r.loi_trung_binh:.1f} m)" for r in theo_diem.head(3).itertuples()))

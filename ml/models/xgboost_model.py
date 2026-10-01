@@ -1,10 +1,9 @@
 """XGBoost Regression — mô hình chính của đồ án.
 
 XGBoost không nhận nhãn hai cột nên bọc trong `MultiOutputRegressor`. Lớp bọc
-này huấn luyện HAI mô hình riêng biệt, một cho trục x một cho trục y — đúng
-thiết kế `model_x`, `model_y` ở mục 2.4.
+này huấn luyện HAI mô hình riêng biệt, một cho trục x một cho trục y.
 
-Lưới nới từ 324 tổ hợp của tài liệu thiết kế lên 648, quét hết khoảng 11 phút;
+Lưới 648 tổ hợp, quét hết khoảng 11 phút;
 dùng `--nhanh` của `ml/train.py` khi thử. Vài tham số tối ưu nằm ở biên lưới,
 nhưng nới thêm một nấc chỉ đổi sai số validation dưới 0,1 m.
 """

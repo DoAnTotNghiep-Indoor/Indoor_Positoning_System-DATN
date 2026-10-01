@@ -40,14 +40,10 @@ def _log(buoc: str, noi_dung: str) -> None:
     print(f"[{buoc:>5}] {noi_dung}", flush=True)
 
 
-def run(
-    min_appear_rate: float | None = None,
-    hampel_train_only: bool | None = None,
-) -> dict:
+def run(min_appear_rate: float | None = None) -> dict:
     """Chạy 12 bước, ghi artifact, trả về nhật ký lần chạy."""
     bat_dau = datetime.now()
     ty_le_ap = min_appear_rate if min_appear_rate is not None else config.MIN_APPEAR_RATE
-    hampel_rieng = config.HAMPEL_ON_TRAIN_ONLY if hampel_train_only is None else hampel_train_only
 
     for thu_muc in (config.PROCESSED_DIR, config.SPLITS_DIR, config.ARTIFACTS_DIR):
         thu_muc.mkdir(parents=True, exist_ok=True)
@@ -79,6 +75,12 @@ def run(
     # --- Bước 3: pivot sang bảng vân tay ---
     fingerprint, ap_cols = pre.to_wide(df, scan_meta)
     _log("3", f"bảng vân tay {fingerprint.shape[0]} × {len(ap_cols)} cột AP")
+
+    # --- Bước 3b: ghép đợt B ---
+    fingerprint, ap_cols, so_dot_b = pre.gop_hai_dot(fingerprint, ap_cols)
+    if so_dot_b:
+        _log("3b", f"ghép {so_dot_b} lần quét đợt B · {len(fingerprint)} lần quét · "
+                   f"{len(ap_cols)} cột AP")
 
     # --- Bước 4: ghép toạ độ thật ---
     fingerprint, tk_toa_do = pre.attach_coordinates(fingerprint)
@@ -136,16 +138,13 @@ def run(
         fingerprint, ap_cols, missing_value=gia_tri_thieu)
     _log("7", f"điền {so_o_trong:,} ô trống bằng {gia_tri_thieu:.0f} dBm")
 
-    # --- Bước 8: lọc nhiễu Hampel ---
-    if hampel_rieng:
-        da_loc, so_ngoai_lai = pre.hampel_filter(
-            fingerprint.loc[la_train], ap_cols, gia_tri_dien=gia_tri_thieu)
-        fingerprint = pd.concat([da_loc, fingerprint.loc[~la_train]], ignore_index=True)
-        _log("8", f"thay {so_ngoai_lai:,} giá trị ngoại lai — chỉ trên tập train")
-    else:
-        fingerprint, so_ngoai_lai = pre.hampel_filter(
-            fingerprint, ap_cols, gia_tri_dien=gia_tri_thieu)
-        _log("8", f"thay {so_ngoai_lai:,} giá trị ngoại lai — trên toàn bộ dữ liệu")
+    # --- Bước 8: lọc nhiễu Hampel, chỉ trên train ---
+    # Hampel thay giá trị lệch bằng trung vị nhóm cùng rp_id: chạy trên test thì
+    # test tự làm sạch chính nó, mà lúc chạy thật backend không biết rp_id để lọc.
+    da_loc, so_ngoai_lai = pre.hampel_filter(
+        fingerprint.loc[la_train], ap_cols, gia_tri_dien=gia_tri_thieu)
+    fingerprint = pd.concat([da_loc, fingerprint.loc[~la_train]], ignore_index=True)
+    _log("8", f"thay {so_ngoai_lai:,} giá trị ngoại lai trên tập train")
 
     # Lưu bản chưa chuẩn hoá TRƯỚC khi scale — không có bản này thì mất đơn vị dBm.
     cot_meta = [c for c in config.META_COLS if c in fingerprint.columns]
@@ -195,7 +194,6 @@ def run(
             "min_appear_rate": ty_le_ap,
             "min_ap_per_scan": config.MIN_AP_PER_SCAN,
             "hampel_k": config.HAMPEL_K,
-            "hampel_chi_tren_train": hampel_rieng,
             "chien_luoc_chia": tk_chia["chien_luoc"],
             "random_state": config.RANDOM_STATE,
         },
@@ -224,14 +222,9 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Pipeline tiền xử lý dữ liệu WiFi fingerprinting")
     p.add_argument("--min-appear-rate", type=float, default=None,
                    help="ngưỡng lọc AP, mặc định %(default)s (thử 0.0 / 0.10 / 0.20)")
-    p.add_argument("--hampel-all", action="store_true",
-                   help="lọc nhiễu trên toàn bộ dữ liệu như bản Colab cũ (không khuyến nghị)")
     a = p.parse_args()
 
-    run(
-        min_appear_rate=a.min_appear_rate,
-        hampel_train_only=False if a.hampel_all else None,
-    )
+    run(min_appear_rate=a.min_appear_rate)
 
 
 if __name__ == "__main__":

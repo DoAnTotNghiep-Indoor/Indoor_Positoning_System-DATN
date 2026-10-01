@@ -136,11 +136,17 @@ def duong_cdf(loi: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def nhom_theo_thoi_gian(tap: pd.DataFrame) -> list[np.ndarray]:
-    """Chỉ số dòng của từng điểm, xếp theo thời điểm quét — đúng thứ tự backend nhận."""
-    t = pd.to_datetime(tap["scan_id"], format="%Y:%m:%d:%H:%M:%S").to_numpy()
-    rp = tap["rp_id"].to_numpy()
-    thu_tu = np.lexsort((t, rp))
-    return [thu_tu[rp[thu_tu] == r] for r in pd.unique(rp[thu_tu])]
+    """Chỉ số dòng của từng (đợt, điểm), xếp theo thời điểm quét — đúng thứ tự backend nhận.
+
+    Đợt B không có thời điểm quét: giữ thứ tự dòng, coi như chuỗi lần quét liên tiếp
+    tại cùng chỗ.
+    """
+    t = pd.to_datetime(tap["scan_id"], format="%Y:%m:%d:%H:%M:%S", errors="coerce")
+    t = t.fillna(pd.Timestamp(0)).to_numpy()
+    nhom = (tap["dot"].astype(str) + "|" if "dot" in tap else "") + tap["rp_id"].astype(str)
+    nhom = nhom.to_numpy()
+    thu_tu = np.lexsort((np.arange(len(tap)), t, nhom))
+    return [thu_tu[nhom[thu_tu] == g] for g in pd.unique(nhom[thu_tu])]
 
 
 def du_doan_ngoai_phan(module, tham_so: dict, X, Y, nhan, so_phan: int = 5) -> np.ndarray:

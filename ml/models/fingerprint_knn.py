@@ -1,4 +1,4 @@
-"""kNN vân tay dùng khoảng cách Bray-Curtis — mô hình tối ưu cho dữ liệu hiện có.
+"""kNN dùng khoảng cách Bray-Curtis — mô hình tối ưu cho dữ liệu hiện có.
 
 782 mẫu nhưng chỉ 39 toạ độ khác nhau vì dữ liệu thu ĐÚNG TẠI các điểm tham
 chiếu, không có mẫu nào ở giữa. Nhãn (x, y) bị lượng tử hoá theo lưới ~7 m nên
@@ -17,7 +17,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.neighbors import KNeighborsClassifier
 
-TEN = "kNN vân tay (Bray-Curtis)"
+TEN = "kNN Bray-Curtis"
 
 # beta tới 4,0 để cực trị nằm trong lưới: tối ưu ở 3,5, sang 4,0 sai số
 # validation tăng lại (2,80 → 3,00 m).

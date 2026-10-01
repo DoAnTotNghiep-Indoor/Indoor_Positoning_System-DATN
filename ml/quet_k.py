@@ -2,7 +2,7 @@
 
     python -m ml.quet_k
 
-`ml.train` chọn k = 1 cho kNN và kNN vân tay, tức thực chất là láng giềng gần
+`ml.train` chọn k = 1 cho kNN và kNN Bray-Curtis, tức thực chất là láng giềng gần
 nhất (NN). Bảng này cho thấy k = 1 thắng ở đâu và thua ở đâu, thay vì chỉ báo
 mỗi giá trị được chọn:
 
@@ -89,7 +89,7 @@ def _ve(bang: pd.DataFrame) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    mau = {"kNN": "#2c5bd8", "WKNN": "#e07b39", "kNN vân tay (Bray-Curtis)": "#2a9d8f"}
+    mau = {"kNN": "#2c5bd8", "WKNN": "#e07b39", "kNN Bray-Curtis": "#2a9d8f"}
     hinh, truc = plt.subplots(1, 2, figsize=(13, 4.8), sharex=True)
     for ten, nhom in bang.groupby("mo_hinh", sort=False):
         truc[0].plot(nhom["k"], nhom["test_10_seed_m"], "o-", color=mau[ten], label=ten)

@@ -1,4 +1,4 @@
-"""kNN vân tay với k động: chọn k theo độ giống của lần quét với dữ liệu đã thu.
+"""kNN k động (Dynamic-k kNN): chọn k theo độ giống của lần quét với dữ liệu đã thu.
 
 `ml.quet_k` cho thấy k = 1 tốt nhất khi người dùng đứng đúng điểm đã khảo sát,
 còn k lớn tốt nhất khi đứng ở chỗ chưa khảo sát (trung bình nhiều láng giềng
@@ -16,7 +16,7 @@ bằng hai tình huống giả lập bên trong, nặng như nhau:
     chưa khảo sát  ->  bỏ trọn từng điểm tham chiếu (mỗi toạ độ là một điểm)
 
 Nhờ vậy dùng được nguyên trong `ml.train`, `ml.on_dinh`, `ml.danh_gia_cheo`
-mà không rò phần thử. Đánh giá đầy đủ: `python -m ml.ket_hop`.
+mà không rò phần thử.
 """
 
 from __future__ import annotations
@@ -26,12 +26,12 @@ from sklearn.base import BaseEstimator, RegressorMixin
 
 from ml.models.fingerprint_knn import DinhViPhanLop, bieu_dien_powed
 
-TEN = "kNN vân tay (Bray-Curtis), k động"
+TEN = "kNN k động"
 
 CAC_K_LON = (15, 21, 31, 41)
 CAC_PHAN_VI = tuple(range(5, 100, 5))
 
-# beta quanh giá trị kNN vân tay thường chọn; ngưỡng và k lớn tự chọn trong fit.
+# beta quanh giá trị kNN Bray-Curtis thường chọn; ngưỡng và k lớn tự chọn trong fit.
 LUOI_THAM_SO = {"beta": [3.0, 3.5, 4.0]}
 LUOI_NHANH = {"beta": [4.0]}
 

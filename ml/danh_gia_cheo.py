@@ -57,6 +57,7 @@ def nap_bang_rong() -> tuple[pd.DataFrame, list[str]]:
     """
     df = pre.build_scan_id(pre.loc_rssi_ngoai_khoang(pre.load_raw())[0])
     fp, ap_cols = pre.to_wide(df, pre.build_scan_meta(df))
+    fp, ap_cols, _ = pre.gop_hai_dot(fp, ap_cols)
     fp, _ = pre.attach_coordinates(fp)
     return fp, ap_cols
 
