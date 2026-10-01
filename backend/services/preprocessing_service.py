@@ -56,15 +56,8 @@ class FeatureMapper:
         missing_rssi_value, lặp thì lấy trung bình như `pivot_table` của bước 3."""
         tong = np.zeros(self.feature_count, dtype=float)
         dem = np.zeros(self.feature_count, dtype=int)
-        for vi_tri, muc in enumerate(scan):
-            try:
-                bssid, rssi = muc["bssid"].lower(), float(muc["rssi"])
-            except (KeyError, AttributeError, TypeError, ValueError) as e:
-                # Nói rõ mục nào hỏng thay vì `KeyError: 'bssid'`.
-                raise ValueError(
-                    f"mục quét thứ {vi_tri} không đúng dạng "
-                    f"{{'bssid': str, 'rssi': số}}: {muc!r}") from e
-
+        for muc in scan:
+            bssid, rssi = muc["bssid"].lower(), muc["rssi"]
             i = self._vi_tri.get(bssid)
             if i is None:
                 continue

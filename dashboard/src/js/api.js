@@ -27,11 +27,6 @@ export function moTaLoi(detail, maHttp) {
       return `Không đủ dữ liệu để định vị — chỉ khớp ${detail.so_ap} access point, `
         + `cần ít nhất ${detail.toi_thieu}`;
     }
-    if (detail.loi === 'ngoai_pham_vi') {
-      const p = detail.pham_vi || {};
-      return `Điểm xuất phát (${detail.tu_x}, ${detail.tu_y}) nằm ngoài bản đồ `
-        + `(x ${p.x_min}…${p.x_max}, y ${p.y_min}…${p.y_max})`;
-    }
     if (detail.loi) return `Máy chủ báo lỗi '${detail.loi}'`;
   }
 

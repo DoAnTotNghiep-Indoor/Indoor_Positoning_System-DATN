@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite+aiosqlite:///{ROOT_DIR / 'data' / 'ips.db'}"
     model_dir: Path = ROOT_DIR / "artifacts"
     reference_dir: Path = ROOT_DIR / "data" / "reference"
-    frontend_dir: Path = ROOT_DIR / "frontend"
+    dashboard_dir: Path = ROOT_DIR / "dashboard"
 
     # Số lần quét gộp; số đo ở `hau_xu_ly_gop` trong model_metadata.json.
     cua_so_gop: int = Field(3, ge=1)
@@ -28,9 +28,6 @@ class Settings(BaseSettings):
     reset_after_seconds: int = Field(30, ge=1)
 
     allowed_origins: list[str] = ["*"]
-
-    # Tạm tắt: mọi client đi REST. Bật lại là có /ws/location như cũ.
-    websocket: bool = False
 
     # DEMO=true: bỏ lần quét của điện thoại, phát lại lần quét thật ở thư viện
     # (xem services/demo_service.py). Chỉ để trình diễn ngoài thư viện.

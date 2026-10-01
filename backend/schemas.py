@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 
 class MucQuet(BaseModel):
@@ -26,7 +26,6 @@ class YeuCauDuDoan(BaseModel):
 
 
 class KetQuaDuDoan(BaseModel):
-    # Khai để REST trả cùng hình dạng với WS; pydantic bỏ trường không khai.
     device_id: str
 
     x: float
@@ -62,7 +61,6 @@ class TrangThai(BaseModel):
     so_dac_trung: int
     gia_tri_dien_thieu: float
     cua_so_gop: int
-    websocket: bool
 
 
 # --- Bản đồ và chỉ đường ---
@@ -130,24 +128,14 @@ class DoThi(ThongKeDoThi):
 
 
 class YeuCauChiDuong(BaseModel):
-    """Điểm đầu bằng rp_id hoặc toạ độ lưới; đích bằng rp_id hoặc tên khu vực.
+    """Điểm đầu bằng rp_id hoặc toạ độ lưới; đích bằng rp_id hoặc tên khu vực."""
 
-    tu_x/tu_y không mặc định 0.0: RP02 nằm đúng (0, 0), quên gửi vẫn ra tuyến.
-    """
-
-    den_rp: str | None = Field(default=None, min_length=1, max_length=64)
-    den_nhom: str | None = Field(default=None, min_length=1, max_length=64)
-    tu_rp: str | None = Field(default=None, max_length=64)
-    # `1e999` là JSON hợp lệ, đọc ra inf.
-    tu_x: float | None = Field(default=None, allow_inf_nan=False)
-    tu_y: float | None = Field(default=None, allow_inf_nan=False)
+    den_rp: str | None = None
+    den_nhom: str | None = None
+    tu_rp: str | None = None
+    tu_x: float | None = None
+    tu_y: float | None = None
     thuat_toan: Literal["a_sao", "dijkstra"] = "a_sao"
-
-    @field_validator("tu_rp", "den_rp", "den_nhom", mode="after")
-    @classmethod
-    def _cat_khoang_trang(cls, v: str | None) -> str | None:
-        """Chuỗi rỗng coi như không gửi, để `_phai_co_diem_dau` bắt được."""
-        return v.strip() or None if v is not None else None
 
     @model_validator(mode="after")
     def _phai_co_diem_dau(self) -> "YeuCauChiDuong":

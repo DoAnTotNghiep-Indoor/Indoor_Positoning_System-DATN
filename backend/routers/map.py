@@ -49,8 +49,6 @@ async def ban_do() -> schemas.BanDo:
 
 @router.get("/map/so-do.png", include_in_schema=False)
 async def so_do_png() -> FileResponse:
-    if not SO_DO_PNG.exists():
-        raise HTTPException(404, "Chưa có data/reference/Map.png")
     return FileResponse(SO_DO_PNG, media_type="image/png")
 
 
@@ -67,26 +65,9 @@ async def do_thi() -> schemas.DoThi:
     )
 
 
-# Được phép ra ngoài hộp bao các điểm tham chiếu (tức toà nhà) ngần này đơn vị lưới.
-LE_NGOAI_M = 10.0
-
-
-def _kiem_trong_nha(x: float, y: float) -> None:
-    """Chặn toạ độ ngoài thư viện, không thì (9999, 9999) vẫn được neo và ra tuyến."""
-    pv = _du_lieu_ban_do()["pham_vi"]
-    if not (pv["x_min"] - LE_NGOAI_M <= x <= pv["x_max"] + LE_NGOAI_M
-            and pv["y_min"] - LE_NGOAI_M <= y <= pv["y_max"] + LE_NGOAI_M):
-        raise HTTPException(
-            422,
-            {"loi": "ngoai_pham_vi", "tu_x": x, "tu_y": y,
-             "pham_vi": pv, "le_ngoai_m": LE_NGOAI_M},
-        )
-
-
 @router.post("/route", response_model=schemas.KetQuaChiDuong, responses={
     404: {"description": "Không có điểm tham chiếu hoặc khu vực"},
-    409: {"description": "Không có đường đi"},
-    422: {"description": "Toạ độ ngoài bản đồ (`ngoai_pham_vi`) hoặc sai schema"}})
+    409: {"description": "Không có đường đi"}})
 async def chi_duong(yeu_cau: schemas.YeuCauChiDuong) -> schemas.KetQuaChiDuong:
     g = lay_do_thi()
 
@@ -95,7 +76,6 @@ async def chi_duong(yeu_cau: schemas.YeuCauChiDuong) -> schemas.KetQuaChiDuong:
             raise HTTPException(404, f"Không có điểm tham chiếu '{yeu_cau.tu_rp}'")
         x, y = g.toa_do[yeu_cau.tu_rp]
     else:
-        _kiem_trong_nha(yeu_cau.tu_x, yeu_cau.tu_y)
         x, y = yeu_cau.tu_x, yeu_cau.tu_y
 
     if yeu_cau.den_nhom is not None:

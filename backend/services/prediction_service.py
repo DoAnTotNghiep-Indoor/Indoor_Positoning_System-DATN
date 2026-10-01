@@ -17,18 +17,6 @@ class HopDongLech(RuntimeError):
     """Model và feature_list.json sinh ra từ hai lần chạy pipeline khác nhau."""
 
 
-class KhongDuAp(ValueError):
-    """Quá ít AP quen để định vị. Mô hình vẫn trả toạ độ cho vector toàn giá trị
-    điền: ngoài thư viện, khớp 0 AP, nó vẫn báo đang ở RP01."""
-
-    def __init__(self, so_ap: int, toi_thieu: int):
-        super().__init__(
-            f"Chỉ khớp {so_ap} access point, cần ít nhất {toi_thieu} để định vị"
-        )
-        self.so_ap = so_ap
-        self.toi_thieu = toi_thieu
-
-
 class Predictor:
     def __init__(self, model_dir: Path | None = None):
         thu_muc = Path(model_dir) if model_dir else settings.model_dir
@@ -58,8 +46,8 @@ class Predictor:
         return self.mapper.min_ap_per_scan
 
     def du_doan(self, scan: list[dict]) -> tuple[float, float, int, float]:
-        """(x, y, số AP khớp, độ trễ ms). Không tự chặn khi thiếu AP: chạy nóng gọi
-        với danh sách rỗng, việc chặn nằm ở `_mot_lan_quet`."""
+        """(x, y, số AP khớp, độ trễ ms). Không tự chặn khi thiếu AP — mô hình vẫn
+        trả toạ độ cho vector toàn giá trị điền, nên `/predict` phải chặn."""
         bat_dau = time.perf_counter()
 
         vector = self.mapper.map_scan_to_vector(scan)

@@ -8,11 +8,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend import dependencies, schemas
@@ -49,14 +46,6 @@ app.include_router(predict.router)
 app.include_router(map_router.router)
 
 
-@app.exception_handler(RequestValidationError)
-async def loi_schema(_, exc: RequestValidationError) -> JSONResponse:
-    """Như mặc định của FastAPI nhưng bỏ `input`: pydantic chép lại giá trị gửi
-    lên, mà inf/NaN không tuần tự hoá được nên 422 hoá thành 500."""
-    return JSONResponse(status_code=422, content={"detail": jsonable_encoder(
-        [{k: v for k, v in e.items() if k != "input"} for e in exc.errors()])})
-
-
 @app.get("/health", response_model=schemas.TrangThai, tags=["health"])
 async def health() -> schemas.TrangThai:
     """Xác nhận model đã nạp và hợp đồng dữ liệu khớp."""
@@ -67,14 +56,13 @@ async def health() -> schemas.TrangThai:
         so_dac_trung=p.mapper.feature_count,
         gia_tri_dien_thieu=p.mapper.missing_rssi_value,
         cua_so_gop=settings.cua_so_gop,
-        websocket=settings.websocket,
     )
 
 
 # Dashboard phục vụ cùng máy chủ API. Mount ĐẶT CUỐI vì nó nhận mọi đường dẫn còn lại.
-if settings.frontend_dir.is_dir():
+if settings.dashboard_dir.is_dir():
     app.mount(
         "/",
-        StaticFiles(directory=settings.frontend_dir, html=True),
+        StaticFiles(directory=settings.dashboard_dir, html=True),
         name="dashboard",
     )

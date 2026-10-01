@@ -17,6 +17,8 @@ credentials.json
 data/processed/*
 !data/processed/.gitkeep
 !data/processed/fingerprint_dataset_sorted.csv
+# Chế độ DEMO=true phát lại lần quét của tập test trong tệp này.
+!data/processed/fingerprint_dataset_raw.csv
 data/splits/*
 !data/splits/.gitkeep
 
@@ -29,6 +31,9 @@ data/*.db-shm
 # Bản ghép của 7 tệp RPxx cùng thư mục — dựng lại được, không giữ hai bản.
 data/raw/nhom15_2026/*/tong_hop.csv
 
+# UJIIndoorLoc (45 MB, bộ công khai tải lại được — xem README trong thư mục).
+data/raw/ujiindoorloc/*.csv
+
 # KHÔNG ignore data/raw/ và data/reference/:
 # đây là số liệu đo thực địa, không sinh lại được (README nguyên tắc 4).
 
@@ -37,10 +42,8 @@ data/raw/nhom15_2026/*/tong_hop.csv
 artifacts/*.pkl
 artifacts/*.joblib
 # Trừ các tệp backend cần để chạy ngay sau khi clone: scaler và mô hình đang
-# triển khai (k động), giữ thêm kNN vân tay k = 1 để quay lui được. Các mô hình
-# còn lại sinh lại bằng `python -m ml.train`.
+# triển khai (k động). Các mô hình còn lại sinh lại bằng `python -m ml.train`.
 !artifacts/scaler.pkl
-!artifacts/model_fingerprint_knn.pkl
 !artifacts/model_fingerprint_knn_dong.pkl
 
 # Node / build

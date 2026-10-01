@@ -1,5 +1,3 @@
-"""Fixture và chốt chặn dùng chung cho cả bộ kiểm thử."""
-
 from __future__ import annotations
 
 import json
@@ -10,39 +8,19 @@ from ml import config
 
 
 def thieu_artifact() -> bool:
-    """Thiếu tệp nào trong bộ artifact cần để dựng app hay không.
-
-    Kiểm cả .pkl chứ không chỉ model_metadata.json: hai tệp json được commit còn
-    scaler.pkl và model_*.pkl bị .gitignore chặn, nên chỉ kiểm json thì người mới
-    clone repo chạy pytest sẽ nhận một loạt FileNotFoundError.
-    """
+    """Thiếu scaler hoặc mô hình đang dùng — kho vừa clone có thể chưa train."""
     meta = config.ARTIFACTS_DIR / "model_metadata.json"
     if not meta.exists():
         return True
-
-    can = [
-        config.ARTIFACTS_DIR / "scaler.pkl",
-        config.ARTIFACTS_DIR / json.loads(meta.read_text(encoding="utf-8"))["file_active"],
-    ]
-    return not all(p.exists() for p in can)
-
-
-def bo_qua_neu_chua_huan_luyen() -> None:
-    if thieu_artifact():
-        pytest.skip("chưa có mô hình — chạy `python -m ml.pipeline` rồi `python -m ml.train`")
+    file_active = json.loads(meta.read_text(encoding="utf-8"))["file_active"]
+    return not all((config.ARTIFACTS_DIR / f).exists() for f in ("scaler.pkl", file_active))
 
 
 @pytest.fixture(scope="module")
 def client(tmp_path_factory):
-    """TestClient chứ không phải ASGITransport trần.
-
-    ASGITransport không chạy sự kiện lifespan, mà toàn bộ việc nạp mô hình và tạo
-    bảng nằm trong đó — dùng nó thì `_predictor` là None và CSDL không có bảng nào.
-
-    CSDL trỏ vào thư mục tạm do pytest cấp nên chạy test không đụng data/ips.db
-    thật, và mỗi mô-đun đều bắt đầu từ bảng rỗng.
-    """
-    bo_qua_neu_chua_huan_luyen()
+    """TestClient (chạy lifespan để nạp mô hình), CSDL trỏ sang thư mục tạm."""
+    if thieu_artifact():
+        pytest.skip("chưa có mô hình — chạy `python -m ml.pipeline` rồi `python -m ml.train`")
 
     from fastapi.testclient import TestClient
 
@@ -52,8 +30,7 @@ def client(tmp_path_factory):
     settings.database_url = f"sqlite+aiosqlite:///{tmp_path_factory.mktemp('db') / 't.db'}"
     database.engine = database.create_async_engine(settings.database_url)
     database.TaoSession = database.async_sessionmaker(
-        database.engine, class_=database.AsyncSession, expire_on_commit=False
-    )
+        database.engine, class_=database.AsyncSession, expire_on_commit=False)
 
     from backend.main import app
 

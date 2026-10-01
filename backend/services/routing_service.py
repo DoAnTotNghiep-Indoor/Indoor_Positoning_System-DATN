@@ -23,15 +23,8 @@ import pandas as pd
 
 from ml import config
 
-# Chỉ dùng khi JSON thiếu `canh_nhin_thay`: mỗi điểm nối bấy nhiêu điểm gần nhất.
-SO_LANG_GIENG = 3
-
 BAN_DO_JSON = config.REFERENCE_DIR / "ban_do_tang1.json"
-
-# Cạnh gỡ tay, cộng thêm vào phần dò được từ sơ đồ. Để trống là bình thường.
-CANH_LOAI_TRU: set[tuple[str, str]] = set()
-
-THUAT_TOAN = ("a_sao", "dijkstra")
+COT_NHAN = ("ten", "nhom", "mo_ta", "mo_ta_chi_tiet", "thu_muc_anh")
 
 
 def _khoa(a: str, b: str) -> tuple[str, str]:
@@ -61,26 +54,6 @@ def _phan_loai(goc: float) -> str:
         return "quay_dau"
     ben = "trai" if goc > 0 else "phai"
     return f"chech_{ben}" if do_lon <= GOC_CHECH else f"re_{ben}"
-
-
-def _doc_json() -> dict | None:
-    if not BAN_DO_JSON.exists():
-        return None
-    return json.loads(BAN_DO_JSON.read_text(encoding="utf-8"))
-
-
-def _doc_ban_do() -> tuple[set[tuple[str, str]], set[tuple[str, str]]]:
-    """(cạnh xuyên tường, cửa giả định); thiếu tệp thì hai tập rỗng."""
-    d = _doc_json()
-    if d is None:
-        return set(), set()
-    return {_khoa(*c) for c in d["canh_xuyen_tuong"]}, {_khoa(*c) for c in d["cua_gia_dinh"]}
-
-
-def _doc_nhin_thay() -> set[tuple[str, str]] | None:
-    d = _doc_json()
-    ds = d.get("canh_nhin_thay") if d else None
-    return None if ds is None else {_khoa(*c) for c in ds}
 
 
 def nhin_thay(o: np.ndarray, p, Q) -> np.ndarray:
@@ -118,8 +91,8 @@ class LuoiDiLai:
 
         g = d["luoi_toa_do"]
         self._x0, self._y0 = g["x_min_px"], g["y_max_px"]
-        self._kx, self._ky = g["px_moi_met_x"], g["px_moi_met_y"]
-        self._gx = g["goc_met_x"]
+        self._kx, self._ky = g["px_moi_don_vi_x"], g["px_moi_don_vi_y"]
+        self._gx = g["goc_x"]
         self.met_moi_don_vi = d["ty_le_quy_doi"]["met_moi_don_vi"]
 
         self.rp = list(l["rp_px"])
@@ -231,63 +204,34 @@ class LuoiDiLai:
 
 
 class DoThiDiLai:
-    def __init__(self, so_lang_gieng: int = SO_LANG_GIENG, tam_nhin: bool = True):
-        rp = pd.read_csv(config.REFERENCE_POINTS_CSV, encoding="utf-8-sig")
-        rp = rp.dropna(subset=["x", "y"]).reset_index(drop=True)
-
+    def __init__(self):
+        rp = pd.read_csv(config.REFERENCE_POINTS_CSV, encoding="utf-8-sig").dropna(subset=["x", "y"])
         self.toa_do: dict[str, tuple[float, float]] = {
-            h.rp_id: (float(h.x), float(h.y)) for h in rp.itertuples()
-        }
-
+            h.rp_id: (float(h.x), float(h.y)) for h in rp.itertuples()}
         # Tên và mô tả lấy từ POI.geojson của CTK45.
         self.nhan: dict[str, dict[str, str]] = {
-            h.rp_id: {
-                c: "" if pd.isna(getattr(h, c)) else str(getattr(h, c))
-                for c in ("ten", "nhom", "mo_ta", "mo_ta_chi_tiet", "thu_muc_anh")
-            }
-            for h in rp.itertuples()
-        }
+            h.rp_id: {c: "" if pd.isna(getattr(h, c)) else str(getattr(h, c)) for c in COT_NHAN}
+            for h in rp.itertuples()}
 
-        d = _doc_json()
-        self.met_moi_don_vi = d["ty_le_quy_doi"]["met_moi_don_vi"] if d else 1.0
-        self.luoi = LuoiDiLai(d) if d and "luoi_di_lai" in d else None
-        self.chi_noi: dict[str, list[str]] = d.get("chi_noi", {}) if d else {}
+        d = json.loads(BAN_DO_JSON.read_text(encoding="utf-8"))
+        self.met_moi_don_vi = d["ty_le_quy_doi"]["met_moi_don_vi"]
+        self.luoi = LuoiDiLai(d)
+        self.chi_noi: dict[str, list[str]] = d["chi_noi"]
         self.cam_noi: dict[str, set[str]] = {}
-        for a, b in d.get("cam_noi", []) if d else []:
+        for a, b in d["cam_noi"]:
             self.cam_noi.setdefault(a, set()).add(b)
             self.cam_noi.setdefault(b, set()).add(a)
-        self.canh = self._dung_canh(d, so_lang_gieng, tam_nhin)
 
+        # Cạnh = các cặp nhìn thấy nhau, cộng cửa giả định: cạnh xuyên tường nhóm
+        # nối tay vì Map.png không vẽ cửa.
+        self.cua_gia_dinh = {_khoa(*c) for c in d["cua_gia_dinh"]}
+        self.canh = {k: self.khoang_cach(*k)
+                     for k in {_khoa(*c) for c in d["canh_nhin_thay"]} | self.cua_gia_dinh
+                     if k[0] in self.toa_do and k[1] in self.toa_do}
         self.ke: dict[str, list[tuple[str, float]]] = {k: [] for k in self.toa_do}
         for (a, b), w in self.canh.items():
             self.ke[a].append((b, w))
             self.ke[b].append((a, w))
-
-    def _dung_canh(self, d: dict | None, k: int, tam_nhin: bool) -> dict[tuple[str, str], float]:
-        xuyen_tuong = {_khoa(*c) for c in d["canh_xuyen_tuong"]} if d else set()
-        self.cua_gia_dinh = {_khoa(*c) for c in d["cua_gia_dinh"]} if d else set()
-        nhin = d.get("canh_nhin_thay") if d and tam_nhin else None
-        canh: dict[tuple[str, str], float] = {}
-
-        if nhin is not None:
-            for a, b in {_khoa(*c) for c in nhin} - CANH_LOAI_TRU:
-                if a in self.toa_do and b in self.toa_do:
-                    canh[(a, b)] = self.khoang_cach(a, b)
-        else:
-            bo = xuyen_tuong | CANH_LOAI_TRU
-            ten = list(self.toa_do)
-            for a in ten:
-                gan = sorted((self.khoang_cach(a, b), b) for b in ten if b != a)[:k]
-                for w, b in gan:
-                    if _khoa(a, b) not in bo:
-                        canh[_khoa(a, b)] = w
-
-        # Thêm cửa SAU CÙNG: chúng chính là cạnh vừa bị chặn ở trên.
-        for a, b in self.cua_gia_dinh:
-            if a in self.toa_do and b in self.toa_do:
-                canh[_khoa(a, b)] = self.khoang_cach(a, b)
-
-        return canh
 
     def khoang_cach(self, a: str, b: str) -> float:
         """Mét."""
@@ -304,9 +248,6 @@ class DoThiDiLai:
     def tim_duong(self, tu: str, den: str) -> tuple[list[str], float]:
         """A* trên đồ thị điểm tham chiếu; ([], inf) khi không có đường."""
         return self._loang(tu, {den}, self._toi_dich_gan_nhat)
-
-    def tim_duong_dijkstra(self, tu: str, den: str) -> tuple[list[str], float]:
-        return self._loang(tu, {den}, lambda n, dich: 0.0)
 
     def diem_cua_nhom(self, nhom: str) -> set[str]:
         return {rp for rp, n in self.nhan.items() if n["nhom"] == nhom}
@@ -365,24 +306,15 @@ class DoThiDiLai:
         if tu in dich:
             return {"tu": tu, "den": tu, "quang_duong_m": 0.0, "so_nut_mo": 0,
                     "duong_di": [self.mo_ta_diem(tu)], "chi_dan": []}
-        if self.luoi is None:
-            duong, m = self._loang(tu, dich, self._toi_dich_gan_nhat if thuat_toan == "a_sao"
-                                   else lambda n, d: 0.0)
-            if not duong:
-                return None
-            diem = [(*self.toa_do[k], k) for k in duong]
-            mo = 0
-        else:
-            # Xuất phát theo luật nối của điểm gần nhất: chỉ ra qua điểm kề cho phép,
-            # không đi thẳng tới điểm bị cấm nối.
-            ke = self.chi_noi.get(tu)
-            nut, xy, m, mo = self.luoi.tim(x, y, dich, thuat_toan,
-                                           {tu, *ke} if ke else None,
-                                           self.cam_noi.get(tu, set()))
-            if not nut:
-                return None
-            ten_rp = {v: k for k, v in self.luoi.chi_so.items()}
-            diem = [(float(px), float(py), ten_rp.get(n)) for (px, py), n in zip(xy, nut)]
+        # Xuất phát theo luật nối của điểm gần nhất: chỉ ra qua điểm kề cho phép,
+        # không đi thẳng tới điểm bị cấm nối.
+        ke = self.chi_noi.get(tu)
+        nut, xy, m, mo = self.luoi.tim(x, y, dich, thuat_toan, {tu, *ke} if ke else None,
+                                       self.cam_noi.get(tu, set()))
+        if not nut:
+            return None
+        ten_rp = {v: k for k, v in self.luoi.chi_so.items()}
+        diem = [(float(px), float(py), ten_rp.get(n)) for (px, py), n in zip(xy, nut)]
 
         # Toạ độ là chỗ tuyến thật sự đi qua: điểm tham chiếu rơi trên kệ sách hay
         # khối cầu thang đã được kéo ra lối đi.
@@ -390,15 +322,6 @@ class DoThiDiLai:
                 "duong_di": [{**(self.mo_ta_diem(k) if k else {"rp_id": "", "ten": "", "nhom": ""}),
                               "x": px, "y": py} for px, py, k in diem],
                 "chi_dan": self._buoc(diem, tu)}
-
-    def toa_do_duong(self, duong: list[str]) -> list[dict]:
-        return [self.mo_ta_diem(k) for k in duong]
-
-    def chi_dan(self, duong: list[str]) -> list[dict]:
-        """Đường đi qua các điểm tham chiếu thành từng bước kèm số mét."""
-        if len(duong) < 2:
-            return []
-        return self._buoc([(*self.toa_do[k], k) for k in duong], duong[0])
 
     def _buoc(self, diem: list[tuple[float, float, str | None]], tu: str) -> list[dict]:
         """Trả mã chứ không trả câu vì ứng dụng chạy hai ngôn ngữ; bước đầu là
@@ -456,11 +379,7 @@ class DoThiDiLai:
         """Toạ độ kèm nhãn; `day_du` thêm mô tả và thư mục ảnh cho màn chi tiết."""
         x, y = self.toa_do[rp_id]
         nhan = self.nhan.get(rp_id, {})
-        cot = (
-            ("ten", "nhom", "mo_ta", "mo_ta_chi_tiet", "thu_muc_anh")
-            if day_du
-            else ("ten", "nhom")
-        )
+        cot = COT_NHAN if day_du else ("ten", "nhom")
         return {"rp_id": rp_id, "x": x, "y": y, **{c: nhan.get(c, "") for c in cot}}
 
     def thong_ke(self) -> dict:

@@ -1,8 +1,6 @@
-// Dashboard thời gian thực: /health, /map, /predictions; WS /ws/location chỉ khi
-// máy chủ bật (`websocket` trong /health), còn không thì hỏi REST định kỳ.
+// Dashboard thời gian thực: /health, /map, và hỏi /predictions định kỳ.
 
 import { api, LoiApi } from './api.js';
-import { KenhViTri } from './websocket.js';
 import { SoDoCanvas } from './map-renderer.js';
 import { khoangCach } from './coordinate.js';
 import { veDuong } from './charts.js';
@@ -26,7 +24,6 @@ const trangThai = {
   diem: [],           // điểm tham chiếu từ /map
   thietBi: new Map(), // device_id -> gói mới nhất
   saiLech: [],        // độ dịch giữa toạ độ thô và toạ độ đã gộp, để vẽ đường
-  websocket: false,   // máy chủ có mở /ws/location không
 };
 
 let soDo;
@@ -54,7 +51,6 @@ function baoLoi(thongDiep) {
 async function napTrangThai() {
   try {
     const t = await api.trangThai();
-    trangThai.websocket = t.websocket === true;
     $('#the-he-thong').replaceChildren(
       theSoLieu({ nhan: 'Mô hình', giaTri: t.mo_hinh }),
       theSoLieu({ nhan: 'Số đặc trưng', giaTri: t.so_dac_trung, phu: 'BSSID' }),
@@ -151,15 +147,7 @@ function veThietBi() {
 }
 
 function baoKenh(noi, chu) {
-  veHuyHieu($('#trang-thai-ws'), { noi, chu });
-}
-
-function moKenhWs() {
-  const kenh = new KenhViTri();
-  kenh.addEventListener('trang-thai', (e) =>
-    baoKenh(e.detail.noi, e.detail.noi ? 'Đang kết nối' : 'Mất kết nối'));
-  kenh.addEventListener('vi-tri', (e) => nhanViTri(e.detail));
-  kenh.moKenh();
+  veHuyHieu($('#trang-thai-ket-noi'), { noi, chu });
 }
 
 /** Hỏi /predictions định kỳ. Lượt đầu chỉ lấy mốc thời gian: bản ghi cũ trong lịch
@@ -296,8 +284,7 @@ async function chay() {
   await napLichSu();
   veThietBi();
 
-  if (trangThai.websocket) moKenhWs();
-  else hoiDinhKy();
+  hoiDinhKy();
 
   // Quét dọn thiết bị đã im lặng, kể cả khi không có gói nào chảy về.
   setInterval(veThietBi, 5000);
