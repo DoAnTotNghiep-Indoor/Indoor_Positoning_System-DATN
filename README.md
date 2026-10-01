@@ -254,5 +254,14 @@ Xem `mobile/README.md`.
 
 - `docs/thiet_ke_he_thong.md` — thiết kế hệ thống: yêu cầu, kiến trúc, mô hình, dữ liệu
   không gian, chỉ đường, API, giao diện
-- `docs/tai_lieu_tham_khao/` — các công trình liên quan
-- Thiết kế giao diện ứng dụng (Figma): https://www.figma.com/design/3dzSOBhBIhb3e9zkuWOiQS
+- `docs/tai_lieu_tham_khao/README.md` — các công trình liên quan, kèm link
+
+Tài liệu trực tuyến (riêng tư, mở được khi đã được chia sẻ):
+
+| Tài liệu | Link |
+|---|---|
+| Đặc tả API cho nhóm hợp tác | https://claude.ai/artifact/Bvk2jmwDoMykYsYrugz7MT |
+| Tài liệu thuyết trình (cơ sở viết báo cáo cuối) | https://claude.ai/artifact/AeDtxUWKmt3MceBPggzvV4 |
+| Slide báo cáo tiến độ lần 1 | https://claude.ai/artifact/MkpUaFENVS1AHyCreZBBk6 |
+| Slide báo cáo tiến độ lần 2 | https://claude.ai/artifact/SToAGkPmoC3LkTBponP2Gn |
+| Thiết kế giao diện ứng dụng (Figma) | https://www.figma.com/design/3dzSOBhBIhb3e9zkuWOiQS |

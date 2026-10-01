@@ -61,3 +61,8 @@ Thumbs.db
 *.zip
 *.rar
 tmp/
+
+# Tài liệu tham khảo có bản công khai: chỉ ghi link trong docs/tai_lieu_tham_khao/README.md.
+docs/tai_lieu_tham_khao/*.pdf
+!docs/tai_lieu_tham_khao/NguyenThiLuong2022_ICT2022.pdf
+!docs/tai_lieu_tham_khao/DATN_CTK45_IPS.pdf
