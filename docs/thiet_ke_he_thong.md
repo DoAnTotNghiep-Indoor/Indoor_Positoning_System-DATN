@@ -1,0 +1,323 @@
+# Thiết kế hệ thống
+
+Tài liệu mô tả thiết kế của hệ thống định vị trong nhà bằng WiFi Fingerprinting cho tầng 1
+Thư viện Đại học Đà Lạt: yêu cầu, kiến trúc, mô hình, dữ liệu không gian, chỉ đường, API và
+giao diện. Cách cài đặt và kết quả thực nghiệm xem `README.md`.
+
+## 1. Yêu cầu
+
+### 1.1. Tác nhân
+
+| Tác nhân | Vai trò |
+|---|---|
+| Người dùng | Dùng ứng dụng Android để biết mình đang ở đâu, tra cứu khu vực và được chỉ đường |
+| Quản trị viên | Theo dõi các thiết bị đang định vị và lịch sử vị trí trên Web Dashboard |
+| Nhóm phát triển | Thu thập dữ liệu, tiền xử lý, huấn luyện và đánh giá mô hình |
+
+### 1.2. Chức năng
+
+1. **Định vị**: nhận một lần quét WiFi, trả toạ độ `(x, y)`; từ chối khi lần quét khớp quá ít
+   AP đã biết.
+2. **Làm mượt vị trí**: gộp vài lần quét gần nhau của cùng thiết bị để loại lần quét lạc.
+3. **Bản đồ**: cung cấp sơ đồ tầng 1, danh sách điểm tham chiếu kèm tên, nhóm khu vực, mô tả.
+4. **Chỉ đường**: tìm đường ngắn nhất từ vị trí hiện tại tới một điểm hoặc một khu vực, kèm
+   chỉ dẫn rẽ từng bước.
+5. **Giám sát**: hiển thị các thiết bị đang định vị và lịch sử vị trí.
+6. **Thực nghiệm tái lập được**: tiền xử lý, huấn luyện, đánh giá chạy lại bằng lệnh, cố định
+   `random_state = 42`.
+
+### 1.3. Yêu cầu phi chức năng
+
+| Loại | Yêu cầu | Đáp ứng |
+|---|---|---|
+| Độ trễ | Một lần định vị dưới 200 ms | Khoảng 10 ms cho cả `/predict`; mô hình nạp một lần lúc khởi động |
+| Nhất quán huấn luyện ↔ chạy thật | Thứ tự cột AP, giá trị điền thiếu, ngưỡng AP chỉ có một nguồn | `artifacts/feature_list.json`; backend từ chối khởi động nếu mô hình và tệp này lệch nhau (so `ap_columns_sha1`) |
+| Tái lập | Chạy lại cho cùng kết quả | Hai lần chạy pipeline cho dữ liệu giống hệt từng byte |
+| Triển khai | Chạy được không cần Internet và không cài dịch vụ ngoài | SQLite; Dashboard không nạp thư viện từ CDN |
+
+## 2. Kiến trúc
+
+Hệ thống có hai giai đoạn dùng chung các tệp trong `artifacts/`:
+
+```mermaid
+flowchart TB
+  subgraph Offline["Ngoại tuyến"]
+    A1[Dữ liệu quét tại các điểm tham chiếu] --> A2[Tiền xử lý 12 bước<br/>ml/pipeline.py]
+    A2 --> A3[Huấn luyện, đánh giá<br/>ml/train.py]
+    A3 --> A4[(artifacts/<br/>feature_list.json, scaler.pkl, mô hình)]
+    M1[Map.png] --> M2[tools/trich_ban_do.py] --> M3[(ban_do_tang1.json)]
+  end
+
+  subgraph Online["Trực tuyến"]
+    B1[Ứng dụng Android] -- POST /predict --> B2[FastAPI]
+    B2 --> B3[FeatureMapper<br/>BSSID → vector]
+    B3 --> B4[Mô hình k động]
+    B4 --> B5[Gộp cửa sổ 3 lần quét]
+    B5 --> B6[(SQLite)]
+    B1 -- POST /route --> B7[Tìm đường A*]
+    B8[Web Dashboard] -- GET /predictions --> B6
+  end
+
+  A4 -.-> B3
+  A4 -.-> B4
+  M3 -.-> B7
+```
+
+| Thành phần | Công nghệ | Mã nguồn |
+|---|---|---|
+| Ứng dụng di động | Flutter (Android) | `mobile/` |
+| Backend | FastAPI, SQLAlchemy async, SQLite | `backend/` |
+| Web Dashboard | HTML, CSS, JavaScript (ES module) | `dashboard/` |
+| Máy học | scikit-learn, XGBoost, pandas, NumPy | `ml/` |
+
+Backend chia ba tầng: `routers/` nhận request và kiểm schema, `services/` chứa nghiệp vụ (dự
+đoán, gộp, tìm đường, chế độ demo), `repository.py` là nơi duy nhất đọc ghi CSDL.
+
+## 3. Luồng định vị
+
+```mermaid
+sequenceDiagram
+  participant A as Ứng dụng
+  participant R as /predict
+  participant F as FeatureMapper
+  participant M as Mô hình
+  participant G as BoGop
+  participant D as SQLite
+
+  A->>R: {device_id, scan: [{bssid, rssi}]}
+  R->>F: ánh xạ theo feature_list.json
+  F->>M: vector đã chuẩn hoá
+  M-->>R: (x, y), số AP khớp
+  alt khớp < 6 AP
+    R-->>A: 422 khong_du_ap
+  else
+    R->>G: thêm (x, y) vào cửa sổ của thiết bị
+    G-->>R: (x_smooth, y_smooth)
+    R->>D: ghi toạ độ thô và đã gộp
+    R-->>A: {x, y, x_smooth, y_smooth, matched_ap, ...}
+  end
+```
+
+- **Ánh xạ theo BSSID.** Client gửi cặp `{bssid, rssi}` chứ không gửi mảng số, nên thứ tự gửi
+  không ảnh hưởng. BSSID hạ chữ thường trước khi tra. BSSID lạ và RSSI ngoài khoảng vật lý bị
+  bỏ qua. BSSID lặp lại lấy trung bình, đúng như bước pivot lúc huấn luyện.
+- **Ngưỡng AP.** Mô hình luôn trả một toạ độ, kể cả khi vector toàn giá trị điền thiếu. Vì vậy
+  backend từ chối lần quét khớp dưới `min_ap_per_scan` = 6 AP, cũng là ngưỡng đã dùng để loại
+  mẫu huấn luyện.
+- **Gộp.** `BoGop` giữ 3 dự đoán gần nhất của mỗi thiết bị và trả dự đoán có tổng khoảng cách
+  tới các dự đoán còn lại nhỏ nhất (đồng thuận không gian). Một lần quét lạc không kéo lệch kết
+  quả như khi lấy trung bình hay EMA. Thiết bị im lặng quá 30 giây thì bắt đầu cửa sổ mới.
+- **Chu kỳ.** Android giới hạn 4 lần quét mỗi 2 phút, nên ứng dụng quét mỗi 5 giây. Với nhịp
+  này REST là đủ; hệ thống không dùng WebSocket.
+
+## 4. Tiền xử lý và mô hình
+
+### 4.1. Tiền xử lý
+
+`ml/pipeline.py` chạy 12 bước. Bước 9 (chia tập) chạy sớm, ngay sau bước 4, vì các bước 5, 7,
+8, 10 đều học tham số từ dữ liệu và chỉ được nhìn tập train.
+
+| Bước | Việc |
+|---|---|
+| 1 | Nạp dữ liệu thô, kiểm tra, bỏ số đọc RSSI ngoài khoảng vật lý |
+| 2–3 | Gom các dòng thành lần quét, pivot thành bảng vân tay (mỗi AP một cột) |
+| 3b | Ghép đợt B (dữ liệu đã xử lý của ba máy còn lại) |
+| 4 | Ghép toạ độ thật từ `data/reference/reference_points.csv` |
+| 9 | Chia train/validation/test 70/15/15, phân tầng theo điểm tham chiếu |
+| 5 | Giữ AP xuất hiện ở ít nhất 20% lần quét train (36 AP) |
+| 6 | Loại lần quét bắt được dưới 6 AP |
+| 7 | Điền AP vắng mặt bằng giá trị tính từ train (−100 dBm) |
+| 8 | Lọc nhiễu Hampel (k = 3 MAD) theo từng điểm tham chiếu, chỉ trên train |
+| 10 | Chuẩn hoá min-max, fit trên train |
+| 11 | Ghi hợp đồng dữ liệu `feature_list.json` và `scaler.pkl` |
+| 12 | Ghi bộ dữ liệu cuối `fingerprint_dataset_sorted.csv` |
+
+### 4.2. Mô hình
+
+| Mô hình | Mô tả |
+|---|---|
+| kNN | Trung bình toạ độ của k mẫu gần nhất |
+| WKNN | Như kNN, trọng số nghịch đảo khoảng cách |
+| Random Forest | Hồi quy hai đầu ra |
+| XGBoost | Hai mô hình con cho x và y |
+| **kNN k động (Dynamic-k kNN)** | Khoảng cách Bray-Curtis, k chọn theo từng lần quét |
+
+Tham số mỗi mô hình chọn bằng tìm kiếm lưới trên tập validation. Riêng mô hình triển khai
+được chỉ định (`MO_HINH_TRIEN_KHAI` trong `ml/config.py`), vì validation chia ngẫu nhiên nên
+luôn ưu tiên mô hình nhớ đúng điểm đã khảo sát (k = 1).
+
+**k động.** Bộ dữ liệu chỉ có 40 toạ độ khác nhau, nên bài toán gần với nhận lại điểm đã khảo
+sát. k = 1 tốt nhất khi người dùng đứng đúng điểm đã đo; k lớn tốt nhất khi đứng giữa các
+điểm. Mô hình đo khoảng cách Bray-Curtis d1 tới vân tay gần nhất: d1 nhỏ hơn ngưỡng thì dùng
+k = 1, ngược lại dùng k lớn để nội suy. Ngưỡng và k lớn chọn trong `fit`, chỉ trên dữ liệu học,
+bằng hai tình huống giả lập: chia ngẫu nhiên 80/20 và bỏ trọn từng điểm.
+
+### 4.3. Đánh giá
+
+Sai số là khoảng cách Euclid giữa toạ độ dự đoán và toạ độ thật, quy ra mét, kèm trung bình,
+trung vị và CDF tại 50/75/90%. Ba giao thức:
+
+| Giao thức | Câu hỏi | Lệnh |
+|---|---|---|
+| Chia ngẫu nhiên, 10 seed | Nhận lại chỗ đã đo, cùng phiên đo | `ml.on_dinh` |
+| Bỏ trọn một điểm | Đứng ở chỗ chưa từng đo | `ml.danh_gia_cheo` |
+| Khác đợt đo | Chỗ đã đo nhưng khác máy, khác thời điểm | `ml.khac_dot` |
+
+Mỗi điểm tham chiếu chỉ được đo trong một phiên, nên chia ngẫu nhiên có rò rỉ: lần quét học
+và kiểm cùng phiên. Đó là chặn lạc quan; bỏ trọn một điểm là chặn bi quan.
+
+## 5. Cơ sở dữ liệu
+
+SQLite, tự tạo bảng lúc khởi động. Chỉ lưu lịch sử định vị; điểm tham chiếu và mô hình đã có
+nguồn là `data/reference/` và `artifacts/`.
+
+```mermaid
+erDiagram
+  positioning_sessions ||--o{ position_predictions : ghi
+  positioning_sessions {
+    int id PK
+    string device_id
+    datetime bat_dau
+    datetime lan_cuoi
+  }
+  position_predictions {
+    int id PK
+    int phien_id FK
+    datetime luc
+    float x
+    float y
+    float x_gop
+    float y_gop
+    int so_ap_bat_duoc
+    string mo_hinh
+    float do_tre_ms
+  }
+```
+
+Một phiên là một thiết bị định vị liên tục; vắng quá 30 giây thì mở phiên mới. Bảng dự đoán
+giữ cả toạ độ thô lẫn toạ độ đã gộp để đo hiệu quả bước gộp. Thời điểm lưu theo UTC. Bật WAL
+để ghi nhanh và đọc không chặn ghi.
+
+## 6. Dữ liệu không gian
+
+### 6.1. Nguồn hình học
+
+Sơ đồ gốc là `data/reference/Map.png`, bản số hoá tầng 1 thư viện. `tools/trich_ban_do.py`
+xử lý ảnh một lần và ghi kết quả vào `data/reference/ban_do_tang1.json`:
+
+- Tách tường (nét đen) khỏi lưới chấm toạ độ: chấm lưới đều đúng 16 px, khối xám lớn hơn là
+  vật cản (vách, kệ sách).
+- Dò các cặp điểm tham chiếu nhìn thấy nhau, các góc lồi của vật cản và mặt nạ vùng đi được.
+- Ghi tỉ lệ quy đổi, cửa giả định và luật nối.
+
+Backend chỉ đọc JSON, không cần thư viện xử lý ảnh lúc chạy.
+
+### 6.2. Hệ toạ độ
+
+Toạ độ dùng đơn vị lưới của bảng điểm tham chiếu: x từ −43 đến 43, y từ 0 đến 52, y = 0 ở
+phía cửa ra vào, y hướng lên.
+
+- **Lưới ↔ pixel.** Lưới chấm trong `Map.png` trải 1000 × 605 px, hộp bao điểm tham chiếu
+  86 × 52 đơn vị, cho 11,628 và 11,635 px/đơn vị ở hai trục. Lưới chấm chính là hệ toạ độ.
+- **Chiều trục.** Toà nhà thắt eo ở giữa; chỉ khi y hướng lên thì mọi điểm trong đoạn eo mới
+  lọt trong tường. Khớp 39 điểm với toạ độ GPS cho sai số 3,15 khi không lật trục x, 13,84 khi
+  lật.
+- **Lưới ↔ mét.** Một đơn vị bằng 0,3508 m, tính từ bốn kích thước dọc ghi trên bản vẽ
+  (19,6 m trên 55,87 đơn vị). Hai nguồn độc lập khớp: đa giác toà nhà trên OpenStreetMap chỉ
+  chứa trọn mặt bằng khi tỉ lệ ≤ 0,35; GPS của các điểm tham chiếu cho trung vị 0,40.
+- **Hướng bắc.** Trục +x của sơ đồ có phương vị 338,5°, đo trên ảnh vệ tinh bằng ba cách độc
+  lập (lệch nhau trong 3,5°). Ứng dụng dùng góc này (trục +y: 248,5°) để xoay nón hướng la bàn.
+
+Phép đổi toạ độ ↔ pixel có ở backend (Python), ứng dụng (Dart) và Dashboard (JavaScript),
+cùng lấy hằng số từ `ban_do_tang1.json`. Ứng dụng vẽ sơ đồ SVG riêng (`tools/ve_so_do_tang1.py`)
+nhưng đặt trong cùng khung pixel với `Map.png`.
+
+## 7. Chỉ đường
+
+**Đồ thị.** Đường ngắn nhất trong mặt bằng có vật cản chỉ bẻ hướng ở góc lồi của vật cản. Vì
+vậy nút của đồ thị là 286 góc lồi dò từ `Map.png` cộng 44 điểm tham chiếu, cạnh nối mọi cặp
+nút nhìn thấy nhau.
+
+**Truy vấn.** Vị trí người dùng được thêm vào đồ thị như một nút tạm; nếu rơi vào tường hay
+kệ thì kéo về ô đi được gần nhất. Sau đó chạy:
+
+- **A\*** (mặc định), heuristic là khoảng cách thẳng tới đích gần nhất. Heuristic không bao
+  giờ ước lượng quá nên cho cùng quãng đường như Dijkstra nhưng mở ít nút hơn nhiều.
+- **Dijkstra**, để đối chứng.
+
+Đích là một khu vực thì tìm đa đích: dừng ở điểm đầu tiên của khu vực lấy ra khỏi hàng đợi,
+tức điểm gần nhất theo đường đi chứ không theo đường chim bay.
+
+**Chỉ dẫn.** Tuyến được chia thành các chặng; góc quay giữa hai chặng phân loại thành
+`di_thang` (≤ 20°), `chech_trai/phai` (≤ 60°), `re_trai/phai` (≤ 135°) và `quay_dau`. Bước đầu
+là `bat_dau` vì chưa biết người dùng quay mặt hướng nào. Các chặng đi thẳng liên tiếp được gộp,
+chặng dưới 0,5 m dồn vào chặng kề. API trả mã hướng; ứng dụng dịch sang tiếng Việt hoặc Anh.
+
+**Cửa và luật nối.** `Map.png` vẽ tường nhưng không vẽ cửa. 15 cạnh cửa do nhóm nối tay, ghi
+riêng trong khoá `cua_gia_dinh`. Luật nối thêm: RP01 chỉ nối RP45, RP02; RP03 chỉ nối RP44,
+RP02; một số cạnh bị cấm; hai WC chỉ là đích.
+
+## 8. API
+
+| Phương thức | Đường dẫn | Mô tả |
+|---|---|---|
+| GET | `/health` | Mô hình đang chạy, số đặc trưng, giá trị điền thiếu, cửa sổ gộp |
+| POST | `/predict` | Định vị một lần quét |
+| GET | `/predictions` | Lịch sử vị trí, lọc theo `device_id`, `gioi_han` từ 1 đến 1000 |
+| GET | `/map` | Phạm vi, điểm tham chiếu (tên, nhóm, mô tả, thư mục ảnh), thống kê đồ thị, `met_moi_don_vi` |
+| GET | `/graph` | Danh sách cạnh giữa các điểm tham chiếu, đánh dấu cửa giả định |
+| POST | `/route` | Chỉ đường |
+| GET | `/map/so-do.png` | Ảnh sơ đồ cho Dashboard |
+| GET | `/` | Web Dashboard |
+
+Ví dụ `POST /predict`:
+
+```json
+// Yêu cầu
+{"device_id": "a1b2", "scan": [{"bssid": "f4:6d:2f:...", "rssi": -62}, ...]}
+
+// Phản hồi 200
+{"device_id": "a1b2", "x": -22.0, "y": 34.0, "x_smooth": -22.0, "y_smooth": 34.0,
+ "model": "fingerprint_knn_dong", "timestamp": "2026-10-01T07:29:47Z",
+ "matched_ap": 32, "scan_count": 3, "latency_ms": 4.2}
+
+// Phản hồi 422 khi khớp quá ít AP
+{"detail": {"loi": "khong_du_ap", "so_ap": 2, "toi_thieu": 6}}
+```
+
+Ví dụ `POST /route`:
+
+```json
+// Yêu cầu: điểm đầu là toạ độ hoặc tu_rp; đích là den_rp hoặc den_nhom
+{"tu_x": 5.0, "tu_y": 30.0, "den_nhom": "WC", "thuat_toan": "a_sao"}
+
+// Phản hồi 200 (rút gọn)
+{"tu": "RP19", "den": "RP42", "quang_duong_m": 16.06, "so_chang": 2, "so_nut_mo": 54,
+ "duong_di": [{"rp_id": "", "x": 5.0, "y": 30.0, "ten": "", "nhom": ""}, ...],
+ "chi_dan": [{"tu_rp": "RP19", "den_rp": "RP42", "den_ten": "WC", "huong": "bat_dau",
+              "goc_do": 0.0, "khoang_cach_m": 12.75}, ...]}
+```
+
+Lỗi: 404 khi điểm hoặc khu vực không tồn tại, 409 khi không có đường, 422 khi sai schema.
+
+## 9. Giao diện
+
+### 9.1. Ứng dụng di động
+
+| Màn | Nội dung |
+|---|---|
+| Trang chủ | Khu vực đang đứng, danh sách khu vực gần nhất |
+| Bản đồ | Sơ đồ tầng 1, chấm vị trí, nón hướng la bàn, tuyến đường, lọc theo nhóm khu vực |
+| Tìm kiếm | Tìm khu vực theo tên hoặc nhóm, không phân biệt dấu |
+| Cài đặt | Địa chỉ máy chủ, ngôn ngữ, chế độ sáng/tối, quyền truy cập |
+
+Chạm một khu vực mở popup có ảnh, giới thiệu và nút Chỉ đường. Định vị chạy liên tục khi ứng
+dụng mở và dừng khi chạy nền. Hiệu ứng kính chỉ dùng cho thanh điều hướng và nút nổi; nội dung
+dùng nền đặc để dễ đọc.
+
+### 9.2. Web Dashboard
+
+Một trang gồm: thẻ trạng thái hệ thống, sơ đồ với điểm tham chiếu, cạnh đồ thị và thiết bị
+đang định vị kèm vệt đường, bảng thiết bị, hộp thử chỉ đường, biểu đồ độ dịch giữa toạ độ thô
+và toạ độ đã gộp, bảng lịch sử. Trang hỏi `/predictions` mỗi 2 giây; thiết bị im lặng quá 20
+giây bị ẩn khỏi sơ đồ.

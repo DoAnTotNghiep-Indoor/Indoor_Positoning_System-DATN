@@ -576,7 +576,7 @@ tới từng khu vực. Lệch một hằng số ở một nơi thì cùng một
 hình đoán sai" nên rất khó lần ra.
 
 Cả ba lấy số từ `ban_do_tang1.json`, gồm cả số hạng dịch trục — số hạng này từng
-viết trần ở cả ba nơi mà không tệp nào khai nó. Nay nó có tên (`goc_met_x`) và được
+viết trần ở cả ba nơi mà không tệp nào khai nó. Nay nó có tên (`goc_x`) và được
 neo vào chính giá trị `x` nhỏ nhất trong bảng toạ độ đã đo.
 
 ---
