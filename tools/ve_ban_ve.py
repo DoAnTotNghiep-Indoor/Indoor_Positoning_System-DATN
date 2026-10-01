@@ -104,10 +104,10 @@ class Ve:
         self.rp = rp.dropna(subset=["x", "y"]).reset_index(drop=True)
 
     def _mx(self, px: float) -> float:
-        return (px - self.bd.luoi["x_min"]) / self.bd.px_moi_met_x + self.bd.goc_met_x
+        return (px - self.bd.luoi["x_min"]) / self.bd.px_moi_don_vi_x + self.bd.goc_x
 
     def _my(self, py: float) -> float:
-        return (self.bd.luoi["y_max"] - py) / self.bd.px_moi_met_y
+        return (self.bd.luoi["y_max"] - py) / self.bd.px_moi_don_vi_y
 
     def _nen(self, ax: plt.Axes, vat_can: bool = True) -> None:
         """Nét tường đen, vật cản xám nhạt, nền trắng."""
@@ -179,7 +179,7 @@ def hinh_mat_bang(v: Ve) -> Path:
     ax.set_title(
         "Bản vẽ thiết kế tầng 1 — Trung tâm Thông tin – Thư viện, Đại học Đà Lạt\n"
         f"nét đen: tường  ·  xám: kệ sách và vật cản  ·  "
-        f"{v.bd.px_moi_met_x:.2f} px/đơn vị lưới, 1 đơn vị = {met} m",
+        f"{v.bd.px_moi_don_vi_x:.2f} px/đơn vị lưới, 1 đơn vị = {met} m",
         fontsize=12.5, pad=14)
     ra = RA / "ban_ve_tang1.png"
     fig.tight_layout()
@@ -229,7 +229,7 @@ def hinh_vung_di_lai(v: Ve) -> Path:
     fig, ax = plt.subplots(figsize=(13.6, 8.6), dpi=130)
     v._nen(ax, vat_can=False)
 
-    dt_px = v.bd.px_moi_met_x * v.bd.px_moi_met_y / ty_le_quy_doi(v.bd)["met_moi_don_vi"] ** 2
+    dt_px = v.bd.px_moi_don_vi_x * v.bd.px_moi_don_vi_y / ty_le_quy_doi(v.bd)["met_moi_don_vi"] ** 2
     chu = []
     for k, i in enumerate(sorted(np.unique(v.bd.vung))[1:]):
         mask = v.bd.vung == i
@@ -323,7 +323,7 @@ MAU_CTK45 = {
 # Góc nghiêng toà nhà trên bản đồ Mapbox của họ, đo từ ảnh chụp trong báo cáo.
 #
 # Về sau đo lại trên ảnh Google Maps: lưới nhà nghiêng 21,75° so với trục bắc-nam
-# (mục 2.5.1 tài liệu thiết kế), nên con số này đúng — và cũng cho thấy khung
+# (mục 6.2 `docs/thiet_ke_he_thong.md`), nên con số này đúng — và cũng cho thấy khung
 # nhìn Mapbox của họ để hướng bắc lên trên, không xoay.
 #
 # Đây CHỈ là góc nghiêng để vẽ lại hình cho giống của họ. Phương vị của trục +y
@@ -338,7 +338,7 @@ def hinh_kieu_ctk45(v: Ve) -> Path:
     chấm đỏ từng điểm, và MỖI ĐIỂM MỘT NHÃN MANG TÊN NHÓM — nên "Cầu thang" in
     12 lần. Nhãn ở đây KHÔNG gỡ chồng, vì chính chỗ chồng nhau mới là thứ cần
     thấy. Không dựng được đa giác WC và bốn `Hallway1–4`: chúng chỉ có trong
-    GeoJSON vẽ tay vốn lệch hình học (mục 2.5.1 tài liệu thiết kế).
+    GeoJSON vẽ tay vốn lệch hình học.
     """
     xoay = Affine2D().rotate_deg(GOC_NGHIENG)
     q = np.array([xoay.transform((x, y)) for x, y in zip(v.rp["x"], v.rp["y"])])

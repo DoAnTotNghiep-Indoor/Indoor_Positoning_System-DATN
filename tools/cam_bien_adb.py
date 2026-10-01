@@ -12,7 +12,7 @@ Hai điều kiện quyết định giá trị có dùng được không:
    thì loại.
 
 Ba cột `Orientation *` ghi nhãn độ nhưng `combined_data.csv` lưu RADIAN, và
-`ml.config.AZIMUTH_IS_RADIAN = True` dựa vào đúng điều đó; ghi ra độ thì
+`ml.preprocess.build_scan_meta` đổi radian sang độ dựa vào đúng điều đó; ghi ra độ thì
 pipeline vẫn chạy êm mà azimuth lệch 57 lần. Thử cảm biến `Orientation` trước
 (đổi độ sang radian), không có thì dùng Rotation Vector; loại `Game` vì nó
 không tham chiếu bắc từ.

@@ -9,7 +9,7 @@ class LaBan extends ChangeNotifier {
   /// Phương vị trục +y của sơ đồ so với bắc, độ theo chiều kim đồng hồ.
   ///
   /// Đo trên ảnh Google Maps, ba đường độc lập khớp trong 3,5° — cách đo ghi ở
-  /// mục 2.5.1 tài liệu thiết kế. Đừng lẫn với góc NGHIÊNG 22° của lưới nhà so
+  /// mục 6.2 `docs/thiet_ke_he_thong.md`. Đừng lẫn với góc NGHIÊNG 22° của lưới nhà so
   /// với trục bắc-nam: lẫn hai đại lượng thì nón lệch 226°, gần như ngược hướng.
   static const gocBacSoDo = 248.5;
 

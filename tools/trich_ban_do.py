@@ -12,8 +12,7 @@ lưới đều đúng 16 px.
 
 ĐƠN VỊ LƯỚI ↔ PIXEL: lưới chấm trải 1000 × 605 px, hộp bao điểm tham chiếu
 86 × 52 đơn vị, cho 11,628 và 11,635 px/đơn vị — lưới chấm chính là hệ toạ độ
-Bảng 4. Khoá JSON vẫn tên `px_moi_met_*` để client cũ đọc được. Trục y HƯỚNG LÊN
-và trục x KHÔNG lật: đoạn thắt eo chỉ lọt theo chiều y đó, và khớp 39 điểm với
+Bảng 4. Trục y HƯỚNG LÊN và trục x KHÔNG lật: đoạn thắt eo chỉ lọt theo chiều y đó, và khớp 39 điểm với
 GPS trong POI.geojson cho RMS 3,15 so với 13,84 khi lật.
 
 ĐƠN VỊ LƯỚI ↔ MÉT: một đơn vị KHÔNG phải một mét. Hình 7 báo cáo CTK45 ghi bốn
@@ -181,17 +180,17 @@ class BanDo:
         # Hộp bao lấy từ chính bộ điểm chứ không viết cứng 86 x 52: ba con số
         # này phải đi cùng nhau, sửa toạ độ mà quên sửa hằng số là cả sơ đồ lệch
         # mà không có gì báo.
-        self.goc_met_x = float(rp["x"].min())
-        rong_m = float(rp["x"].max()) - self.goc_met_x
+        self.goc_x = float(rp["x"].min())
+        rong_m = float(rp["x"].max()) - self.goc_x
         cao_m = float(rp["y"].max()) - float(rp["y"].min())
 
-        self.px_moi_met_x = (self.luoi["x_max"] - self.luoi["x_min"]) / rong_m
-        self.px_moi_met_y = (self.luoi["y_max"] - self.luoi["y_min"]) / cao_m
+        self.px_moi_don_vi_x = (self.luoi["x_max"] - self.luoi["x_min"]) / rong_m
+        self.px_moi_don_vi_y = (self.luoi["y_max"] - self.luoi["y_min"]) / cao_m
         self._dich_ve_cho_di_duoc()
 
     def sang_pixel(self, x: float, y: float) -> tuple[float, float]:
-        return (self.luoi["x_min"] + (x - self.goc_met_x) * self.px_moi_met_x,
-                self.luoi["y_max"] - y * self.px_moi_met_y)
+        return (self.luoi["x_min"] + (x - self.goc_x) * self.px_moi_don_vi_x,
+                self.luoi["y_max"] - y * self.px_moi_don_vi_y)
 
     def _dich_ve_cho_di_duoc(self) -> None:
         """Kéo điểm rơi trúng nét vẽ về ô đi được gần nhất.
@@ -211,7 +210,7 @@ class BanDo:
             if self.vung[hang, cot]:
                 self.da_dich[rp] = 0.0
             else:
-                self.da_dich[rp] = float(xa[hang, cot]) / self.px_moi_met_x
+                self.da_dich[rp] = float(xa[hang, cot]) / self.px_moi_don_vi_x
                 hang, cot = int(chi_so[0, hang, cot]), int(chi_so[1, hang, cot])
             self.px[rp] = (cot, hang)
 
@@ -313,9 +312,9 @@ def tinh(bd: "BanDo") -> dict:
             "x_max_px": round(bd.luoi["x_max"], 2),
             "y_min_px": round(bd.luoi["y_min"], 2),
             "y_max_px": round(bd.luoi["y_max"], 2),
-            "px_moi_met_x": round(bd.px_moi_met_x, 4),
-            "px_moi_met_y": round(bd.px_moi_met_y, 4),
-            "goc_met_x": bd.goc_met_x,
+            "px_moi_don_vi_x": round(bd.px_moi_don_vi_x, 4),
+            "px_moi_don_vi_y": round(bd.px_moi_don_vi_y, 4),
+            "goc_x": bd.goc_x,
             "truc_y_huong_len": True,
         },
         "diem_lech_khoi_san": {
@@ -336,7 +335,7 @@ def tinh(bd: "BanDo") -> dict:
 def ty_le_quy_doi(bd: "BanDo") -> dict:
     net_den, _, _ = _tach_ba_lop(ANH)
     hang = np.nonzero(net_den.any(axis=1))[0]
-    cao = float(hang.max() - hang.min()) / bd.px_moi_met_y
+    cao = float(hang.max() - hang.min()) / bd.px_moi_don_vi_y
     return {"met_moi_don_vi": round(sum(CHIEU_DOC_HINH7_M) / cao, 4),
             "chieu_doc_hinh7_m": list(CHIEU_DOC_HINH7_M),
             "chieu_doc_duong_bao_don_vi": round(cao, 2),
@@ -400,7 +399,7 @@ def _ve_khoi_bo_sung(ax, bd: "BanDo") -> None:
 
     for x, y, rong, cao in KHOI_CAU_THANG_BO_SUNG:
         u, w = bd.sang_pixel(x - rong / 2, y + cao / 2)
-        ax.add_patch(Rectangle((u, w), rong * bd.px_moi_met_x, cao * bd.px_moi_met_y,
+        ax.add_patch(Rectangle((u, w), rong * bd.px_moi_don_vi_x, cao * bd.px_moi_don_vi_y,
                                facecolor=SAC_VAT_CAN_PNG, alpha=ALPHA_NEN_ANH,
                                edgecolor="none", zorder=1))
 
@@ -451,7 +450,7 @@ def ve_hinh(bd: BanDo, kq: dict) -> Path:
                     ha="center", fontsize=6.5, color="#1f4e79", zorder=6)
 
     ax.set_title("Đồ thị đi lại dựng trên sơ đồ mặt bằng thật — "
-                 f"{len(bd.toa_do)} điểm, {bd.px_moi_met_x:.2f} px/m")
+                 f"{len(bd.toa_do)} điểm, {bd.px_moi_don_vi_x:.2f} px/m")
     ax.legend(loc="lower center", ncol=3, fontsize=8, framealpha=0.9)
     ax.set_axis_off()
     fig.tight_layout()

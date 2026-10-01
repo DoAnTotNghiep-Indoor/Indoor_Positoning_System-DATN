@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "Wall",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "fid": 1, "material": "Brick" }, "geometry": { "type": "LineString", "coordinates": [ [ 108.445135780066906, 11.957105094926575 ], [ 108.445099394272276, 11.957184857064759 ] ] } },
+{ "type": "Feature", "properties": { "fid": 2, "material": "Brick" }, "geometry": { "type": "LineString", "coordinates": [ [ 108.445103437138357, 11.957000942677679 ], [ 108.445065029910637, 11.957016763275028 ], [ 108.445083222807995, 11.957054996381482 ], [ 108.445050206068387, 11.957069498592857 ], [ 108.44498012972312, 11.957041153360803 ] ] } },
+{ "type": "Feature", "properties": { "fid": 3, "material": "Brick" }, "geometry": { "type": "LineString", "coordinates": [ [ 108.444943743928491, 11.957416892242138 ], [ 108.444929593897228, 11.95738195514009 ], [ 108.444953851093672, 11.95737074889885 ], [ 108.444947786794572, 11.957350313987167 ], [ 108.444857496118956, 11.957313399304088 ] ] } },
+{ "type": "Feature", "properties": { "fid": 4, "material": "Brick" }, "geometry": { "type": "LineString", "coordinates": [ [ 108.444949808227648, 11.957029617509701 ], [ 108.444933636763352, 11.957071805762777 ] ] } }
+]
+}

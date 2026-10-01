@@ -1,0 +1,14 @@
+{
+"type": "FeatureCollection",
+"name": "Doors",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "fid": 1, "door_type": "Office door" }, "geometry": { "type": "Point", "coordinates": [ 108.444845367520784, 11.957231330035258 ] } },
+{ "type": "Feature", "properties": { "fid": 2, "door_type": "Office door" }, "geometry": { "type": "Point", "coordinates": [ 108.445162732507455, 11.95709355907819 ] } },
+{ "type": "Feature", "properties": { "fid": 3, "door_type": "Main entrance" }, "geometry": { "type": "Point", "coordinates": [ 108.445080527563974, 11.957222760551929 ] } },
+{ "type": "Feature", "properties": { "fid": 4, "door_type": "Main entrance" }, "geometry": { "type": "Point", "coordinates": [ 108.444908874208679, 11.957084330399132 ] } },
+{ "type": "Feature", "properties": { "fid": 5, "door_type": "Office door" }, "geometry": { "type": "Point", "coordinates": [ 108.445035213773394, 11.957434690386721 ] } },
+{ "type": "Feature", "properties": { "fid": 6, "door_type": "Main entrance" }, "geometry": { "type": "Point", "coordinates": [ 108.445017694687152, 11.957301863464586 ] } },
+{ "type": "Feature", "properties": { "fid": 7, "door_type": "Main entrance" }, "geometry": { "type": "Point", "coordinates": [ 108.445112533587093, 11.957071805762773 ] } }
+]
+}
