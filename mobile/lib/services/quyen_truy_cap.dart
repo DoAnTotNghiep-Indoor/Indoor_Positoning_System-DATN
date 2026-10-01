@@ -9,6 +9,7 @@ enum TrangThaiQuyen {
 
   /// Người dùng chọn "Không hỏi lại", hoặc thiết bị bị chính sách chặn. Hỏi
   /// tiếp không có tác dụng — chỉ mở được màn Cài đặt của hệ điều hành.
+  /// Trên Android, "không hỏi lại" chỉ thấy được qua kết quả [QuyenTruyCap.xin].
   biChan,
 }
 

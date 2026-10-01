@@ -1,141 +1,98 @@
 # IPS DLU — Ứng dụng di động
 
-Ứng dụng Flutter quét WiFi thật, gửi lên máy chủ và hiển thị vị trí người dùng
-trên sơ đồ mặt bằng tầng 1 Thư viện Đại học Đà Lạt.
+Ứng dụng Android định vị trong nhà cho tầng 1 Thư viện Đại học Đà Lạt. Ứng dụng
+quét WiFi, gửi lên máy chủ để dự đoán toạ độ, rồi hiển thị vị trí trên sơ đồ mặt
+bằng.
 
-Bố cục và bảng màu dựng theo frame thiết kế `ips-dlu-screens-v4.svg`; dữ liệu
-hiển thị thì lấy từ `GET /map` và `POST /predict`.
+Thiết kế giao diện: [Figma](https://www.figma.com/design/3dzSOBhBIhb3e9zkuWOiQS).
 
-> **Sản phẩm chính của đồ án** theo đề cương bản 24.9 (mục I, chương 5): người
-> dùng cuối định vị, xem bản đồ, tra cứu và được chỉ đường trên ứng dụng này. Web
-> Dashboard chỉ là công cụ giám sát cho quản trị viên.
+## Chức năng
+
+- **Định vị liên tục**: quét WiFi mỗi 5 giây khi app mở, dừng khi app chạy nền.
+- **Bản đồ**: sơ đồ tầng 1 (sáng/tối), chấm vị trí kèm nón hướng theo la bàn.
+- **Tra cứu**: tìm khu vực theo tên hoặc nhóm, popup có ảnh và giới thiệu.
+- **Chỉ đường**: vẽ tuyến từ vị trí hiện tại tới khu vực đã chọn.
+- **Cài đặt**: địa chỉ máy chủ, ngôn ngữ (Việt/Anh), chế độ sáng/tối. App nhớ
+  các tuỳ chọn này giữa hai lần mở.
+
+Máy chủ cung cấp `POST /predict`, `GET /map`, `POST /route`.
 
 ## Yêu cầu
 
-- Flutter **>= 3.27** (Dart >= 3.6) vì mã dùng `Color.withValues()`.
-- Máy Android thật hoặc máy ảo. Web chỉ dựng được giao diện: `wifi_scan` không
-  có bản cho trình duyệt.
-
-Đã kiểm chứng trên **Flutter 3.47.1 stable** (Dart 3.13.1) tại `D:\flutter`,
-Android SDK 36.0.0.
+- Flutter 3.47 stable (Dart 3.13), Android SDK 36.
+- Máy Android thật để định vị. Máy ảo chỉ dùng được để xem giao diện.
 
 ## Chạy
 
 ```bash
 cd mobile
 flutter pub get
-flutter run                  # chọn thiết bị Android
+flutter run
 flutter analyze
 flutter test
 ```
 
-Bản cài lên điện thoại để demo — chỉ arm64 (mọi máy Android đời mới), tách thông
-tin gỡ lỗi Dart ra `build/app/symbols`: APK 19,6 MB thay vì 55 MB của bản gộp ba
-kiến trúc. Bản debug chậm hơn nhiều, không dùng để đánh giá tốc độ.
+Bản cài để demo (arm64, khoảng 20 MB):
 
 ```bash
 flutter build apk --release --target-platform android-arm64 --obfuscate --split-debug-info=build/app/symbols
 adb install -r build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Máy chủ phải chạy trước (`uvicorn backend.main:app --host 0.0.0.0` ở thư mục
-gốc). Địa chỉ sửa trong màn **Cài đặt**, mặc định `http://10.0.2.2:8000` là lối
-tắt máy ảo Android gọi về máy đang chạy nó. Điện thoại thật thì đổi sang IP nội
-bộ của máy chủ, hoặc nối USB rồi `adb reverse tcp:8000 tcp:8000` để dùng luôn
-`http://127.0.0.1:8000`.
+Cần chạy máy chủ trước: `uvicorn backend.main:app --host 0.0.0.0` ở thư mục gốc.
+Đặt địa chỉ máy chủ trong **Cài đặt** như sau:
 
-Địa chỉ, ngôn ngữ và chế độ sáng/tối được nhớ giữa hai lần mở app.
+| Thiết bị | Địa chỉ |
+|---|---|
+| Máy ảo | `http://10.0.2.2:8000` (mặc định) |
+| Điện thoại cùng mạng | `http://<IP máy chủ>:8000` |
+| Điện thoại nối USB, đã chạy `adb reverse tcp:8000 tcp:8000` | `http://127.0.0.1:8000` |
+
+Khi ở ngoài thư viện, chạy máy chủ với `DEMO=true`. Máy chủ sẽ phát lại các lần
+quét thật đã ghi trong thư viện, nên app vẫn có vị trí và hiện nón hướng.
 
 ## Cấu trúc
 
 ```
 lib/
-├── main.dart                 App + AppShell: GlassScaffold, thanh tab kính, điều hướng bằng state
-├── theme/app_theme.dart      token màu sáng/tối (Mau), nhóm khu vực, ThemeData, cấu hình kính chung
-├── theme/app_settings.dart   chế độ màu, ngôn ngữ, địa chỉ máy chủ (lưu giữa hai lần mở)
+├── main.dart                 khung app, thanh tab, điều hướng
+├── theme/                    màu sáng/tối, cấu hình kính, tuỳ chọn người dùng
 ├── services/
-│   ├── theo_doi_vi_tri.dart  vòng quét 5 giây luôn bật khi app mở, trạng thái định vị và tuyến
-│   ├── api_dinh_vi.dart      POST /predict, GET /map, POST /route, phân loại lỗi
-│   ├── quet_wifi.dart        wifi_scan; quyen_truy_cap.dart; la_ban.dart (từ kế → hướng sơ đồ)
-├── data/                     floor_map (lưới ↔ pixel), khu_vuc, khu_vuc_thu_vien (SINH TỰ ĐỘNG), anh_khu_vuc
-├── widgets/
-│   ├── so_do_that.dart       sơ đồ: Map.png + lớp vẽ tĩnh (RP, nhãn) + lớp động (vị trí, la bàn, tuyến)
-│   ├── the_khu_vuc.dart      popup khu vực duy nhất: ảnh, giới thiệu, nút Chỉ đường
-│   └── chung.dart            thẻ đặc, pill vị trí kính, dòng khu vực dùng chung
+│   ├── theo_doi_vi_tri.dart  vòng quét 5 giây, trạng thái định vị và tuyến
+│   ├── api_dinh_vi.dart      gọi API, phân loại lỗi
+│   ├── quet_wifi.dart        quét WiFi
+│   ├── quyen_truy_cap.dart   quyền vị trí / thiết bị WiFi lân cận
+│   └── la_ban.dart           hướng la bàn → hướng trên sơ đồ
+├── data/                     đổi toạ độ mét ↔ pixel, danh sách khu vực, ảnh
+├── widgets/                  sơ đồ, popup khu vực, thành phần dùng chung
 ├── screens/                  Trang chủ, Bản đồ, Tìm kiếm, Cài đặt
-└── l10n/                     app_vi.arb, app_en.arb và mã sinh từ chúng
+└── l10n/                     chuỗi tiếng Việt/Anh (.arb) và mã sinh tự động
+assets/                       font Inter, SVG sơ đồ, ảnh khu vực
 ```
 
-Liquid glass (`liquid_glass_widgets`) chỉ dùng cho chrome nổi (thanh tab, pill, nút lọc,
-thẻ tuyến); nội dung là bề mặt đặc. Font Inter tĩnh ở `assets/fonts/`.
-
-`khu_vuc_thu_vien.dart` **không sửa tay**: sinh bằng `python -m tools.sinh_khu_vuc`
-từ `data/reference/reference_points.csv`.
+`data/khu_vuc_thu_vien.dart` được sinh tự động, **không sửa tay**. Sinh lại bằng
+`python -m tools.sinh_khu_vuc` từ `data/reference/reference_points.csv`.
 
 ## Ghi chú kỹ thuật
 
-**Chu kỳ quét 5 giây.** Android chặn ứng dụng nền trước ở 4 lần `startScan` mỗi
-2 phút. Quét dày hơn chỉ tốn pin để nhận lại kết quả cũ trong bộ đệm, nên con số
-này là giới hạn hệ điều hành chứ không phải tuỳ chọn.
+- **Chu kỳ 5 giây**: Android chỉ cho app quét 4 lần mỗi 2 phút. Quét dày hơn thì
+  chỉ nhận lại kết quả cũ.
+- **Hệ toạ độ**: phép đổi trong `lib/data/floor_map.dart` dùng chung bộ hằng số
+  với backend và Dashboard, lấy từ `data/reference/ban_do_tang1.json`.
+- **Không đủ AP thì không đoán**: máy chủ trả 422, app báo "chưa xác định vị trí"
+  thay vì giữ vị trí cũ.
+- **Giao diện**: chỉ thanh điều hướng và các nút nổi dùng hiệu ứng kính
+  (`liquid_glass_widgets`, khoá ở 0.30.2), nội dung dùng nền đặc.
+- **`permission_handler` giữ ở 12.x**: bản 13 cần compileSdk 37 và bản AGP mới hơn.
 
-**Hệ toạ độ.** Sơ đồ dùng phép đổi mét ↔ pixel trong `lib/data/floor_map.dart`, cùng
-một phép với backend và Dashboard web. Ba nơi giữ cùng bộ hằng số lấy từ
-`data/reference/ban_do_tang1.json`.
+## Môi trường Android
 
-**Không đủ AP thì không đoán.** Máy chủ trả 422 khi lần quét khớp ít AP hơn
-ngưỡng trong hợp đồng dữ liệu; ứng dụng xoá toạ độ cũ và nói rõ "chưa xác định
-vị trí" thay vì giữ tên phòng cũ trên màn hình.
+- Giữ **cmdline-tools 19.0**. Từ bản 20, `sdkmanager` không đọc được tên gói có
+  dấu `;` mà Gradle truyền vào, nên build APK bị crash.
+- Cảnh báo `SDK XML version 4 ... understands up to 3` là vô hại.
 
-**`kotlin.incremental=false`** trong `android/gradle.properties`: ứng dụng dùng
-Kotlin Gradle Plugin 2.4.0 còn `wifi_scan` khai Kotlin 1.8.21, cơ chế biên dịch
-tăng dần của Kotlin 2.x làm hỏng build. Gỡ dòng này khi nâng được `wifi_scan`.
+## Hạn chế
 
-## Trạng thái kiểm thử
-
-| Lệnh | Kết quả |
-|---|---|
-| `flutter analyze` | `No issues found!` |
-| `flutter test` | `All tests passed!` |
-| `flutter build apk --debug` | `✓ Built app-debug.apk` |
-
-| Tệp test | Nội dung |
-|---|---|
-| `api_test.dart` | Gọi `/predict`, `/map`, đọc JSON của `/route`, phân loại mã lỗi, địa chỉ máy chủ sai |
-
-Đã chạy trên máy Android thật — **Redmi K40 Pro (M2012K11C), Android 14** — nối
-qua `adb reverse tcp:8000`. Đứng ngoài thư viện nên khớp 0 trong 36 BSSID đã
-học: `GET /map` trả 200, kênh `WS /ws/location` mở được, mọi lần quét trả lỗi
-"không đủ AP" và ứng dụng nói rõ *"chỉ khớp 0 access point quen thuộc, cần ít
-nhất 6"* thay vì trả một toạ độ trong thư viện. Không lỗi Dart, không crash,
-không bản ghi nào lọt vào cơ sở dữ liệu.
-
-## Lưu ý về môi trường Android
-
-**Đừng đổi `cmdline-tools\latest` sang 23.0.** SDK đang cố ý dùng
-**cmdline-tools 19.0**. Từ bản 20 trở đi Google thay `sdkmanager` cũ bằng
-"Android CLI" mới, và wrapper mới tách tên gói ở dấu `;` — Gradle gọi
-`sdkmanager "ndk;28.2.13676358"` thì nó hiểu thành hai gói rời rồi crash
-(`0xC0000409`), build APK thất bại. Bản 23.0 vẫn giữ ở
-`...\Android\Sdk\cmdline-tools\23.0` để dùng khi Gradle hỗ trợ CLI mới.
-
-Cảnh báo `SDK XML version 4 ... understands up to 3` là hệ quả của việc này —
-vô hại, build vẫn đúng.
-
-Thiếu workload "Desktop development with C++" của Visual Studio chỉ chặn build
-app Windows desktop, không ảnh hưởng Android hay web.
-
-## Chưa làm
-
-- Nón hướng đã vẽ nhưng **chưa ai nhìn thấy nó chạy trên máy thật**: nón chỉ
-  hiện khi đã có toạ độ, mà ở ngoài thư viện thì mọi lần quét đều trả 422.
-- Phương vị dùng cho nón (`LaBan.gocBacSoDo`) đo trên ảnh Google Maps, còn sai
-  số dư dưới 1° do lệch giữa bắc thật và bắc từ — chưa hiệu chỉnh tại chỗ.
-- Chưa chụp ảnh màn hình bộ giao diện mới trên thiết bị thật.
-
-## Đã làm xong, ghi lại để khỏi hỏi lại
-
-- Tuyến đường vẽ lên sơ đồ bằng chuỗi chấm theo mét thật (`so_do_that.dart`).
-- La bàn: nón hướng mở 40° quanh chấm vị trí (`la_ban.dart`).
-- `WS /ws/location`: ứng dụng **không dùng** (đã gỡ ngày 30/09/2026), gửi lần quét
-  qua `POST /predict`. Kênh không làm vị trí dày hơn — nhịp 5 giây do Android chặn
-  quét WiFi quyết định.
+- Góc giữa sơ đồ và hướng bắc (`LaBan.gocBacSoDo`, 248,5°) đo trên ảnh vệ tinh.
+  Góc này chưa được kiểm tra bằng cách đứng trong thư viện và so nón hướng với
+  hướng thật.

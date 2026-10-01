@@ -20,13 +20,14 @@ dependencies:
   intl: ^0.20.3
 
   # Quét WiFi và xin quyền — phần đưa ứng dụng từ dữ liệu demo sang chạy thật.
-  wifi_scan: ^0.4.1+2
-  permission_handler: ^11.3.1
+  wifi_scan: ^0.5.0
+  permission_handler: ^12.0.1
   http: ^1.2.2
 
   # Nhớ địa chỉ máy chủ giữa hai lần mở app.
   shared_preferences: ^2.3.2
   flutter_compass: ^0.8.1
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -54,9 +55,9 @@ flutter:
   generate: true
 
   assets:
-    # Sơ đồ mặt bằng tầng 1 đã số hoá. Bản gốc ở data/reference/Map.png; chép
-    # sang đây vì Flutter chỉ đóng gói được asset nằm trong thư mục mobile/.
-    - assets/map/Map.png
+    # Sơ đồ tầng 1 vẽ lại từ bản của trường; sinh bằng tools/ve_so_do_tang1.py --app.
+    - assets/map/so_do_tang1.svg
+    - assets/map/so_do_tang1_toi.svg
 
     # Ảnh thật của 12 khu vực: 11 thư mục đầu do nhóm CTK45 chụp, `wc/` do nhóm
     # 15 chụp ngày 07/09/2026. Đều thu về cạnh dài 1024 px chất lượng 80 — thừa

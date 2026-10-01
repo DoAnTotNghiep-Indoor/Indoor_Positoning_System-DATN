@@ -118,11 +118,11 @@ class TheoDoiViTri extends ChangeNotifier {
   }
 
   Future<void> xuLyQuyen() async {
-    final tt = await _quyen.kiemTra();
-    if (tt == TrangThaiQuyen.biChan) {
+    // Xin thẳng: Android chỉ báo bị chặn qua kết quả request(), không qua status.
+    // Quyền đã bị chặn thì request() trả về ngay, không hiện hộp thoại.
+    if (await _quyen.xin() == TrangThaiQuyen.biChan) {
       await _quyen.moCaiDat();
     } else {
-      await _quyen.xin();
       _motVong();
     }
   }
