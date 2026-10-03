@@ -6,11 +6,12 @@ import 'package:flutter/widgets.dart';
 import '../data/floor_map.dart';
 import '../data/khu_vuc.dart';
 import 'api_dinh_vi.dart';
+import 'dinh_vi_tren_may.dart';
 import 'quet_wifi.dart';
 import 'quyen_truy_cap.dart';
 
-/// Vòng quét WiFi → `POST /predict` chạy liên tục khi app ở nền trước: quét
-/// xong là quét tiếp. Nhịp hẹn chỉ để gọi lại, `_dangBan` chặn hai vòng chồng
+/// Vòng quét WiFi → `POST /predict` (hoặc mô hình trên máy) chạy liên tục khi app
+/// ở nền trước: quét xong là quét tiếp. Nhịp hẹn chỉ để gọi lại, `_dangBan` chặn hai vòng chồng
 /// nhau. Máy phải tắt điều tiết quét Wi-Fi, không thì Android chỉ cho 4 lần
 /// quét mỗi 2 phút và phần lớn vòng chỉ đọc lại bộ đệm cũ.
 class TheoDoiViTri extends ChangeNotifier {
@@ -33,6 +34,10 @@ class TheoDoiViTri extends ChangeNotifier {
         _quyen = quyen;
 
   Timer? _hen;
+
+  bool _cucBo = false;
+  Future<MoHinhKDong>? _moHinh;
+  final _boGop = BoGop();
   bool _dangBan = false;
   bool _daHuy = false;
   bool _daXinQuyen = false;
@@ -95,6 +100,33 @@ class TheoDoiViTri extends ChangeNotifier {
     if (diaChi == _api.diaChi) return;
     _api.diaChi = diaChi;
     _banDo = const [];
+  }
+
+  void doiCheDo({required bool cucBo}) {
+    if (cucBo == _cucBo) return;
+    _cucBo = cucBo;
+    _boGop.quen();
+  }
+
+  /// Vẫn gửi lần quét lên máy chủ nhưng không chờ: máy chủ ghi lại cho Dashboard
+  /// và để phân tích sau buổi đo; mất mạng thì vị trí trên máy vẫn chạy.
+  Future<ViTri> _doanTrenMay(List<DiemTruyCap> quet) async {
+    unawaited(_api.duDoan(deviceId: deviceId, quet: quet).then((_) {}, onError: (_) {}));
+    final mo = await (_moHinh ??= MoHinhKDong.napTaiSan());
+    final dongHo = Stopwatch()..start();
+    final (x, y, soKhop) = mo.doan(quet);
+    final (xGop, yGop) = _boGop.them(x, y);
+    return ViTri(
+      x: x,
+      y: y,
+      xGop: xGop,
+      yGop: yGop,
+      moHinh: 'fingerprint_knn_dong',
+      soApKhop: soKhop,
+      soLanQuetDaGop: _boGop.soMau,
+      doTreMs: dongHo.elapsedMicroseconds / 1000,
+      cucBo: true,
+    );
   }
 
   void batDau() {
@@ -218,7 +250,9 @@ class TheoDoiViTri extends ChangeNotifier {
     unawaited(_taiBanDo());
     try {
       final quet = await _mayQuet.quet();
-      final vt = await _api.duDoan(deviceId: deviceId, quet: quet);
+      final vt = _cucBo
+          ? await _doanTrenMay(quet)
+          : await _api.duDoan(deviceId: deviceId, quet: quet);
       if (luot != _luot) return;
       _viTri = vt;
       _lucCapNhat = DateTime.now();

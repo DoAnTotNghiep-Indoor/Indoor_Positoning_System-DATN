@@ -10,7 +10,7 @@ Hệ thống định vị người dùng trong tầng 1 Thư viện Đại học
 
 | Thành phần | Thư mục | Làm gì |
 |---|---|---|
-| Ứng dụng Android (Flutter) | `mobile/` | Quét WiFi mỗi 5 giây, hiện vị trí và nón hướng la bàn trên sơ đồ, tra cứu khu vực, chỉ đường. Song ngữ Việt/Anh, sáng/tối |
+| Ứng dụng Android (Flutter) | `mobile/` | Quét WiFi liên tục, định vị qua máy chủ hoặc ngay trên máy, hiện vị trí và nón hướng la bàn trên sơ đồ, tra cứu khu vực, chỉ đường. Song ngữ Việt/Anh, sáng/tối |
 | Backend (FastAPI + SQLite) | `backend/` | Dự đoán toạ độ, gộp các lần quét, lưu lịch sử, phục vụ bản đồ và tìm đường |
 | Web Dashboard | `dashboard/` | Giám sát: sơ đồ với các thiết bị đang định vị và vệt đường, bảng thiết bị, thử chỉ đường, lịch sử. HTML/CSS/JS thuần, không thư viện ngoài |
 | Máy học | `ml/` | Tiền xử lý 12 bước, huấn luyện và so sánh 5 mô hình, đánh giá, vẽ biểu đồ |
@@ -33,8 +33,27 @@ Hệ thống định vị người dùng trong tầng 1 Thư viện Đại học
    thì bắt đầu lại.
 6. Ghi cả toạ độ thô lẫn toạ độ đã gộp vào SQLite (`data/ips.db`), trả kết quả về app.
 
-Android chỉ cho app quét 4 lần mỗi 2 phút nên chu kỳ 5 giây là giới hạn của hệ điều hành.
-Vì vậy hệ thống dùng REST: Dashboard hỏi `GET /predictions` mỗi 2 giây.
+App quét xong là quét tiếp, khoảng 2 giây một lần; máy phải tắt điều tiết quét Wi-Fi, còn bật
+thì Android chỉ cho 4 lần quét mỗi 2 phút. Với nhịp này REST là đủ: Dashboard hỏi
+`GET /predictions` mỗi 2 giây.
+
+### Định vị ngay trên điện thoại (Mô hình cục bộ)
+
+Bật **Mô hình cục bộ** trong Cài đặt của app thì bước 2–5 chạy ngay trên điện thoại, không
+chờ máy chủ:
+
+- `python -m ml.xuat_mo_hinh` xuất mô hình đang triển khai ra `mobile/assets/model/k_dong.json`
+  (khoảng 790 KB): 36 BSSID, tham số chuẩn hoá, 2.668 vân tay, 40 toạ độ, ngưỡng d1 và k lớn.
+  Không có trọng số nào cần học lại; kNN chỉ cần đúng bảng vân tay và các tham số này.
+- App (`mobile/lib/services/dinh_vi_tren_may.dart`) làm lại đúng thuật toán: ánh xạ BSSID,
+  chặn khi khớp dưới 6 AP, khoảng cách Bray-Curtis, chọn k = 1 hoặc k lớn, gộp 3 lần quét.
+  `flutter test` đối chiếu với 200 lần quét test do Python đoán: lệch dưới 10⁻⁶ đơn vị lưới.
+- App vẫn gửi `POST /predict` nhưng không chờ trả lời, nên máy chủ vẫn ghi lịch sử cho
+  Dashboard và để phân tích. Mất mạng thì vị trí trên máy vẫn chạy.
+- Bản đồ (`GET /map`) và chỉ đường (`POST /route`) vẫn cần máy chủ.
+
+Học lại mô hình thì phải chạy lại `ml.xuat_mo_hinh` rồi build lại app;
+`tests/test_xuat_mo_hinh.py` báo lỗi nếu quên.
 
 ### Mô hình kNN k động (Dynamic-k kNN)
 
@@ -107,7 +126,7 @@ Mọi bảng trong `reports/tables/` và số in ra từ `ml.*` tính theo đơn
 | Mô hình | Chia ngẫu nhiên (TB 10 seed) | Bỏ trọn một điểm | Khác đợt đo |
 |---|---:|---:|---:|
 | **kNN k động** | **2,30 ± 0,16** | 5,63 | **4,11** |
-| XGBoost | 3,23 ± 0,17 | **5,37** | 5,29 |
+| XGBoost | 3,20 ± 0,15 | **5,33** | 5,21 |
 | kNN | 3,32 ± 0,27 | 7,26 | 5,81 |
 | WKNN | 3,32 ± 0,15 | 6,19 | 5,39 |
 | Random Forest | 3,41 ± 0,14 | 5,68 | 5,46 |
@@ -121,7 +140,7 @@ Mọi bảng trong `reports/tables/` và số in ra từ `ml.*` tính theo đơn
   thời điểm, gần với lúc dùng thật nhất.
 
 k động dẫn đầu ở cột thứ nhất (cả 10 seed) và cột thứ ba; ở cột thứ hai XGBoost thấp hơn
-0,26 m. So với hai mô hình cơ sở kNN và WKNN, k động thấp hơn ở cả ba cột. Quét k = 1..61
+0,30 m. So với hai mô hình cơ sở kNN và WKNN, k động thấp hơn ở cả ba cột. Quét k = 1..61
 (`ml.quet_k`) cho thấy k = 1 tốt nhất khi chia ngẫu nhiên còn k lớn tốt nhất khi bỏ trọn
 một điểm. Đó là lý do chọn k động.
 
@@ -159,7 +178,10 @@ toạ độ chỉ từ các láng giềng cùng toà và tầng, còn ở đây 
 
 - Mô hình dự đoán khoảng 4 ms một lần quét; cả `/predict` (kèm gộp và ghi CSDL) khoảng
   10 ms; `/route` khoảng 7 ms.
-- APK release chỉ arm64: 19,6 MB.
+- Đo trên vivo X300, bản release, 200 lần quét test: mô hình cục bộ trung vị 0,72 ms mỗi lần
+  đoán; gọi `/predict` qua WiFi nội bộ khứ hồi trung vị 58 ms, phần lớn là mạng. Cả hai đều
+  nhỏ so với nhịp quét 2 giây.
+- APK release chỉ arm64: 20,5 MB (kể cả mô hình cục bộ).
 
 ## Cài đặt và chạy
 
@@ -198,6 +220,7 @@ với `DEMO=true`: máy chủ phát lại các lần quét thật của tập te
 python -m ml.pipeline         # tiền xử lý 12 bước -> artifacts/, data/processed/, data/splits/
 python -m ml.audit            # rà rò rỉ dữ liệu, độ ổn định, chất lượng buổi thu
 python -m ml.train            # huấn luyện 5 mô hình (--nhanh: lưới rút gọn) -> artifacts/, reports/tables/
+python -m ml.xuat_mo_hinh     # xuất kNN k động cho app -> mobile/assets/model/
 python -m ml.report           # biểu đồ -> reports/figures/
 python -m ml.on_dinh          # chia ngẫu nhiên 10 seed
 python -m ml.danh_gia_cheo    # bỏ trọn một điểm
@@ -208,7 +231,8 @@ python -m tools.danh_gia_chi_duong
 python -m tools.so_sanh_tim_duong
 ```
 
-Chạy `ml.pipeline` trước `ml.train`, và `ml.train` trước `ml.report`.
+Chạy `ml.pipeline` trước `ml.train`, và `ml.train` trước `ml.report`, `ml.xuat_mo_hinh`.
+Các bước học và đánh giá chạy song song trên mọi lõi CPU.
 
 ### Ứng dụng
 

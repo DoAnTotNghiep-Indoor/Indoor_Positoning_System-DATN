@@ -165,6 +165,16 @@ class LVi extends L {
   String get settingsServerHint => 'http://<IP>:8000';
 
   @override
+  String get settingsLocalModel => 'Mô hình cục bộ';
+
+  @override
+  String get settingsLocalModelSub =>
+      'Định vị ngay trên điện thoại, không cần máy chủ';
+
+  @override
+  String get liveOnDevice => 'trên máy';
+
+  @override
   String get settingsTheme => 'Chế độ màu';
 
   @override

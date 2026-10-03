@@ -110,6 +110,24 @@ sequenceDiagram
 - **Chu kỳ.** Ứng dụng quét xong là quét tiếp, chờ đúng sự kiện quét xong của hệ thống. Máy đo phải tắt điều tiết quét Wi-Fi; còn bật thì Android chỉ cho 4 lần quét
   mỗi 2 phút. Với nhịp này REST là đủ; hệ thống không dùng WebSocket.
 
+**Định vị trên máy (Mô hình cục bộ).** Tuỳ chọn trong Cài đặt của ứng dụng, mặc định tắt. Khi
+bật, ứng dụng tự làm các bước ánh xạ, chặn ngưỡng AP, mô hình và gộp ở trên, không chờ máy chủ:
+
+- Mô hình kNN k động không có trọng số cần học; "mô hình" là bảng vân tay cùng vài tham số.
+  `ml.xuat_mo_hinh` xuất phần này ra `mobile/assets/model/k_dong.json` (khoảng 790 KB): danh
+  sách 36 BSSID, giá trị điền thiếu, tham số min-max, 2.668 vân tay đã nâng mũ beta, nhãn và 40
+  toạ độ, ngưỡng d1, k lớn. Bước học vẫn chạy trên máy tính như cũ.
+- Mã Dart dịch đúng thuật toán Python. Hai bài kiểm giữ hai bên khớp nhau: `flutter test` so
+  với 200 lần quét test do Python đoán (lệch dưới 10⁻⁶ đơn vị lưới), còn pytest báo lỗi khi tệp
+  trong app lệch với mô hình vừa học.
+- Ứng dụng vẫn gửi `POST /predict` nhưng không chờ trả lời: máy chủ tiếp tục ghi CSDL cho
+  Dashboard và cho phân tích sau buổi đo, còn vị trí trên điện thoại không phụ thuộc mạng.
+- Đo trên vivo X300 (bản release, 200 lần quét): một lần đoán trên máy trung vị 0,72 ms; gọi
+  API qua WiFi nội bộ khứ hồi trung vị 58 ms, trong đó mô hình trên máy chủ 3,3 ms. Cả hai đều
+  nhỏ so với nhịp quét 2 giây, nên lợi ích chính là không cần mạng. Không dùng NPU (LiteRT):
+  kNN chỉ là phép tính khoảng cách, không phải mạng nơ-ron.
+- Bản đồ và chỉ đường vẫn lấy từ máy chủ.
+
 ## 4. Tiền xử lý và mô hình
 
 ### 4.1. Tiền xử lý
@@ -309,7 +327,7 @@ Lỗi: 404 khi điểm hoặc khu vực không tồn tại, 409 khi không có �
 | Trang chủ | Khu vực đang đứng, danh sách khu vực gần nhất |
 | Bản đồ | Sơ đồ tầng 1, chấm vị trí, nón hướng la bàn, tuyến đường, lọc theo nhóm khu vực |
 | Tìm kiếm | Tìm khu vực theo tên hoặc nhóm, không phân biệt dấu |
-| Cài đặt | Địa chỉ máy chủ, ngôn ngữ, chế độ sáng/tối, quyền truy cập |
+| Cài đặt | Mô hình cục bộ, địa chỉ máy chủ, ngôn ngữ, chế độ sáng/tối, quyền truy cập |
 
 Chạm một khu vực mở popup có ảnh, giới thiệu và nút Chỉ đường. Định vị chạy liên tục khi ứng
 dụng mở và dừng khi chạy nền. Hiệu ứng kính chỉ dùng cho thanh điều hướng và nút nổi; nội dung

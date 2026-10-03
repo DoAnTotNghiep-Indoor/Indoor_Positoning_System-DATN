@@ -41,21 +41,23 @@ class _IpsDluAppState extends State<IpsDluApp> {
   void initState() {
     super.initState();
     _vongDoi = AppLifecycleListener(onStateChange: _theoDoi.doiVongDoi);
-    // Nạp địa chỉ máy chủ đã lưu TRƯỚC khi quét, không thì vòng đầu gọi nhầm
+    // Nạp tuỳ chọn đã lưu TRƯỚC khi quét, không thì vòng đầu gọi nhầm
     // địa chỉ mặc định.
     _tuyChon.nap().whenComplete(() {
-      _dongBoMayChu();
-      _tuyChon.addListener(_dongBoMayChu);
+      _dongBo();
+      _tuyChon.addListener(_dongBo);
       _theoDoi.batDau();
     });
   }
 
-  void _dongBoMayChu() => _theoDoi.doiMayChu(_tuyChon.diaChiMayChu);
+  void _dongBo() => _theoDoi
+    ..doiMayChu(_tuyChon.diaChiMayChu)
+    ..doiCheDo(cucBo: _tuyChon.moHinhCucBo);
 
   @override
   void dispose() {
     _vongDoi.dispose();
-    _tuyChon.removeListener(_dongBoMayChu);
+    _tuyChon.removeListener(_dongBo);
     _theoDoi.dispose();
     _tuyChon.dispose();
     super.dispose();

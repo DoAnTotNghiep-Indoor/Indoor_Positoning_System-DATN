@@ -116,7 +116,9 @@ class _KhoiViTri extends StatelessWidget {
                 : null,
           )
         else if (vt != null)
-          Text(t.liveInfo(vt.soApKhop, vt.moHinh, so.format(vt.doTreMs)),
+          Text(t.liveInfo(vt.soApKhop,
+              vt.cucBo ? '${vt.moHinh} · ${t.liveOnDevice}' : vt.moHinh,
+              so.format(vt.doTreMs)),
               style: tt.labelMedium),
       ],
     );

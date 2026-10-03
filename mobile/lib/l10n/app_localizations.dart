@@ -379,6 +379,24 @@ abstract class L {
   /// **'http://<IP>:8000'**
   String get settingsServerHint;
 
+  /// No description provided for @settingsLocalModel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mô hình cục bộ'**
+  String get settingsLocalModel;
+
+  /// No description provided for @settingsLocalModelSub.
+  ///
+  /// In vi, this message translates to:
+  /// **'Định vị ngay trên điện thoại, không cần máy chủ'**
+  String get settingsLocalModelSub;
+
+  /// No description provided for @liveOnDevice.
+  ///
+  /// In vi, this message translates to:
+  /// **'trên máy'**
+  String get liveOnDevice;
+
   /// No description provided for @settingsTheme.
   ///
   /// In vi, this message translates to:

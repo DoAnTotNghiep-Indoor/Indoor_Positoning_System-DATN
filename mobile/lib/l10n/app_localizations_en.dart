@@ -165,6 +165,15 @@ class LEn extends L {
   String get settingsServerHint => 'http://<IP>:8000';
 
   @override
+  String get settingsLocalModel => 'On-device model';
+
+  @override
+  String get settingsLocalModelSub => 'Locate on the phone, no server needed';
+
+  @override
+  String get liveOnDevice => 'on device';
+
+  @override
   String get settingsTheme => 'Theme';
 
   @override

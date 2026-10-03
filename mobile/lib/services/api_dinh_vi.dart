@@ -5,12 +5,12 @@ import 'package:http/http.dart' as http;
 
 import 'quet_wifi.dart';
 
-/// Toạ độ trả về từ `POST /predict`, đơn vị lưới của sơ đồ.
+/// Toạ độ đơn vị lưới của sơ đồ, từ `POST /predict` hoặc tính trên máy.
 class ViTri {
   final double x;
   final double y;
 
-  /// Toạ độ sau khi máy chủ gộp vài lần quét gần nhau — toạ độ nên hiển thị.
+  /// Toạ độ sau khi gộp vài lần quét gần nhau — toạ độ nên hiển thị.
   final double xGop;
   final double yGop;
 
@@ -18,6 +18,9 @@ class ViTri {
   final int soApKhop;
   final int soLanQuetDaGop;
   final double doTreMs;
+
+  /// Tính ngay trên điện thoại (tuỳ chọn "Mô hình cục bộ"), không qua máy chủ.
+  final bool cucBo;
 
   const ViTri({
     required this.x,
@@ -28,6 +31,7 @@ class ViTri {
     required this.soApKhop,
     required this.soLanQuetDaGop,
     required this.doTreMs,
+    this.cucBo = false,
   });
 
   factory ViTri.tuJson(Map<String, dynamic> j) => ViTri(

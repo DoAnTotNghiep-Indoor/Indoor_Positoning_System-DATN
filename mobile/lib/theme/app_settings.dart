@@ -13,10 +13,12 @@ class AppSettings extends ChangeNotifier {
 
   /// 10.0.2.2 là lối máy ảo Android gọi về máy chạy nó; máy thật đổi trong Cài đặt.
   String _diaChiMayChu = 'http://10.0.2.2:8000';
+  bool _moHinhCucBo = false;
 
   ThemeMode get cheDo => _cheDo;
   Locale get ngonNgu => _ngonNgu;
   String get diaChiMayChu => _diaChiMayChu;
+  bool get moHinhCucBo => _moHinhCucBo;
 
   Future<void> nap() async {
     final kho = _kho;
@@ -25,6 +27,7 @@ class AppSettings extends ChangeNotifier {
       final cheDo = await kho.getString('che_do');
       final ngonNgu = await kho.getString('ngon_ngu');
       final mayChu = await kho.getString('dia_chi_may_chu');
+      _moHinhCucBo = await kho.getBool('mo_hinh_cuc_bo') ?? _moHinhCucBo;
       _cheDo = ThemeMode.values.asNameMap()[cheDo] ?? _cheDo;
       if (ngonNgu != null && ngonNgu.isNotEmpty) _ngonNgu = Locale(ngonNgu);
       if (mayChu != null && mayChu.isNotEmpty) _diaChiMayChu = mayChu;
@@ -48,6 +51,13 @@ class AppSettings extends ChangeNotifier {
     if (gt == _ngonNgu) return;
     _ngonNgu = gt;
     _luu('ngon_ngu', gt.languageCode);
+    notifyListeners();
+  }
+
+  void datMoHinhCucBo(bool gt) {
+    if (gt == _moHinhCucBo) return;
+    _moHinhCucBo = gt;
+    _kho?.setBool('mo_hinh_cuc_bo', gt).catchError((_) {});
     notifyListeners();
   }
 

@@ -58,7 +58,7 @@ Tổng quan hệ thống ở `README.md`, thiết kế ở `docs/thiet_ke_he_tho
 ```bash
 venv/Scripts/python -m pytest tests -q                  # test backend
 DEMO=true venv/Scripts/python -m uvicorn backend.main:app --host 0.0.0.0   # máy chủ phát lại quét thật
-venv/Scripts/python -m ml.pipeline && venv/Scripts/python -m ml.train      # tiền xử lý và huấn luyện
+venv/Scripts/python -m ml.pipeline && venv/Scripts/python -m ml.train && venv/Scripts/python -m ml.xuat_mo_hinh   # tiền xử lý, huấn luyện, xuất mô hình cho app
 cd mobile && flutter analyze && flutter test && flutter build apk --debug
 ```
 

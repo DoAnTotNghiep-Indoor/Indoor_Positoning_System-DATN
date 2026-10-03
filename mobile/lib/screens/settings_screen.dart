@@ -36,6 +36,17 @@ class SettingsScreen extends StatelessWidget {
               ),
               const Divider(indent: 56),
               _Dong(
+                icon: Icons.memory_rounded,
+                tieuDe: t.settingsLocalModel,
+                phu: t.settingsLocalModelSub,
+                cuoi: Switch(
+                  value: tuyChon.moHinhCucBo,
+                  onChanged: tuyChon.datMoHinhCucBo,
+                ),
+                onTap: () => tuyChon.datMoHinhCucBo(!tuyChon.moHinhCucBo),
+              ),
+              const Divider(indent: 56),
+              _Dong(
                 icon: Icons.dns_outlined,
                 tieuDe: t.settingsServer,
                 phu: t.settingsServerSub,
