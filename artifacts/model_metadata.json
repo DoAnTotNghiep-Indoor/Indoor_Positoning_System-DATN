@@ -1,5 +1,5 @@
 {
-  "huan_luyen_luc": "2026-10-01T11:17:29",
+  "huan_luyen_luc": "2026-10-03T18:16:32",
   "mo_hinh_active": "fingerprint_knn_dong",
   "file_active": "model_fingerprint_knn_dong.pkl",
   "hop_dong_du_lieu": {
@@ -22,8 +22,8 @@
         "metric": "manhattan"
       },
       "loi_validation": 9.550472853048428,
-      "giay_quet_luoi": 0.17,
-      "giay_huan_luyen": 0.0,
+      "giay_quet_luoi": 4.0,
+      "giay_huan_luyen": 0.012,
       "mo_hinh": "kNN",
       "so_mau": 473,
       "loi_trung_binh": 9.883384261275298,
@@ -38,7 +38,7 @@
       "cdf_50": 0.0,
       "cdf_75": 15.0,
       "cdf_90": 30.242318893347026,
-      "thoi_gian_du_doan_ms": 0.2666600001975894
+      "thoi_gian_du_doan_ms": 0.27305199997499585
     },
     "wknn": {
       "ten": "WKNN",
@@ -47,7 +47,7 @@
         "metric": "manhattan"
       },
       "loi_validation": 10.040226003389726,
-      "giay_quet_luoi": 0.07,
+      "giay_quet_luoi": 1.81,
       "giay_huan_luyen": 0.001,
       "mo_hinh": "WKNN",
       "so_mau": 473,
@@ -63,7 +63,7 @@
       "cdf_50": 6.771314736314234,
       "cdf_75": 14.31738005303903,
       "cdf_90": 23.87105924236652,
-      "thoi_gian_du_doan_ms": 0.3567100001964718
+      "thoi_gian_du_doan_ms": 0.37833600013982505
     },
     "random_forest": {
       "ten": "Random Forest",
@@ -72,8 +72,8 @@
         "max_depth": null
       },
       "loi_validation": 9.69597849584891,
-      "giay_quet_luoi": 5.74,
-      "giay_huan_luyen": 1.393,
+      "giay_quet_luoi": 4.7,
+      "giay_huan_luyen": 1.5,
       "mo_hinh": "Random Forest",
       "so_mau": 473,
       "loi_trung_binh": 9.595030693877288,
@@ -88,7 +88,7 @@
       "cdf_50": 6.7207725746375315,
       "cdf_75": 12.663558109788893,
       "cdf_90": 20.85713563842303,
-      "thoi_gian_du_doan_ms": 88.76422800007276
+      "thoi_gian_du_doan_ms": 88.13074399949983
     },
     "xgboost_model": {
       "ten": "XGBoost",
@@ -97,37 +97,37 @@
         "max_depth": 7,
         "learning_rate": 0.03,
         "subsample": 0.8,
-        "colsample_bytree": 1.0,
+        "colsample_bytree": 0.8,
         "reg_lambda": 1
       },
-      "loi_validation": 8.878386673483845,
-      "giay_quet_luoi": 541.75,
-      "giay_huan_luyen": 1.765,
+      "loi_validation": 8.83637385031682,
+      "giay_quet_luoi": 102.34,
+      "giay_huan_luyen": 2.952,
       "mo_hinh": "XGBoost",
       "so_mau": 473,
-      "loi_trung_binh": 9.158158623415442,
-      "loi_trung_vi": 6.771157842294815,
-      "loi_nho_nhat": 0.271682132425051,
-      "loi_lon_nhat": 83.22310957045609,
-      "loi_do_lech_chuan": 8.677663348405893,
-      "mae_x": 6.929162169257316,
-      "mae_y": 4.514663369251104,
-      "rmse_x": 10.849948938192366,
-      "rmse_y": 6.438347505262819,
-      "cdf_50": 6.771157842294815,
-      "cdf_75": 12.015301491287731,
-      "cdf_90": 19.713742812996347,
-      "thoi_gian_du_doan_ms": 1.8354839997482486
+      "loi_trung_binh": 9.01230974075682,
+      "loi_trung_vi": 6.583728762680338,
+      "loi_nho_nhat": 0.2867003367733514,
+      "loi_lon_nhat": 83.03390222719302,
+      "loi_do_lech_chuan": 8.726650002055989,
+      "mae_x": 6.826957579812401,
+      "mae_y": 4.453582657394777,
+      "rmse_x": 10.814034407700609,
+      "rmse_y": 6.358679654676068,
+      "cdf_50": 6.583728762680338,
+      "cdf_75": 11.555030019986015,
+      "cdf_90": 19.619148918008456,
+      "thoi_gian_du_doan_ms": 1.1748200003057718
     },
     "fingerprint_knn_dong": {
-      "ten": "kNN vân tay (Bray-Curtis), k động",
+      "ten": "kNN k động",
       "tham_so": {
         "beta": 3.5
       },
       "loi_validation": 6.280232106951057,
-      "giay_quet_luoi": 7.17,
-      "giay_huan_luyen": 2.631,
-      "mo_hinh": "kNN vân tay (Bray-Curtis), k động",
+      "giay_quet_luoi": 2.4,
+      "giay_huan_luyen": 1.858,
+      "mo_hinh": "kNN k động",
       "so_mau": 473,
       "loi_trung_binh": 6.625816932016666,
       "loi_trung_vi": 2.227405327783835,
@@ -141,7 +141,7 @@
       "cdf_50": 2.227405327783835,
       "cdf_75": 10.275127923645714,
       "cdf_90": 19.235598683114237,
-      "thoi_gian_du_doan_ms": 3.1720940000377595
+      "thoi_gian_du_doan_ms": 2.4937680002767593
     }
   },
   "hau_xu_ly_gop": {

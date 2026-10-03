@@ -1,9 +1,9 @@
-"""XGBoost Regression — mô hình chính của đồ án.
+"""XGBoost Regression — mô hình so sánh (gradient boosting); mô hình đề xuất là kNN k động.
 
 XGBoost không nhận nhãn hai cột nên bọc trong `MultiOutputRegressor`. Lớp bọc
 này huấn luyện HAI mô hình riêng biệt, một cho trục x một cho trục y.
 
-Lưới 648 tổ hợp, quét hết khoảng 11 phút;
+Lưới 648 tổ hợp, mỗi tổ hợp một tiến trình (`ml.train`);
 dùng `--nhanh` của `ml/train.py` khi thử. Vài tham số tối ưu nằm ở biên lưới,
 nhưng nới thêm một nấc chỉ đổi sai số validation dưới 0,1 m.
 """
@@ -51,7 +51,10 @@ def build(
         reg_lambda=reg_lambda,
         random_state=config.RANDOM_STATE,
         objective="reg:squarederror",
-        n_jobs=-1,
+        # Một luồng: cùng tham số và seed mà khác số luồng thì kết quả khác (đo được một
+        # dự đoán lệch hơn 10 đơn vị lưới giữa 1 và 16 luồng). `ml.train` chạy song song
+        # các tổ hợp lưới nên vẫn dùng hết lõi.
+        n_jobs=1,
         verbosity=0,
     )
     return MultiOutputRegressor(nen)

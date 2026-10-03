@@ -52,6 +52,19 @@ def khoang_tin_cay(loi: np.ndarray, so_lan: int = SO_LAN_BOOTSTRAP) -> tuple[flo
     return float(np.percentile(tb, 2.5)), float(np.percentile(tb, 97.5))
 
 
+def _mot_seed(fp, ap_cols, seed, chon, khoa) -> dict:
+    """Sai số trung bình trên test của từng mô hình, với một cách chia."""
+    d, ap = chia_lai(fp, ap_cols, seed)
+    hoc, thu = d[d["split"] != "test"], d[d["split"] == "test"]
+    ra = {}
+    for m in chon:
+        mo = m.build(**_tham_so(khoa[m.TEN], m)).fit(
+            hoc[ap].to_numpy(float), hoc[config.TARGET_COLS].to_numpy(float))
+        ra[m.TEN] = float(evaluate.khoang_cach_loi(
+            thu[config.TARGET_COLS].to_numpy(float), mo.predict(thu[ap].to_numpy(float))).mean())
+    return ra
+
+
 def run(so_seed: int = SO_SEED, ten_mo_hinh: list[str] | None = None,
         cho_phep_luoi_rut_gon: bool = False) -> pd.DataFrame:
     luoi = _luoi_da_dung()
@@ -66,15 +79,8 @@ def run(so_seed: int = SO_SEED, ten_mo_hinh: list[str] | None = None,
     khoa = {m.TEN: m.__name__.rsplit(".", 1)[-1] for m in chon}
 
     fp, ap_cols = nap_bang_rong()
-    theo_seed = {m.TEN: [] for m in chon}
-    for seed in range(so_seed):
-        d, ap = chia_lai(fp, ap_cols, seed)
-        hoc, thu = d[d["split"] != "test"], d[d["split"] == "test"]
-        for m in chon:
-            mo = m.build(**_tham_so(khoa[m.TEN], m)).fit(
-                hoc[ap].to_numpy(float), hoc[config.TARGET_COLS].to_numpy(float))
-            theo_seed[m.TEN].append(float(evaluate.khoang_cach_loi(
-                thu[config.TARGET_COLS].to_numpy(float), mo.predict(thu[ap].to_numpy(float))).mean()))
+    cac_seed = config.song_song(_mot_seed, [(fp, ap_cols, s, chon, khoa) for s in range(so_seed)])
+    theo_seed = {m.TEN: [s[m.TEN] for s in cac_seed] for m in chon}
 
     ap42 = json.loads((config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON).read_text(encoding="utf-8"))["ap_columns"]
     te = pd.read_csv(config.SPLITS_DIR / "test.csv")

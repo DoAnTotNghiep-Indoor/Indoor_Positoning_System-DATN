@@ -45,35 +45,40 @@ def _loi(mo_dun, k, X_hoc, Y_hoc, X_thu, Y_thu) -> np.ndarray:
     return evaluate.khoang_cach_loi(Y_thu, mo.predict(X_thu))
 
 
+def _mot_dong(mo_dun, k, tr_va, cac_seed, cac_gap) -> dict:
+    loi_va = _loi(mo_dun, k, *tr_va)
+    theo_seed = [_loi(mo_dun, k, *s).mean() for s in cac_seed]
+    bo_diem = np.concatenate([_loi(mo_dun, k, Xh, Yh, Xt, Yt) for _, Xh, Yh, Xt, Yt in cac_gap])
+    return {
+        "mo_hinh": mo_dun.TEN, "k": k,
+        "validation": loi_va.mean(),
+        "validation_dung_diem": float((loi_va < 1e-9).mean()),
+        "test_10_seed": float(np.mean(theo_seed)),
+        "test_10_seed_lech_chuan": float(np.std(theo_seed, ddof=1)),
+        "bo_diem": float(bo_diem.mean()),
+        "bo_diem_trung_vi": float(np.median(bo_diem)),
+    }
+
+
+def _hoc_thu(d: pd.DataFrame, a: list[str]) -> tuple:
+    hoc, thu = d[d["split"] != "test"], d[d["split"] == "test"]
+    return (hoc[a].to_numpy(float), hoc[config.TARGET_COLS].to_numpy(float),
+            thu[a].to_numpy(float), thu[config.TARGET_COLS].to_numpy(float))
+
+
 def run() -> pd.DataFrame:
     tap, ap = nap_du_lieu()
     tr, va = tap["train"], tap["validation"]
+    tr_va = (tr[ap].to_numpy(float), tr[config.TARGET_COLS].to_numpy(float),
+             va[ap].to_numpy(float), va[config.TARGET_COLS].to_numpy(float))
     fp, ap_cols = nap_bang_rong()
-    cac_seed = [chia_lai(fp, ap_cols, s) for s in range(SO_SEED)]
+    cac_seed = [_hoc_thu(*chia_lai(fp, ap_cols, s)) for s in range(SO_SEED)]
     cac_gap = chuan_bi_lan_gap(fp, ap_cols)
 
-    dong = []
-    for mo_dun in MO_HINH:
-        for k in CAC_K:
-            loi_va = _loi(mo_dun, k, tr[ap].to_numpy(float), tr[config.TARGET_COLS].to_numpy(float),
-                          va[ap].to_numpy(float), va[config.TARGET_COLS].to_numpy(float))
-            theo_seed = []
-            for d, a in cac_seed:
-                hoc, thu = d[d["split"] != "test"], d[d["split"] == "test"]
-                theo_seed.append(_loi(mo_dun, k, hoc[a].to_numpy(float), hoc[config.TARGET_COLS].to_numpy(float),
-                                      thu[a].to_numpy(float), thu[config.TARGET_COLS].to_numpy(float)).mean())
-            bo_diem = np.concatenate([_loi(mo_dun, k, Xh, Yh, Xt, Yt) for _, Xh, Yh, Xt, Yt in cac_gap])
-            dong.append({
-                "mo_hinh": mo_dun.TEN, "k": k,
-                "validation": loi_va.mean(),
-                "validation_dung_diem": float((loi_va < 1e-9).mean()),
-                "test_10_seed": float(np.mean(theo_seed)),
-                "test_10_seed_lech_chuan": float(np.std(theo_seed, ddof=1)),
-                "bo_diem": float(bo_diem.mean()),
-                "bo_diem_trung_vi": float(np.median(bo_diem)),
-            })
-            print(f"{mo_dun.TEN:28s} k={k:2d}  val {loi_va.mean():6.2f}  "
-                  f"10 seed {np.mean(theo_seed):6.2f}  bỏ điểm {bo_diem.mean():6.2f}  (đơn vị lưới)")
+    dong = config.song_song(_mot_dong, [(m, k, tr_va, cac_seed, cac_gap) for m in MO_HINH for k in CAC_K])
+    for r in dong:
+        print(f"{r['mo_hinh']:28s} k={r['k']:2d}  val {r['validation']:6.2f}  "
+              f"10 seed {r['test_10_seed']:6.2f}  bỏ điểm {r['bo_diem']:6.2f}  (đơn vị lưới)")
 
     bang = pd.DataFrame(dong)
     for cot in ("validation", "test_10_seed", "test_10_seed_lech_chuan", "bo_diem", "bo_diem_trung_vi"):

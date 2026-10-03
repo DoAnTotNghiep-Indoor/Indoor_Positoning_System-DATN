@@ -90,14 +90,14 @@ def chuan_bi_lan_gap(fp: pd.DataFrame, ap_cols: list[str]) -> list[tuple]:
     return ra
 
 
+def _loi_mot_gap(mo_dun, tham_so, Xh, Yh, Xt, Yt) -> np.ndarray:
+    return evaluate.khoang_cach_loi(Yt, mo_dun.build(**tham_so).fit(Xh, Yh).predict(Xt))
+
+
 def chay_mot_mo_hinh(mo_dun, cac_gap: list[tuple], tham_so: dict) -> np.ndarray:
     """Sai số từng mẫu qua toàn bộ các lần gấp, đơn vị mét."""
-    loi = []
-    for _, Xh, Yh, Xt, Yt in cac_gap:
-        mo_hinh = mo_dun.build(**tham_so)
-        mo_hinh.fit(Xh, Yh)
-        loi.append(evaluate.khoang_cach_loi(Yt, mo_hinh.predict(Xt)))
-    return np.concatenate(loi)
+    return np.concatenate(config.song_song(
+        _loi_mot_gap, [(mo_dun, tham_so, Xh, Yh, Xt, Yt) for _, Xh, Yh, Xt, Yt in cac_gap]))
 
 
 def run(ten_mo_hinh: list[str] | None = None,

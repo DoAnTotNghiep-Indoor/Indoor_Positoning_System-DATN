@@ -109,3 +109,10 @@ def ghi_csv(bang, duong_dan: Path, **kw) -> None:
     bang.to_csv(duong_dan, lineterminator="\n", **kw)
 
 
+
+
+def song_song(ham, cac_doi_so: list[tuple]) -> list:
+    """ham(*đối số) cho từng bộ, mỗi bộ một tiến trình trên mọi lõi; kết quả giữ thứ tự."""
+    from joblib import Parallel, delayed
+
+    return Parallel(n_jobs=-1)(delayed(ham)(*a) for a in cac_doi_so)

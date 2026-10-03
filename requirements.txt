@@ -10,7 +10,7 @@ pandas==3.0.5
 scikit-learn==1.9.0
 joblib==1.5.3
 
-# Mô hình chính. PHẢI khớp phiên bản này: model_xgboost_model.pkl được sinh ra
+# Mô hình so sánh. PHẢI khớp phiên bản này: model_xgboost_model.pkl được sinh ra
 # bằng 3.4.1, nạp lại bằng bản 2.x có thể lỗi định dạng.
 xgboost==3.4.1
 

@@ -63,24 +63,22 @@ def _to_hop(luoi: dict, bo_qua=None) -> list[dict]:
     return [t for t in ds if not (bo_qua and bo_qua(t))] or [{}]
 
 
+def _loi_mot_to_hop(module, tham_so, X_tr, y_tr, X_va, y_va) -> float:
+    model = module.build(**tham_so).fit(X_tr, y_tr)
+    return float(evaluate.khoang_cach_loi(y_va, model.predict(X_va)).mean())
+
+
 def quet_luoi(module, X_tr, y_tr, X_va, y_va, nhanh: bool = False) -> tuple[dict, float]:
-    """Thử mọi tổ hợp, trả về (tham số tốt nhất, sai số trung bình trên validation)."""
+    """Thử mọi tổ hợp, trả về (tham số tốt nhất, sai số trung bình trên validation).
+
+    Mỗi tổ hợp một tiến trình: dữ liệu nhỏ nên RF/XGBoost tự chia luồng trong một lần
+    học không tận dụng hết lõi. Hoà thì lấy tổ hợp đứng trước, như khi chạy tuần tự.
+    """
     luoi = getattr(module, "LUOI_NHANH", module.LUOI_THAM_SO) if nhanh else module.LUOI_THAM_SO
     to_hop = _to_hop(luoi, getattr(module, "to_hop_trung", None))
-
-    tot_nhat, loi_tot_nhat = None, float("inf")
-    for i, tham_so in enumerate(to_hop, 1):
-        model = module.build(**tham_so)
-        model.fit(X_tr, y_tr)
-        loi = evaluate.khoang_cach_loi(y_va, model.predict(X_va)).mean()
-
-        if loi < loi_tot_nhat:
-            tot_nhat, loi_tot_nhat = tham_so, loi
-
-        if len(to_hop) > 20 and i % max(1, len(to_hop) // 10) == 0:
-            print(f"        {i}/{len(to_hop)} tổ hợp · tốt nhất {loi_tot_nhat:.3f} m", flush=True)
-
-    return tot_nhat, loi_tot_nhat
+    loi = config.song_song(_loi_mot_to_hop, [(module, t, X_tr, y_tr, X_va, y_va) for t in to_hop])
+    i = int(np.argmin(loi))
+    return to_hop[i], loi[i]
 
 
 def huan_luyen_mot(module, tap: dict, ap_cols: list[str], nhanh: bool) -> dict:
