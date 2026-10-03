@@ -30,6 +30,7 @@ aiosqlite==0.22.1
 
 # --- Công cụ chạy một lần (tools/) ---
 pillow==12.3.0
+pyyaml==6.0.3
 scipy==1.18.1
 
 # --- Kiểm thử ---

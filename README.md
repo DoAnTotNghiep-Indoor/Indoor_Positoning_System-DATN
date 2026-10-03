@@ -61,8 +61,9 @@ Toạ độ dùng **đơn vị lưới** của bảng điểm tham chiếu (x t�
 với đa giác toà nhà trên OpenStreetMap. Phép đổi toạ độ ↔ pixel có ở ba nơi (Python, Dart,
 JavaScript), cùng lấy hằng số từ `ban_do_tang1.json`.
 
-App vẽ sơ đồ SVG (`mobile/assets/map/`, do `tools/ve_so_do_tang1.py` vẽ theo sơ đồ của
-trường) đặt trong cùng khung pixel với `Map.png`. Dashboard dùng thẳng `Map.png`.
+App vẽ sơ đồ SVG (`mobile/assets/map/`) đặt trong cùng khung pixel với `Map.png`. Hình học
+khai báo trong `data/reference/mat_bang_tang1.yaml` theo số viên gạch đếm tại chỗ (một viên ≈
+một đơn vị lưới), `tools/ve_so_do_tang1.py` vẽ ra SVG. Dashboard dùng thẳng `Map.png`.
 
 ### Chỉ đường
 
@@ -233,9 +234,10 @@ Xem `mobile/README.md`.
 
 - **Không có xác thực.** Ai vào được mạng LAN cũng xem được Dashboard và lịch sử vị trí của
   mọi thiết bị qua `GET /predictions`. `ALLOWED_ORIGINS` mặc định là `*`.
-- **Chưa kiểm thử trọn vẹn tại thư viện.** Luồng định vị và chỉ đường đã chạy trên máy
-  Android thật, chủ yếu qua chế độ demo. Góc giữa sơ đồ và hướng bắc (dùng cho nón hướng)
-  đo trên ảnh vệ tinh, chưa so tại chỗ.
+- **Sai số tại chỗ chưa đủ điểm.** Buổi đo 03/10/2026 mới so được 1 chỗ đứng biết toạ độ.
+  Góc giữa sơ đồ và hướng bắc (dùng cho nón hướng) đo trên ảnh vệ tinh, chưa so tại chỗ.
+- **Vị trí nhảy khi ở giữa các điểm tham chiếu.** Gần RP sai khoảng 1–2 m; ở giữa các RP,
+  tập láng giềng đổi theo dao động RSSI nên vị trí nhảy nhiều hướng (xem Hướng phát triển).
 - **Đợt B không có dữ liệu thô**: không có thời điểm quét, tên máy, hướng. Vì vậy đánh giá
   khác máy chỉ làm được ở mức đợt (một máy so với ba máy gộp), chưa tách từng máy hay
   từng buổi.
@@ -244,11 +246,48 @@ Xem `mobile/README.md`.
 - **Dữ liệu nhóm tự thu chưa dùng.** 7 điểm đo năm 2026 bằng Redmi K40 Pro
   (`data/raw/nhom15_2026/`) lệch RSSI so với máy Samsung của CTK45. Gộp vào thì sai số tăng,
   nên chưa gộp khi chưa đo được độ lệch giữa hai máy.
-- **Cửa và tỉ lệ chưa đo thực địa.** 15 cửa giả định và luật nối do nhóm đặt. Tỉ lệ
-  0,3508 m/đơn vị suy từ bản vẽ, chưa đo bằng thước. Quãng đường là cận dưới vì tuyến ôm sát
-  góc vật cản.
+- **Chỉ đường chưa theo sơ đồ mới.** Đồ thị đi lại vẫn dựng từ `Map.png` với 15 cửa giả
+  định, nên tuyến có thể cắt qua giếng hay lan can của sơ đồ đo lại. Tỉ lệ 0,3508 m/đơn vị đã
+  kiểm bằng đếm gạch tại chỗ (lệch 1%). Quãng đường là cận dưới vì tuyến ôm sát góc vật cản.
 - **Chưa đánh giá theo mật độ người.** Dữ liệu không ghi số người có mặt lúc đo, muốn làm
   phải đo lại vào giờ đông và giờ vắng.
+
+## Hướng phát triển
+
+### Ưu tiên kết quả theo hướng thiết bị
+
+Đo trên 2.045 dự đoán buổi 03/10/2026 (máy vivo X300): chỉ 1,9% lần quét đủ gần một vân tay
+để mô hình dùng k = 1; còn lại lấy trung bình 15 láng giềng. Bước nhảy thô giữa hai lần liên
+tiếp có trung vị 2,4 m, P90 6,9 m; 41,7% bước dài hơn 3 m, xa hơn quãng đi bộ giữa hai lần
+quét. Ở giữa các RP, lần quét giống vài RP gần ngang nhau, RSSI dao động vài dBm là tập láng
+giềng đổi sang cụm khác.
+
+Ý tưởng chưa làm: khi người dùng **đang đi**, ưu tiên ứng viên nằm phía trước theo hướng điện
+thoại đang chỉ.
+
+1. Ứng dụng gửi kèm mỗi lần quét: hướng (la bàn, đã quy về trục sơ đồ) và cờ đang đi / đứng
+   yên (gia tốc kế, biên độ rung theo nhịp bước).
+2. Máy chủ coi mỗi láng giềng của kNN là một ứng viên, nhân trọng số theo vị trí của nó so với
+   vị trí trước:
+   - đang đi: `e^(κ·cos Δθ)`, Δθ là góc giữa hướng tới ứng viên và hướng điện thoại; κ nhỏ,
+     ứng viên phía trước chỉ nặng gấp 2–3 lần phía sau, vì la bàn trong nhà bị thép làm lệch
+     và hướng cầm máy không luôn trùng hướng đi;
+   - đứng yên: không dùng hướng, ưu tiên ứng viên gần vị trí cũ (xoay máy tại chỗ không được
+     làm chấm trôi);
+   - luôn luôn: không dời quá tốc độ đi bộ (~1,5 m/s × thời gian giữa hai lần quét).
+3. Chạy song song với cách cũ, ghi cả hai cùng hướng và cờ đang đi vào CSDL; buổi đo sau đi
+   dọc vài đường ron biết toạ độ (ví dụ trục x = 0 từ cửa tới quầy), đứng tại vài chỗ đếm được
+   bằng gạch, rồi so độ nhảy và sai số của hai cách.
+
+Đã thử và **không** hiệu quả: chỉ so lần quét với vân tay thu ở hướng gần giống (đợt A, 802 lần
+quét có hướng). Chia ngẫu nhiên, k = 15: 1,85 m khi so mọi hướng, 2,35 m khi lọc ±90°, 3,67 m
+khi lọc ±45°. Bỏ trọn một điểm, k = 15: 4,69 / 4,59 / 4,86 m. Mỗi RP chỉ có vài lần quét mỗi
+hướng nên lọc bớt thì láng giềng bị kéo sang RP khác; đợt B lại không ghi hướng.
+
+Hai hướng khác cùng giải quyết chuyện nhảy, không cần thu thêm vân tay: bộ lọc hạt có mô hình
+bước chân và ràng buộc tường, giếng, lan can lấy từ `data/reference/mat_bang_tang1.yaml`; và
+làm dày bản đồ vô tuyến bằng nội suy (Gaussian process) giữa các RP, đánh giá bằng giao thức
+bỏ trọn một điểm.
 
 ## Tài liệu
 

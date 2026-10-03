@@ -17,11 +17,14 @@ class SoDoMatBang extends StatefulWidget {
   /// Nhóm đang lọc, null là tất cả. Ngoài nhóm thì làm mờ chứ không ẩn.
   final String? loc;
 
+  /// Ẩn chấm điểm tham chiếu; quầng của nhóm đang lọc vẫn vẽ.
+  final bool hienDiem;
+
   /// Phép biến đổi của `InteractiveViewer` bọc ngoài: chấm vị trí, nón hướng và
   /// tuyến chia kích thước cho mức phóng để giữ nguyên cỡ trên màn hình.
   final TransformationController? bienDoi;
 
-  const SoDoMatBang({super.key, this.loc, this.bienDoi});
+  const SoDoMatBang({super.key, this.loc, this.hienDiem = true, this.bienDoi});
 
   @override
   State<SoDoMatBang> createState() => _SoDoMatBangState();
@@ -83,6 +86,7 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
                   painter: _LopTinh(
                     diem: theoDoi.banDo,
                     loc: widget.loc,
+                    hienDiem: widget.hienDiem,
                     mau: m.nhan,
                     chu: m.chu,
                   ),
@@ -112,12 +116,14 @@ double _tiLe(Size s) => s.width / SoDoThat.khungRong;
 class _LopTinh extends CustomPainter {
   final List<DiemThamChieu> diem;
   final String? loc;
+  final bool hienDiem;
   final Color mau;
   final Color chu;
 
   _LopTinh({
     required this.diem,
     required this.loc,
+    required this.hienDiem,
     required this.mau,
     required this.chu,
   });
@@ -157,6 +163,7 @@ class _LopTinh extends CustomPainter {
       }
     }
 
+    if (!hienDiem) return;
     final r = (4 * s).clamp(2.0, 4.0);
     for (final d in diem) {
       final chon = l == null || d.nhom == l;
@@ -171,7 +178,11 @@ class _LopTinh extends CustomPainter {
 
   @override
   bool shouldRepaint(_LopTinh cu) =>
-      cu.diem != diem || cu.loc != loc || cu.mau != mau || cu.chu != chu;
+      cu.diem != diem ||
+      cu.loc != loc ||
+      cu.hienDiem != hienDiem ||
+      cu.mau != mau ||
+      cu.chu != chu;
 }
 
 class _LopDong extends CustomPainter {

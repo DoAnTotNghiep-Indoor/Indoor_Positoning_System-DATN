@@ -1,0 +1,263 @@
+[
+ {
+  "ten": "Trung tâm CNTT",
+  "en": "IT Center",
+  "x": -77.6,
+  "y": -40.5,
+  "icon": "may_tinh",
+  "cap": 1
+ },
+ {
+  "ten": "Hội trường",
+  "en": "Conference Hall",
+  "x": 83.6,
+  "y": -44.8,
+  "icon": "hoi_truong",
+  "cap": 1
+ },
+ {
+  "ten": "Phòng báo & tạp chí",
+  "en": "Periodicals",
+  "x": 23.5,
+  "y": 57.25,
+  "icon": "doc",
+  "cap": 2
+ },
+ {
+  "ten": "Phòng nghiệp vụ 2",
+  "en": "Technical Dept. 2",
+  "x": 17.5,
+  "y": 66.88,
+  "icon": "van_phong",
+  "cap": 2
+ },
+ {
+  "ten": "Phòng học nhóm",
+  "en": "Group Study",
+  "x": -17.5,
+  "y": 69.0,
+  "icon": "doc",
+  "cap": 2
+ },
+ {
+  "ten": "Phòng nghiệp vụ 1",
+  "en": "Technical Dept. 1",
+  "x": -37.75,
+  "y": 66.25,
+  "icon": "van_phong",
+  "cap": 2
+ },
+ {
+  "ten": "Phòng đọc sau đại học",
+  "en": "Postgraduate",
+  "x": 37.75,
+  "y": 66.25,
+  "icon": "doc",
+  "cap": 2
+ },
+ {
+  "ten": "Sảnh chờ",
+  "x": 37.0,
+  "y": 4.25,
+  "icon": "ghe",
+  "cap": 3
+ },
+ {
+  "ten": "Sảnh chờ",
+  "x": -37.0,
+  "y": 4.25,
+  "icon": "ghe",
+  "cap": 3
+ },
+ {
+  "ten": "Lên hội trường",
+  "x": 22.5,
+  "y": 4.25,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Lên TV3, TV4",
+  "x": -22.5,
+  "y": 4.25,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Xuống căn tin",
+  "x": 21.5,
+  "y": 11.0,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Xuống TV1, TV2",
+  "x": -21.5,
+  "y": 11.0,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Trước WC",
+  "x": 41.0,
+  "y": 12.85,
+  "icon": "wc",
+  "cap": 3
+ },
+ {
+  "ten": "Trước WC",
+  "x": -41.0,
+  "y": 12.85,
+  "icon": "wc",
+  "cap": 3
+ },
+ {
+  "ten": "Xuống WC",
+  "x": 41.25,
+  "y": 18.95,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Xuống WC",
+  "x": -41.25,
+  "y": 18.95,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "WC",
+  "x": 47.5,
+  "y": 11.25,
+  "icon": "wc",
+  "cap": 2
+ },
+ {
+  "ten": "WC",
+  "x": -47.5,
+  "y": 11.25,
+  "icon": "wc",
+  "cap": 2
+ },
+ {
+  "ten": "Cầu thang",
+  "x": 0.0,
+  "y": 17.0,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Bậc lên quầy",
+  "x": 0.0,
+  "y": 37.88,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Ban công",
+  "x": 12.75,
+  "y": 36.0,
+  "icon": "ghe",
+  "cap": 3
+ },
+ {
+  "ten": "Ban công",
+  "x": -12.75,
+  "y": 36.0,
+  "icon": "ghe",
+  "cap": 3
+ },
+ {
+  "ten": "Xuống",
+  "x": 21.5,
+  "y": 37.88,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Xuống",
+  "x": -21.5,
+  "y": 37.88,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Quầy thủ thư",
+  "x": 0.0,
+  "y": 57.25,
+  "icon": "quay",
+  "cap": 1
+ },
+ {
+  "ten": "Lên tầng 2",
+  "x": 36.0,
+  "y": 54.5,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Lên tầng 2",
+  "x": -36.0,
+  "y": 54.5,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Sảnh cửa chính",
+  "x": 0.0,
+  "y": 6.0,
+  "icon": "diem",
+  "cap": 1
+ },
+ {
+  "ten": "Cửa chính",
+  "x": 0.0,
+  "y": 1.2,
+  "icon": "cua",
+  "cap": 2
+ },
+ {
+  "ten": "Lối ra",
+  "x": -23.5,
+  "y": 57.0,
+  "icon": "cua",
+  "cap": 2
+ },
+ {
+  "ten": "Cửa sau",
+  "x": 0.0,
+  "y": 68.5,
+  "icon": "cua",
+  "cap": 2
+ },
+ {
+  "ten": "Khu tự học",
+  "en": "Reading Space",
+  "x": 27.0,
+  "y": 27.0,
+  "icon": "doc",
+  "cap": 1
+ },
+ {
+  "ten": "Khu tự học",
+  "en": "Reading Space",
+  "x": -27.0,
+  "y": 27.0,
+  "icon": "doc",
+  "cap": 1
+ },
+ {
+  "ten": "Khu đọc",
+  "x": 36.0,
+  "y": 44.0,
+  "icon": "doc",
+  "cap": 2
+ },
+ {
+  "ten": "Khu đọc",
+  "x": -36.0,
+  "y": 44.0,
+  "icon": "doc",
+  "cap": 2
+ }
+]

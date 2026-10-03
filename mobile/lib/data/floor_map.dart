@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 
 /// Phép đổi toạ độ lưới ↔ pixel. Lưới chấm `Map.png` trải 1000 × 605 px, đúng
 /// hộp bao 86 × 52 đơn vị của bộ điểm tham chiếu, nên lưới chấm chính là hệ toạ
@@ -8,15 +10,15 @@ import 'package:flutter/material.dart';
 class SoDoThat {
   SoDoThat._();
 
-  /// Sơ đồ vẽ lại từ bản của trường (`tools/ve_so_do_tang1.py`), cùng khung
-  /// pixel với `Map.png` nhưng mở rộng lên trên cho các phòng CTK45 khuyết và
-  /// xuống dưới cho hai toà CNTT, hội trường. Bốn số dưới là viewBox của hai tệp SVG.
+  /// Sơ đồ vẽ theo số đếm gạch tại chỗ (`tools/ve_so_do_tang1.py`), cùng khung
+  /// pixel với `Map.png`, cắt quanh khối giữa. Bốn số dưới là viewBox của hai tệp SVG.
   static const anh = 'assets/map/so_do_tang1.svg';
   static const anhToi = 'assets/map/so_do_tang1_toi.svg';
-  static const khungX = -745.6;
-  static const khungY = -195.4;
-  static const khungRong = 2539.9;
-  static const khungCao = 1754.7;
+  static const nhan = 'assets/map/nhan_tang1.json';
+  static const khungX = -580.2;
+  static const khungY = -282.0;
+  static const khungRong = 2209.3;
+  static const khungCao = 1547.4;
 
   /// Tâm khối thư viện (đơn vị lưới), để căn khi chưa có vị trí.
   static const tamToaX = 0.0;
@@ -57,4 +59,39 @@ class SoDoThat {
       (gocYPx - khung.dy / s - khungY) / pxMoiMetY,
     );
   }
+}
+
+/// Tên khu vực vẽ nổi trên sơ đồ: giữ đứng thẳng và giữ cỡ chữ khi xoay, phóng. Sinh cùng SVG từ
+/// `data/reference/mat_bang_tang1.yaml` nên toạ độ là đơn vị lưới.
+class NhanSoDo {
+  final String ten;
+  final String? en;
+  final double x;
+  final double y;
+  final String icon;
+
+  /// 1 luôn hiện; 2, 3 chỉ hiện khi đã phóng đủ to, để sơ đồ toàn cảnh không dày chữ.
+  final int cap;
+
+  const NhanSoDo(
+      {required this.ten,
+      this.en,
+      required this.x,
+      required this.y,
+      required this.icon,
+      required this.cap});
+
+  factory NhanSoDo.tuJson(Map<String, dynamic> j) => NhanSoDo(
+        ten: j['ten'] as String,
+        en: j['en'] as String?,
+        x: (j['x'] as num).toDouble(),
+        y: (j['y'] as num).toDouble(),
+        icon: j['icon'] as String,
+        cap: j['cap'] as int,
+      );
+
+  static Future<List<NhanSoDo>> tai([AssetBundle? goi]) async => [
+        for (final j in jsonDecode(await (goi ?? rootBundle).loadString(SoDoThat.nhan)) as List)
+          NhanSoDo.tuJson(j as Map<String, dynamic>)
+      ];
 }

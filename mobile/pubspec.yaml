@@ -55,9 +55,10 @@ flutter:
   generate: true
 
   assets:
-    # Sơ đồ tầng 1 vẽ lại từ bản của trường; sinh bằng tools/ve_so_do_tang1.py --app.
+    # Sơ đồ tầng 1 và nhãn nổi; sinh bằng tools/ve_so_do_tang1.py --app từ data/reference/mat_bang_tang1.yaml.
     - assets/map/so_do_tang1.svg
     - assets/map/so_do_tang1_toi.svg
+    - assets/map/nhan_tang1.json
 
     # Ảnh thật của 12 khu vực: 11 thư mục đầu do nhóm CTK45 chụp, `wc/` do nhóm
     # 15 chụp ngày 07/09/2026. Đều thu về cạnh dài 1024 px chất lượng 80 — thừa

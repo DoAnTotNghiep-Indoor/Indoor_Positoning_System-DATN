@@ -1,0 +1,126 @@
+# Mặt bằng tầng 1 thư viện — nguồn duy nhất cho sơ đồ SVG (tools/ve_so_do_tang1.py).
+#
+# Đơn vị: viên gạch lát sàn (~35 cm), trùng đơn vị lưới của điểm tham chiếu CTK45. Gốc (0; 0) là tâm ngưỡng
+# cửa chính; trục giữa x = 0 nằm trên đường ron; y tăng vào phía quầy; x dương về phía hội trường.
+#
+# Toạ độ là số hoặc biểu thức theo tên trong `moc` (ví dụ "chan_bac_quay - 2*sau_bac"): sửa một mốc thì mọi
+# phần tử dùng nó tự dịch theo.
+#
+# Mỗi phần tử: `loai` + một kiểu hình học:
+#   hcn: [x1, y1, x2, y2]          hình chữ nhật theo lưới
+#   hcn_tam: [x, y, rong, cao]     hình chữ nhật theo tâm, kèm `xoay` (độ, ngược chiều kim đồng hồ)
+#   diem: [[x, y], ...]            đa giác (vùng) hoặc đường gấp khúc (tường, lan can)
+#   tam: [x, y] + kich_thuoc       cột
+# Nhãn: phần tử có `ten` thành nhãn nổi trên app; `icon` (doc, van_phong, may_tinh, hoi_truong, wc, thang,
+# quay, cua, ghe, diem) mặc định suy từ loại / màu, `cap` 1-3 là mức phóng tối thiểu để hiện (1 luôn hiện).
+# Tuỳ chọn: doi_xung (sinh thêm bản đối xứng qua x = 0; tên dạng [trái, phải]), huong (cầu thang: +x, -x,
+# +y, -y — chiều đi lên), nguon (do_tai_cho | anh | ve_tinh | doan; khác do_tai_cho thì vẽ nét đứt),
+# ten, en, mau (nhóm màu của phòng / nhãn), co (cỡ chữ).
+
+moc:
+  tuong_ben: 45.5         # từ trục ra tường bên, ở sàn giữa và mức quầy
+  mep_san_duoi: 16.5      # sàn cửa chính rộng ±16,5; chân thang lên CNTT / hội trường
+  chan_thang_duoi: 15
+  dinh_thang_duoi: 19
+  chan_bac_quay: 36
+  sau_bac: 3.75           # bậc trước quầy và cầu thang nhỏ sâu như nhau
+  mep_quay: 52.75
+  sau_quay: 9
+  gian_quay: 8.5          # quầy 34 viên chia 1 : 2 : 1
+  thang_t2: 30            # chân thang lên tầng 2
+  sau_thang_len: 8.5      # thang lên hai toà rộng 8,5, sát tường cửa
+  dinh_thang_len: 28.5    # 14 bậc × 30 cm ≈ 12 viên
+  hang_cot: 20.7          # hàng cột giữa khu tự học (Map.png)
+  khoi_wc: 9              # khối lan can quanh lối xuống WC rộng 9 viên từ tường bên, sâu tới hàng cột
+  tuong_sau: 72           # sau quầy: theo sơ đồ trường, chưa đo
+
+phan_tu:
+  # --- Ngoài khối giữa ---------------------------------------------------------------------------------
+  # Hai toà xoay 45°, đọc từ viền mái trên ảnh vệ tinh đã chồng khung tầng 1
+  # (docs/tai_lieu_tham_khao/hinh_dang_thu_vien/ve_tinh_chong_tang1.png, 2,02 px mỗi viên).
+  - {loai: phong, ten: Trung tâm CNTT, en: IT Center, mau: dich_vu, co: 22, cap: 1, hcn_tam: [-77.6, -40.5, 78.2, 78.2], xoay: 45, nguon: ve_tinh}
+  - {loai: phong, ten: Hội trường, en: Conference Hall, mau: su_kien, co: 22, cap: 1, hcn_tam: [83.6, -44.8, 77.2, 77.2], xoay: 45, nguon: ve_tinh}
+  - {loai: cau_thang, hcn: [-10, -5, 10, -0.5], huong: +y, nguon: anh}
+
+  # --- Vỏ khối giữa ------------------------------------------------------------------------------------
+  - loai: vo
+    diem: [[-tuong_ben, 0], [tuong_ben, 0], [tuong_ben, tuong_sau], [42, tuong_sau + 3.5], [33, tuong_sau + 3.5],
+           [30, tuong_sau], [-30, tuong_sau], [-33, tuong_sau + 3.5], [-42, tuong_sau + 3.5], [-tuong_ben, tuong_sau]]
+  - {loai: vom, hcn: [-5, tuong_sau, 5, tuong_sau + 1.6]}
+  # Khu tự học tô màu; lối đi giữa toà rộng đúng bằng bậc thang (x ±8) để trống từ cầu thang dưới tới bậc lên quầy.
+  - {loai: vung, mau: hoc_tap, doi_xung: true,
+     diem: [[8, dinh_thang_duoi], [8, chan_bac_quay - sau_bac], [2*gian_quay, chan_bac_quay - sau_bac], [2*gian_quay, chan_bac_quay],
+            [26, chan_bac_quay], [26, 50], [tuong_ben, 50], [tuong_ben, hang_cot], [tuong_ben - khoi_wc, hang_cot],
+            [tuong_ben - khoi_wc, 13.5], [mep_san_duoi, 13.5], [mep_san_duoi, dinh_thang_duoi]]}
+
+  # --- Sau quầy (theo thứ tự trên sơ đồ trường, kích thước đoán) ----------------------------------------
+  - {loai: phong, ten: Phòng báo & tạp chí, en: Periodicals, mau: hoc_tap, co: 13, hcn: [17, mep_quay, thang_t2, mep_quay + sau_quay], nguon: doan}
+  - {loai: phong, ten: Phòng nghiệp vụ 2, en: Technical Dept. 2, mau: nghiep_vu, co: 13, hcn: [5, mep_quay + sau_quay, thang_t2, tuong_sau], nguon: doan}
+  - {loai: phong, ten: Phòng học nhóm, en: Group Study, mau: hoc_tap, co: 13, hcn: [-thang_t2, 66, -5, tuong_sau], nguon: doan}
+  - {loai: phong, ten: Phòng nghiệp vụ 1, en: Technical Dept. 1, mau: nghiep_vu, co: 13, nguon: doan,
+     diem: [[-tuong_ben, 57], [-thang_t2, 57], [-thang_t2, tuong_sau], [-33, tuong_sau + 3.5], [-42, tuong_sau + 3.5], [-tuong_ben, tuong_sau]]}
+  - {loai: phong, ten: Phòng đọc sau đại học, en: Postgraduate, mau: hoc_tap, co: 13, nguon: doan,
+     diem: [[tuong_ben, 57], [thang_t2, 57], [thang_t2, tuong_sau], [33, tuong_sau + 3.5], [42, tuong_sau + 3.5], [tuong_ben, tuong_sau]]}
+  - {loai: tuong, diem: [[-thang_t2, mep_quay], [-thang_t2, mep_quay + sau_quay], [5, mep_quay + sau_quay]], nguon: doan}
+
+  # --- Phía cửa chính (đếm gạch 03/10/2026) -------------------------------------------------------------
+  - {loai: san_cao, ten: Sảnh chờ, doi_xung: true, hcn: [dinh_thang_len, 0, tuong_ben, sau_thang_len], nguon: doan}
+  - {loai: cau_thang, ten: ["Lên TV3, TV4", Lên hội trường], doi_xung: true, huong: +x,
+     hcn: [mep_san_duoi, 0, dinh_thang_len, sau_thang_len]}
+  # Giếng chữ U xuống tầng 0: đợt đầu ~6 bậc từ x 14, rồi sàn lửng; đầu xa ước ngang đỉnh thang lên.
+  - {loai: gieng, ten: ["Xuống TV1, TV2", Xuống căn tin], doi_xung: true, hcn: [14, sau_thang_len, 29, 13.5]}
+  - {loai: cau_thang, doi_xung: true, huong: -x, hcn: [14, sau_thang_len, 19.5, 13.5]}
+  - {loai: lan_can, doi_xung: true, diem: [[14, sau_thang_len], [dinh_thang_len, sau_thang_len]]}
+  # Sàn trống trước WC, ngang sàn cửa chính, sát dưới sảnh chờ; xuống từ khu tự học bằng một cầu thang
+  # nay bị kệ sách chặn. Lan can bao cả thang lẫn sàn trống thành một khối 9 × ~13 viên (đếm tại chỗ);
+  # vị trí cầu thang trong khối ước theo ảnh.
+  - {loai: san_thap, ten: Trước WC, doi_xung: true, hcn: [tuong_ben - khoi_wc, sau_thang_len, tuong_ben, hang_cot - 3.5]}
+  - {loai: cau_thang, ten: Xuống WC, doi_xung: true, huong: +y, hcn: [39, hang_cot - 3.5, 43.5, hang_cot], nguon: anh}
+  - {loai: lan_can, doi_xung: true, diem: [[39, hang_cot], [tuong_ben - khoi_wc, hang_cot], [tuong_ben - khoi_wc, sau_thang_len]]}
+  - {loai: lan_can, doi_xung: true, diem: [[43.5, hang_cot], [tuong_ben, hang_cot]]}
+  - {loai: phong, ten: WC, mau: ve_sinh, co: 11, doi_xung: true, hcn: [tuong_ben, 9, 49.5, 13.5], nguon: doan}
+  - {loai: cua, doi_xung: true, diem: [[tuong_ben, 9.75], [tuong_ben, 12.75]], mo: -1}
+
+  # Sàn dưới, cầu thang dưới, cột. Cột nằm trên hai mép bậc thang lớn x = ±9; bậc chạy giữa mặt trong cột.
+  - {loai: cau_thang, ten: Cầu thang, huong: +y, hcn: [-8, chan_thang_duoi, 8, dinh_thang_duoi]}
+  - {loai: cot, doi_xung: true, tam: [9, 8], kich_thuoc: 2}
+  - {loai: cot, doi_xung: true, tam: [9, hang_cot], kich_thuoc: 2}   # cột lớn ở đầu trên cầu thang dưới
+  # Mép sàn giữa là một dải lan can liền từ cầu thang dưới tới khối WC (người đo xác nhận).
+  - {loai: lan_can, doi_xung: true, diem: [[10, dinh_thang_duoi], [mep_san_duoi, dinh_thang_duoi], [mep_san_duoi, 13.5], [tuong_ben - khoi_wc, 13.5]]}
+  - {loai: cua, diem: [[-5, 0], [5, 0]], mo: -1, doi: true}
+
+  # --- Sàn giữa (khu tự học) ----------------------------------------------------------------------------
+  - {loai: cot, doi_xung: true, tam: [22.3, hang_cot], kich_thuoc: 2, nguon: anh}   # theo Map.png
+  - {loai: cot, doi_xung: true, tam: [32.4, hang_cot], kich_thuoc: 2, nguon: anh}
+  - {loai: ke, doi_xung: true, hcn: [44.3, hang_cot + 1.5, tuong_ben, 31], nguon: anh}
+  - {loai: ke, doi_xung: true, hcn: [38.5, hang_cot + 0.2, 44, hang_cot + 1.2], nguon: anh}   # chắn lối xuống WC
+
+  # --- Mép trước mức quầy -------------------------------------------------------------------------------
+  - {loai: cau_thang, ten: Bậc lên quầy, huong: +y, hcn: [-8, chan_bac_quay, 8, chan_bac_quay + sau_bac]}
+  - {loai: cot, hinh: tron, doi_xung: true, tam: [9, 38.8], kich_thuoc: 2}
+  # Ban công vuông có sofa: bề ngang bằng gian quầy, sâu gấp đôi cầu thang nhỏ. Chiều nhô (về phía cửa) chưa chắc.
+  - {loai: ban_cong, ten: Ban công, doi_xung: true, nguon: anh,
+     hcn: [gian_quay, chan_bac_quay + sau_bac - 2*sau_bac, 2*gian_quay, chan_bac_quay + sau_bac]}
+  - {loai: lan_can, doi_xung: true, nguon: anh,
+     diem: [[gian_quay, chan_bac_quay], [gian_quay, chan_bac_quay - sau_bac], [2*gian_quay, chan_bac_quay - sau_bac], [2*gian_quay, chan_bac_quay]]}
+  - {loai: cau_thang, ten: Xuống, doi_xung: true, huong: +y, hcn: [2*gian_quay, chan_bac_quay, 26, chan_bac_quay + sau_bac]}
+  # Khu đọc hai bên (kệ dưới cửa sổ lớn), ngang sàn giữa, xuống từ cầu thang nhỏ.
+  - {loai: ke, doi_xung: true, hcn: [44.3, 40, tuong_ben, 49], nguon: anh}
+  - {loai: ke, doi_xung: true, hcn: [34, 48.8, 43, 50], nguon: anh}
+
+  # --- Mức quầy -----------------------------------------------------------------------------------------
+  - {loai: quay, hcn: [-2*gian_quay, mep_quay, -gian_quay, mep_quay + sau_quay]}
+  - {loai: quay, ten: Quầy thủ thư, cap: 1, hcn: [-gian_quay, mep_quay, gian_quay, mep_quay + sau_quay]}
+  - {loai: quay, hcn: [gian_quay, mep_quay, 2*gian_quay, mep_quay + sau_quay]}
+  - {loai: cau_thang, ten: Lên tầng 2, doi_xung: true, huong: +x, hcn: [thang_t2, mep_quay, 42, 56.25], nguon: doan}
+  - {loai: cua, doi_xung: true, diem: [[29, mep_quay], [thang_t2, 57]], mo: 1}
+  - {loai: cua, diem: [[22, mep_quay], [25.5, mep_quay]], mo: 1}
+  - {loai: cua, diem: [[-3, tuong_sau], [3, tuong_sau]], mo: 1, doi: true}
+
+  # --- Nhãn ---------------------------------------------------------------------------------------------
+  - {loai: nhan, tai: [0, 6], ten: Sảnh cửa chính, co: 15, cap: 1}
+  - {loai: nhan, tai: [0, 1.2], ten: Cửa chính, co: 12, icon: cua}
+  - {loai: nhan, tai: [-23.5, 57], ten: Lối ra, co: 12, icon: cua}
+  - {loai: nhan, tai: [0, 68.5], ten: Cửa sau, co: 12, icon: cua}
+  - {loai: nhan, doi_xung: true, tai: [27, 27], ten: Khu tự học, en: Reading Space, mau: hoc_tap, co: 20, cap: 1}
+  - {loai: nhan, doi_xung: true, tai: [36, 44], ten: Khu đọc, mau: hoc_tap, co: 15}
