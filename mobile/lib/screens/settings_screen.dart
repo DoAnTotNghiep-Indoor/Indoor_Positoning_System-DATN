@@ -32,7 +32,7 @@ class SettingsScreen extends StatelessWidget {
               _Dong(
                 icon: Icons.sync_rounded,
                 tieuDe: t.settingsScanCycle,
-                phu: t.settingsScanCycleSub(TheoDoiViTri.chuKy.inSeconds),
+                phu: t.settingsScanCycleSub,
               ),
               const Divider(indent: 56),
               _Dong(

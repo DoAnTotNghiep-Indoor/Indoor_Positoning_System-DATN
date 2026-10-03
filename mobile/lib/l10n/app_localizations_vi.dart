@@ -79,6 +79,21 @@ class LVi extends L {
   String get mapClearRoute => 'Xoá tuyến đường';
 
   @override
+  String get mapResetRotation => 'Đưa sơ đồ về hướng ban đầu';
+
+  @override
+  String get mapShowSection => 'Hiển thị';
+
+  @override
+  String get mapShowPoints => 'Điểm tham chiếu';
+
+  @override
+  String get mapShowLabels => 'Tên khu vực';
+
+  @override
+  String get mapAreaSection => 'Khu vực';
+
+  @override
   String searchResultCount(int count) {
     return '$count kết quả';
   }
@@ -174,9 +189,7 @@ class LVi extends L {
   String get settingsScanCycle => 'Định vị liên tục';
 
   @override
-  String settingsScanCycleSub(int giay) {
-    return 'Quét WiFi mỗi $giay giây khi ứng dụng đang mở';
-  }
+  String get settingsScanCycleSub => 'Quét WiFi liên tục khi ứng dụng đang mở';
 
   @override
   String get settingsPermission => 'Vị trí và WiFi';
@@ -234,7 +247,7 @@ class LVi extends L {
   String get errTimeout => 'Máy chủ không phản hồi kịp.';
 
   @override
-  String get mapFilter => 'Lọc khu vực';
+  String get mapFilter => 'Lớp bản đồ';
 
   @override
   String get buildingFull => 'Thư viện Đại học Đà Lạt';

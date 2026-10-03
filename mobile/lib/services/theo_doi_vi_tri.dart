@@ -9,11 +9,12 @@ import 'api_dinh_vi.dart';
 import 'quet_wifi.dart';
 import 'quyen_truy_cap.dart';
 
-/// Vòng quét WiFi → `POST /predict` chạy liên tục khi app ở nền trước.
-///
-/// Chu kỳ 5 giây vì Android chặn 4 lần `startScan` mỗi 2 phút.
+/// Vòng quét WiFi → `POST /predict` chạy liên tục khi app ở nền trước: quét
+/// xong là quét tiếp. Nhịp hẹn chỉ để gọi lại, `_dangBan` chặn hai vòng chồng
+/// nhau. Máy phải tắt điều tiết quét Wi-Fi, không thì Android chỉ cho 4 lần
+/// quét mỗi 2 phút và phần lớn vòng chỉ đọc lại bộ đệm cũ.
 class TheoDoiViTri extends ChangeNotifier {
-  static const chuKy = Duration(seconds: 5);
+  static const _nhip = Duration(seconds: 1);
 
   /// Đi được ngần này mét kể từ lần hỏi tuyến trước thì hỏi lại, kể cả khi vẫn
   /// gần cùng một điểm tham chiếu — không thì quãng đường còn lại đứng im.
@@ -100,7 +101,7 @@ class TheoDoiViTri extends ChangeNotifier {
     if (_hen != null) return;
     _luot++;
     _motVong();
-    _hen = Timer.periodic(chuKy, (_) => _motVong());
+    _hen = Timer.periodic(_nhip, (_) => _motVong());
   }
 
   void dungLai() {

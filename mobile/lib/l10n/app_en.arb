@@ -20,6 +20,11 @@
   "mapRouteChip": "{met} m to {noi}",
   "mapArrived": "Arrived at {noi}",
   "mapClearRoute": "Clear route",
+  "mapResetRotation": "Reset map rotation",
+  "mapShowSection": "Show",
+  "mapShowPoints": "Reference points",
+  "mapShowLabels": "Area names",
+  "mapAreaSection": "Areas",
   "searchResultCount": "{count} results",
   "searchEmpty": "No matching areas found",
   "searchEmptyHint": "Try another keyword or pick \"All\".",
@@ -50,7 +55,7 @@
   "settingsLanguageVi": "Tiếng Việt",
   "settingsLanguageEn": "English",
   "settingsScanCycle": "Continuous positioning",
-  "settingsScanCycleSub": "Scans WiFi every {giay} s while the app is open",
+  "settingsScanCycleSub": "Scans WiFi continuously while the app is open",
   "settingsPermission": "Location and WiFi",
   "settingsPermissionGranted": "Granted",
   "settingsPermissionMissing": "Tap to grant",
@@ -66,6 +71,6 @@
   "errServer": "Server returned error {ma}",
   "errBadFormat": "The app and the server could not parse each other's packets.",
   "errTimeout": "The server did not respond in time.",
-  "mapFilter": "Filter areas",
+  "mapFilter": "Map layers",
   "buildingFull": "Da Lat University Library"
 }

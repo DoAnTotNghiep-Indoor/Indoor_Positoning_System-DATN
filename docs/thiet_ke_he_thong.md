@@ -107,8 +107,8 @@ sequenceDiagram
 - **Gộp.** `BoGop` giữ 3 dự đoán gần nhất của mỗi thiết bị và trả dự đoán có tổng khoảng cách
   tới các dự đoán còn lại nhỏ nhất (đồng thuận không gian). Một lần quét lạc không kéo lệch kết
   quả như khi lấy trung bình hay EMA. Thiết bị im lặng quá 30 giây thì bắt đầu cửa sổ mới.
-- **Chu kỳ.** Android giới hạn 4 lần quét mỗi 2 phút, nên ứng dụng quét mỗi 5 giây. Với nhịp
-  này REST là đủ; hệ thống không dùng WebSocket.
+- **Chu kỳ.** Ứng dụng quét xong là quét tiếp, chờ đúng sự kiện quét xong của hệ thống. Máy đo phải tắt điều tiết quét Wi-Fi; còn bật thì Android chỉ cho 4 lần quét
+  mỗi 2 phút. Với nhịp này REST là đủ; hệ thống không dùng WebSocket.
 
 ## 4. Tiền xử lý và mô hình
 

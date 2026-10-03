@@ -26,9 +26,9 @@ from tools.ve_ban_ve import RA, Ve  # noqa: E402
 DANH_SACH = config.REFERENCE_DIR / "diem_can_do.csv"
 THU_MOI = config.RAW_DIR / "nhom15_2026"
 
-# Số lần quét mỗi điểm và giãn cách, khớp `tools.thu_van_tay` — dùng để ước
+# Số lần quét mỗi điểm và giây mỗi lần (6 s chờ quét + 5 s nghỉ), khớp `tools.thu_van_tay` — dùng để ước
 # lượng thời gian còn lại.
-SO_LAN, GIAY = 20, 45
+SO_LAN, GIAY = 20, 11
 
 
 def da_do() -> dict[str, int]:

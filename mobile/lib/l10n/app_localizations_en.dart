@@ -79,6 +79,21 @@ class LEn extends L {
   String get mapClearRoute => 'Clear route';
 
   @override
+  String get mapResetRotation => 'Reset map rotation';
+
+  @override
+  String get mapShowSection => 'Show';
+
+  @override
+  String get mapShowPoints => 'Reference points';
+
+  @override
+  String get mapShowLabels => 'Area names';
+
+  @override
+  String get mapAreaSection => 'Areas';
+
+  @override
   String searchResultCount(int count) {
     return '$count results';
   }
@@ -174,9 +189,8 @@ class LEn extends L {
   String get settingsScanCycle => 'Continuous positioning';
 
   @override
-  String settingsScanCycleSub(int giay) {
-    return 'Scans WiFi every $giay s while the app is open';
-  }
+  String get settingsScanCycleSub =>
+      'Scans WiFi continuously while the app is open';
 
   @override
   String get settingsPermission => 'Location and WiFi';
@@ -236,7 +250,7 @@ class LEn extends L {
   String get errTimeout => 'The server did not respond in time.';
 
   @override
-  String get mapFilter => 'Filter areas';
+  String get mapFilter => 'Map layers';
 
   @override
   String get buildingFull => 'Da Lat University Library';

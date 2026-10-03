@@ -217,6 +217,36 @@ abstract class L {
   /// **'Xoá tuyến đường'**
   String get mapClearRoute;
 
+  /// No description provided for @mapResetRotation.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đưa sơ đồ về hướng ban đầu'**
+  String get mapResetRotation;
+
+  /// No description provided for @mapShowSection.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiển thị'**
+  String get mapShowSection;
+
+  /// No description provided for @mapShowPoints.
+  ///
+  /// In vi, this message translates to:
+  /// **'Điểm tham chiếu'**
+  String get mapShowPoints;
+
+  /// No description provided for @mapShowLabels.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tên khu vực'**
+  String get mapShowLabels;
+
+  /// No description provided for @mapAreaSection.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khu vực'**
+  String get mapAreaSection;
+
   /// No description provided for @searchResultCount.
   ///
   /// In vi, this message translates to:
@@ -400,8 +430,8 @@ abstract class L {
   /// No description provided for @settingsScanCycleSub.
   ///
   /// In vi, this message translates to:
-  /// **'Quét WiFi mỗi {giay} giây khi ứng dụng đang mở'**
-  String settingsScanCycleSub(int giay);
+  /// **'Quét WiFi liên tục khi ứng dụng đang mở'**
+  String get settingsScanCycleSub;
 
   /// No description provided for @settingsPermission.
   ///
@@ -496,7 +526,7 @@ abstract class L {
   /// No description provided for @mapFilter.
   ///
   /// In vi, this message translates to:
-  /// **'Lọc khu vực'**
+  /// **'Lớp bản đồ'**
   String get mapFilter;
 
   /// No description provided for @buildingFull.

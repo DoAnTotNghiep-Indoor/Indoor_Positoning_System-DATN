@@ -1,7 +1,7 @@
 """Thu vân tay WiFi tại một điểm tham chiếu, qua cáp USB.
 
     python -m tools.thu_van_tay RP46 --nguoi-thu <MSSV>
-    python -m tools.thu_van_tay RP46 --nguoi-thu <MSSV> --so-lan 20 --giay 45
+    python -m tools.thu_van_tay RP46 --nguoi-thu <MSSV> --so-lan 20 --giay 5
 
 `--nguoi-thu` bắt buộc: 7 tệp buổi 06/09/2026 đứng tên nhầm vì mặc định cũ là mã
 người thu bộ CTK45. Xem `data/raw/nhom15_2026/README.md`.
@@ -12,8 +12,9 @@ Flutter; máy chỉ cần cắm cáp và bật gỡ lỗi USB. Ghi ra
 `combined_data.csv`, để RIÊNG vì hai máy đọc RSSI lệch nhau vài dBm — xem
 `data/raw/nhom15_2026/README.md`.
 
-45 giây một lần vì Android chặn 4 lần `startScan` mỗi 2 phút; quét dày hơn
-chỉ nhận lại bộ đệm cũ, và công cụ phát hiện việc đó bằng cột `Age`.
+Máy phải tắt "Điều tiết quét Wi-Fi" trong Tuỳ chọn nhà phát triển, không thì
+Android chỉ cho 4 lần quét mỗi 2 phút: phải đặt `--giay 45`, quét dày hơn chỉ
+nhận lại bộ đệm cũ (công cụ bỏ AP cũ bằng cột `Age`).
 
 Chuẩn bị máy trước khi đo — thiếu là cột rỗng:
 
@@ -219,8 +220,8 @@ def main() -> None:
     bo.add_argument("rp_id", help="mã điểm, ví dụ RP46")
     bo.add_argument("--so-lan", type=int, default=20,
                     help="số lần quét, mặc định 20 như buổi thu 2025")
-    bo.add_argument("--giay", type=float, default=45.0,
-                    help="giãn cách giữa hai lần quét, mặc định 45")
+    bo.add_argument("--giay", type=float, default=5.0,
+                    help="nghỉ giữa hai lần quét (ngoài 6 s chờ quét), mặc định 5")
     # BẮT BUỘC, không có mặc định. Trước đây mặc định là 2212343 — mã người thu
     # bộ CTK45 lấy từ `combined_data.csv` — nên cả 7 tệp buổi 06/09/2026 đều đứng
     # tên nhầm người. Bắt gõ tay để lỗi đó không lặp lại lặng lẽ.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:wifi_scan/wifi_scan.dart';
 
 class DiemTruyCap {
@@ -19,6 +21,12 @@ class NgoaiLeQuet implements Exception {
 }
 
 class MayQuetWifi {
+  StreamSubscription<List<WiFiAccessPoint>>? _nghe;
+  Completer<List<WiFiAccessPoint>>? _cho;
+
+  /// Chờ đúng lúc hệ thống báo quét xong thay vì ngủ một khoảng cố định: ngủ
+  /// ngắn thì đọc phải bộ đệm của lần trước, ngủ dài thì phí thời gian.
+  ///
   /// Hạ BSSID về chữ thường: `feature_list.json` lưu chữ thường và backend ánh xạ
   /// theo đúng chuỗi, mà máy Android trả hoa hay thường tuỳ hãng — không chuẩn
   /// hoá thì số AP khớp về 0 mà không báo lỗi gì.
@@ -26,16 +34,23 @@ class MayQuetWifi {
     final co = await WiFiScan.instance.canStartScan();
     if (co != CanStartScan.yes) throw NgoaiLeQuet(_doiLoi(co));
 
-    // Android giới hạn 4 lần startScan mỗi 2 phút cho ứng dụng nền trước. Quá
-    // hạn thì lệnh trả false, nhưng kết quả lần quét gần nhất vẫn còn trong bộ
-    // đệm hệ thống — dùng lại còn hơn báo lỗi cho người dùng.
-    await WiFiScan.instance.startScan();
-    await Future.delayed(const Duration(seconds: 2));
-
     final doc = await WiFiScan.instance.canGetScannedResults();
     if (doc != CanGetScannedResults.yes) throw NgoaiLeQuet(_doiLoiDoc(doc));
 
-    final ds = await WiFiScan.instance.getScannedResults();
+    // Plugin phát ngay bộ đệm cũ khi vừa đăng ký; sự kiện đó về trước kết quả
+    // của startScan nên rơi vào lúc `_cho` còn null và bị bỏ qua.
+    _nghe ??= WiFiScan.instance.onScannedResultsAvailable.listen((ds) {
+      final c = _cho;
+      if (c != null && !c.isCompleted) c.complete(ds);
+    });
+    // startScan trả false khi máy còn bật giới hạn quét (Tuỳ chọn nhà phát
+    // triển > Điều tiết quét Wi-Fi) hoặc đang bận: đọc luôn bộ đệm hiện có.
+    final ds = await WiFiScan.instance.startScan()
+        ? await (_cho = Completer()).future.timeout(
+            const Duration(seconds: 10),
+            onTimeout: WiFiScan.instance.getScannedResults)
+        : await WiFiScan.instance.getScannedResults();
+    _cho = null;
     return [
       for (final ap in ds)
         if (ap.bssid.isNotEmpty)

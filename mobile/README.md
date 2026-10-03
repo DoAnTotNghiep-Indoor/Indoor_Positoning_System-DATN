@@ -8,7 +8,9 @@ Thiết kế giao diện: [Figma](https://www.figma.com/design/3dzSOBhBIhb3e9zku
 
 ## Chức năng
 
-- **Định vị liên tục**: quét WiFi mỗi 5 giây khi app mở, dừng khi app chạy nền.
+- **Định vị liên tục**: quét xong là quét tiếp khi app mở, dừng khi app
+  chạy nền. Máy cần tắt **Điều tiết quét Wi-Fi** trong Tuỳ chọn nhà phát triển; còn bật thì
+  Android chỉ cho 4 lần quét mỗi 2 phút và app đọc lại kết quả cũ.
 - **Bản đồ**: sơ đồ tầng 1 (sáng/tối), chấm vị trí kèm nón hướng theo la bàn.
 - **Tra cứu**: tìm khu vực theo tên hoặc nhóm, popup có ảnh và giới thiệu.
 - **Chỉ đường**: vẽ tuyến từ vị trí hiện tại tới khu vực đã chọn.
@@ -47,6 +49,7 @@ Cần chạy máy chủ trước: `uvicorn backend.main:app --host 0.0.0.0` ở 
 | Máy ảo | `http://10.0.2.2:8000` (mặc định) |
 | Điện thoại cùng mạng | `http://<IP máy chủ>:8000` |
 | Điện thoại nối USB, đã chạy `adb reverse tcp:8000 tcp:8000` | `http://127.0.0.1:8000` |
+| Khác mạng (WiFi thư viện chặn máy nhìn nhau), chạy `cloudflared tunnel --url http://localhost:8000` | `https://<tên>.trycloudflare.com` |
 
 Khi ở ngoài thư viện, chạy máy chủ với `DEMO=true`. Máy chủ sẽ phát lại các lần
 quét thật đã ghi trong thư viện, nên app vẫn có vị trí và hiện nón hướng.

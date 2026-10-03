@@ -67,6 +67,11 @@
     }
   },
   "mapClearRoute": "Xoá tuyến đường",
+  "mapResetRotation": "Đưa sơ đồ về hướng ban đầu",
+  "mapShowSection": "Hiển thị",
+  "mapShowPoints": "Điểm tham chiếu",
+  "mapShowLabels": "Tên khu vực",
+  "mapAreaSection": "Khu vực",
   "searchResultCount": "{count} kết quả",
   "@searchResultCount": {
     "placeholders": {
@@ -111,14 +116,7 @@
   "settingsLanguageVi": "Tiếng Việt",
   "settingsLanguageEn": "English",
   "settingsScanCycle": "Định vị liên tục",
-  "settingsScanCycleSub": "Quét WiFi mỗi {giay} giây khi ứng dụng đang mở",
-  "@settingsScanCycleSub": {
-    "placeholders": {
-      "giay": {
-        "type": "int"
-      }
-    }
-  },
+  "settingsScanCycleSub": "Quét WiFi liên tục khi ứng dụng đang mở",
   "settingsPermission": "Vị trí và WiFi",
   "settingsPermissionGranted": "Đã cấp",
   "settingsPermissionMissing": "Chạm để cấp quyền",
@@ -165,6 +163,6 @@
   },
   "errBadFormat": "Ứng dụng và máy chủ không hiểu gói tin của nhau.",
   "errTimeout": "Máy chủ không phản hồi kịp.",
-  "mapFilter": "Lọc khu vực",
+  "mapFilter": "Lớp bản đồ",
   "buildingFull": "Thư viện Đại học Đà Lạt"
 }
