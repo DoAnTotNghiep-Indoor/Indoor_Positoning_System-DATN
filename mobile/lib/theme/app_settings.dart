@@ -11,13 +11,27 @@ class AppSettings extends ChangeNotifier {
   ThemeMode _cheDo = ThemeMode.system;
   Locale _ngonNgu = const Locale('vi');
 
-  /// 10.0.2.2 là lối máy ảo Android gọi về máy chạy nó; máy thật đổi trong Cài đặt.
-  String _diaChiMayChu = 'http://10.0.2.2:8000';
+  /// Máy chủ của đồ án trên VM, ra ngoài qua Cloudflare Tunnel. DEMO phát lại lần quét
+  /// thật ở thư viện để trình diễn ở nơi khác; mỗi bản một CSDL riêng.
+  static const mayChuCoSan = {
+    'IPS DLU PROD': 'https://dlu-ips.etylix.me',
+    'IPS DLU DEMO': 'https://dlu-ips-demo.etylix.me',
+  };
+
+  String _diaChiMayChu = mayChuCoSan['IPS DLU PROD']!;
   bool _moHinhCucBo = false;
 
   ThemeMode get cheDo => _cheDo;
   Locale get ngonNgu => _ngonNgu;
   String get diaChiMayChu => _diaChiMayChu;
+
+  /// Tên máy chủ có sẵn đang dùng; null là địa chỉ tự nhập.
+  String? get tenMayChu {
+    for (final e in mayChuCoSan.entries) {
+      if (e.value == _diaChiMayChu) return e.key;
+    }
+    return null;
+  }
   bool get moHinhCucBo => _moHinhCucBo;
 
   Future<void> nap() async {

@@ -8,9 +8,9 @@ Thiết kế giao diện: [Figma](https://www.figma.com/design/3dzSOBhBIhb3e9zku
 
 ## Chức năng
 
-- **Định vị liên tục**: quét xong là quét tiếp khi app mở, dừng khi app
-  chạy nền. Máy cần tắt **Điều tiết quét Wi-Fi** trong Tuỳ chọn nhà phát triển; còn bật thì
-  Android chỉ cho 4 lần quét mỗi 2 phút và app đọc lại kết quả cũ.
+- **Định vị liên tục**: gọi quét mỗi 1 giây khi app mở, dừng khi app chạy nền. Máy cần tắt
+  **Điều tiết quét Wi-Fi** trong Tuỳ chọn nhà phát triển; còn bật thì Android chỉ cho 4 lần quét
+  mỗi 2 phút và app đọc lại kết quả cũ. Cài đặt hiện nhịp RSSI thật sự đổi.
 - **Bản đồ**: sơ đồ tầng 1 (sáng/tối), chấm vị trí kèm nón hướng theo la bàn.
 - **Tra cứu**: tìm khu vực theo tên hoặc nhóm, popup có ảnh và giới thiệu.
 - **Chỉ đường**: vẽ tuyến từ vị trí hiện tại tới khu vực đã chọn.
@@ -82,8 +82,9 @@ assets/                       font Inter, SVG sơ đồ, ảnh khu vực, mô h�
 
 ## Ghi chú kỹ thuật
 
-- **Nhịp quét**: quét xong là quét tiếp, khoảng 2 giây một lần trên vivo X300. Máy phải
-  tắt điều tiết quét Wi-Fi, không thì chỉ được 4 lần mỗi 2 phút và nhận lại kết quả cũ.
+- **Nhịp quét**: app gọi quét mỗi 1 giây, nhưng firmware có thể trả lại bộ đệm cũ. Trên vivo
+  X300 (đã tắt điều tiết quét): số liệu mới ~7,6 s một lần khi đang nối WiFi, 2 s khi không nối
+  mạng nào. Đếm bằng cách so RSSI với lần trước (`TheoDoiViTri.nhipSoLieuMoiGiay`).
 - **Mô hình cục bộ**: `assets/model/k_dong.json` sinh bằng `python -m ml.xuat_mo_hinh` ở thư
   mục gốc, chạy lại sau mỗi lần `ml.train` rồi build lại app (`tests/test_xuat_mo_hinh.py`
   báo lỗi nếu quên). `test/dinh_vi_tren_may_test.dart` kiểm bản Dart đoán trùng Python trên

@@ -4,7 +4,7 @@
   "tabHome": "Trang chủ",
   "tabMap": "Bản đồ",
   "tabSettings": "Cài đặt",
-  "searchHint": "Tìm phòng, khu vực…",
+  "searchHint": "Tìm địa điểm…",
   "floorLine": "Tầng 1 · Thư viện Đại học Đà Lạt",
   "homeYouAreAt": "Bạn đang ở",
   "homeQuickAccess": "Truy cập nhanh",
@@ -22,7 +22,7 @@
       }
     }
   },
-  "liveInfo": "Khớp {so} AP · {moHinh} · {ms} ms",
+  "liveInfo": "{so} AP khớp · {moHinh} · {ms} ms",
   "@liveInfo": {
     "placeholders": {
       "so": {
@@ -36,7 +36,7 @@
       }
     }
   },
-  "liveStale": "Vị trí từ {giay} giây trước",
+  "liveStale": "Cập nhật {giay} giây trước",
   "@liveStale": {
     "placeholders": {
       "giay": {
@@ -47,7 +47,7 @@
   "mapFloorOne": "Tầng 1",
   "mapFloorPlanLabel": "Sơ đồ mặt bằng tầng 1",
   "mapFilterAll": "Tất cả",
-  "mapRouteChip": "{met} m tới {noi}",
+  "mapRouteChip": "{noi} · còn {met} m",
   "@mapRouteChip": {
     "placeholders": {
       "met": {
@@ -58,7 +58,7 @@
       }
     }
   },
-  "mapArrived": "Đã tới {noi}",
+  "mapArrived": "Đã đến {noi}",
   "@mapArrived": {
     "placeholders": {
       "noi": {
@@ -66,12 +66,12 @@
       }
     }
   },
-  "mapClearRoute": "Xoá tuyến đường",
-  "mapResetRotation": "Đưa sơ đồ về hướng ban đầu",
+  "mapClearRoute": "Huỷ chỉ đường",
+  "mapResetRotation": "Đưa bản đồ về hướng ban đầu",
   "mapShowSection": "Hiển thị",
   "mapShowPoints": "Điểm tham chiếu",
-  "mapShowLabels": "Tên khu vực",
-  "mapAreaSection": "Khu vực",
+  "mapShowLabels": "Tên địa điểm",
+  "mapAreaSection": "Lọc theo khu vực",
   "searchResultCount": "{count} kết quả",
   "@searchResultCount": {
     "placeholders": {
@@ -80,16 +80,16 @@
       }
     }
   },
-  "searchEmpty": "Không tìm thấy khu vực nào phù hợp",
+  "searchEmpty": "Không có địa điểm phù hợp",
   "searchEmptyHint": "Thử từ khoá khác hoặc chọn \"Tất cả\".",
   "searchFilterAll": "Tất cả",
   "searchFilterStudy": "Học tập",
   "searchFilterService": "Tiện ích",
   "searchFilterWays": "Lối đi",
   "placeGo": "Chỉ đường",
-  "placeWaiting": "Đang chờ định vị…",
+  "placeWaiting": "Đang xác định vị trí của bạn…",
   "placeRouting": "Đang tìm đường…",
-  "placeRouteFailed": "Không tìm được đường tới đây",
+  "placeRouteFailed": "Không tìm được đường đi tới địa điểm này",
   "placeHere": "Bạn đang ở đây",
   "distanceMeters": "{met} m",
   "@distanceMeters": {
@@ -99,19 +99,18 @@
       }
     }
   },
-  "a11yOpenArea": "Mở thông tin khu vực",
+  "a11yOpenArea": "Mở thông tin địa điểm",
   "settingsTitle": "Cài đặt",
-  "settingsGroupGeneral": "Chung",
   "settingsGroupAppearance": "Giao diện",
   "settingsGroupPositioning": "Định vị",
-  "settingsAppInfo": "Phiên bản",
   "settingsServer": "Máy chủ định vị",
-  "settingsServerSub": "Máy ảo dùng 10.0.2.2, điện thoại thật dùng IP nội bộ",
-  "settingsServerHint": "http://<IP>:8000",
-  "settingsLocalModel": "Mô hình cục bộ",
-  "settingsLocalModelSub": "Định vị ngay trên điện thoại, không cần máy chủ",
-  "liveOnDevice": "trên máy",
-  "settingsTheme": "Chế độ màu",
+  "settingsServerSub": "Chọn máy chủ của hệ thống hoặc nhập địa chỉ riêng",
+  "settingsServerHint": "https://… hoặc http://<IP>:8000",
+  "settingsServerCustom": "Tuỳ chỉnh",
+  "settingsLocalModel": "Mô hình trên thiết bị",
+  "settingsLocalModelSub": "Ước lượng vị trí ngay trên thiết bị, không phụ thuộc máy chủ",
+  "liveOnDevice": "trên thiết bị",
+  "settingsTheme": "Chế độ hiển thị",
   "settingsThemeSystem": "Hệ thống",
   "settingsThemeLight": "Sáng",
   "settingsThemeDark": "Tối",
@@ -119,17 +118,32 @@
   "settingsLanguageVi": "Tiếng Việt",
   "settingsLanguageEn": "English",
   "settingsScanCycle": "Định vị liên tục",
-  "settingsScanCycleSub": "Quét WiFi liên tục khi ứng dụng đang mở",
-  "settingsPermission": "Vị trí và WiFi",
-  "settingsPermissionGranted": "Đã cấp",
+  "settingsScanCycleSub": "Quét WiFi liên tục khi ứng dụng đang hoạt động",
+  "settingsScanFresh": "Dữ liệu WiFi cập nhật mỗi {giay} s ({moi}/{tong} lượt quét)",
+  "@settingsScanFresh": {
+    "description": "Nhịp RSSI thật sự đổi; máy có thể trả lại bộ đệm cũ cho lệnh quét",
+    "placeholders": {
+      "giay": {
+        "type": "String"
+      },
+      "moi": {
+        "type": "int"
+      },
+      "tong": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsPermission": "Quyền vị trí và WiFi",
+  "settingsPermissionGranted": "Đã cấp quyền",
   "settingsPermissionMissing": "Chạm để cấp quyền",
-  "settingsPermissionBlocked": "Bị chặn — chạm để mở Cài đặt",
+  "settingsPermissionBlocked": "Đã bị chặn · chạm để mở Cài đặt hệ thống",
   "errWifiPermission": "Cần quyền vị trí để quét WiFi. Chạm để cấp quyền.",
-  "errWifiBlocked": "Quyền vị trí đang bị chặn. Chạm để mở Cài đặt.",
-  "errLocationOff": "Dịch vụ vị trí đang tắt. Hãy bật lên để định vị.",
+  "errWifiBlocked": "Quyền vị trí đã bị chặn. Chạm để mở Cài đặt hệ thống.",
+  "errLocationOff": "Dịch vụ vị trí đang tắt. Vui lòng bật để định vị.",
   "errWifiUnsupported": "Thiết bị không hỗ trợ quét WiFi.",
-  "errScanFailed": "Không quét được WiFi, đang thử lại…",
-  "errNotEnoughAp": "Chỉ khớp {so}/{can} access point cần thiết. Bạn có đang ở trong thư viện?",
+  "errScanFailed": "Quét WiFi không thành công, đang thử lại…",
+  "errNotEnoughAp": "Chỉ nhận diện được {so}/{can} điểm truy cập cần thiết. Có thể bạn đang ở ngoài thư viện.",
   "@errNotEnoughAp": {
     "placeholders": {
       "so": {
@@ -148,7 +162,7 @@
       }
     }
   },
-  "errNoConnection": "Không kết nối được máy chủ {diaChi}",
+  "errNoConnection": "Không thể kết nối tới máy chủ {diaChi}",
   "@errNoConnection": {
     "placeholders": {
       "diaChi": {
@@ -156,7 +170,7 @@
       }
     }
   },
-  "errServer": "Máy chủ trả lỗi {ma}",
+  "errServer": "Máy chủ báo lỗi (mã {ma})",
   "@errServer": {
     "placeholders": {
       "ma": {
@@ -164,8 +178,19 @@
       }
     }
   },
-  "errBadFormat": "Ứng dụng và máy chủ không hiểu gói tin của nhau.",
-  "errTimeout": "Máy chủ không phản hồi kịp.",
+  "errBadFormat": "Phản hồi từ máy chủ không đúng định dạng.",
+  "errTimeout": "Máy chủ phản hồi quá thời gian chờ.",
   "mapFilter": "Lớp bản đồ",
-  "buildingFull": "Thư viện Đại học Đà Lạt"
+  "buildingFull": "Thư viện Đại học Đà Lạt",
+  "settingsVersionLine": "{app} · phiên bản {phienBan}",
+  "@settingsVersionLine": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      },
+      "phienBan": {
+        "type": "String"
+      }
+    }
+  }
 }

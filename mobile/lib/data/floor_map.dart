@@ -2,11 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
-/// Phép đổi toạ độ lưới ↔ pixel. Lưới chấm `Map.png` trải 1000 × 605 px, đúng
-/// hộp bao 86 × 52 đơn vị của bộ điểm tham chiếu, nên lưới chấm chính là hệ toạ
-/// độ Bảng 4. Trục y hướng LÊN. Một đơn vị lưới là [metMoiDonVi] mét.
+/// Phép đổi toạ độ lưới ↔ pixel. Lưới chấm `Map.png` của CTK45 trải 1000 × 605 px,
+/// đúng hộp bao 86 × 52 đơn vị của bộ điểm tham chiếu; sơ đồ SVG giữ khung pixel đó.
+/// Trục y hướng LÊN. Một đơn vị lưới là [metMoiDonVi] mét.
 ///
-/// Số do `tools/trich_ban_do.py` đo; dashboard và backend dùng cùng bộ số.
+/// Dashboard (`coordinate.js`) và `tools/ve_so_do_tang1.py` dùng cùng bộ số.
 class SoDoThat {
   SoDoThat._();
 
@@ -73,22 +73,39 @@ class NhanSoDo {
   /// 1 luôn hiện; 2, 3 chỉ hiện khi đã phóng đủ to, để sơ đồ toàn cảnh không dày chữ.
   final int cap;
 
+  /// Chạm nhãn mở popup của nhóm điểm tham chiếu [nhom]; không có nhóm mà có [moTa] thì nhãn là
+  /// một địa điểm riêng, chỉ đường tới toạ độ [den].
+  final String? nhom;
+  final String? moTa;
+  final Offset? den;
+
   const NhanSoDo(
       {required this.ten,
       this.en,
       required this.x,
       required this.y,
       required this.icon,
-      required this.cap});
+      required this.cap,
+      this.nhom,
+      this.moTa,
+      this.den});
 
-  factory NhanSoDo.tuJson(Map<String, dynamic> j) => NhanSoDo(
-        ten: j['ten'] as String,
-        en: j['en'] as String?,
-        x: (j['x'] as num).toDouble(),
-        y: (j['y'] as num).toDouble(),
-        icon: j['icon'] as String,
-        cap: j['cap'] as int,
-      );
+  factory NhanSoDo.tuJson(Map<String, dynamic> j) {
+    final den = j['den'] as List?;
+    return NhanSoDo(
+      ten: j['ten'] as String,
+      en: j['en'] as String?,
+      x: (j['x'] as num).toDouble(),
+      y: (j['y'] as num).toDouble(),
+      icon: j['icon'] as String,
+      cap: j['cap'] as int,
+      nhom: j['nhom'] as String?,
+      moTa: j['mo_ta'] as String?,
+      den: den == null
+          ? null
+          : Offset((den[0] as num).toDouble(), (den[1] as num).toDouble()),
+    );
+  }
 
   static Future<List<NhanSoDo>> tai([AssetBundle? goi]) async => [
         for (final j in jsonDecode(await (goi ?? rootBundle).loadString(SoDoThat.nhan)) as List)

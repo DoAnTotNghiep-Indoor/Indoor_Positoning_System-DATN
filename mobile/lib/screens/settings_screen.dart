@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' as intl;
 
 import '../l10n/app_localizations.dart';
 import '../services/quyen_truy_cap.dart';
@@ -17,6 +18,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = L.of(context);
     final tuyChon = AppSettingsScope.of(context);
+    final theoDoi = TheoDoiViTriScope.doc(context);
 
     return ListView(
       padding: EdgeInsets.fromLTRB(20, MediaQuery.paddingOf(context).top + 16,
@@ -29,10 +31,22 @@ class SettingsScreen extends StatelessWidget {
             children: [
               const _DongQuyen(),
               const Divider(indent: 56),
-              _Dong(
-                icon: Icons.sync_rounded,
-                tieuDe: t.settingsScanCycle,
-                phu: t.settingsScanCycleSub,
+              ListenableBuilder(
+                listenable: theoDoi,
+                builder: (context, _) {
+                  final nhip = theoDoi.nhipSoLieuMoiGiay;
+                  return _Dong(
+                    icon: Icons.sync_rounded,
+                    tieuDe: t.settingsScanCycle,
+                    phu: nhip == null
+                        ? t.settingsScanCycleSub
+                        : t.settingsScanFresh(
+                            intl.NumberFormat('#0.0', t.localeName)
+                                .format(nhip),
+                            theoDoi.soLanMoi,
+                            theoDoi.soLanQuet),
+                  );
+                },
               ),
               const Divider(indent: 56),
               _Dong(
@@ -99,14 +113,10 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
         ),
-        TieuDeMuc(t.settingsGroupGeneral),
-        BeMat(
-          child: _Dong(
-            icon: Icons.info_outline_rounded,
-            tieuDe: t.settingsAppInfo,
-            cuoi: Text('${t.appTitle} $_phienBan',
-                style: Theme.of(context).textTheme.bodyMedium),
-          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 28, 4, 0),
+          child: Text(t.settingsVersionLine(t.appTitle, _phienBan),
+              style: Theme.of(context).textTheme.bodyMedium),
         ),
       ],
     );
@@ -174,7 +184,11 @@ class _OMayChu extends StatefulWidget {
 
 class _OMayChuState extends State<_OMayChu> {
   late final _tuyChon = AppSettingsScope.of(context);
-  late final _o = TextEditingController(text: _tuyChon.diaChiMayChu);
+  late final _o = TextEditingController(
+      text: _tuyChon.tenMayChu == null ? _tuyChon.diaChiMayChu : '');
+
+  /// Đang chọn "Tuỳ chỉnh" nhưng có thể chưa gõ xong địa chỉ, nên giữ riêng khỏi tuỳ chọn đã lưu.
+  late bool _tuNhap = _tuyChon.tenMayChu == null;
 
   @override
   void dispose() {
@@ -184,32 +198,59 @@ class _OMayChuState extends State<_OMayChu> {
 
   void _luu() {
     _tuyChon.datDiaChiMayChu(_o.text);
-    _o.text = _tuyChon.diaChiMayChu;
+    if (_tuyChon.tenMayChu == null) _o.text = _tuyChon.diaChiMayChu;
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = L.of(context);
     final m = Mau.of(context);
-    return TextField(
-      controller: _o,
-      keyboardType: TextInputType.url,
-      autocorrect: false,
-      style: TextStyle(fontSize: 15, color: m.chu),
-      decoration: InputDecoration(
-        isDense: true,
-        filled: true,
-        fillColor: m.nhanNhat,
-        hintText: L.of(context).settingsServerHint,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+    final ten = _tuNhap ? null : _tuyChon.tenMayChu;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SegmentedButton<String?>(
+          showSelectedIcon: false,
+          segments: [
+            for (final k in AppSettings.mayChuCoSan.keys)
+              ButtonSegment(value: k, label: Text(k.split(' ').last)),
+            ButtonSegment(value: null, label: Text(t.settingsServerCustom)),
+          ],
+          selected: {ten},
+          onSelectionChanged: (c) => setState(() {
+            _tuNhap = c.first == null;
+            if (c.first != null) {
+              _tuyChon.datDiaChiMayChu(AppSettings.mayChuCoSan[c.first]!);
+            } else if (_o.text.isNotEmpty) {
+              _luu();
+            }
+          }),
         ),
-      ),
-      onTapOutside: (_) {
-        _luu();
-        FocusScope.of(context).unfocus();
-      },
-      onSubmitted: (_) => _luu(),
+        if (ten == null) ...[
+          const SizedBox(height: 8),
+          TextField(
+            controller: _o,
+            keyboardType: TextInputType.url,
+            autocorrect: false,
+            style: TextStyle(fontSize: 15, color: m.chu),
+            decoration: InputDecoration(
+              isDense: true,
+              filled: true,
+              fillColor: m.nhanNhat,
+              hintText: t.settingsServerHint,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onTapOutside: (_) {
+              _luu();
+              FocusScope.of(context).unfocus();
+            },
+            onSubmitted: (_) => _luu(),
+          ),
+        ],
+      ],
     );
   }
 }

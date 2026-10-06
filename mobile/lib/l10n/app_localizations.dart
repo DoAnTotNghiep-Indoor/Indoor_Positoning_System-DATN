@@ -124,7 +124,7 @@ abstract class L {
   /// No description provided for @searchHint.
   ///
   /// In vi, this message translates to:
-  /// **'Tìm phòng, khu vực…'**
+  /// **'Tìm địa điểm…'**
   String get searchHint;
 
   /// No description provided for @floorLine.
@@ -172,13 +172,13 @@ abstract class L {
   /// No description provided for @liveInfo.
   ///
   /// In vi, this message translates to:
-  /// **'Khớp {so} AP · {moHinh} · {ms} ms'**
+  /// **'{so} AP khớp · {moHinh} · {ms} ms'**
   String liveInfo(int so, String moHinh, String ms);
 
   /// No description provided for @liveStale.
   ///
   /// In vi, this message translates to:
-  /// **'Vị trí từ {giay} giây trước'**
+  /// **'Cập nhật {giay} giây trước'**
   String liveStale(int giay);
 
   /// No description provided for @mapFloorOne.
@@ -202,25 +202,25 @@ abstract class L {
   /// No description provided for @mapRouteChip.
   ///
   /// In vi, this message translates to:
-  /// **'{met} m tới {noi}'**
+  /// **'{noi} · còn {met} m'**
   String mapRouteChip(String met, String noi);
 
   /// No description provided for @mapArrived.
   ///
   /// In vi, this message translates to:
-  /// **'Đã tới {noi}'**
+  /// **'Đã đến {noi}'**
   String mapArrived(String noi);
 
   /// No description provided for @mapClearRoute.
   ///
   /// In vi, this message translates to:
-  /// **'Xoá tuyến đường'**
+  /// **'Huỷ chỉ đường'**
   String get mapClearRoute;
 
   /// No description provided for @mapResetRotation.
   ///
   /// In vi, this message translates to:
-  /// **'Đưa sơ đồ về hướng ban đầu'**
+  /// **'Đưa bản đồ về hướng ban đầu'**
   String get mapResetRotation;
 
   /// No description provided for @mapShowSection.
@@ -238,13 +238,13 @@ abstract class L {
   /// No description provided for @mapShowLabels.
   ///
   /// In vi, this message translates to:
-  /// **'Tên khu vực'**
+  /// **'Tên địa điểm'**
   String get mapShowLabels;
 
   /// No description provided for @mapAreaSection.
   ///
   /// In vi, this message translates to:
-  /// **'Khu vực'**
+  /// **'Lọc theo khu vực'**
   String get mapAreaSection;
 
   /// No description provided for @searchResultCount.
@@ -256,7 +256,7 @@ abstract class L {
   /// No description provided for @searchEmpty.
   ///
   /// In vi, this message translates to:
-  /// **'Không tìm thấy khu vực nào phù hợp'**
+  /// **'Không có địa điểm phù hợp'**
   String get searchEmpty;
 
   /// No description provided for @searchEmptyHint.
@@ -298,7 +298,7 @@ abstract class L {
   /// No description provided for @placeWaiting.
   ///
   /// In vi, this message translates to:
-  /// **'Đang chờ định vị…'**
+  /// **'Đang xác định vị trí của bạn…'**
   String get placeWaiting;
 
   /// No description provided for @placeRouting.
@@ -310,7 +310,7 @@ abstract class L {
   /// No description provided for @placeRouteFailed.
   ///
   /// In vi, this message translates to:
-  /// **'Không tìm được đường tới đây'**
+  /// **'Không tìm được đường đi tới địa điểm này'**
   String get placeRouteFailed;
 
   /// No description provided for @placeHere.
@@ -328,7 +328,7 @@ abstract class L {
   /// No description provided for @a11yOpenArea.
   ///
   /// In vi, this message translates to:
-  /// **'Mở thông tin khu vực'**
+  /// **'Mở thông tin địa điểm'**
   String get a11yOpenArea;
 
   /// No description provided for @settingsTitle.
@@ -336,12 +336,6 @@ abstract class L {
   /// In vi, this message translates to:
   /// **'Cài đặt'**
   String get settingsTitle;
-
-  /// No description provided for @settingsGroupGeneral.
-  ///
-  /// In vi, this message translates to:
-  /// **'Chung'**
-  String get settingsGroupGeneral;
 
   /// No description provided for @settingsGroupAppearance.
   ///
@@ -355,12 +349,6 @@ abstract class L {
   /// **'Định vị'**
   String get settingsGroupPositioning;
 
-  /// No description provided for @settingsAppInfo.
-  ///
-  /// In vi, this message translates to:
-  /// **'Phiên bản'**
-  String get settingsAppInfo;
-
   /// No description provided for @settingsServer.
   ///
   /// In vi, this message translates to:
@@ -370,37 +358,43 @@ abstract class L {
   /// No description provided for @settingsServerSub.
   ///
   /// In vi, this message translates to:
-  /// **'Máy ảo dùng 10.0.2.2, điện thoại thật dùng IP nội bộ'**
+  /// **'Chọn máy chủ của hệ thống hoặc nhập địa chỉ riêng'**
   String get settingsServerSub;
 
   /// No description provided for @settingsServerHint.
   ///
   /// In vi, this message translates to:
-  /// **'http://<IP>:8000'**
+  /// **'https://… hoặc http://<IP>:8000'**
   String get settingsServerHint;
+
+  /// No description provided for @settingsServerCustom.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tuỳ chỉnh'**
+  String get settingsServerCustom;
 
   /// No description provided for @settingsLocalModel.
   ///
   /// In vi, this message translates to:
-  /// **'Mô hình cục bộ'**
+  /// **'Mô hình trên thiết bị'**
   String get settingsLocalModel;
 
   /// No description provided for @settingsLocalModelSub.
   ///
   /// In vi, this message translates to:
-  /// **'Định vị ngay trên điện thoại, không cần máy chủ'**
+  /// **'Ước lượng vị trí ngay trên thiết bị, không phụ thuộc máy chủ'**
   String get settingsLocalModelSub;
 
   /// No description provided for @liveOnDevice.
   ///
   /// In vi, this message translates to:
-  /// **'trên máy'**
+  /// **'trên thiết bị'**
   String get liveOnDevice;
 
   /// No description provided for @settingsTheme.
   ///
   /// In vi, this message translates to:
-  /// **'Chế độ màu'**
+  /// **'Chế độ hiển thị'**
   String get settingsTheme;
 
   /// No description provided for @settingsThemeSystem.
@@ -448,19 +442,25 @@ abstract class L {
   /// No description provided for @settingsScanCycleSub.
   ///
   /// In vi, this message translates to:
-  /// **'Quét WiFi liên tục khi ứng dụng đang mở'**
+  /// **'Quét WiFi liên tục khi ứng dụng đang hoạt động'**
   String get settingsScanCycleSub;
+
+  /// Nhịp RSSI thật sự đổi; máy có thể trả lại bộ đệm cũ cho lệnh quét
+  ///
+  /// In vi, this message translates to:
+  /// **'Dữ liệu WiFi cập nhật mỗi {giay} s ({moi}/{tong} lượt quét)'**
+  String settingsScanFresh(String giay, int moi, int tong);
 
   /// No description provided for @settingsPermission.
   ///
   /// In vi, this message translates to:
-  /// **'Vị trí và WiFi'**
+  /// **'Quyền vị trí và WiFi'**
   String get settingsPermission;
 
   /// No description provided for @settingsPermissionGranted.
   ///
   /// In vi, this message translates to:
-  /// **'Đã cấp'**
+  /// **'Đã cấp quyền'**
   String get settingsPermissionGranted;
 
   /// No description provided for @settingsPermissionMissing.
@@ -472,7 +472,7 @@ abstract class L {
   /// No description provided for @settingsPermissionBlocked.
   ///
   /// In vi, this message translates to:
-  /// **'Bị chặn — chạm để mở Cài đặt'**
+  /// **'Đã bị chặn · chạm để mở Cài đặt hệ thống'**
   String get settingsPermissionBlocked;
 
   /// No description provided for @errWifiPermission.
@@ -484,13 +484,13 @@ abstract class L {
   /// No description provided for @errWifiBlocked.
   ///
   /// In vi, this message translates to:
-  /// **'Quyền vị trí đang bị chặn. Chạm để mở Cài đặt.'**
+  /// **'Quyền vị trí đã bị chặn. Chạm để mở Cài đặt hệ thống.'**
   String get errWifiBlocked;
 
   /// No description provided for @errLocationOff.
   ///
   /// In vi, this message translates to:
-  /// **'Dịch vụ vị trí đang tắt. Hãy bật lên để định vị.'**
+  /// **'Dịch vụ vị trí đang tắt. Vui lòng bật để định vị.'**
   String get errLocationOff;
 
   /// No description provided for @errWifiUnsupported.
@@ -502,13 +502,13 @@ abstract class L {
   /// No description provided for @errScanFailed.
   ///
   /// In vi, this message translates to:
-  /// **'Không quét được WiFi, đang thử lại…'**
+  /// **'Quét WiFi không thành công, đang thử lại…'**
   String get errScanFailed;
 
   /// No description provided for @errNotEnoughAp.
   ///
   /// In vi, this message translates to:
-  /// **'Chỉ khớp {so}/{can} access point cần thiết. Bạn có đang ở trong thư viện?'**
+  /// **'Chỉ nhận diện được {so}/{can} điểm truy cập cần thiết. Có thể bạn đang ở ngoài thư viện.'**
   String errNotEnoughAp(int so, int can);
 
   /// No description provided for @errBadAddress.
@@ -520,25 +520,25 @@ abstract class L {
   /// No description provided for @errNoConnection.
   ///
   /// In vi, this message translates to:
-  /// **'Không kết nối được máy chủ {diaChi}'**
+  /// **'Không thể kết nối tới máy chủ {diaChi}'**
   String errNoConnection(String diaChi);
 
   /// No description provided for @errServer.
   ///
   /// In vi, this message translates to:
-  /// **'Máy chủ trả lỗi {ma}'**
+  /// **'Máy chủ báo lỗi (mã {ma})'**
   String errServer(int ma);
 
   /// No description provided for @errBadFormat.
   ///
   /// In vi, this message translates to:
-  /// **'Ứng dụng và máy chủ không hiểu gói tin của nhau.'**
+  /// **'Phản hồi từ máy chủ không đúng định dạng.'**
   String get errBadFormat;
 
   /// No description provided for @errTimeout.
   ///
   /// In vi, this message translates to:
-  /// **'Máy chủ không phản hồi kịp.'**
+  /// **'Máy chủ phản hồi quá thời gian chờ.'**
   String get errTimeout;
 
   /// No description provided for @mapFilter.
@@ -552,6 +552,12 @@ abstract class L {
   /// In vi, this message translates to:
   /// **'Thư viện Đại học Đà Lạt'**
   String get buildingFull;
+
+  /// No description provided for @settingsVersionLine.
+  ///
+  /// In vi, this message translates to:
+  /// **'{app} · phiên bản {phienBan}'**
+  String settingsVersionLine(String app, String phienBan);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

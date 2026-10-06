@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show Offset;
 
 import 'package:http/http.dart' as http;
 
@@ -222,6 +223,7 @@ class ApiDinhVi {
     required double tuY,
     required String denNhom,
     String? denRp,
+    Offset? den,
   }) async {
     final url = _url('/route');
     final tra = await _gui(_client.post(
@@ -230,7 +232,9 @@ class ApiDinhVi {
       body: jsonEncode({
         'tu_x': tuX,
         'tu_y': tuY,
-        if (denRp != null) 'den_rp': denRp else 'den_nhom': denNhom,
+        if (den != null) ...{'den_x': den.dx, 'den_y': den.dy}
+        else if (denRp != null) 'den_rp': denRp
+        else 'den_nhom': denNhom,
       }),
     ));
     return _doc(tra, (j) => KetQuaChiDuong.tuJson(j as Map<String, dynamic>));

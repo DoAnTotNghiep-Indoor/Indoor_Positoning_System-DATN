@@ -21,7 +21,7 @@ class LEn extends L {
   String get tabSettings => 'Settings';
 
   @override
-  String get searchHint => 'Search rooms, areas…';
+  String get searchHint => 'Search places…';
 
   @override
   String get floorLine => 'Floor 1 · Da Lat University Library';
@@ -39,7 +39,7 @@ class LEn extends L {
   String get homeAllAreas => 'All areas';
 
   @override
-  String get liveLocating => 'Locating you…';
+  String get liveLocating => 'Determining your location…';
 
   @override
   String liveCoords(String x, String y) {
@@ -53,7 +53,7 @@ class LEn extends L {
 
   @override
   String liveStale(int giay) {
-    return 'Location from $giay s ago';
+    return 'Updated $giay s ago';
   }
 
   @override
@@ -67,19 +67,19 @@ class LEn extends L {
 
   @override
   String mapRouteChip(String met, String noi) {
-    return '$met m to $noi';
+    return '$noi · $met m left';
   }
 
   @override
   String mapArrived(String noi) {
-    return 'Arrived at $noi';
+    return 'You have arrived at $noi';
   }
 
   @override
-  String get mapClearRoute => 'Clear route';
+  String get mapClearRoute => 'End directions';
 
   @override
-  String get mapResetRotation => 'Reset map rotation';
+  String get mapResetRotation => 'Reset map orientation';
 
   @override
   String get mapShowSection => 'Show';
@@ -88,10 +88,10 @@ class LEn extends L {
   String get mapShowPoints => 'Reference points';
 
   @override
-  String get mapShowLabels => 'Area names';
+  String get mapShowLabels => 'Place names';
 
   @override
-  String get mapAreaSection => 'Areas';
+  String get mapAreaSection => 'Filter by area';
 
   @override
   String searchResultCount(int count) {
@@ -99,10 +99,10 @@ class LEn extends L {
   }
 
   @override
-  String get searchEmpty => 'No matching areas found';
+  String get searchEmpty => 'No matching places';
 
   @override
-  String get searchEmptyHint => 'Try another keyword or pick \"All\".';
+  String get searchEmptyHint => 'Try a different keyword or choose \"All\".';
 
   @override
   String get searchFilterAll => 'All';
@@ -114,19 +114,19 @@ class LEn extends L {
   String get searchFilterService => 'Services';
 
   @override
-  String get searchFilterWays => 'Ways';
+  String get searchFilterWays => 'Walkways';
 
   @override
   String get placeGo => 'Directions';
 
   @override
-  String get placeWaiting => 'Waiting for your location…';
+  String get placeWaiting => 'Determining your location…';
 
   @override
   String get placeRouting => 'Finding a route…';
 
   @override
-  String get placeRouteFailed => 'Could not find a route here';
+  String get placeRouteFailed => 'No route to this place could be found';
 
   @override
   String get placeHere => 'You are here';
@@ -137,13 +137,10 @@ class LEn extends L {
   }
 
   @override
-  String get a11yOpenArea => 'Open area info';
+  String get a11yOpenArea => 'Open place details';
 
   @override
   String get settingsTitle => 'Settings';
-
-  @override
-  String get settingsGroupGeneral => 'General';
 
   @override
   String get settingsGroupAppearance => 'Appearance';
@@ -152,29 +149,30 @@ class LEn extends L {
   String get settingsGroupPositioning => 'Positioning';
 
   @override
-  String get settingsAppInfo => 'Version';
-
-  @override
   String get settingsServer => 'Positioning server';
 
   @override
   String get settingsServerSub =>
-      'Emulator uses 10.0.2.2, a real phone needs the LAN IP';
+      'Choose a system server or enter a custom address';
 
   @override
-  String get settingsServerHint => 'http://<IP>:8000';
+  String get settingsServerHint => 'https://… or http://<IP>:8000';
+
+  @override
+  String get settingsServerCustom => 'Custom';
 
   @override
   String get settingsLocalModel => 'On-device model';
 
   @override
-  String get settingsLocalModelSub => 'Locate on the phone, no server needed';
+  String get settingsLocalModelSub =>
+      'Estimates your position on the device, independent of the server';
 
   @override
   String get liveOnDevice => 'on device';
 
   @override
-  String get settingsTheme => 'Theme';
+  String get settingsTheme => 'Appearance';
 
   @override
   String get settingsThemeSystem => 'System';
@@ -199,41 +197,48 @@ class LEn extends L {
 
   @override
   String get settingsScanCycleSub =>
-      'Scans WiFi continuously while the app is open';
+      'Scans WiFi continuously while the app is in use';
 
   @override
-  String get settingsPermission => 'Location and WiFi';
+  String settingsScanFresh(String giay, int moi, int tong) {
+    return 'WiFi data refreshes every $giay s ($moi/$tong scans)';
+  }
+
+  @override
+  String get settingsPermission => 'Location and WiFi access';
 
   @override
   String get settingsPermissionGranted => 'Granted';
 
   @override
-  String get settingsPermissionMissing => 'Tap to grant';
+  String get settingsPermissionMissing => 'Tap to grant access';
 
   @override
-  String get settingsPermissionBlocked => 'Blocked — tap to open Settings';
+  String get settingsPermissionBlocked =>
+      'Blocked · tap to open system settings';
 
   @override
   String get errWifiPermission =>
-      'Location permission is needed to scan WiFi. Tap to grant.';
+      'Location access is required to scan WiFi. Tap to grant.';
 
   @override
   String get errWifiBlocked =>
-      'Location permission is blocked. Tap to open Settings.';
+      'Location access is blocked. Tap to open system settings.';
 
   @override
   String get errLocationOff =>
-      'Location services are off. Turn them on to locate you.';
+      'Location services are off. Turn them on to enable positioning.';
 
   @override
-  String get errWifiUnsupported => 'This device cannot scan WiFi.';
+  String get errWifiUnsupported =>
+      'This device does not support WiFi scanning.';
 
   @override
   String get errScanFailed => 'WiFi scan failed, retrying…';
 
   @override
   String errNotEnoughAp(int so, int can) {
-    return 'Only $so of the $can required access points matched. Are you inside the library?';
+    return 'Only $so of $can required access points were recognised. You may be outside the library.';
   }
 
   @override
@@ -243,17 +248,16 @@ class LEn extends L {
 
   @override
   String errNoConnection(String diaChi) {
-    return 'Cannot reach the server at $diaChi';
+    return 'Unable to connect to the server at $diaChi';
   }
 
   @override
   String errServer(int ma) {
-    return 'Server returned error $ma';
+    return 'The server returned an error (code $ma)';
   }
 
   @override
-  String get errBadFormat =>
-      'The app and the server could not parse each other\'s packets.';
+  String get errBadFormat => 'The server response has an unexpected format.';
 
   @override
   String get errTimeout => 'The server did not respond in time.';
@@ -263,4 +267,9 @@ class LEn extends L {
 
   @override
   String get buildingFull => 'Da Lat University Library';
+
+  @override
+  String settingsVersionLine(String app, String phienBan) {
+    return '$app · version $phienBan';
+  }
 }

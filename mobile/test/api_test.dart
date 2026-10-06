@@ -5,9 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'package:ips_dlu/data/floor_map.dart';
+import 'package:ips_dlu/data/khu_vuc.dart';
 import 'package:ips_dlu/services/api_dinh_vi.dart';
 import 'package:ips_dlu/services/quet_wifi.dart';
 import 'package:ips_dlu/services/theo_doi_vi_tri.dart';
+import 'package:ips_dlu/theme/app_settings.dart';
 
 /// Lớp gọi API của ứng dụng: POST /predict, GET /map, hình dạng JSON của
 /// POST /route, mã lỗi và địa chỉ máy chủ sai.
@@ -323,5 +326,37 @@ void main() {
     final j = jsonDecode(_tuyen()) as Map<String, dynamic>;
     j.remove('duong_di');
     expect(KetQuaChiDuong.tuJson(j).duongDi, isEmpty);
+  });
+
+  test('Đích là địa điểm riêng thì gửi toạ độ, không gửi tên nhóm', () async {
+    late Map<String, dynamic> daGui;
+    final api = ApiDinhVi('http://test', client: MockClient((yc) async {
+      daGui = jsonDecode(yc.body);
+      return http.Response.bytes(utf8.encode(_tuyen()), 200);
+    }));
+    await api.chiDuong(
+        tuX: 0, tuY: 40, denNhom: 'Phòng học nhóm', den: const Offset(-17.5, 64));
+    expect(daGui, {'tu_x': 0, 'tu_y': 40, 'den_x': -17.5, 'den_y': 64});
+  });
+
+  test('Nhãn có mô tả thành khu vực theo toạ độ, cùng tên thì gộp', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final nhan = await NhanSoDo.tai();
+    final rieng = KhuVuc.tuNhan(nhan);
+    final sanh = rieng.singleWhere((k) => k.nhom == 'Sảnh chờ');
+    expect(sanh.theoToaDo, isTrue);
+    expect(sanh.diem, hasLength(2));
+    // Nhãn gắn nhóm điểm tham chiếu (Khu tự học, WC...) không thành khu vực riêng.
+    expect(rieng.map((k) => k.nhom), isNot(contains('Khu tự học')));
+    expect(sanh.ganNhat(30, 5), sanh.diem.firstWhere((p) => p.dx > 0));
+  });
+
+  test('Mặc định dùng máy chủ PROD, địa chỉ tự nhập thì không mang tên', () {
+    final tc = AppSettings(luu: false);
+    expect(tc.tenMayChu, 'IPS DLU PROD');
+    tc.datDiaChiMayChu('https://dlu-ips-demo.etylix.me/');
+    expect(tc.tenMayChu, 'IPS DLU DEMO');
+    tc.datDiaChiMayChu('http://192.168.1.5:8000');
+    expect(tc.tenMayChu, isNull);
   });
 }

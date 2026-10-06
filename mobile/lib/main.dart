@@ -41,6 +41,7 @@ class _IpsDluAppState extends State<IpsDluApp> {
   void initState() {
     super.initState();
     _vongDoi = AppLifecycleListener(onStateChange: _theoDoi.doiVongDoi);
+    _theoDoi.taiNhan();
     // Nạp tuỳ chọn đã lưu TRƯỚC khi quét, không thì vòng đầu gọi nhầm
     // địa chỉ mặc định.
     _tuyChon.nap().whenComplete(() {

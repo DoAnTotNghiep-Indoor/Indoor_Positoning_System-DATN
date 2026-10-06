@@ -53,6 +53,7 @@ class TheoDoiViTri extends ChangeNotifier {
   Exception? _loi;
 
   List<DiemThamChieu> _banDo = const [];
+  List<NhanSoDo> _nhan = const [];
   List<KhuVuc> _khuVuc = sapTheoKhoangCach(KhuVuc.tuDiem(const []), null);
   DiemThamChieu? _diemGan;
 
@@ -68,10 +69,46 @@ class TheoDoiViTri extends ChangeNotifier {
   Exception? get loi => _loi;
   List<DiemThamChieu> get banDo => _banDo;
 
+  /// Nhãn nổi của sơ đồ; nhãn có mô tả riêng cũng là khu vực trong [khuVuc].
+  List<NhanSoDo> get nhan => _nhan;
+
+  Future<void> taiNhan([AssetBundle? goi]) async {
+    _nhan = await NhanSoDo.tai(goi);
+    _capNhatDanXuat();
+    _bao();
+  }
+
   /// Khu vực sắp theo khoảng cách (chưa định vị thì theo tên). Tính sẵn một lần
   /// mỗi khi toạ độ đổi thay vì mỗi lần giao diện đọc.
   List<KhuVuc> get khuVuc => _khuVuc;
   DiemThamChieu? get diemGanNhat => _diemGan;
+
+  /// Firmware có thể trả lại bộ đệm cũ cho lệnh quét mà không báo (vivo X300: RSSI chỉ đổi
+  /// ~7,6 s một lần dù app quét mỗi giây). Đếm lần quét có RSSI khác lần trước để biết nhịp thật.
+  String? _vanTayTruoc;
+  final _lucCoMoi = <DateTime>[];
+  int soLanQuet = 0;
+  int soLanMoi = 0;
+
+  /// Trung vị khoảng cách giữa các lần có số liệu mới gần đây, giây; null khi chưa đủ.
+  double? get nhipSoLieuMoiGiay {
+    if (_lucCoMoi.length < 3) return null;
+    final d = [
+      for (var i = 1; i < _lucCoMoi.length; i++)
+        _lucCoMoi[i].difference(_lucCoMoi[i - 1]).inMilliseconds / 1000
+    ]..sort();
+    return d[d.length ~/ 2];
+  }
+
+  void _demQuet(List<DiemTruyCap> quet) {
+    final vanTay = ([for (final d in quet) '${d.bssid}${d.rssi}']..sort()).join();
+    soLanQuet++;
+    if (vanTay == _vanTayTruoc) return;
+    _vanTayTruoc = vanTay;
+    soLanMoi++;
+    _lucCoMoi.add(DateTime.now());
+    if (_lucCoMoi.length > 11) _lucCoMoi.removeAt(0);
+  }
 
   KhuVuc? get khuHienTai {
     final nhom = _diemGan?.nhom;
@@ -187,8 +224,9 @@ class TheoDoiViTri extends ChangeNotifier {
     _viTriNeo = Offset(vt.xGop, vt.yGop);
     // Gửi tên khu vực để máy chủ chọn điểm gần nhất THEO ĐƯỜNG ĐI: điểm gần
     // nhất theo đường chim bay có thể nằm sau tường.
+    final den = k.theoToaDo ? k.ganNhat(vt.xGop, vt.yGop) : null;
     final kq = await _api.chiDuong(
-        tuX: vt.xGop, tuY: vt.yGop, denNhom: k.nhom, denRp: rpId);
+        tuX: vt.xGop, tuY: vt.yGop, denNhom: k.nhom, denRp: rpId, den: den);
     if (luot != _luotTuyen) return;
     _tuyen = kq;
     _dich = k;
@@ -229,7 +267,7 @@ class TheoDoiViTri extends ChangeNotifier {
 
   void _capNhatDanXuat() {
     final vt = _viTri;
-    _khuVuc = sapTheoKhoangCach(KhuVuc.tuDiem(_banDo), vt);
+    _khuVuc = sapTheoKhoangCach(KhuVuc.tuDiem(_banDo, _nhan), vt);
     _diemGan = null;
     if (vt == null) return;
     var min = double.infinity;
@@ -250,6 +288,7 @@ class TheoDoiViTri extends ChangeNotifier {
     unawaited(_taiBanDo());
     try {
       final quet = await _mayQuet.quet();
+      _demQuet(quet);
       final vt = _cucBo
           ? await _doanTrenMay(quet)
           : await _api.duDoan(deviceId: deviceId, quet: quet);

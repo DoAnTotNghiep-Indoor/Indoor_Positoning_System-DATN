@@ -72,12 +72,18 @@ LoaiKhu loaiCua(String nhom) => switch (nhom) {
       'Khu vực tự học' ||
       'Khu vực đọc' ||
       'TV3,4' ||
-      'Phòng tạp chí' =>
+      'Phòng tạp chí' ||
+      'Phòng học nhóm' ||
+      'Phòng đọc sau đại học' =>
         LoaiKhu.hocTap,
       'Căn tin' ||
       'Hội trường thư viện' ||
       'Bàn thủ thư' ||
-      'WC' =>
+      'WC' ||
+      'Phòng nghiệp vụ 1' ||
+      'Phòng nghiệp vụ 2' ||
+      'Sảnh chờ' ||
+      'Ban công' =>
         LoaiKhu.tienIch,
       _ => LoaiKhu.loiDi,
     };

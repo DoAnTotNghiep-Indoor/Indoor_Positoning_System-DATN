@@ -21,7 +21,7 @@ class LVi extends L {
   String get tabSettings => 'Cài đặt';
 
   @override
-  String get searchHint => 'Tìm phòng, khu vực…';
+  String get searchHint => 'Tìm địa điểm…';
 
   @override
   String get floorLine => 'Tầng 1 · Thư viện Đại học Đà Lạt';
@@ -48,12 +48,12 @@ class LVi extends L {
 
   @override
   String liveInfo(int so, String moHinh, String ms) {
-    return 'Khớp $so AP · $moHinh · $ms ms';
+    return '$so AP khớp · $moHinh · $ms ms';
   }
 
   @override
   String liveStale(int giay) {
-    return 'Vị trí từ $giay giây trước';
+    return 'Cập nhật $giay giây trước';
   }
 
   @override
@@ -67,19 +67,19 @@ class LVi extends L {
 
   @override
   String mapRouteChip(String met, String noi) {
-    return '$met m tới $noi';
+    return '$noi · còn $met m';
   }
 
   @override
   String mapArrived(String noi) {
-    return 'Đã tới $noi';
+    return 'Đã đến $noi';
   }
 
   @override
-  String get mapClearRoute => 'Xoá tuyến đường';
+  String get mapClearRoute => 'Huỷ chỉ đường';
 
   @override
-  String get mapResetRotation => 'Đưa sơ đồ về hướng ban đầu';
+  String get mapResetRotation => 'Đưa bản đồ về hướng ban đầu';
 
   @override
   String get mapShowSection => 'Hiển thị';
@@ -88,10 +88,10 @@ class LVi extends L {
   String get mapShowPoints => 'Điểm tham chiếu';
 
   @override
-  String get mapShowLabels => 'Tên khu vực';
+  String get mapShowLabels => 'Tên địa điểm';
 
   @override
-  String get mapAreaSection => 'Khu vực';
+  String get mapAreaSection => 'Lọc theo khu vực';
 
   @override
   String searchResultCount(int count) {
@@ -99,7 +99,7 @@ class LVi extends L {
   }
 
   @override
-  String get searchEmpty => 'Không tìm thấy khu vực nào phù hợp';
+  String get searchEmpty => 'Không có địa điểm phù hợp';
 
   @override
   String get searchEmptyHint => 'Thử từ khoá khác hoặc chọn \"Tất cả\".';
@@ -120,13 +120,13 @@ class LVi extends L {
   String get placeGo => 'Chỉ đường';
 
   @override
-  String get placeWaiting => 'Đang chờ định vị…';
+  String get placeWaiting => 'Đang xác định vị trí của bạn…';
 
   @override
   String get placeRouting => 'Đang tìm đường…';
 
   @override
-  String get placeRouteFailed => 'Không tìm được đường tới đây';
+  String get placeRouteFailed => 'Không tìm được đường đi tới địa điểm này';
 
   @override
   String get placeHere => 'Bạn đang ở đây';
@@ -137,13 +137,10 @@ class LVi extends L {
   }
 
   @override
-  String get a11yOpenArea => 'Mở thông tin khu vực';
+  String get a11yOpenArea => 'Mở thông tin địa điểm';
 
   @override
   String get settingsTitle => 'Cài đặt';
-
-  @override
-  String get settingsGroupGeneral => 'Chung';
 
   @override
   String get settingsGroupAppearance => 'Giao diện';
@@ -152,30 +149,30 @@ class LVi extends L {
   String get settingsGroupPositioning => 'Định vị';
 
   @override
-  String get settingsAppInfo => 'Phiên bản';
-
-  @override
   String get settingsServer => 'Máy chủ định vị';
 
   @override
   String get settingsServerSub =>
-      'Máy ảo dùng 10.0.2.2, điện thoại thật dùng IP nội bộ';
+      'Chọn máy chủ của hệ thống hoặc nhập địa chỉ riêng';
 
   @override
-  String get settingsServerHint => 'http://<IP>:8000';
+  String get settingsServerHint => 'https://… hoặc http://<IP>:8000';
 
   @override
-  String get settingsLocalModel => 'Mô hình cục bộ';
+  String get settingsServerCustom => 'Tuỳ chỉnh';
+
+  @override
+  String get settingsLocalModel => 'Mô hình trên thiết bị';
 
   @override
   String get settingsLocalModelSub =>
-      'Định vị ngay trên điện thoại, không cần máy chủ';
+      'Ước lượng vị trí ngay trên thiết bị, không phụ thuộc máy chủ';
 
   @override
-  String get liveOnDevice => 'trên máy';
+  String get liveOnDevice => 'trên thiết bị';
 
   @override
-  String get settingsTheme => 'Chế độ màu';
+  String get settingsTheme => 'Chế độ hiển thị';
 
   @override
   String get settingsThemeSystem => 'Hệ thống';
@@ -199,40 +196,48 @@ class LVi extends L {
   String get settingsScanCycle => 'Định vị liên tục';
 
   @override
-  String get settingsScanCycleSub => 'Quét WiFi liên tục khi ứng dụng đang mở';
+  String get settingsScanCycleSub =>
+      'Quét WiFi liên tục khi ứng dụng đang hoạt động';
 
   @override
-  String get settingsPermission => 'Vị trí và WiFi';
+  String settingsScanFresh(String giay, int moi, int tong) {
+    return 'Dữ liệu WiFi cập nhật mỗi $giay s ($moi/$tong lượt quét)';
+  }
 
   @override
-  String get settingsPermissionGranted => 'Đã cấp';
+  String get settingsPermission => 'Quyền vị trí và WiFi';
+
+  @override
+  String get settingsPermissionGranted => 'Đã cấp quyền';
 
   @override
   String get settingsPermissionMissing => 'Chạm để cấp quyền';
 
   @override
-  String get settingsPermissionBlocked => 'Bị chặn — chạm để mở Cài đặt';
+  String get settingsPermissionBlocked =>
+      'Đã bị chặn · chạm để mở Cài đặt hệ thống';
 
   @override
   String get errWifiPermission =>
       'Cần quyền vị trí để quét WiFi. Chạm để cấp quyền.';
 
   @override
-  String get errWifiBlocked => 'Quyền vị trí đang bị chặn. Chạm để mở Cài đặt.';
+  String get errWifiBlocked =>
+      'Quyền vị trí đã bị chặn. Chạm để mở Cài đặt hệ thống.';
 
   @override
   String get errLocationOff =>
-      'Dịch vụ vị trí đang tắt. Hãy bật lên để định vị.';
+      'Dịch vụ vị trí đang tắt. Vui lòng bật để định vị.';
 
   @override
   String get errWifiUnsupported => 'Thiết bị không hỗ trợ quét WiFi.';
 
   @override
-  String get errScanFailed => 'Không quét được WiFi, đang thử lại…';
+  String get errScanFailed => 'Quét WiFi không thành công, đang thử lại…';
 
   @override
   String errNotEnoughAp(int so, int can) {
-    return 'Chỉ khớp $so/$can access point cần thiết. Bạn có đang ở trong thư viện?';
+    return 'Chỉ nhận diện được $so/$can điểm truy cập cần thiết. Có thể bạn đang ở ngoài thư viện.';
   }
 
   @override
@@ -242,23 +247,28 @@ class LVi extends L {
 
   @override
   String errNoConnection(String diaChi) {
-    return 'Không kết nối được máy chủ $diaChi';
+    return 'Không thể kết nối tới máy chủ $diaChi';
   }
 
   @override
   String errServer(int ma) {
-    return 'Máy chủ trả lỗi $ma';
+    return 'Máy chủ báo lỗi (mã $ma)';
   }
 
   @override
-  String get errBadFormat => 'Ứng dụng và máy chủ không hiểu gói tin của nhau.';
+  String get errBadFormat => 'Phản hồi từ máy chủ không đúng định dạng.';
 
   @override
-  String get errTimeout => 'Máy chủ không phản hồi kịp.';
+  String get errTimeout => 'Máy chủ phản hồi quá thời gian chờ.';
 
   @override
   String get mapFilter => 'Lớp bản đồ';
 
   @override
   String get buildingFull => 'Thư viện Đại học Đà Lạt';
+
+  @override
+  String settingsVersionLine(String app, String phienBan) {
+    return '$app · phiên bản $phienBan';
+  }
 }

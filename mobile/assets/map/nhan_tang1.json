@@ -5,7 +5,8 @@
   "x": -77.6,
   "y": -40.5,
   "icon": "may_tinh",
-  "cap": 1
+  "cap": 1,
+  "nhom": "TV3,4"
  },
  {
   "ten": "Hội trường",
@@ -13,7 +14,8 @@
   "x": 83.6,
   "y": -44.8,
   "icon": "hoi_truong",
-  "cap": 1
+  "cap": 1,
+  "nhom": "Hội trường thư viện"
  },
  {
   "ten": "Phòng báo & tạp chí",
@@ -21,7 +23,8 @@
   "x": 23.5,
   "y": 57.25,
   "icon": "doc",
-  "cap": 2
+  "cap": 2,
+  "nhom": "Phòng tạp chí"
  },
  {
   "ten": "Phòng nghiệp vụ 2",
@@ -29,7 +32,12 @@
   "x": 17.5,
   "y": 66.88,
   "icon": "van_phong",
-  "cap": 2
+  "cap": 2,
+  "mo_ta": "Phòng làm việc nghiệp vụ của cán bộ thư viện, phía sau quầy thủ thư.",
+  "den": [
+   3.0,
+   66.0
+  ]
  },
  {
   "ten": "Phòng học nhóm",
@@ -37,7 +45,12 @@
   "x": -17.5,
   "y": 69.0,
   "icon": "doc",
-  "cap": 2
+  "cap": 2,
+  "mo_ta": "Phòng học và thảo luận theo nhóm.",
+  "den": [
+   -17.5,
+   64.0
+  ]
  },
  {
   "ten": "Phòng nghiệp vụ 1",
@@ -45,7 +58,12 @@
   "x": -37.75,
   "y": 66.25,
   "icon": "van_phong",
-  "cap": 2
+  "cap": 2,
+  "mo_ta": "Phòng làm việc nghiệp vụ của cán bộ thư viện.",
+  "den": [
+   -28.5,
+   64.0
+  ]
  },
  {
   "ten": "Phòng đọc sau đại học",
@@ -53,182 +71,236 @@
   "x": 37.75,
   "y": 66.25,
   "icon": "doc",
-  "cap": 2
+  "cap": 2,
+  "mo_ta": "Phòng đọc dành cho học viên sau đại học.",
+  "den": [
+   37.75,
+   66.25
+  ]
  },
  {
   "ten": "Sảnh chờ",
   "x": 37.0,
   "y": 4.25,
   "icon": "ghe",
-  "cap": 3
+  "cap": 3,
+  "mo_ta": "Sảnh có bàn ghế ở đầu cầu thang, cửa gỗ vào Trung tâm CNTT và hội trường.",
+  "den": [
+   37.0,
+   4.25
+  ]
  },
  {
   "ten": "Sảnh chờ",
   "x": -37.0,
   "y": 4.25,
   "icon": "ghe",
-  "cap": 3
+  "cap": 3,
+  "mo_ta": "Sảnh có bàn ghế ở đầu cầu thang, cửa gỗ vào Trung tâm CNTT và hội trường.",
+  "den": [
+   -37.0,
+   4.25
+  ]
  },
  {
   "ten": "Lên hội trường",
   "x": 22.5,
   "y": 4.25,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "Hội trường thư viện"
  },
  {
   "ten": "Lên TV3, TV4",
   "x": -22.5,
   "y": 4.25,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "TV3,4"
  },
  {
   "ten": "Xuống căn tin",
   "x": 21.5,
   "y": 11.0,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "Căn tin"
  },
  {
   "ten": "Xuống TV1, TV2",
   "x": -21.5,
   "y": 11.0,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "mo_ta": "Cầu thang xuống phòng máy TV1 và TV2 ở tầng dưới.",
+  "den": [
+   -15.0,
+   11.0
+  ]
  },
  {
   "ten": "Trước WC",
   "x": 41.0,
   "y": 12.85,
   "icon": "wc",
-  "cap": 3
+  "cap": 3,
+  "nhom": "WC"
  },
  {
   "ten": "Trước WC",
   "x": -41.0,
   "y": 12.85,
   "icon": "wc",
-  "cap": 3
+  "cap": 3,
+  "nhom": "WC"
  },
  {
   "ten": "Xuống WC",
   "x": 41.25,
   "y": 18.95,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "WC"
  },
  {
   "ten": "Xuống WC",
   "x": -41.25,
   "y": 18.95,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "WC"
  },
  {
   "ten": "WC",
   "x": 47.5,
   "y": 11.25,
   "icon": "wc",
-  "cap": 2
+  "cap": 2,
+  "nhom": "WC"
  },
  {
   "ten": "WC",
   "x": -47.5,
   "y": 11.25,
   "icon": "wc",
-  "cap": 2
+  "cap": 2,
+  "nhom": "WC"
  },
  {
   "ten": "Cầu thang",
   "x": 0.0,
   "y": 17.0,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "Cầu thang"
  },
  {
   "ten": "Bậc lên quầy",
   "x": 0.0,
   "y": 37.88,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "Cầu thang"
  },
  {
   "ten": "Ban công",
   "x": 12.75,
   "y": 36.0,
   "icon": "ghe",
-  "cap": 3
+  "cap": 3,
+  "mo_ta": "Ban công đặt ghế sofa ở hai bên bậc lên quầy.",
+  "den": [
+   12.75,
+   36.0
+  ]
  },
  {
   "ten": "Ban công",
   "x": -12.75,
   "y": 36.0,
   "icon": "ghe",
-  "cap": 3
+  "cap": 3,
+  "mo_ta": "Ban công đặt ghế sofa ở hai bên bậc lên quầy.",
+  "den": [
+   -12.75,
+   36.0
+  ]
  },
  {
   "ten": "Xuống",
   "x": 21.5,
   "y": 37.88,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "Cầu thang"
  },
  {
   "ten": "Xuống",
   "x": -21.5,
   "y": 37.88,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "Cầu thang"
  },
  {
   "ten": "Quầy thủ thư",
   "x": 0.0,
   "y": 57.25,
   "icon": "quay",
-  "cap": 1
+  "cap": 1,
+  "nhom": "Bàn thủ thư"
  },
  {
   "ten": "Lên tầng 2",
   "x": 36.0,
   "y": 54.5,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "Cầu thang tầng 2"
  },
  {
   "ten": "Lên tầng 2",
   "x": -36.0,
   "y": 54.5,
   "icon": "thang",
-  "cap": 3
+  "cap": 3,
+  "nhom": "Cầu thang tầng 2"
  },
  {
   "ten": "Sảnh cửa chính",
   "x": 0.0,
   "y": 6.0,
   "icon": "diem",
-  "cap": 1
+  "cap": 1,
+  "nhom": "Cửa ra vào"
  },
  {
   "ten": "Cửa chính",
   "x": 0.0,
   "y": 1.2,
   "icon": "cua",
-  "cap": 2
+  "cap": 2,
+  "nhom": "Cửa ra vào"
  },
  {
   "ten": "Lối ra",
   "x": -23.5,
   "y": 57.0,
   "icon": "cua",
-  "cap": 2
+  "cap": 2,
+  "nhom": "Cửa ra vào"
  },
  {
   "ten": "Cửa sau",
   "x": 0.0,
   "y": 68.5,
   "icon": "cua",
-  "cap": 2
+  "cap": 2,
+  "mo_ta": "Cửa sau dẫn ra bãi đỗ xe cổng sau.",
+  "den": [
+   0.0,
+   70.0
+  ]
  },
  {
   "ten": "Khu tự học",
@@ -236,7 +308,8 @@
   "x": 27.0,
   "y": 27.0,
   "icon": "doc",
-  "cap": 1
+  "cap": 1,
+  "nhom": "Khu vực tự học"
  },
  {
   "ten": "Khu tự học",
@@ -244,20 +317,23 @@
   "x": -27.0,
   "y": 27.0,
   "icon": "doc",
-  "cap": 1
+  "cap": 1,
+  "nhom": "Khu vực tự học"
  },
  {
   "ten": "Khu đọc",
   "x": 36.0,
   "y": 44.0,
   "icon": "doc",
-  "cap": 2
+  "cap": 2,
+  "nhom": "Khu vực đọc"
  },
  {
   "ten": "Khu đọc",
   "x": -36.0,
   "y": 44.0,
   "icon": "doc",
-  "cap": 2
+  "cap": 2,
+  "nhom": "Khu vực đọc"
  }
 ]
