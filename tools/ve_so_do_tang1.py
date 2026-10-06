@@ -1,13 +1,15 @@
 """Vẽ sơ đồ tầng 1 dạng SVG từ data/reference/mat_bang_tang1.yaml, trong khung pixel của Map.png.
 
-    python tools/ve_so_do_tang1.py data/reference/so_do_tang1.svg [--diem]
-    python tools/ve_so_do_tang1.py mobile/assets/map/so_do_tang1.svg --app
-    python tools/ve_so_do_tang1.py mobile/assets/map/so_do_tang1_toi.svg --app --toi
+    python -m tools.ve_so_do_tang1 data/reference/so_do_tang1.svg [--diem]
+    python -m tools.ve_so_do_tang1 mobile/assets/map/so_do_tang1.svg --app
+    python -m tools.ve_so_do_tang1 mobile/assets/map/so_do_tang1_toi.svg --app --toi
+    python -m tools.ve_so_do_tang1 dashboard/so_do_tang1.svg --dashboard
 
 Hình học, đơn vị và quy ước ghi ở đầu tệp YAML; ở đây chỉ có cách vẽ. `--diem` chấm thêm điểm tham chiếu để
 đối chiếu; `--toi` bảng màu tối; `--app` bỏ nền trắng, chú giải và chữ, ghi tên ra `nhan_tang1.json` cạnh tệp
-SVG để app vẽ thành nhãn nổi, luôn đứng thẳng khi xoay bản đồ. viewBox in ra cuối cùng phải chép vào
-`SoDoThat` (mobile/lib/data/floor_map.dart).
+SVG để app vẽ thành nhãn nổi, luôn đứng thẳng khi xoay bản đồ; `--dashboard` cắt khung như app nhưng giữ chữ.
+viewBox in ra cuối cùng phải chép vào `SoDoThat` (mobile/lib/data/floor_map.dart) và `SO_DO`
+(dashboard/src/js/coordinate.js).
 """
 import csv
 import json
@@ -15,10 +17,11 @@ import math
 import sys
 from pathlib import Path
 
-import yaml
+from tools.mat_bang import doc_mat_bang, tam
 
 GOC = Path(__file__).parents[1]
 APP = '--app' in sys.argv
+KHUNG_APP = APP or '--dashboard' in sys.argv
 TOI = '--toi' in sys.argv
 DIEM = '--diem' in sys.argv
 
@@ -94,47 +97,6 @@ def cua(a, b, phia, doi):
     return ''.join(ra)
 
 
-def doc_mat_bang():
-    """Phần tử YAML -> danh sách phần tử với hình học đã tính ra số, kể cả bản đối xứng."""
-    d = yaml.safe_load((GOC / 'data/reference/mat_bang_tang1.yaml').read_text(encoding='utf-8'))
-    moc = {k: float(v) for k, v in d['moc'].items()}
-
-    def so(v):
-        return float(eval(v, {'__builtins__': {}}, moc)) if isinstance(v, str) else float(v)
-
-    ra = []
-    for e in d['phan_tu']:
-        e = dict(e)
-        if 'hcn' in e:
-            x1, y1, x2, y2 = map(so, e.pop('hcn'))
-            e['diem'] = [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]
-        elif 'hcn_tam' in e:
-            x, y, w, h = map(so, e.pop('hcn_tam'))
-            t = math.radians(e.get('xoay', 0))
-            e['diem'] = [(x + a * math.cos(t) - b * math.sin(t), y + a * math.sin(t) + b * math.cos(t))
-                         for a, b in ((-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2))]
-        elif 'diem' in e:
-            e['diem'] = [(so(x), so(y)) for x, y in e['diem']]
-        for k in ('tam', 'tai'):
-            if k in e:
-                e[k] = tuple(map(so, e[k]))
-        ten = e.get('ten')
-        trai, phai = ten if isinstance(ten, list) else (ten, ten)
-        if not e.get('doi_xung'):
-            ra.append(dict(e, ten=phai))
-            continue
-        ra.append(dict(e, ten=phai))
-        ra.append(dict(e, ten=trai, diem=[(-x, y) for x, y in e.get('diem', [])], mo=-e.get('mo', 1),
-                       huong={'+x': '-x', '-x': '+x'}.get(e.get('huong'), e.get('huong')),
-                       **{k: (-e[k][0], e[k][1]) for k in ('tam', 'tai') if k in e}))
-    return ra
-
-
-def tam(ps):
-    xs, ys = [p[0] for p in ps], [p[1] for p in ps]
-    return (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
-
-
 ICON_MAU = {'hoc_tap': 'doc', 'nghiep_vu': 'van_phong', 'dich_vu': 'may_tinh', 'su_kien': 'hoi_truong',
             've_sinh': 'wc'}
 ICON_LOAI = {'cau_thang': 'thang', 'gieng': 'thang', 'quay': 'quay', 'ban_cong': 'ghe', 'san_cao': 'ghe',
@@ -142,16 +104,19 @@ ICON_LOAI = {'cau_thang': 'thang', 'gieng': 'thang', 'quay': 'quay', 'ban_cong':
 
 
 def nhan_cua(e):
-    """Phần tử có tên -> nhãn {ten, en, x, y, mau, co, icon, cap}; không tên thì None."""
+    """Phần tử có tên -> nhãn {ten, en, x, y, mau, co, icon, cap, nhom, mo_ta, den}; không tên thì None.
+    `den` là điểm chỉ đường của địa điểm riêng (có `mo_ta`)."""
     if not e.get('ten'):
         return None
     loai = e['loai']
     x, y = e['tai'] if 'tai' in e else tam(e['diem'])
     to = loai in ('phong', 'nhan', 'quay')
+    den = e.get('loi_vao', (x, y)) if e.get('mo_ta') else None
     return {'ten': e['ten'], 'en': e.get('en'), 'x': round(x, 2), 'y': round(y, 2), 'mau': e.get('mau'),
             'co': e.get('co', 13 if to else 11),
             'icon': e.get('icon') or ICON_MAU.get(e.get('mau')) or ICON_LOAI.get(loai, 'diem'),
-            'cap': e.get('cap', 2 if to else 3)}
+            'cap': e.get('cap', 2 if to else 3), 'nhom': e.get('nhom'), 'mo_ta': e.get('mo_ta'),
+            'den': [round(v, 2) for v in den] if den else None}
 
 
 def ve(e):
@@ -200,8 +165,8 @@ def ve(e):
         return loai, da_giac(ps, BAN[0], BAN[1], 3)
     if loai == 'cua':
         return loai, cua(ps[0], ps[1], e['mo'], e.get('doi', False))
-    if loai == 'nhan':
-        return loai, ''
+    if loai in ('nhan', 'mep'):
+        return 'nhan', ''
     raise ValueError(f'loại lạ: {loai}')
 
 
@@ -232,10 +197,10 @@ if DIEM:
 
 # App cắt quanh khối giữa (hai toà chéo nằm ngoài vùng định vị, vẽ hết thì khối giữa nhỏ đi một nửa);
 # bản tham chiếu vẽ đủ.
-(x0, y0), (x1, y1) = (P(-95, 78), P(95, -55)) if APP else (P(-136, 78), P(141, -102))
+(x0, y0), (x1, y1) = (P(-95, 78), P(95, -55)) if KHUNG_APP else (P(-136, 78), P(141, -102))
 w, h = x1 - x0, y1 - y0
 cg = []
-if not APP:
+if not KHUNG_APP:
     h += 90
     day = y0 + h - 70
     MUC = [(MAU['nghiep_vu'][0], 'Nghiệp vụ'), (MAU['hoc_tap'][0], 'Học tập, đọc'), (MAU['dich_vu'][0], 'CNTT'),

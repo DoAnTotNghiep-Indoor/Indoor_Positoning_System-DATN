@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1056.9 -282.0 3220.9 2184.2" font-family="Inter, Segoe UI, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-580.2 -282.0 2209.3 1547.4" font-family="Inter, Segoe UI, Arial, sans-serif">
 <!-- Sinh từ data/reference/mat_bang_tang1.yaml. Khung = pixel Map.png (lưới -> px: x = 24.5 + (gx + 43) * 11.6279, y = 625.5 - gy * 11.6346). -->
-<rect x="-1056.9" y="-282.0" width="3220.9" height="2184.2" fill="#FFFFFF"/>
+<rect x="-580.2" y="-282.0" width="2209.3" height="1547.4" fill="#FFFFFF"/>
 <polygon points="-377.8,1740.0 265.1,1096.7 -377.8,453.4 -1020.8,1096.7" fill="#DDF3E8" stroke="#1F2937" stroke-width="4" stroke-linejoin="round" stroke-dasharray="12 7"/>
 <polygon points="1496.6,1781.8 2131.3,1146.7 1496.6,511.6 861.8,1146.7" fill="#ECE6FB" stroke="#1F2937" stroke-width="4" stroke-linejoin="round" stroke-dasharray="12 7"/>
 <polygon points="408.2,683.7 640.8,683.7 640.8,631.3 408.2,631.3" fill="#EEF0F3" stroke="#8A93A1" stroke-width="2" stroke-linejoin="round" stroke-dasharray="12 7"/><polyline points="408.2,672.0 640.8,672.0" fill="none" stroke="#C9CED6" stroke-width="2.5"/><polyline points="408.2,660.4 640.8,660.4" fill="none" stroke="#C9CED6" stroke-width="2.5"/><polyline points="408.2,648.8 640.8,648.8" fill="none" stroke="#C9CED6" stroke-width="2.5"/><polyline points="408.2,637.1 640.8,637.1" fill="none" stroke="#C9CED6" stroke-width="2.5"/>
@@ -121,18 +121,4 @@
 <text x="210.5" y="305.4" text-anchor="middle" font-size="20" font-weight="600" fill="#1E4E8C">Khu tự học</text><text x="210.5" y="325.4" text-anchor="middle" font-size="11.5" fill="#1E4E8C" fill-opacity="0.75">Reading Space</text>
 <text x="943.1" y="117.6" text-anchor="middle" font-size="15" font-weight="600" fill="#1E4E8C">Khu đọc</text>
 <text x="105.9" y="117.6" text-anchor="middle" font-size="15" font-weight="600" fill="#1E4E8C">Khu đọc</text>
-<rect x="-1056.9" y="1798.2" width="3220.9" height="104.0" fill="#FFFFFF"/><g font-size="12" fill="#374151"><text x="-1044.9" y="1832.2" font-size="18" font-weight="700" fill="#111827">Tầng 1 · Thư viện Đại học Đà Lạt</text>
-<rect x="-1044.9" y="1848.2" width="15" height="15" rx="3" fill="#E7EBF2" stroke="#1F2937" stroke-width="1.2"/><text x="-1023.9" y="1860.2">Nghiệp vụ</text>
-<rect x="-946.5" y="1848.2" width="15" height="15" rx="3" fill="#DCEAFB" stroke="#1F2937" stroke-width="1.2"/><text x="-925.5" y="1860.2">Học tập, đọc</text>
-<rect x="-828.3" y="1848.2" width="15" height="15" rx="3" fill="#DDF3E8" stroke="#1F2937" stroke-width="1.2"/><text x="-807.3" y="1860.2">CNTT</text>
-<rect x="-762.9" y="1848.2" width="15" height="15" rx="3" fill="#ECE6FB" stroke="#1F2937" stroke-width="1.2"/><text x="-741.9" y="1860.2">Hội trường</text>
-<rect x="-657.9" y="1848.2" width="15" height="15" rx="3" fill="#E9ECEF" stroke="#1F2937" stroke-width="1.2"/><text x="-636.9" y="1860.2">Vệ sinh</text>
-<rect x="-572.7" y="1848.2" width="15" height="15" rx="3" fill="#EEF0F3" stroke="#1F2937" stroke-width="1.2"/><text x="-551.7" y="1860.2">Bậc, cầu thang</text>
-<rect x="-441.3" y="1848.2" width="15" height="15" rx="3" fill="#D5DAE1" stroke="#1F2937" stroke-width="1.2"/><text x="-420.3" y="1860.2">Giếng xuống tầng 0</text>
-<rect x="-283.5" y="1848.2" width="15" height="15" rx="3" fill="#E8EBEF" stroke="#1F2937" stroke-width="1.2"/><text x="-262.5" y="1860.2">Sàn thấp</text>
-<rect x="-191.7" y="1848.2" width="15" height="15" rx="3" fill="#DDE5F8" stroke="#1F2937" stroke-width="1.2"/><text x="-170.7" y="1860.2">Quầy</text>
-<rect x="-126.3" y="1848.2" width="15" height="15" rx="3" fill="#B89B74" stroke="#1F2937" stroke-width="1.2"/><text x="-105.3" y="1860.2">Kệ sách</text>
-<line x1="-41.1" y1="1856.2" x2="-19.1" y2="1856.2" stroke="#1F2937" stroke-width="3" stroke-dasharray="10 5"/><text x="-13.1" y="1860.2">Lan can</text>
-<line x1="51.1" y1="1856.2" x2="73.1" y2="1856.2" stroke="#1F2937" stroke-width="3" stroke-dasharray="12 7"/><text x="79.1" y="1860.2">Chưa đo tại chỗ</text>
-<g stroke="#1F2937" stroke-width="2"><line x1="1792.6" y1="1832.2" x2="2124.0" y2="1832.2"/><line x1="1792.6" y1="1826.2" x2="1792.6" y2="1838.2"/><line x1="2124.0" y1="1826.2" x2="2124.0" y2="1838.2"/></g><text x="1792.6" y="1822.2" text-anchor="middle">0</text><text x="2124.0" y="1822.2" text-anchor="middle">10 m</text></g>
 </svg>

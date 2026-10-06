@@ -33,9 +33,10 @@ Hệ thống định vị người dùng trong tầng 1 Thư viện Đại học
    thì bắt đầu lại.
 6. Ghi cả toạ độ thô lẫn toạ độ đã gộp vào SQLite (`data/ips.db`), trả kết quả về app.
 
-App quét xong là quét tiếp, khoảng 2 giây một lần; máy phải tắt điều tiết quét Wi-Fi, còn bật
-thì Android chỉ cho 4 lần quét mỗi 2 phút. Với nhịp này REST là đủ: Dashboard hỏi
-`GET /predictions` mỗi 2 giây.
+App gọi quét mỗi 1 giây (lượt trước chưa xong thì bỏ qua). Máy phải tắt điều tiết quét Wi-Fi,
+còn bật thì Android chỉ cho 4 lần quét mỗi 2 phút. Số liệu RSSI thật mới bao lâu một lần do
+firmware quyết định (mục Hạn chế). Với nhịp này REST là đủ: Dashboard hỏi `GET /predictions`
+mỗi 2 giây.
 
 ### Định vị ngay trên điện thoại (Mô hình cục bộ)
 
@@ -71,37 +72,44 @@ một nửa số lần quét dùng k = 1. Mô hình triển khai đặt bằng `
 
 ### Bản đồ và toạ độ
 
-Sơ đồ gốc là `data/reference/Map.png` (bản số hoá tầng 1 của nhóm CTK45).
-`tools/trich_ban_do.py` tách tường khỏi lưới chấm, dò vật cản rồi ghi hình học vào
-`data/reference/ban_do_tang1.json`. Backend chỉ đọc tệp JSON này.
+Mặt bằng tầng 1 khai báo trong `data/reference/mat_bang_tang1.yaml` theo số viên gạch đếm
+tại chỗ (một viên ≈ một đơn vị lưới): phòng, tường, lan can, cầu thang, cột, kệ, cửa, tên
+địa điểm. Từ tệp này, `tools/ve_so_do_tang1.py` vẽ sơ đồ SVG cho app và Dashboard, còn
+`tools/luoi_di_lai.py` dựng lưới đi lại vào `data/reference/ban_do_tang1.json` cho backend.
+Phần chưa đo tại chỗ (sau quầy, sảnh chờ, WC, hai toà chéo) vẽ nét đứt.
 
 Toạ độ dùng **đơn vị lưới** của bảng điểm tham chiếu (x từ −43 đến 43, y từ 0 đến 52, y = 0
 ở cửa ra vào). Một đơn vị bằng **0,3508 m**, lấy từ kích thước ghi trên bản vẽ CTK45 và khớp
-với đa giác toà nhà trên OpenStreetMap. Phép đổi toạ độ ↔ pixel có ở ba nơi (Python, Dart,
-JavaScript), cùng lấy hằng số từ `ban_do_tang1.json`.
-
-App vẽ sơ đồ SVG (`mobile/assets/map/`) đặt trong cùng khung pixel với `Map.png`. Hình học
-khai báo trong `data/reference/mat_bang_tang1.yaml` theo số viên gạch đếm tại chỗ (một viên ≈
-một đơn vị lưới), `tools/ve_so_do_tang1.py` vẽ ra SVG. Dashboard dùng thẳng `Map.png`.
+với đa giác toà nhà trên OpenStreetMap; đếm gạch tại chỗ lệch 1%. Sơ đồ SVG giữ khung pixel
+của `Map.png` cũ (CTK45), nên phép đổi toạ độ ↔ pixel giống nhau ở app (Dart), Dashboard
+(JavaScript) và công cụ vẽ (Python).
 
 ### Chỉ đường
 
 `POST /route` tìm đường ngắn nhất từ đúng vị trí người dùng (không neo về điểm tham chiếu
 gần nhất) tới một điểm hoặc một khu vực:
 
-- **Đồ thị**: nút là 286 góc lồi của vật cản dò từ `Map.png`, cộng 44 điểm tham chiếu. Cạnh
-  nối các cặp nhìn thấy nhau. Đường ngắn nhất trong mặt bằng có vật cản chỉ bẻ hướng ở góc
-  lồi, nên đồ thị này cho đúng đường ngắn nhất.
+- **Lưới đi lại**: mặt nạ 4 điểm ảnh mỗi đơn vị lưới. Đi được trong vỏ toà, phòng, sàn, cầu
+  thang; chặn bởi tường, lan can, mép sàn khác mức, giếng, quầy, cột, kệ. Cầu thang chỉ lên
+  xuống ở hai đầu; cửa mở khe qua tường. Phòng không có cửa thì không vào được: chỉ đường dừng
+  ở lối vào khai trong YAML hoặc điểm đi được gần nhất.
+- **Đồ thị**: nút là 167 góc lồi của vật cản cộng 44 điểm tham chiếu, 3.599 cạnh nối các cặp
+  nhìn thấy nhau. Đường ngắn nhất trong mặt bằng có vật cản chỉ bẻ hướng ở góc lồi, nên đồ thị
+  này cho đúng đường ngắn nhất.
 - **Thuật toán**: A* (mặc định, heuristic là khoảng cách thẳng tới đích gần nhất) hoặc
   Dijkstra. Đích là khu vực thì chọn điểm gần nhất **theo đường đi**, không theo đường chim
-  bay.
+  bay; đích là toạ độ (phòng không có điểm tham chiếu) thì cách dưới 2 m coi như đã tới.
+  Trên 1.892 truy vấn giữa các điểm tham chiếu, A* mở trung bình 15 nút, Dijkstra 107, cùng
+  quãng đường (`python -m tools.so_sanh_tim_duong`).
 - **Chỉ dẫn** (`chi_dan`): mỗi bước kèm mã hướng (`bat_dau`, `di_thang`, `chech_trai/phai`,
   `re_trai/phai`, `quay_dau`) và số mét. App tự dịch mã sang tiếng Việt/Anh. Các chặng đi
   thẳng liên tiếp được gộp lại, chặng ngắn dưới 0,5 m dồn vào chặng kề.
-- **Cửa và luật nối**: `Map.png` vẽ tường nhưng không vẽ cửa, nên 15 cửa là cạnh nhóm tự nối
-  (`cua_gia_dinh`, `/graph` đánh dấu riêng). Ngoài ra có luật nối tay: RP01 chỉ nối RP45,
-  RP02; RP03 chỉ nối RP44, RP02; bỏ các cạnh 18-20, 45-12, 45-13, 45-20, 44-14, 44-15,
-  44-21; hai WC (RP42, RP43) chỉ là đích.
+- **Sai số quãng đường** (`python -m tools.danh_gia_chi_duong`, so với Dijkstra trên lưới
+  mịn): riêng thuật toán, từ 400 điểm xuất phát ngẫu nhiên tới mọi khu vực, lệch trung bình
+  0,16 m. Cả hệ thống, quãng đường app báo khi đứng ở vị trí mô hình đoán (tập test, gộp 3 lần
+  quét) so với quãng đường thật từ vị trí thật: lệch trung bình 1,45 m, trung vị 0,28 m, lớn
+  nhất 29 m. Ca lớn là vị trí đoán rơi sang sàn khác mức bên kia lan can, nên tuyến phải vòng
+  qua cầu thang.
 
 ## Dữ liệu
 
@@ -179,8 +187,12 @@ toạ độ chỉ từ các láng giềng cùng toà và tầng, còn ở đây 
 - Mô hình dự đoán khoảng 4 ms một lần quét; cả `/predict` (kèm gộp và ghi CSDL) khoảng
   10 ms; `/route` khoảng 7 ms.
 - Đo trên vivo X300, bản release, 200 lần quét test: mô hình cục bộ trung vị 0,72 ms mỗi lần
-  đoán; gọi `/predict` qua WiFi nội bộ khứ hồi trung vị 58 ms, phần lớn là mạng. Cả hai đều
-  nhỏ so với nhịp quét 2 giây.
+  đoán; gọi `/predict` qua WiFi nội bộ khứ hồi trung vị 58 ms, phần lớn là mạng.
+- Máy chủ trên VM Azure Central India, ra ngoài qua Cloudflare Tunnel, đo từ Việt Nam
+  (`python -m tools.do_tre_may_chu <địa chỉ>`, 200 lần, trung vị): `/predict` 332 ms, `/route`
+  330 ms, P99 ≤ 352 ms. Mô hình trên VM chỉ 1,7 ms; nối thẳng tới VM không qua Cloudflare 136 ms.
+  Cloudflare thêm ~200 ms vì vào ở Hồng Kông còn tunnel nối ở Mumbai. Mọi con số này đều nhỏ so
+  với nhịp số liệu WiFi mới (2–8 s, mục Hạn chế).
 - APK release chỉ arm64: 20,5 MB (kể cả mô hình cục bộ).
 
 ## Cài đặt và chạy
@@ -202,17 +214,33 @@ Kho kèm sẵn `scaler.pkl` và mô hình đang triển khai nên backend chạy
 `http://127.0.0.1:8000` để xem Dashboard, `/docs` để thử API. Đứng ngoài thư viện thì chạy
 với `DEMO=true`: máy chủ phát lại các lần quét thật của tập test, mô hình vẫn chạy thật.
 
+### Máy chủ triển khai
+
+Một VM Azure (Central India, 2 nhân, 3,8 GB RAM, Ubuntu 24.04) chạy hai bản backend dưới
+systemd, ra ngoài qua một Cloudflare Tunnel có hai tên miền:
+
+| Tên trong app | Địa chỉ | Cổng trên VM | Dịch vụ | CSDL |
+|---|---|---:|---|---|
+| IPS DLU PROD | `https://dlu-ips.etylix.me` | 8000 | `ips.service` | `data/ips.db` |
+| IPS DLU DEMO | `https://dlu-ips-demo.etylix.me` | 8001 | `ips-demo.service` (`DEMO=true`) | `data/ips_demo.db` |
+
+Hai bản cùng mã nguồn ở `~/IPS`; DEMO tách CSDL (`DATABASE_URL`) để lần quét phát lại không lẫn
+vào dữ liệu thật. Cập nhật: `git pull` rồi `sudo systemctl restart ips ips-demo`. Tên miền phải
+một cấp dưới `etylix.me`: chứng chỉ miễn phí của Cloudflare không phủ dạng `a.b.etylix.me`.
+
+App chọn máy chủ trong Cài đặt: PROD, DEMO hoặc Tuỳ chỉnh (tự nhập, ví dụ máy chủ trên
+laptop `http://<IP>:8000`). Mặc định là PROD.
+
 ### API
 
 | Endpoint | Việc |
 |---|---|
 | `GET /health` | Mô hình đang chạy, số đặc trưng, cửa sổ gộp |
-| `POST /predict` | `{device_id, scan: [{bssid, rssi}]}` → `{x, y, x_smooth, y_smooth, matched_ap, …}` |
+| `POST /predict` | `{device_id, scan: [{bssid, rssi}]}` → `{x, y, x_smooth, y_smooth, matched_ap, latency_ms, …}` |
 | `GET /predictions` | Lịch sử vị trí (`device_id`, `gioi_han` ≤ 1000) |
 | `GET /map` | Phạm vi, điểm tham chiếu kèm tên, nhóm, mô tả; `met_moi_don_vi` để đổi ra mét |
-| `GET /graph` | Các cạnh nối điểm tham chiếu, đánh dấu cửa giả định |
-| `POST /route` | Điểm đầu `tu_rp` hoặc `tu_x, tu_y`; đích `den_rp` hoặc `den_nhom`; `thuat_toan` = `a_sao` / `dijkstra` |
-| `GET /map/so-do.png` | Ảnh sơ đồ cho Dashboard |
+| `GET /graph` | Các cặp điểm tham chiếu nhìn thấy nhau, cho Dashboard vẽ |
+| `POST /route` | Điểm đầu `tu_rp` hoặc `tu_x, tu_y`; đích `den_rp`, `den_nhom` hoặc `den_x, den_y`; `thuat_toan` = `a_sao` / `dijkstra` |
 
 ### Máy học
 
@@ -256,6 +284,19 @@ Xem `mobile/README.md`.
 
 ## Hạn chế
 
+- **Nhịp số liệu WiFi do Android và firmware quyết định, không do app.** App gọi quét mỗi 1 s,
+  nhưng máy có thể trả lại kết quả cũ mà không báo (vẫn ghi tuổi mới). Đo trên vivo X300 đã tắt
+  điều tiết quét, 06/10/2026, qua nhật ký `dumpsys wifiscanner` và so RSSI giữa các lần:
+  - đang nối một mạng WiFi: RSSI đổi đủ khoảng 7,6 s một lần (7 lần trong 57 s), lẻ tẻ từng
+    phần băng tần ở giữa; ra lệnh quét nhịp 1, 2, 3 hay 5 s đều chỉ được 4–7 lần quét thật
+    trong 45 s;
+  - bật WiFi nhưng không nối mạng nào: số liệu mới đều 2 s một lần (một lần quét đủ băng
+    1–2,5 s cộng nhịp 1 s của app).
+
+  Người dùng trong thư viện thường đang nối WiFi thư viện, nên vị trí cập nhật thật khoảng
+  5–8 s một lần; trong lúc đó app gửi lại cùng một lần quét, cửa sổ gộp 3 lần quét phần lớn gộp
+  bản trùng. Mới đo một máy; hãng khác có thể khác. Cài đặt của app hiện nhịp đo được ("Số liệu
+  WiFi mới mỗi … s").
 - **Không có xác thực.** Ai vào được mạng LAN cũng xem được Dashboard và lịch sử vị trí của
   mọi thiết bị qua `GET /predictions`. `ALLOWED_ORIGINS` mặc định là `*`.
 - **Sai số tại chỗ chưa đủ điểm.** Buổi đo 03/10/2026 mới so được 1 chỗ đứng biết toạ độ.
@@ -270,9 +311,9 @@ Xem `mobile/README.md`.
 - **Dữ liệu nhóm tự thu chưa dùng.** 7 điểm đo năm 2026 bằng Redmi K40 Pro
   (`data/raw/nhom15_2026/`) lệch RSSI so với máy Samsung của CTK45. Gộp vào thì sai số tăng,
   nên chưa gộp khi chưa đo được độ lệch giữa hai máy.
-- **Chỉ đường chưa theo sơ đồ mới.** Đồ thị đi lại vẫn dựng từ `Map.png` với 15 cửa giả
-  định, nên tuyến có thể cắt qua giếng hay lan can của sơ đồ đo lại. Tỉ lệ 0,3508 m/đơn vị đã
-  kiểm bằng đếm gạch tại chỗ (lệch 1%). Quãng đường là cận dưới vì tuyến ôm sát góc vật cản.
+- **Một phần sơ đồ là suy đoán.** Khu sau quầy, cửa các phòng ở đó, lối vào WC (coi như
+  lách qua kệ sách) và mép giữa khu đọc với mức quầy chưa kiểm tại chỗ; chỉ đường đi theo các
+  giả định này. Quãng đường là cận dưới vì tuyến ôm sát góc vật cản.
 - **Chưa đánh giá theo mật độ người.** Dữ liệu không ghi số người có mặt lúc đo, muốn làm
   phải đo lại vào giờ đông và giờ vắng.
 

@@ -45,7 +45,7 @@ flowchart TB
     A1[Dữ liệu quét tại các điểm tham chiếu] --> A2[Tiền xử lý 12 bước<br/>ml/pipeline.py]
     A2 --> A3[Huấn luyện, đánh giá<br/>ml/train.py]
     A3 --> A4[(artifacts/<br/>feature_list.json, scaler.pkl, mô hình)]
-    M1[Map.png] --> M2[tools/trich_ban_do.py] --> M3[(ban_do_tang1.json)]
+    M1[mat_bang_tang1.yaml] --> M2[tools/luoi_di_lai.py] --> M3[(ban_do_tang1.json)]
   end
 
   subgraph Online["Trực tuyến"]
@@ -107,8 +107,11 @@ sequenceDiagram
 - **Gộp.** `BoGop` giữ 3 dự đoán gần nhất của mỗi thiết bị và trả dự đoán có tổng khoảng cách
   tới các dự đoán còn lại nhỏ nhất (đồng thuận không gian). Một lần quét lạc không kéo lệch kết
   quả như khi lấy trung bình hay EMA. Thiết bị im lặng quá 30 giây thì bắt đầu cửa sổ mới.
-- **Chu kỳ.** Ứng dụng quét xong là quét tiếp, chờ đúng sự kiện quét xong của hệ thống. Máy đo phải tắt điều tiết quét Wi-Fi; còn bật thì Android chỉ cho 4 lần quét
-  mỗi 2 phút. Với nhịp này REST là đủ; hệ thống không dùng WebSocket.
+- **Chu kỳ.** Ứng dụng gọi quét mỗi 1 giây và chờ đúng sự kiện quét xong của hệ thống. Máy đo phải
+  tắt điều tiết quét Wi-Fi; còn bật thì Android chỉ cho 4 lần quét mỗi 2 phút. Kể cả khi tắt,
+  firmware vẫn có thể trả lại kết quả cũ: trên vivo X300 số liệu thật mới khoảng 7,6 s một lần khi
+  đang nối WiFi, 2 s khi không nối mạng nào (README, mục Hạn chế). Với nhịp này REST là đủ; hệ
+  thống không dùng WebSocket.
 
 **Định vị trên máy (Mô hình cục bộ).** Tuỳ chọn trong Cài đặt của ứng dụng, mặc định tắt. Khi
 bật, ứng dụng tự làm các bước ánh xạ, chặn ngưỡng AP, mô hình và gộp ở trên, không chờ máy chủ:
@@ -124,7 +127,7 @@ bật, ứng dụng tự làm các bước ánh xạ, chặn ngưỡng AP, mô h
   Dashboard và cho phân tích sau buổi đo, còn vị trí trên điện thoại không phụ thuộc mạng.
 - Đo trên vivo X300 (bản release, 200 lần quét): một lần đoán trên máy trung vị 0,72 ms; gọi
   API qua WiFi nội bộ khứ hồi trung vị 58 ms, trong đó mô hình trên máy chủ 3,3 ms. Cả hai đều
-  nhỏ so với nhịp quét 2 giây, nên lợi ích chính là không cần mạng. Không dùng NPU (LiteRT):
+  nhỏ so với nhịp số liệu WiFi mới (2–8 s), nên lợi ích chính là không cần mạng. Không dùng NPU (LiteRT):
   kNN chỉ là phép tính khoảng cách, không phải mạng nơ-ron.
 - Bản đồ và chỉ đường vẫn lấy từ máy chủ.
 
@@ -220,13 +223,14 @@ giữ cả toạ độ thô lẫn toạ độ đã gộp để đo hiệu quả 
 
 ### 6.1. Nguồn hình học
 
-Sơ đồ gốc là `data/reference/Map.png`, bản số hoá tầng 1 thư viện. `tools/trich_ban_do.py`
-xử lý ảnh một lần và ghi kết quả vào `data/reference/ban_do_tang1.json`:
+Mặt bằng khai báo một nơi, `data/reference/mat_bang_tang1.yaml`, theo số viên gạch đếm tại chỗ;
+toạ độ viết bằng số hoặc biểu thức theo mốc đã đo, phần chưa đo ghi nguồn (ảnh, vệ tinh, đoán)
+và vẽ nét đứt. Hai công cụ đọc tệp này:
 
-- Tách tường (nét đen) khỏi lưới chấm toạ độ: chấm lưới đều đúng 16 px, khối xám lớn hơn là
-  vật cản (vách, kệ sách).
-- Dò các cặp điểm tham chiếu nhìn thấy nhau, các góc lồi của vật cản và mặt nạ vùng đi được.
-- Ghi tỉ lệ quy đổi, cửa giả định và luật nối.
+- `tools/ve_so_do_tang1.py` vẽ sơ đồ SVG cho ứng dụng (sáng, tối) và Dashboard, kèm danh sách
+  nhãn địa điểm (tên, biểu tượng, nhóm điểm tham chiếu hoặc mô tả và lối vào).
+- `tools/luoi_di_lai.py` vẽ mặt nạ đi được (4 điểm ảnh mỗi đơn vị lưới), dò góc lồi của vật cản,
+  các cặp nút nhìn thấy nhau, ghi vào `data/reference/ban_do_tang1.json`.
 
 Backend chỉ đọc JSON, không cần thư viện xử lý ảnh lúc chạy.
 
@@ -235,8 +239,8 @@ Backend chỉ đọc JSON, không cần thư viện xử lý ảnh lúc chạy.
 Toạ độ dùng đơn vị lưới của bảng điểm tham chiếu: x từ −43 đến 43, y từ 0 đến 52, y = 0 ở
 phía cửa ra vào, y hướng lên.
 
-- **Lưới ↔ pixel.** Lưới chấm trong `Map.png` trải 1000 × 605 px, hộp bao điểm tham chiếu
-  86 × 52 đơn vị, cho 11,628 và 11,635 px/đơn vị ở hai trục. Lưới chấm chính là hệ toạ độ.
+- **Lưới ↔ pixel.** Sơ đồ SVG giữ khung pixel của `Map.png` (bản số hoá của CTK45): lưới chấm
+  trải 1000 × 605 px trên hộp bao 86 × 52 đơn vị, 11,628 và 11,635 px/đơn vị ở hai trục.
 - **Chiều trục.** Toà nhà thắt eo ở giữa; chỉ khi y hướng lên thì mọi điểm trong đoạn eo mới
   lọt trong tường. Khớp 39 điểm với toạ độ GPS cho sai số 3,15 khi không lật trục x, 13,84 khi
   lật.
@@ -246,15 +250,16 @@ phía cửa ra vào, y hướng lên.
 - **Hướng bắc.** Trục +x của sơ đồ có phương vị 338,5°, đo trên ảnh vệ tinh bằng ba cách độc
   lập (lệch nhau trong 3,5°). Ứng dụng dùng góc này (trục +y: 248,5°) để xoay nón hướng la bàn.
 
-Phép đổi toạ độ ↔ pixel có ở backend (Python), ứng dụng (Dart) và Dashboard (JavaScript),
-cùng lấy hằng số từ `ban_do_tang1.json`. Ứng dụng vẽ sơ đồ SVG riêng (`tools/ve_so_do_tang1.py`)
-nhưng đặt trong cùng khung pixel với `Map.png`.
+Phép đổi toạ độ ↔ pixel có ở công cụ vẽ (Python), ứng dụng (Dart) và Dashboard (JavaScript),
+cùng bộ hằng số.
 
 ## 7. Chỉ đường
 
 **Đồ thị.** Đường ngắn nhất trong mặt bằng có vật cản chỉ bẻ hướng ở góc lồi của vật cản. Vì
-vậy nút của đồ thị là 286 góc lồi dò từ `Map.png` cộng 44 điểm tham chiếu, cạnh nối mọi cặp
-nút nhìn thấy nhau.
+vậy nút của đồ thị là 167 góc lồi của mặt nạ đi được cộng 44 điểm tham chiếu, 3.599 cạnh nối
+mọi cặp nút nhìn thấy nhau. Mặt nạ cho đi trong vỏ toà, phòng, sàn, cầu thang; chặn bởi tường,
+lan can, mép sàn khác mức, giếng, quầy, cột, kệ; cầu thang chỉ lên xuống ở hai đầu; cửa mở khe
+qua tường. Chỉ giữ mảng sàn liền với sảnh cửa chính.
 
 **Truy vấn.** Vị trí người dùng được thêm vào đồ thị như một nút tạm; nếu rơi vào tường hay
 kệ thì kéo về ô đi được gần nhất. Sau đó chạy:
@@ -264,16 +269,19 @@ kệ thì kéo về ô đi được gần nhất. Sau đó chạy:
 - **Dijkstra**, để đối chứng.
 
 Đích là một khu vực thì tìm đa đích: dừng ở điểm đầu tiên của khu vực lấy ra khỏi hàng đợi,
-tức điểm gần nhất theo đường đi chứ không theo đường chim bay.
+tức điểm gần nhất theo đường đi chứ không theo đường chim bay. Đích là toạ độ (phòng không có
+điểm tham chiếu, như phòng sau quầy) thì đích được kéo về điểm đi được gần nhất và thêm vào đồ
+thị như một nút tạm; cách đích dưới 2 m coi như đã tới.
 
 **Chỉ dẫn.** Tuyến được chia thành các chặng; góc quay giữa hai chặng phân loại thành
 `di_thang` (≤ 20°), `chech_trai/phai` (≤ 60°), `re_trai/phai` (≤ 135°) và `quay_dau`. Bước đầu
 là `bat_dau` vì chưa biết người dùng quay mặt hướng nào. Các chặng đi thẳng liên tiếp được gộp,
 chặng dưới 0,5 m dồn vào chặng kề. API trả mã hướng; ứng dụng dịch sang tiếng Việt hoặc Anh.
 
-**Cửa và luật nối.** `Map.png` vẽ tường nhưng không vẽ cửa. 15 cạnh cửa do nhóm nối tay, ghi
-riêng trong khoá `cua_gia_dinh`. Luật nối thêm: RP01 chỉ nối RP45, RP02; RP03 chỉ nối RP44,
-RP02; một số cạnh bị cấm; hai WC chỉ là đích.
+**Kết quả.** Trên 1.892 truy vấn giữa các điểm tham chiếu, A* mở trung bình 15 nút, Dijkstra
+107, cùng quãng đường. So với đường ngắn nhất trên lưới mịn, riêng thuật toán lệch trung bình
+0,16 m; quãng đường báo khi đứng ở vị trí mô hình đoán so với từ vị trí thật lệch trung bình 1,45 m,
+lớn nhất 29 m khi vị trí đoán rơi sang sàn khác mức bên kia lan can.
 
 ## 8. API
 
@@ -283,9 +291,8 @@ RP02; một số cạnh bị cấm; hai WC chỉ là đích.
 | POST | `/predict` | Định vị một lần quét |
 | GET | `/predictions` | Lịch sử vị trí, lọc theo `device_id`, `gioi_han` từ 1 đến 1000 |
 | GET | `/map` | Phạm vi, điểm tham chiếu (tên, nhóm, mô tả, thư mục ảnh), thống kê đồ thị, `met_moi_don_vi` |
-| GET | `/graph` | Danh sách cạnh giữa các điểm tham chiếu, đánh dấu cửa giả định |
-| POST | `/route` | Chỉ đường |
-| GET | `/map/so-do.png` | Ảnh sơ đồ cho Dashboard |
+| GET | `/graph` | Các cặp điểm tham chiếu nhìn thấy nhau |
+| POST | `/route` | Chỉ đường tới điểm tham chiếu, khu vực hoặc toạ độ |
 | GET | `/` | Web Dashboard |
 
 Ví dụ `POST /predict`:

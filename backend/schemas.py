@@ -118,20 +118,19 @@ class Canh(BaseModel):
     den: str
     khoang_cach_m: float
 
-    # True: cạnh nối tay vì Map.png không vẽ cửa, chưa đối chiếu thực địa — client
-    # phải vẽ khác cạnh đo được.
-    cua_gia_dinh: bool = False
-
 
 class DoThi(ThongKeDoThi):
     canh: list[Canh]
 
 
 class YeuCauChiDuong(BaseModel):
-    """Điểm đầu bằng rp_id hoặc toạ độ lưới; đích bằng rp_id hoặc tên khu vực."""
+    """Điểm đầu bằng rp_id hoặc toạ độ lưới; đích bằng rp_id, tên khu vực, hoặc
+    toạ độ lưới (địa điểm trên sơ đồ không có điểm tham chiếu, như phòng sau quầy)."""
 
     den_rp: str | None = None
     den_nhom: str | None = None
+    den_x: float | None = None
+    den_y: float | None = None
     tu_rp: str | None = None
     tu_x: float | None = None
     tu_y: float | None = None
@@ -141,8 +140,10 @@ class YeuCauChiDuong(BaseModel):
     def _phai_co_diem_dau(self) -> "YeuCauChiDuong":
         if self.tu_rp is None and (self.tu_x is None or self.tu_y is None):
             raise ValueError("cần tu_rp, hoặc cả tu_x lẫn tu_y")
-        if (self.den_rp is None) == (self.den_nhom is None):
-            raise ValueError("cần đúng một trong den_rp và den_nhom")
+        if (self.den_x is None) != (self.den_y is None):
+            raise ValueError("cần cả den_x lẫn den_y")
+        if [self.den_rp, self.den_nhom, self.den_x].count(None) != 2:
+            raise ValueError("cần đúng một trong den_rp, den_nhom, (den_x, den_y)")
         return self
 
 

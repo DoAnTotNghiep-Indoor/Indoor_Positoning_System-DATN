@@ -4,9 +4,8 @@
     python -m tools.danh_gia_chi_duong
 
 Mốc đo độc lập với cách tìm đường đang đánh giá: Dijkstra trên lưới điểm ảnh nửa
-độ phân giải của mặt nạ đi được, mỗi ô nối 80 hướng trong bán kính 5 ô, cộng
-cạnh cửa giả định. Mốc không biết luật `chi_noi` nên lệch có chủ ý ở RP01, RP03. Rời rạc
-hoá làm mốc dài hơn đường thật tối đa khoảng 0,5%, cộng nửa ô (6 cm).
+độ phân giải của mặt nạ đi được, mỗi ô nối 80 hướng trong bán kính 5 ô. Rời rạc
+hoá làm mốc dài hơn đường thật tối đa khoảng 0,5%, cộng nửa ô (9 cm).
 
 Hai phép đo:
 
@@ -14,8 +13,7 @@ Hai phép đo:
   Cả hai cách cùng đổi mét bằng một tỉ lệ, nên chỉ còn sai số của thuật toán.
 - `dau_cuoi`: tập test của mô hình đang triển khai. Quãng đường ứng dụng hiển thị
   khi đứng ở vị trí DỰ ĐOÁN so với quãng đường thật từ vị trí THẬT — con số người
-  dùng thực sự nhìn thấy. `cu_1m` là cách cũ đúng như ứng dụng từng hiển thị,
-  coi mỗi đơn vị lưới là một mét.
+  dùng thực sự nhìn thấy.
 """
 
 from __future__ import annotations
@@ -66,13 +64,6 @@ class MocDo:
             hang.append(nguon)
             cot.append(self.chi_so[f[nguon, 0] + dy, f[nguon, 1] + dx])
             trong_so.append(np.full(len(nguon), math.hypot(2 * dx / l._kx, 2 * dy / l._ky)))
-        for a, b in g.cua_gia_dinh:
-            pa, pb = l.xy[l.chi_so[a]], l.xy[l.chi_so[b]]
-            i, j = self.o_gan(*pa), self.o_gan(*pb)
-            w = math.hypot(*(pa - pb))
-            hang += [np.array([i]), np.array([j])]
-            cot += [np.array([j]), np.array([i])]
-            trong_so += [np.array([w]), np.array([w])]
         self.G = coo_matrix((np.concatenate(trong_so), (np.concatenate(hang), np.concatenate(cot))),
                             shape=(len(f),) * 2).tocsr()
         self.met = l.met_moi_don_vi
@@ -115,7 +106,6 @@ def thuat_toan(g: DoThiDiLai, moc: MocDo, nhom: dict, truong: dict,
             d = g.chi_duong(x, y, rp, "dijkstra")
             dong.append({"phep_do": "thuat_toan", "x": x, "y": y, "khu_vuc": ten,
                          "moc_m": truong[ten][o_moc],
-                         "cu_m": g.tim_duong_toi_nhom(tu, ten)[1],
                          "moi_m": a["quang_duong_m"], "dijkstra_m": d["quang_duong_m"],
                          "mo_a_sao": a["so_nut_mo"], "mo_dijkstra": d["so_nut_mo"]})
     return pd.DataFrame(dong)
@@ -139,14 +129,11 @@ def dau_cuoi(g: DoThiDiLai, moc: MocDo, nhom: dict, truong: dict) -> pd.DataFram
     for kieu, i, (px, py) in vi_tri:
         rp_that = te["rp_id"].iloc[i]
         o_that = moc.o_gan(*y[i])
-        tu = g.gan_nhat(px, py)
         for ten, rp in nhom.items():
             if rp_that in rp:
                 continue
-            cu = g.tim_duong_toi_nhom(tu, ten)[1]
             dong.append({"phep_do": kieu, "x": px, "y": py, "khu_vuc": ten,
                          "moc_m": truong[ten][o_that],
-                         "cu_m": cu, "cu_1m": cu / g.met_moi_don_vi,
                          "moi_m": g.chi_duong(px, py, rp)["quang_duong_m"]})
     return pd.DataFrame(dong)
 
@@ -154,7 +141,7 @@ def dau_cuoi(g: DoThiDiLai, moc: MocDo, nhom: dict, truong: dict) -> pd.DataFram
 def tom_tat(df: pd.DataFrame) -> pd.DataFrame:
     ra = []
     for kieu, n in df.groupby("phep_do"):
-        for cot in ("cu_1m", "cu_m", "moi_m", "dijkstra_m"):
+        for cot in ("moi_m", "dijkstra_m"):
             if cot not in n or n[cot].isna().all():
                 continue
             e = (n[cot] - n["moc_m"]).abs()

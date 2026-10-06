@@ -1,13 +1,13 @@
 """Đồ thị đi lại và tìm đường.
 
-Hai tầng đồ thị. `DoThiDiLai.canh` nối các điểm tham chiếu nhìn thấy nhau, dùng
-cho Dashboard. Chỉ đường thật chạy trên `LuoiDiLai`: nút là góc lồi của vật cản
-cộng điểm tham chiếu, vì đường ngắn nhất trong mặt bằng có vật cản chỉ bẻ hướng
-ở góc lồi — nên tuyến đi từ đúng vị trí người dùng, không phải từ điểm tham
-chiếu gần nhất.
+Mặt nạ đi được và đồ thị dựng sẵn từ sơ đồ `mat_bang_tang1.yaml` bằng
+`tools/luoi_di_lai.py`. Chỉ đường chạy trên `LuoiDiLai`: nút là góc lồi của vật
+cản cộng điểm tham chiếu, vì đường ngắn nhất trong mặt bằng có vật cản chỉ bẻ
+hướng ở góc lồi — nên tuyến đi từ đúng vị trí người dùng, không phải từ điểm
+tham chiếu gần nhất. `DoThiDiLai.canh` (cặp điểm tham chiếu nhìn thấy nhau) chỉ
+để Dashboard vẽ.
 
-Toạ độ giữ đơn vị lưới của Bảng 4; mọi khoảng cách trả ra là MÉT, nhân
-`met_moi_don_vi` (Hình 7 báo cáo CTK45, xem `tools/trich_ban_do.py`).
+Toạ độ giữ đơn vị lưới của Bảng 4; mọi khoảng cách trả ra là MÉT.
 """
 
 from __future__ import annotations
@@ -38,6 +38,9 @@ GOC_QUAY_DAU = 135.0
 
 # Chặng ngắn hơn chừng một sải chân thì không đáng thành một bước chỉ dẫn.
 CHANG_TOI_THIEU_M = 0.5
+
+# Cách đích toạ độ dưới ngần này là đã tới: sai số định vị cỡ vài mét.
+DA_TOI_M = 2.0
 
 
 def _goc_quay(truoc: float, sau: float) -> float:
@@ -101,7 +104,6 @@ class LuoiDiLai:
         self.px = np.vstack([goc, [l["rp_px"][k] for k in self.rp]]).astype(float)
         self.xy = self.sang_don_vi(self.px)
         self.chi_so = {k: self.so_goc + i for i, k in enumerate(self.rp)}
-        self.han_che = {self.chi_so[k] for k in d.get("chi_noi", {}) if k in self.chi_so}
 
         self.ke: list[list[tuple[int, float]]] = [[] for _ in self.px]
         for i, j in _giai_nen(l["canh"], np.uint16).reshape(-1, 2).tolist():
@@ -121,7 +123,7 @@ class LuoiDiLai:
 
     def chieu_vao(self, x: float, y: float) -> tuple[int, int]:
         """Pixel đi được gần [x, y] nhất: vị trí dự đoán hay rơi vào tường, kệ sách
-        hoặc ra ngoài nhà."""
+        hoặc ra ngoài nhà, đích hay nằm trong phòng không có cửa."""
         u, v = self.sang_px(x, y)
         cao, rong = self.o.shape
         c0, r0 = min(max(round(u), 0), rong - 1), min(max(round(v), 0), cao - 1)
@@ -145,43 +147,48 @@ class LuoiDiLai:
             else:
                 k *= 2
 
-    def tim(self, x: float, y: float, dich: set[str], thuat_toan: str = "a_sao",
-            chi_noi: set[str] | None = None,
-            bo: set[str] = frozenset()) -> tuple[list[int], np.ndarray, float, int]:
+    def _thay(self, cr: tuple[int, int]) -> list[tuple[int, float]]:
+        """Nút nhìn thấy từ pixel [cr], kèm mét; không thấy nút nào thì lấy nút gần nhất."""
+        xy = self.sang_don_vi(np.array(cr, float))[0]
+        thay = np.nonzero(nhin_thay(self.o, cr, self.px))[0]
+        if not len(thay):
+            thay = [int(np.hypot(*(self.px - cr).T).argmin())]
+        return [(int(j), self._met(xy, self.xy[j])) for j in thay]
+
+    def tim(self, x: float, y: float, dich: set[str] | tuple[float, float],
+            thuat_toan: str = "a_sao") -> tuple[list[int], np.ndarray, float, int]:
         """(chỉ số nút, toạ độ từng điểm trên tuyến, quãng đường mét, số nút đã mở).
 
-        Nút -1 là điểm xuất phát. A* dùng khoảng cách thẳng tới đích gần nhất —
-        không bao giờ ước lượng quá nên vẫn cho đường ngắn nhất như Dijkstra."""
-        dich_i = [self.chi_so[k] for k in dich if k in self.chi_so]
+        Đích là tập rp_id, hoặc một toạ độ (x, y). Nút -1 là điểm xuất phát, -2 là
+        đích toạ độ. A* dùng khoảng cách thẳng tới đích gần nhất — không bao giờ
+        ước lượng quá nên vẫn cho đường ngắn nhất như Dijkstra."""
         c, r = self.chieu_vao(x, y)
         goc = self.sang_don_vi(np.array([c, r], float))[0]
-        if not dich_i:
-            return [], goc[None], math.inf, 0
+        if isinstance(dich, tuple):
+            cr_dich = self.chieu_vao(*dich)
+            D = self.sang_don_vi(np.array(cr_dich, float))
+            ke_dich = dict(self._thay(cr_dich))
+            dich_set = {-2}
+        else:
+            dich_i = [self.chi_so[k] for k in dich if k in self.chi_so]
+            if not dich_i:
+                return [], goc[None], math.inf, 0
+            D, ke_dich, dich_set = self.xy[dich_i], {}, set(dich_i)
 
-        D = self.xy[dich_i]
         if thuat_toan == "a_sao":
             h = np.sqrt(((self.xy[:, None, :] - D[None]) ** 2).sum(-1)).min(1) * self.met_moi_don_vi
             h0 = float(np.sqrt(((D - goc) ** 2).sum(-1)).min()) * self.met_moi_don_vi
         else:
             h, h0 = np.zeros(len(self.xy)), 0.0
 
-        if chi_noi:
-            thay = [self.chi_so[k] for k in chi_noi if k in self.chi_so]
-        else:
-            cam = self.han_che | {self.chi_so[k] for k in bo if k in self.chi_so}
-            thay = [j for j in np.nonzero(nhin_thay(self.o, (c, r), self.px))[0].tolist()
-                    if j not in cam]
-            if not thay:
-                xa = np.hypot(*(self.px - (c, r)).T)
-                xa[list(cam)] = np.inf
-                thay = [int(xa.argmin())]
-        ke_nguon = [(int(j), self._met(goc, self.xy[j])) for j in thay]
+        ke_nguon = self._thay((c, r))
+        if ke_dich and nhin_thay(self.o, (c, r), [cr_dich])[0]:
+            ke_nguon.append((-2, self._met(goc, D[0])))
 
         g = {-1: 0.0}
         truoc: dict[int, int] = {}
         hang = [(h0, 0.0, -1)]
         xong: set[int] = set()
-        dich_set = set(dich_i)
         while hang:
             _, _, u = heapq.heappop(hang)
             if u in xong:
@@ -192,14 +199,17 @@ class LuoiDiLai:
                 while nut[-1] != -1:
                     nut.append(truoc[nut[-1]])
                 nut.reverse()
-                diem = np.vstack([goc, self.xy[nut[1:]]])
+                diem = np.vstack([goc, *(D[0] if n == -2 else self.xy[n] for n in nut[1:])])
                 return nut, diem, g[u], len(xong)
-            for v, w in (ke_nguon if u == -1 else self.ke[u]):
+            ke = ke_nguon if u == -1 else self.ke[u]
+            if u in ke_dich:
+                ke = [*ke, (-2, ke_dich[u])]
+            for v, w in ke:
                 moi = g[u] + w
                 if moi < g.get(v, math.inf) - 1e-12:
                     g[v] = moi
                     truoc[v] = u
-                    heapq.heappush(hang, (moi + h[v], -moi, v))
+                    heapq.heappush(hang, (moi + (0.0 if v == -2 else h[v]), -moi, v))
         return [], goc[None], math.inf, len(xong)
 
 
@@ -216,22 +226,8 @@ class DoThiDiLai:
         d = json.loads(BAN_DO_JSON.read_text(encoding="utf-8"))
         self.met_moi_don_vi = d["ty_le_quy_doi"]["met_moi_don_vi"]
         self.luoi = LuoiDiLai(d)
-        self.chi_noi: dict[str, list[str]] = d["chi_noi"]
-        self.cam_noi: dict[str, set[str]] = {}
-        for a, b in d["cam_noi"]:
-            self.cam_noi.setdefault(a, set()).add(b)
-            self.cam_noi.setdefault(b, set()).add(a)
-
-        # Cạnh = các cặp nhìn thấy nhau, cộng cửa giả định: cạnh xuyên tường nhóm
-        # nối tay vì Map.png không vẽ cửa.
-        self.cua_gia_dinh = {_khoa(*c) for c in d["cua_gia_dinh"]}
-        self.canh = {k: self.khoang_cach(*k)
-                     for k in {_khoa(*c) for c in d["canh_nhin_thay"]} | self.cua_gia_dinh
-                     if k[0] in self.toa_do and k[1] in self.toa_do}
-        self.ke: dict[str, list[tuple[str, float]]] = {k: [] for k in self.toa_do}
-        for (a, b), w in self.canh.items():
-            self.ke[a].append((b, w))
-            self.ke[b].append((a, w))
+        # Cặp điểm tham chiếu nhìn thấy nhau, cho Dashboard vẽ.
+        self.canh = {_khoa(*c): self.khoang_cach(*c) for c in d["canh_nhin_thay"]}
 
     def khoang_cach(self, a: str, b: str) -> float:
         """Mét."""
@@ -239,86 +235,39 @@ class DoThiDiLai:
         return math.hypot(xa - xb, ya - yb) * self.met_moi_don_vi
 
     def gan_nhat(self, x: float, y: float) -> str:
-        """Điểm tham chiếu gần một toạ độ nhất — dùng để neo đầu và cuối đường đi."""
+        """Điểm tham chiếu gần một toạ độ nhất, cùng luật "đang ở khu nào" của ứng dụng."""
         return min(
             self.toa_do,
             key=lambda k: math.hypot(self.toa_do[k][0] - x, self.toa_do[k][1] - y),
         )
 
-    def tim_duong(self, tu: str, den: str) -> tuple[list[str], float]:
-        """A* trên đồ thị điểm tham chiếu; ([], inf) khi không có đường."""
-        return self._loang(tu, {den}, self._toi_dich_gan_nhat)
-
     def diem_cua_nhom(self, nhom: str) -> set[str]:
         return {rp for rp, n in self.nhan.items() if n["nhom"] == nhom}
 
-    def tim_duong_toi_nhom(self, tu: str, nhom: str) -> tuple[list[str], float]:
-        """A* đa đích: dừng ở điểm đầu tiên của khu vực lấy ra khỏi hàng đợi — điểm
-        gần nhất theo đường thẳng có thể nằm sau tường."""
-        return self._loang(tu, self.diem_cua_nhom(nhom), self._toi_dich_gan_nhat)
-
-    def _toi_dich_gan_nhat(self, nut: str, dich: set[str]) -> float:
-        return min(self.khoang_cach(nut, d) for d in dich)
-
-    def _loang(self, tu: str, dich: set[str], uoc_luong) -> tuple[list[str], float]:
-        if not dich:
-            return [], math.inf
-        if tu in dich:
-            return [tu], 0.0
-
-        xa = {tu: 0.0}
-        truoc: dict[str, str] = {}
-        hang = [(uoc_luong(tu, dich), tu)]
-        da_xong: set[str] = set()
-        den = None
-
-        while hang:
-            _, nut = heapq.heappop(hang)
-            if nut in da_xong:
-                continue
-            if nut in dich:
-                den = nut
-                break
-            da_xong.add(nut)
-
-            for ke, w in self.ke[nut]:
-                moi = xa[nut] + w
-                if moi < xa.get(ke, math.inf):
-                    xa[ke] = moi
-                    truoc[ke] = nut
-                    heapq.heappush(hang, (moi + uoc_luong(ke, dich), ke))
-
-        if den is None:
-            return [], math.inf
-
-        duong = [den]
-        while duong[-1] != tu:
-            duong.append(truoc[duong[-1]])
-        return duong[::-1], xa[den]
-
-    def chi_duong(self, x: float, y: float, dich: set[str],
+    def chi_duong(self, x: float, y: float, dich: set[str] | tuple[float, float],
                   thuat_toan: str = "a_sao") -> dict | None:
-        """Tuyến từ toạ độ [x, y] tới điểm gần nhất THEO ĐƯỜNG ĐI trong [dich].
+        """Tuyến từ toạ độ [x, y] tới điểm gần nhất THEO ĐƯỜNG ĐI trong tập rp_id
+        [dich], hoặc tới toạ độ [dich].
 
-        Đứng sẵn ở khu vực đích — điểm tham chiếu gần nhất thuộc [dich], cùng luật
-        với ứng dụng — thì tuyến rỗng. None khi không có đường."""
+        Tuyến rỗng khi đã tới: điểm tham chiếu gần nhất thuộc [dich] (cùng luật với
+        ứng dụng), hoặc cách đích toạ độ dưới `DA_TOI_M`. None khi không có đường."""
         tu = self.gan_nhat(x, y)
-        if tu in dich:
+        if isinstance(dich, set) and tu in dich:
             return {"tu": tu, "den": tu, "quang_duong_m": 0.0, "so_nut_mo": 0,
                     "duong_di": [self.mo_ta_diem(tu)], "chi_dan": []}
-        # Xuất phát theo luật nối của điểm gần nhất: chỉ ra qua điểm kề cho phép,
-        # không đi thẳng tới điểm bị cấm nối.
-        ke = self.chi_noi.get(tu)
-        nut, xy, m, mo = self.luoi.tim(x, y, dich, thuat_toan, {tu, *ke} if ke else None,
-                                       self.cam_noi.get(tu, set()))
+        nut, xy, m, mo = self.luoi.tim(x, y, dich, thuat_toan)
         if not nut:
             return None
+        if isinstance(dich, tuple) and m < DA_TOI_M:
+            return {"tu": tu, "den": "", "quang_duong_m": 0.0, "so_nut_mo": mo,
+                    "duong_di": [{"rp_id": "", "ten": "", "nhom": "", "x": float(xy[-1][0]),
+                                  "y": float(xy[-1][1])}], "chi_dan": []}
         ten_rp = {v: k for k, v in self.luoi.chi_so.items()}
         diem = [(float(px), float(py), ten_rp.get(n)) for (px, py), n in zip(xy, nut)]
 
-        # Toạ độ là chỗ tuyến thật sự đi qua: điểm tham chiếu rơi trên kệ sách hay
-        # khối cầu thang đã được kéo ra lối đi.
-        return {"tu": tu, "den": diem[-1][2], "quang_duong_m": m, "so_nut_mo": mo,
+        # Toạ độ là chỗ tuyến thật sự đi qua: điểm tham chiếu rơi trên cầu thang hay
+        # sát tường đã được kéo ra lối đi.
+        return {"tu": tu, "den": diem[-1][2] or "", "quang_duong_m": m, "so_nut_mo": mo,
                 "duong_di": [{**(self.mo_ta_diem(k) if k else {"rp_id": "", "ten": "", "nhom": ""}),
                               "x": px, "y": py} for px, py, k in diem],
                 "chi_dan": self._buoc(diem, tu)}
@@ -329,7 +278,7 @@ class DoThiDiLai:
         đích: tên điểm tham chiếu gần góc có thể là chỗ vừa rời đi hoặc sau tường."""
         if len(diem) < 2:
             return []
-        moc = [k or diem[-1][2] for _, _, k in diem]
+        moc = [k or diem[-1][2] or "" for _, _, k in diem]
         moc[0] = tu
 
         chang = [[math.hypot(xb - xa, yb - ya) * self.met_moi_don_vi,

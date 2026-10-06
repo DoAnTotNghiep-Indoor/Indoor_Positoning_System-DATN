@@ -9,16 +9,11 @@ from __future__ import annotations
 from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
 
 from backend import schemas
-from backend.config import settings
 from backend.dependencies import lay_do_thi
 
 router = APIRouter(tags=["map"])
-
-# Phục vụ thẳng từ data/reference/ để Dashboard khỏi giữ thêm một bản sao.
-SO_DO_PNG = settings.reference_dir / "Map.png"
 
 
 @lru_cache(maxsize=1)
@@ -47,19 +42,13 @@ async def ban_do() -> schemas.BanDo:
     return schemas.BanDo(**_du_lieu_ban_do())
 
 
-@router.get("/map/so-do.png", include_in_schema=False)
-async def so_do_png() -> FileResponse:
-    return FileResponse(SO_DO_PNG, media_type="image/png")
-
-
 @router.get("/graph", response_model=schemas.DoThi)
 async def do_thi() -> schemas.DoThi:
     g = lay_do_thi()
     return schemas.DoThi(
         **g.thong_ke(),
         canh=[
-            {"tu": a, "den": b, "khoang_cach_m": round(d, 2),
-             "cua_gia_dinh": (a, b) in g.cua_gia_dinh}
+            {"tu": a, "den": b, "khoang_cach_m": round(d, 2)}
             for (a, b), d in sorted(g.canh.items())
         ],
     )
@@ -78,7 +67,9 @@ async def chi_duong(yeu_cau: schemas.YeuCauChiDuong) -> schemas.KetQuaChiDuong:
     else:
         x, y = yeu_cau.tu_x, yeu_cau.tu_y
 
-    if yeu_cau.den_nhom is not None:
+    if yeu_cau.den_x is not None:
+        dich = (yeu_cau.den_x, yeu_cau.den_y)
+    elif yeu_cau.den_nhom is not None:
         dich = g.diem_cua_nhom(yeu_cau.den_nhom)
         if not dich:
             raise HTTPException(404, f"Không có khu vực '{yeu_cau.den_nhom}'")
@@ -89,7 +80,7 @@ async def chi_duong(yeu_cau: schemas.YeuCauChiDuong) -> schemas.KetQuaChiDuong:
 
     kq = g.chi_duong(x, y, dich, yeu_cau.thuat_toan)
     if kq is None:
-        raise HTTPException(409, f"Không tìm được đường tới '{yeu_cau.den_nhom or yeu_cau.den_rp}'")
+        raise HTTPException(409, f"Không tìm được đường tới {dich}")
 
     return schemas.KetQuaChiDuong(
         **{**kq, "quang_duong_m": round(kq["quang_duong_m"], 2)},

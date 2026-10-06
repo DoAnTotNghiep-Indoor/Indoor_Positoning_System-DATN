@@ -1,32 +1,35 @@
-// Quy đổi mét sang pixel — cùng phép với `SoDoThat` (Dart) và
-// `tools/trich_ban_do.py`.
+// Quy đổi toạ độ lưới sang pixel — cùng phép với `SoDoThat` (Dart) và
+// `tools/ve_so_do_tang1.py`. Sơ đồ SVG đặt trong khung pixel của Map.png cũ;
+// `khung*` là viewBox của nó.
 
 export const SO_DO = {
-  anh: 'map/so-do.png',
-  rongPx: 1053,
-  caoPx: 651,
+  anh: 'so_do_tang1.svg',
+  khungX: -580.2,
+  khungY: -282.0,
+  khungRong: 2209.3,
+  khungCao: 1547.4,
   gocXPx: 24.5,
   gocYPx: 625.5,
-  pxMoiMetX: 11.6279,
-  pxMoiMetY: 11.6346,
+  pxMoiDonViX: 11.6279,
+  pxMoiDonViY: 11.6346,
 
-  // Toạ độ mét của cạnh trái sơ đồ.
-  gocMetX: -43,
+  // Toạ độ lưới của gốc pixel x.
+  gocX: -43,
 };
 
-// Trục y hướng lên: y = 0 ở cạnh dưới ảnh, chỗ cửa ra vào.
-function metSangPixel(x, y) {
+// Trục y hướng lên: y = 0 ở cửa chính.
+function sangPixel(x, y) {
   return {
-    x: SO_DO.gocXPx + (x - SO_DO.gocMetX) * SO_DO.pxMoiMetX,
-    y: SO_DO.gocYPx - y * SO_DO.pxMoiMetY,
+    x: SO_DO.gocXPx + (x - SO_DO.gocX) * SO_DO.pxMoiDonViX,
+    y: SO_DO.gocYPx - y * SO_DO.pxMoiDonViY,
   };
 }
 
-/** Mét sang toạ độ trong khung vẽ rộng `rong` pixel, giữ nguyên tỉ lệ ảnh. */
+/** Toạ độ lưới sang toạ độ trong khung vẽ rộng `rong` pixel, giữ nguyên tỉ lệ sơ đồ. */
 export function metSangKhung(x, y, rong) {
-  const s = rong / SO_DO.rongPx;
-  const p = metSangPixel(x, y);
-  return { x: p.x * s, y: p.y * s };
+  const s = rong / SO_DO.khungRong;
+  const p = sangPixel(x, y);
+  return { x: (p.x - SO_DO.khungX) * s, y: (p.y - SO_DO.khungY) * s };
 }
 
 export function khoangCach(a, b) {

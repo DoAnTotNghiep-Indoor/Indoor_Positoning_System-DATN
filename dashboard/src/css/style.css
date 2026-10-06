@@ -124,7 +124,6 @@ main > .khung, main .cot-phai > .khung:last-child { margin-bottom: 0; }
 .mau-diem { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
 .mau-thiet-bi { width: 8px; height: 8px; border-radius: 50%; background: #2563eb; }
 .mau-canh { width: 20px; height: 0; border-top: 2px solid rgba(100, 116, 139, 0.42); }
-.mau-cua { width: 20px; height: 0; border-top: 2px dashed rgba(217, 119, 6, 0.75); }
 #so-do { max-width: 100%; }
 
 .luoi-the { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

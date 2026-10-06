@@ -4,7 +4,6 @@ import { SO_DO, metSangKhung } from './coordinate.js';
 
 const MAU = {
   canh: 'rgba(100, 116, 139, 0.42)',
-  cuaGiaDinh: 'rgba(217, 119, 6, 0.75)',
   diem: '#94a3b8',
   diemTuyen: '#e08a1e',
   tuyen: '#e08a1e',
@@ -72,7 +71,7 @@ export class SoDoCanvas {
     const { canvas, ctx } = this;
     const rongCss = canvas.parentElement.clientWidth;
     if (rongCss <= 0) return;
-    const caoCss = (rongCss * SO_DO.caoPx) / SO_DO.rongPx;
+    const caoCss = (rongCss * SO_DO.khungCao) / SO_DO.khungRong;
 
     // Nhân devicePixelRatio để nét không răng cưa trên màn HiDPI.
     const dpr = window.devicePixelRatio || 1;
@@ -85,7 +84,7 @@ export class SoDoCanvas {
     ctx.clearRect(0, 0, rongCss, caoCss);
 
     if (this.anh.complete && this.anh.naturalWidth) {
-      ctx.globalAlpha = 0.6;
+      ctx.globalAlpha = 0.85;
       ctx.drawImage(this.anh, 0, 0, rongCss, caoCss);
       ctx.globalAlpha = 1;
     }
@@ -93,28 +92,22 @@ export class SoDoCanvas {
     const q = (d) => metSangKhung(d.x, d.y, rongCss);
     const tren = new Set(this.tuyen?.map((d) => d.rp_id) ?? []);
 
-    // Cạnh vẽ trước chấm. Cạnh đo được nét liền, cửa giả định nét đứt.
+    // Cạnh vẽ trước chấm.
     if (this.canh.length && this.diem.length) {
       const toaDo = new Map(this.diem.map((d) => [d.rp_id, d]));
-      const veLoat = (loc, mau, netDut) => {
-        ctx.strokeStyle = mau;
-        ctx.lineWidth = 1.2;
-        ctx.setLineDash(netDut);
-        ctx.beginPath();
-        for (const c of this.canh.filter(loc)) {
-          const a = toaDo.get(c.tu);
-          const b = toaDo.get(c.den);
-          if (!a || !b) continue;
-          const pa = q(a);
-          const pb = q(b);
-          ctx.moveTo(pa.x, pa.y);
-          ctx.lineTo(pb.x, pb.y);
-        }
-        ctx.stroke();
-      };
-      veLoat((c) => !c.cua_gia_dinh, MAU.canh, []);
-      veLoat((c) => c.cua_gia_dinh, MAU.cuaGiaDinh, [5, 4]);
-      ctx.setLineDash([]);
+      ctx.strokeStyle = MAU.canh;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (const c of this.canh) {
+        const a = toaDo.get(c.tu);
+        const b = toaDo.get(c.den);
+        if (!a || !b) continue;
+        const pa = q(a);
+        const pb = q(b);
+        ctx.moveTo(pa.x, pa.y);
+        ctx.lineTo(pb.x, pb.y);
+      }
+      ctx.stroke();
     }
 
     for (const d of this.diem) {

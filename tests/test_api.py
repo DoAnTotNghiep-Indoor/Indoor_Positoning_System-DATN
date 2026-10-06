@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 
+import numpy as np
 import pytest
 
 from ml import config
@@ -32,7 +33,7 @@ def test_health(client):
 
 
 @pytest.mark.parametrize("duong_dan", [
-    "/health", "/map", "/graph", "/predictions", "/map/so-do.png",
+    "/health", "/map", "/graph", "/predictions",
     "/", "/src/js/dashboard.js", "/src/css/style.css"])
 def test_moi_duong_dan_deu_tra_ve(client, duong_dan):
     # Dashboard mount ở "/" nhận mọi đường dẫn còn lại, không được che API.
@@ -140,9 +141,6 @@ def test_graph(client):
     co = {m["rp_id"] for m in client.get("/map").json()["diem_tham_chieu"]}
     assert {c[k] for c in canh for k in ("tu", "den")} <= co
 
-    that = {tuple(sorted(c)) for c in json.loads(
-        (config.REFERENCE_DIR / "ban_do_tang1.json").read_text(encoding="utf-8"))["cua_gia_dinh"]}
-    assert {tuple(sorted((c["tu"], c["den"]))) for c in canh if c["cua_gia_dinh"]} == that
 
 
 # --- /route ---
@@ -169,12 +167,38 @@ def test_route_tu_toa_do_nguoi_dung(client):
     assert math.hypot(dau["x"] - 5.0, dau["y"] - 30.0) < 0.2
 
 
-def test_route_a_sao_bang_dijkstra_nhung_mo_it_nut_hon(client):
-    than = {"tu_x": 22, "tu_y": 52, "den_nhom": "Căn tin"}
+@pytest.mark.parametrize("dich", [{"den_nhom": "Căn tin"}, {"den_x": -17.5, "den_y": 64}])
+def test_route_a_sao_bang_dijkstra_nhung_mo_it_nut_hon(client, dich):
+    than = {"tu_x": 22, "tu_y": 52, **dich}
     a = client.post("/route", json=than).json()
     d = client.post("/route", json={**than, "thuat_toan": "dijkstra"}).json()
-    assert a["quang_duong_m"] == d["quang_duong_m"]
+    assert a["quang_duong_m"] == pytest.approx(d["quang_duong_m"])
     assert a["so_nut_mo"] < d["so_nut_mo"]
+
+
+@pytest.mark.parametrize("tu,dich,tren,duoi", [
+    # Phòng học nhóm sau quầy: đi qua lối ra (x ≈ -23, y ≈ 57) vào hành lang cửa sau.
+    ((0, 45), (-17.5, 64), (-30, 52.75), (-17, 61.75)),
+    # Từ khu tự học xuống sảnh cửa chính phải qua cầu thang dưới (|x| < 8), không trèo lan can.
+    ((25, 25), (0, 5), (-8, 15), (8, 19)),
+])
+def test_route_toi_toa_do_qua_loi_di_that(client, tu, dich, tren, duoi):
+    d = client.post("/route", json={"tu_x": tu[0], "tu_y": tu[1], "den_x": dich[0], "den_y": dich[1]}).json()
+    assert d["so_chang"] > 0 and d["den"] == ""
+    cuoi = d["duong_di"][-1]
+    assert math.hypot(cuoi["x"] - dich[0], cuoi["y"] - dich[1]) < 1
+    # Có ít nhất một đoạn của tuyến cắt qua cửa ngõ [tren, duoi].
+    (x0, y0), (x1, y1) = tren, duoi
+    def trong(p):
+        return x0 - 0.5 <= p["x"] <= x1 + 0.5 and y0 - 0.5 <= p["y"] <= y1 + 0.5
+    diem = d["duong_di"]
+    assert any(trong({"x": a["x"] + (b["x"] - a["x"]) * t, "y": a["y"] + (b["y"] - a["y"]) * t})
+               for a, b in zip(diem, diem[1:]) for t in np.linspace(0, 1, 50))
+
+
+def test_route_toi_toa_do_da_toi(client):
+    d = client.post("/route", json={"tu_x": 0, "tu_y": 30, "den_x": 0.5, "den_y": 31}).json()
+    assert d["so_chang"] == 0 and d["chi_dan"] == []
 
 
 @pytest.mark.parametrize("than,ma", [
@@ -185,6 +209,8 @@ def test_route_a_sao_bang_dijkstra_nhung_mo_it_nut_hon(client):
     ({"den_rp": "RP20"}, 422),
     ({"den_rp": "RP20", "tu_x": -16.2}, 422),
     ({"tu_rp": "RP01", "den_rp": "RP09", "den_nhom": "Căn tin"}, 422),
+    ({"tu_rp": "RP01", "den_x": 3.0}, 422),
+    ({"tu_rp": "RP01", "den_nhom": "WC", "den_x": 3.0, "den_y": 3.0}, 422),
     ({"tu_rp": "RP01", "den_rp": "RP09", "thuat_toan": "bfs"}, 422),
 ])
 def test_route_loi(client, than, ma):

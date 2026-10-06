@@ -18,7 +18,6 @@ class Settings(BaseSettings):
 
     database_url: str = f"sqlite+aiosqlite:///{ROOT_DIR / 'data' / 'ips.db'}"
     model_dir: Path = ROOT_DIR / "artifacts"
-    reference_dir: Path = ROOT_DIR / "data" / "reference"
     dashboard_dir: Path = ROOT_DIR / "dashboard"
 
     # Số lần quét gộp; số đo ở `hau_xu_ly_gop` trong model_metadata.json.
