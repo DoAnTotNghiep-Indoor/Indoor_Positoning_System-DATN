@@ -15,7 +15,7 @@
     <uses-feature android:name="android.hardware.wifi" android:required="true"/>
 
     <application
-        android:label="ips_dlu"
+        android:label="WiLoc"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

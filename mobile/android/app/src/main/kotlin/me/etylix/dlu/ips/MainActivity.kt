@@ -1,4 +1,4 @@
-package com.example.ips_dlu
+package me.etylix.dlu.ips
 
 import android.os.Build
 import android.os.Bundle

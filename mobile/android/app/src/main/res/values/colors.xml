@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Logo #2C5BD8 (màu nhấn của app) trên nền trắng: tương phản 5,84 : 1. -->
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>

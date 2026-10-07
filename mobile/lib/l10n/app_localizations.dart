@@ -100,7 +100,7 @@ abstract class L {
   /// No description provided for @appTitle.
   ///
   /// In vi, this message translates to:
-  /// **'IPS DLU'**
+  /// **'WiLoc'**
   String get appTitle;
 
   /// No description provided for @tabHome.

@@ -9,7 +9,7 @@ class LEn extends L {
   LEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'IPS DLU';
+  String get appTitle => 'WiLoc';
 
   @override
   String get tabHome => 'Home';

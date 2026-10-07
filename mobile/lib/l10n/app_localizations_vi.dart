@@ -9,7 +9,7 @@ class LVi extends L {
   LVi([String locale = 'vi']) : super(locale);
 
   @override
-  String get appTitle => 'IPS DLU';
+  String get appTitle => 'WiLoc';
 
   @override
   String get tabHome => 'Trang chủ';
