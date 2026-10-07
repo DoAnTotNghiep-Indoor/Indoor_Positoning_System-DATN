@@ -48,7 +48,7 @@ flutter build apk --release --target-platform android-arm64 --obfuscate --split-
 adb install -r build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Mặc định app dùng máy chủ IPS DLU PROD (`https://dlu-ips.etylix.me`); DEMO phát lại lần quét
+Mặc định app dùng máy chủ IPS DLU PROD (`https://dlu-ips.etylix.com`); DEMO phát lại lần quét
 thật nên dùng được ở ngoài thư viện. Muốn dùng máy chủ tự chạy (`uvicorn backend.main:app
 --host 0.0.0.0` ở thư mục gốc) thì chọn **Tuỳ chỉnh** trong Cài đặt:
 

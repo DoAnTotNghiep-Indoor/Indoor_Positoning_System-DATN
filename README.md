@@ -270,12 +270,12 @@ systemd, ra ngoài qua một Cloudflare Tunnel có hai tên miền:
 
 | Tên trong app | Địa chỉ | Cổng trên VM | Dịch vụ | CSDL |
 |---|---|---:|---|---|
-| IPS DLU PROD | `https://dlu-ips.etylix.me` | 8000 | `ips.service` | `data/ips.db` |
-| IPS DLU DEMO | `https://dlu-ips-demo.etylix.me` | 8001 | `ips-demo.service` (`DEMO=true`) | `data/ips_demo.db` |
+| IPS DLU PROD | `https://dlu-ips.etylix.com` | 8000 | `ips.service` | `data/ips.db` |
+| IPS DLU DEMO | `https://dlu-ips-demo.etylix.com` | 8001 | `ips-demo.service` (`DEMO=true`) | `data/ips_demo.db` |
 
 Hai bản cùng mã nguồn ở `~/IPS`; DEMO tách CSDL (`DATABASE_URL`) để lần quét phát lại không lẫn
 vào dữ liệu thật. Cập nhật: `git pull` rồi `sudo systemctl restart ips ips-demo`. Tên miền phải
-một cấp dưới `etylix.me`: chứng chỉ miễn phí của Cloudflare không phủ dạng `a.b.etylix.me`.
+một cấp dưới `etylix.com`: chứng chỉ miễn phí của Cloudflare không phủ dạng `a.b.etylix.com`.
 
 App chọn máy chủ trong Cài đặt: PROD, DEMO hoặc Tuỳ chỉnh (tự nhập, ví dụ máy chủ trên
 laptop `http://<IP>:8000`). Mặc định là PROD.

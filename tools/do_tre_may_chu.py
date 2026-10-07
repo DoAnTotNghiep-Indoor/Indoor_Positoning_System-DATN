@@ -1,6 +1,6 @@
 """Đo độ trễ máy chủ từ phía client: /health, /predict (lần quét test thật), /route.
 
-    python -m tools.do_tre_may_chu https://dlu-ips.etylix.me [--lan 200]
+    python -m tools.do_tre_may_chu https://dlu-ips.etylix.com [--lan 200]
 
 Một client giữ kết nối (keep-alive) như app. `/predict` gửi lần quét của tập test với device_id `do-tre-<giờ>`
 nên ghi vào CSDL máy chủ; `latency_ms` trong trả lời là thời gian mô hình chạy trên máy chủ. In trung vị, P90,

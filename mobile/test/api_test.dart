@@ -365,7 +365,7 @@ void main() {
   test('Mặc định dùng máy chủ PROD, địa chỉ tự nhập thì không mang tên', () {
     final tc = AppSettings(luu: false);
     expect(tc.tenMayChu, 'IPS DLU PROD');
-    tc.datDiaChiMayChu('https://dlu-ips-demo.etylix.me/');
+    tc.datDiaChiMayChu('https://dlu-ips-demo.etylix.com/');
     expect(tc.tenMayChu, 'IPS DLU DEMO');
     tc.datDiaChiMayChu('http://192.168.1.5:8000');
     expect(tc.tenMayChu, isNull);

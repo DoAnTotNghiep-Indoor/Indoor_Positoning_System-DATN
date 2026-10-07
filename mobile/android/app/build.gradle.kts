@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "me.etylix.dlu.ips"
+    namespace = "com.etylix.dlu.ips"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "me.etylix.dlu.ips"
+        applicationId = "com.etylix.dlu.ips"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // Chỉ có adaptive icon (mipmap-anydpi-v26), không có icon PNG cho Android dưới 8.0.

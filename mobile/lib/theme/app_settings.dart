@@ -14,8 +14,8 @@ class AppSettings extends ChangeNotifier {
   /// Máy chủ của đồ án trên VM, ra ngoài qua Cloudflare Tunnel. DEMO phát lại lần quét
   /// thật ở thư viện để trình diễn ở nơi khác; mỗi bản một CSDL riêng.
   static const mayChuCoSan = {
-    'IPS DLU PROD': 'https://dlu-ips.etylix.me',
-    'IPS DLU DEMO': 'https://dlu-ips-demo.etylix.me',
+    'IPS DLU PROD': 'https://dlu-ips.etylix.com',
+    'IPS DLU DEMO': 'https://dlu-ips-demo.etylix.com',
   };
 
   String _diaChiMayChu = mayChuCoSan['IPS DLU PROD']!;
