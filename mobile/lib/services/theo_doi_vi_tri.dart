@@ -151,13 +151,14 @@ class TheoDoiViTri extends ChangeNotifier {
     unawaited(_api.duDoan(deviceId: deviceId, quet: quet).then((_) {}, onError: (_) {}));
     final mo = await (_moHinh ??= MoHinhKDong.napTaiSan());
     final dongHo = Stopwatch()..start();
-    final (x, y, soKhop) = mo.doan(quet);
+    final (x, y, doTrai, soKhop) = mo.doan(quet);
     final (xGop, yGop) = _boGop.them(x, y);
     return ViTri(
       x: x,
       y: y,
       xGop: xGop,
       yGop: yGop,
+      doTrai: doTrai,
       moHinh: 'fingerprint_knn_dong',
       soApKhop: soKhop,
       soLanQuetDaGop: _boGop.soMau,

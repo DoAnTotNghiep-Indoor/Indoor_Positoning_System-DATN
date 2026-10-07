@@ -66,7 +66,9 @@ class _TheKhuVucState extends State<_TheKhuVuc> {
     final k = widget.khuVuc;
     final theoDoi = TheoDoiViTriScope.of(context);
     final vt = theoDoi.viTri;
-    final oDay = theoDoi.khuHienTai?.nhom == k.nhom;
+    final oDay = widget.rpId != null
+        ? theoDoi.diemGanNhat?.rpId == widget.rpId
+        : theoDoi.khuHienTai?.nhom == k.nhom;
 
     final String nhanNut;
     VoidCallback? bam;

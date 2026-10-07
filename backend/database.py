@@ -76,6 +76,8 @@ class DuDoanViTri(Base):
     y: Mapped[float] = mapped_column(Float)
     x_gop: Mapped[float] = mapped_column(Float)
     y_gop: Mapped[float] = mapped_column(Float)
+    # NULL ở các dòng ghi trước khi có cột này.
+    do_trai: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     so_ap_bat_duoc: Mapped[int] = mapped_column(Integer)
     mo_hinh: Mapped[str] = mapped_column(String(64))
@@ -106,6 +108,11 @@ TaoSession = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=Fa
 async def tao_bang() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # create_all không thêm cột vào bảng đã có; CSDL trên máy chủ giữ dữ liệu thực địa.
+        cot = {r[1] for r in (await conn.exec_driver_sql(
+            "PRAGMA table_info(position_predictions)")).fetchall()}
+        if "do_trai" not in cot:
+            await conn.exec_driver_sql("ALTER TABLE position_predictions ADD COLUMN do_trai FLOAT")
 
 
 async def lay_session():

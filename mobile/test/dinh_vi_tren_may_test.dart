@@ -14,14 +14,18 @@ void main() {
 
   test('Đoán trùng mô hình Python trên lần quét test', () {
     final dc = _doc('test/du_lieu/doi_chieu_k_dong.json');
-    final quet = dc['quet'] as List, toaDo = dc['toa_do'] as List;
+    final quet = dc['quet'] as List,
+        toaDo = dc['toa_do'] as List,
+        doTrai = dc['do_trai'] as List;
     for (var i = 0; i < quet.length; i++) {
-      final (x, y, _) = mo.doan([
+      final (x, y, trai, _) = mo.doan([
         for (final ap in quet[i] as List)
           DiemTruyCap(bssid: ap['bssid'] as String, rssi: ap['rssi'] as int),
       ]);
       expect(x, closeTo(toaDo[i][0] as num, 1e-6), reason: 'lần quét $i');
       expect(y, closeTo(toaDo[i][1] as num, 1e-6), reason: 'lần quét $i');
+      // Vân tay trong app làm tròn 7 chữ số; độ trải khuếch đại phần lệch đó hơn toạ độ.
+      expect(trai, closeTo(doTrai[i] as num, 1e-5), reason: 'lần quét $i');
     }
   });
 

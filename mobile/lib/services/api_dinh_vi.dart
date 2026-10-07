@@ -15,6 +15,10 @@ class ViTri {
   final double xGop;
   final double yGop;
 
+  /// Độ trải toạ độ các láng giềng, đơn vị lưới: chỉ báo tương đối (lớn là kém tin),
+  /// không phải bán kính sai số có độ phủ cố định.
+  final double doTrai;
+
   final String moHinh;
   final int soApKhop;
   final int soLanQuetDaGop;
@@ -28,6 +32,7 @@ class ViTri {
     required this.y,
     required this.xGop,
     required this.yGop,
+    required this.doTrai,
     required this.moHinh,
     required this.soApKhop,
     required this.soLanQuetDaGop,
@@ -40,6 +45,8 @@ class ViTri {
         y: (j['y'] as num).toDouble(),
         xGop: (j['x_smooth'] as num).toDouble(),
         yGop: (j['y_smooth'] as num).toDouble(),
+        // Máy chủ của nhóm hợp tác có thể không trả trường này: 0 là không vẽ quầng.
+        doTrai: (j['do_trai'] as num?)?.toDouble() ?? 0,
         moHinh: j['model'] as String,
         soApKhop: j['matched_ap'] as int,
         soLanQuetDaGop: j['scan_count'] as int,

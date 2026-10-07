@@ -51,8 +51,9 @@ class MoHinhKDong {
       jsonDecode(await rootBundle.loadString('assets/model/k_dong.json'))
           as Map<String, dynamic>);
 
-  /// (x, y, số AP khớp). Ném [NgoaiLeApi] `khongDuAp` như máy chủ khi khớp quá ít.
-  (double, double, int) doan(List<DiemTruyCap> quet) {
+  /// (x, y, độ trải, số AP khớp); độ trải như `DinhViKDong.do_trai`, đơn vị lưới. Ném
+  /// [NgoaiLeApi] `khongDuAp` như máy chủ khi khớp quá ít.
+  (double, double, double, int) doan(List<DiemTruyCap> quet) {
     final tong = Float64List(_soAp), dem = Int32List(_soAp);
     for (final ap in quet) {
       final i = _viTri[ap.bssid.toLowerCase()];
@@ -88,19 +89,31 @@ class MoHinhKDong {
     final thuTu = List<int>.generate(n, (i) => i)
       ..sort((a, b) => d[a].compareTo(d[b]));
 
-    if (d[thuTu[0]] < _nguong) {
-      final t = _toaDo[_nhan[thuTu[0]]];
-      return (t[0], t[1], soKhop);
-    }
+    // Độ trải luôn tính bằng k lớn láng giềng, kể cả khi đoán bằng k = 1.
+    final lon = thuTu.take(_kLon);
     var w = 0.0, x = 0.0, y = 0.0;
-    for (final i in thuTu.take(_kLon)) {
+    for (final i in lon) {
       final wi = 1 / (d[i] + 1e-12);
       final t = _toaDo[_nhan[i]];
       w += wi;
       x += wi * t[0];
       y += wi * t[1];
     }
-    return (x / w, y / w, soKhop);
+    x /= w;
+    y /= w;
+    var v = 0.0;
+    for (final i in lon) {
+      final t = _toaDo[_nhan[i]];
+      v += (1 / (d[i] + 1e-12)) *
+          ((t[0] - x) * (t[0] - x) + (t[1] - y) * (t[1] - y));
+    }
+    final doTrai = sqrt(v / w);
+
+    if (d[thuTu[0]] < _nguong) {
+      final t = _toaDo[_nhan[thuTu[0]]];
+      return (t[0], t[1], doTrai, soKhop);
+    }
+    return (x, y, doTrai, soKhop);
   }
 }
 

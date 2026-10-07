@@ -27,6 +27,7 @@ const trangThai = {
 };
 
 let soDo;
+let metMoiDonVi = 1;
 
 /** Tên khu vực gần toạ độ nhất, như app di động. */
 function tenKhuVuc(x, y) {
@@ -82,7 +83,7 @@ async function napBanDo() {
   }
 
   // Toạ độ theo đơn vị lưới; nhân tỉ lệ ra mét.
-  const met = bd.met_moi_don_vi ?? 1;
+  const met = (metMoiDonVi = bd.met_moi_don_vi ?? 1);
   $('#pham-vi').textContent =
     `${so.format((bd.pham_vi.x_max - bd.pham_vi.x_min) * met)} × ` +
     `${so.format((bd.pham_vi.y_max - bd.pham_vi.y_min) * met)} m · ` +
@@ -253,6 +254,8 @@ async function napLichSu() {
         { ten: 'x', so: true, lay: (d) => so.format(d.x_gop) },
         { ten: 'y', so: true, lay: (d) => so.format(d.y_gop) },
         { ten: 'AP', so: true, lay: (d) => d.so_ap_bat_duoc },
+        // Chỉ báo tương đối: to là mô hình phân vân giữa nhiều chỗ xa nhau.
+        { ten: 'Độ trải (m)', so: true, lay: (d) => (d.do_trai == null ? '' : so.format(d.do_trai * metMoiDonVi)) },
         { ten: 'Mô hình', lay: (d) => d.mo_hinh },
       ],
       ds,

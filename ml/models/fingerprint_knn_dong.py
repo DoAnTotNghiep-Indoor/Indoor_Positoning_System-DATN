@@ -124,6 +124,18 @@ class DinhViKDong(BaseEstimator, RegressorMixin):
         X = np.asarray(X, float)
         return np.where(self.dung_k_nho(X)[:, None], self.nho_.predict(X), self.lon_.predict(X))
 
+    def do_trai(self, X) -> np.ndarray:
+        """Độ lệch chuẩn có trọng số của toạ độ k lớn láng giềng, đơn vị lưới. Tính
+        bằng k lớn cả khi đoán bằng k nhỏ: k = 1 luôn cho độ trải 0.
+
+        Đi cùng sai số thật (Spearman +0,43–0,46 khác đợt đo, +0,25 bỏ trọn một điểm)
+        nhưng không hiệu chỉnh được thành bán kính có độ phủ cố định: chỉ là chỉ báo
+        tương đối."""
+        p = self.lon_.clf_.predict_proba(bieu_dien_powed(np.asarray(X, float), self.beta))
+        c = self.lon_.toa_do_[self.lon_.clf_.classes_]
+        tam = p @ c
+        return np.sqrt((p * ((c[None] - tam[:, None]) ** 2).sum(-1)).sum(1))
+
 
 def build(beta: float = 4.0, power: float = 1.0) -> DinhViKDong:
     return DinhViKDong(beta=beta, power=power)

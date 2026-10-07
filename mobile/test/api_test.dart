@@ -21,6 +21,7 @@ String _traLoiMau({int soApKhop = 12, int soLanQuet = 3}) => jsonEncode({
       'y': 41.0,
       'x_smooth': 12.5,
       'y_smooth': 40.5,
+      'do_trai': 9.8,
       'model': 'fingerprint_knn',
       'timestamp': '2026-08-30T10:00:00Z',
       'matched_ap': soApKhop,
@@ -128,6 +129,16 @@ void main() {
     expect(vt.yGop, 40.5);
     expect(vt.moHinh, 'fingerprint_knn');
     expect(vt.soApKhop, 12);
+    expect(vt.doTrai, 9.8);
+  });
+
+  test('Máy chủ không trả độ trải thì vẫn định vị, không vẽ quầng', () async {
+    final than = jsonDecode(_traLoiMau()) as Map<String, dynamic>
+      ..remove('do_trai');
+    final api = ApiDinhVi('http://test',
+        client: MockClient((_) async => http.Response(jsonEncode(than), 200)));
+
+    expect((await api.duDoan(deviceId: 'may-1', quet: quetMau)).doTrai, 0);
   });
 
   test('Máy chủ trả mã lỗi thì giữ lại mã đó để hiện cho người dùng', () async {

@@ -52,6 +52,17 @@ class KhuVuc {
     ];
   }
 
+  /// Khu vực chỉ còn điểm [p]: chạm một nhãn hay một chấm thì chỉ đường và đo
+  /// khoảng cách tới đúng chỗ đó, không tới chỗ cùng tên gần người dùng hơn.
+  KhuVuc chiTai(Offset p) => KhuVuc(
+      nhom: nhom,
+      moTa: moTa,
+      moTaChiTiet: moTaChiTiet,
+      thuMucAnh: thuMucAnh,
+      icon: icon,
+      diem: [p],
+      theoToaDo: theoToaDo);
+
   Offset ganNhat(double x, double y) => diem.reduce((a, b) =>
       (a - Offset(x, y)).distance <= (b - Offset(x, y)).distance ? a : b);
 

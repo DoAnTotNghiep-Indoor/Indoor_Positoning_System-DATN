@@ -7,6 +7,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lg;
 import '../data/floor_map.dart';
 import '../data/khu_vuc.dart';
 import '../l10n/app_localizations.dart';
+import '../services/api_dinh_vi.dart';
 import '../services/theo_doi_vi_tri.dart';
 import '../theme/app_theme.dart';
 import '../widgets/chung.dart';
@@ -378,7 +379,7 @@ class _MapScreenState extends State<MapScreen>
         top: p.dy - r - dem,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: kv == null ? null : () => moKhuVuc(context, kv),
+          onTap: kv == null ? null : () => _moNhan(n, kv, theoDoi),
           child: Padding(
             padding: const EdgeInsets.all(dem),
             child: NhanNoi(ten: ten, icon: n.icon, to: to),
@@ -387,6 +388,30 @@ class _MapScreenState extends State<MapScreen>
       ));
     }
     return ra;
+  }
+
+  /// Nhãn cùng khu vực hay nằm cả hai bên nhà (WC, Khu đọc, Lên tầng 2...): đích là
+  /// chỗ của nhãn đã chạm, tức điểm tham chiếu của khu gần nhãn nhất.
+  void _moNhan(NhanSoDo n, KhuVuc kv, TheoDoiViTri theoDoi) {
+    if (kv.theoToaDo) {
+      moKhuVuc(context, kv.chiTai(n.den!));
+      return;
+    }
+    final p = Offset(n.x, n.y);
+    DiemThamChieu? gan;
+    for (final d in theoDoi.banDo) {
+      if (d.nhom == kv.nhom &&
+          (gan == null ||
+              (Offset(d.x, d.y) - p).distance <
+                  (Offset(gan.x, gan.y) - p).distance)) {
+        gan = d;
+      }
+    }
+    if (gan == null) {
+      moKhuVuc(context, kv);
+    } else {
+      moKhuVuc(context, kv.chiTai(Offset(gan.x, gan.y)), rpId: gan.rpId);
+    }
   }
 
   static KhuVuc? _khuVucCua(NhanSoDo n, TheoDoiViTri theoDoi) {

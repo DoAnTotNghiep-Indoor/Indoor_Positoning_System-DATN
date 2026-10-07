@@ -47,6 +47,7 @@ def test_predict_tra_ve_toa_do_trong_toa_nha(client):
     assert -43 <= d["x"] <= 43 and 0 <= d["y"] <= 52
     assert d["matched_ap"] == 12
     assert d["latency_ms"] < 200
+    assert 0 <= d["do_trai"] < 86
 
 
 def test_anh_xa_bssid(client):
@@ -100,6 +101,7 @@ def test_gop_cua_so_va_lich_su(client):
 
     ds = client.get("/predictions", params={"device_id": "gop"}).json()
     assert len(ds) == 3 and {m["device_id"] for m in ds} == {"gop"}
+    assert ds[0]["do_trai"] == pytest.approx(c["do_trai"], abs=1e-3)
     assert ds[0]["luc"].endswith("Z") or "+" in ds[0]["luc"][10:]
 
 

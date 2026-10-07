@@ -45,14 +45,16 @@ class Predictor:
     def so_ap_toi_thieu(self) -> int:
         return self.mapper.min_ap_per_scan
 
-    def du_doan(self, scan: list[dict]) -> tuple[float, float, int, float]:
-        """(x, y, số AP khớp, độ trễ ms). Không tự chặn khi thiếu AP — mô hình vẫn
-        trả toạ độ cho vector toàn giá trị điền, nên `/predict` phải chặn."""
+    def du_doan(self, scan: list[dict]) -> tuple[float, float, float, int, float]:
+        """(x, y, độ trải, số AP khớp, độ trễ ms). Không tự chặn khi thiếu AP — mô hình
+        vẫn trả toạ độ cho vector toàn giá trị điền, nên `/predict` phải chặn."""
         bat_dau = time.perf_counter()
 
         vector = self.mapper.map_scan_to_vector(scan)
         so_khop = int((vector != self.mapper.missing_rssi_value).sum())
-        x, y = self.model.predict(self.mapper.chuan_hoa(vector))[0]
+        X = self.mapper.chuan_hoa(vector)
+        x, y = self.model.predict(X)[0]
+        do_trai = self.model.do_trai(X)[0]
 
         do_tre = (time.perf_counter() - bat_dau) * 1000
-        return float(x), float(y), so_khop, do_tre
+        return float(x), float(y), float(do_trai), so_khop, do_tre

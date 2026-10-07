@@ -1,6 +1,6 @@
-# IPS DLU — Ứng dụng di động
+# WiLoc — Ứng dụng di động
 
-Ứng dụng Android định vị trong nhà cho tầng 1 Thư viện Đại học Đà Lạt. Ứng dụng
+WiLoc (Wi-Fi + Location) là ứng dụng Android định vị trong nhà cho tầng 1 Thư viện Đại học Đà Lạt. Ứng dụng
 quét WiFi, dự đoán toạ độ (qua máy chủ, hoặc ngay trên máy khi bật Mô hình cục bộ),
 rồi hiển thị vị trí trên sơ đồ mặt bằng.
 
@@ -11,13 +11,17 @@ Thiết kế giao diện: [Figma](https://www.figma.com/design/3dzSOBhBIhb3e9zku
 - **Định vị liên tục**: gọi quét mỗi 1 giây khi app mở, dừng khi app chạy nền. Máy cần tắt
   **Điều tiết quét Wi-Fi** trong Tuỳ chọn nhà phát triển; còn bật thì Android chỉ cho 4 lần quét
   mỗi 2 phút và app đọc lại kết quả cũ. Cài đặt hiện nhịp RSSI thật sự đổi.
-- **Bản đồ**: sơ đồ tầng 1 (sáng/tối), chấm vị trí kèm nón hướng theo la bàn.
-- **Tra cứu**: tìm khu vực theo tên hoặc nhóm, popup có ảnh và giới thiệu.
-- **Chỉ đường**: vẽ tuyến từ vị trí hiện tại tới khu vực đã chọn.
+- **Bản đồ**: sơ đồ tầng 1 (sáng/tối), chấm vị trí kèm nón hướng theo la bàn và quầng độ trải
+  (to là mô hình đang phân vân; chỉ báo tương đối, không phải bán kính sai số). Nhãn địa điểm
+  kiểu Google Maps, chạm được.
+- **Tra cứu**: tìm khu vực và địa điểm theo tên hoặc nhóm, popup có ảnh và giới thiệu.
+- **Chỉ đường**: vẽ tuyến từ vị trí hiện tại tới khu vực đã chọn. Mở từ danh sách thì tới chỗ
+  gần nhất của khu vực; chạm nhãn trên sơ đồ thì tới đúng chỗ của nhãn đó.
 - **Mô hình cục bộ**: tuỳ chọn trong Cài đặt, mặc định tắt. Bật thì app tự chạy kNN k
   động trên máy, không chờ máy chủ; lần quét vẫn gửi lên máy chủ (không chờ trả lời) để
   Dashboard và CSDL vẫn có dữ liệu. Bản đồ và chỉ đường vẫn lấy từ máy chủ.
-- **Cài đặt**: mô hình cục bộ, địa chỉ máy chủ, ngôn ngữ (Việt/Anh), chế độ sáng/tối.
+- **Cài đặt**: mô hình cục bộ, máy chủ (IPS DLU PROD, DEMO hoặc tự nhập), ngôn ngữ
+  (Việt/Anh), chế độ sáng/tối.
   App nhớ các tuỳ chọn này giữa hai lần mở.
 
 Máy chủ cung cấp `POST /predict`, `GET /map`, `POST /route`.
@@ -25,7 +29,7 @@ Máy chủ cung cấp `POST /predict`, `GET /map`, `POST /route`.
 ## Yêu cầu
 
 - Flutter 3.47 stable (Dart 3.13), Android SDK 36.
-- Máy Android thật để định vị. Máy ảo chỉ dùng được để xem giao diện.
+- Máy Android 8.0 trở lên (minSdk 26), máy thật để định vị. Máy ảo chỉ dùng được để xem giao diện.
 
 ## Chạy
 
@@ -44,12 +48,13 @@ flutter build apk --release --target-platform android-arm64 --obfuscate --split-
 adb install -r build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Cần chạy máy chủ trước: `uvicorn backend.main:app --host 0.0.0.0` ở thư mục gốc.
-Đặt địa chỉ máy chủ trong **Cài đặt** như sau:
+Mặc định app dùng máy chủ IPS DLU PROD (`https://dlu-ips.etylix.me`); DEMO phát lại lần quét
+thật nên dùng được ở ngoài thư viện. Muốn dùng máy chủ tự chạy (`uvicorn backend.main:app
+--host 0.0.0.0` ở thư mục gốc) thì chọn **Tuỳ chỉnh** trong Cài đặt:
 
 | Thiết bị | Địa chỉ |
 |---|---|
-| Máy ảo | `http://10.0.2.2:8000` (mặc định) |
+| Máy ảo | `http://10.0.2.2:8000` |
 | Điện thoại cùng mạng | `http://<IP máy chủ>:8000` |
 | Điện thoại nối USB, đã chạy `adb reverse tcp:8000 tcp:8000` | `http://127.0.0.1:8000` |
 | Khác mạng (WiFi thư viện chặn máy nhìn nhau), chạy `cloudflared tunnel --url http://localhost:8000` | `https://<tên>.trycloudflare.com` |
@@ -88,7 +93,8 @@ assets/                       font Inter, SVG sơ đồ, ảnh khu vực, mô h�
 - **Mô hình cục bộ**: `assets/model/k_dong.json` sinh bằng `python -m ml.xuat_mo_hinh` ở thư
   mục gốc, chạy lại sau mỗi lần `ml.train` rồi build lại app (`tests/test_xuat_mo_hinh.py`
   báo lỗi nếu quên). `test/dinh_vi_tren_may_test.dart` kiểm bản Dart đoán trùng Python trên
-  200 lần quét test (`test/du_lieu/doi_chieu_k_dong.json`, cùng lệnh sinh ra). Một lần đoán
+  200 lần quét test (`test/du_lieu/doi_chieu_k_dong.json`, cùng lệnh sinh ra), cả toạ độ lẫn
+  độ trải. Một lần đoán
   trên X300 khoảng 0,7 ms; không cần LiteRT hay NPU vì kNN chỉ là tính khoảng cách.
 - **Hệ toạ độ**: phép đổi trong `lib/data/floor_map.dart` dùng chung bộ hằng số
   với backend và Dashboard, lấy từ `data/reference/ban_do_tang1.json`.

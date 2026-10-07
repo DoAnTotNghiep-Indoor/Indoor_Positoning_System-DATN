@@ -30,7 +30,7 @@ async def predict(yeu_cau: schemas.YeuCauDuDoan) -> schemas.KetQuaDuDoan:
         log.info("DEMO %s: phát lại lần quét ở %s", device_id, rp_demo)
 
     # Threadpool: gọi thẳng thì chặn vòng lặp sự kiện, đuôi 1.243 ms với 40 request.
-    x, y, so_ap, do_tre = await run_in_threadpool(predictor.du_doan, scan)
+    x, y, do_trai, so_ap, do_tre = await run_in_threadpool(predictor.du_doan, scan)
 
     # Chặn TRƯỚC khi gộp và ghi CSDL: toạ độ vô căn cứ kéo lệch cửa sổ gộp.
     if so_ap < predictor.so_ap_toi_thieu:
@@ -43,10 +43,11 @@ async def predict(yeu_cau: schemas.YeuCauDuDoan) -> schemas.KetQuaDuDoan:
     async with database.TaoSession() as session:
         await repository.ghi_du_doan(
             session, device_id=device_id, x=x, y=y, x_gop=x_gop, y_gop=y_gop,
-            so_ap=so_ap, mo_hinh=predictor.ten_mo_hinh, do_tre_ms=do_tre)
+            do_trai=do_trai, so_ap=so_ap, mo_hinh=predictor.ten_mo_hinh, do_tre_ms=do_tre)
 
     return schemas.KetQuaDuDoan(
         device_id=device_id, x=x, y=y, x_smooth=x_gop, y_smooth=y_gop,
+        do_trai=round(do_trai, 3),
         model=predictor.ten_mo_hinh, timestamp=datetime.now(timezone.utc),
         matched_ap=so_ap, scan_count=bo_gop.so_mau_dang_giu(device_id),
         latency_ms=round(do_tre, 3))

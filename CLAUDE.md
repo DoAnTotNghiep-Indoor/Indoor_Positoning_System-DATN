@@ -32,6 +32,8 @@ Tổng quan hệ thống ở `README.md`, thiết kế ở `docs/thiet_ke_he_tho
 
 ## Tài liệu
 
+- Báo cáo và slide viết trên Google Docs/Slides, thư mục Drive "WiLoc":
+  https://drive.google.com/drive/folders/1fmShLsEUcS6nmvG0US4xwAecbjUZQ3KS. Không tạo .docx/.pptx cục bộ.
 - Viết theo hệ thống có gì, làm được gì, hoạt động thế nào, kết quả và hạn chế.
 - Không viết theo kiểu "theo đề cương...", không kể lại trạng thái hay quá trình, không so sánh với đồ án cũ
   CTK45 (chỉ một mục nhỏ "cải tiến" khi cần).

@@ -10,7 +10,7 @@ Hệ thống định vị người dùng trong tầng 1 Thư viện Đại học
 
 | Thành phần | Thư mục | Làm gì |
 |---|---|---|
-| Ứng dụng Android (Flutter) | `mobile/` | Quét WiFi liên tục, định vị qua máy chủ hoặc ngay trên máy, hiện vị trí và nón hướng la bàn trên sơ đồ, tra cứu khu vực, chỉ đường. Song ngữ Việt/Anh, sáng/tối |
+| Ứng dụng Android WiLoc (Flutter) | `mobile/` | Quét WiFi liên tục, định vị qua máy chủ hoặc ngay trên máy, hiện vị trí và nón hướng la bàn trên sơ đồ, tra cứu khu vực, chỉ đường. Song ngữ Việt/Anh, sáng/tối |
 | Backend (FastAPI + SQLite) | `backend/` | Dự đoán toạ độ, gộp các lần quét, lưu lịch sử, phục vụ bản đồ và tìm đường |
 | Web Dashboard | `dashboard/` | Giám sát: sơ đồ với các thiết bị đang định vị và vệt đường, bảng thiết bị, thử chỉ đường, lịch sử. HTML/CSS/JS thuần, không thư viện ngoài |
 | Máy học | `ml/` | Tiền xử lý 12 bước, huấn luyện và so sánh 5 mô hình, đánh giá, vẽ biểu đồ |
@@ -24,14 +24,16 @@ Hệ thống định vị người dùng trong tầng 1 Thư viện Đại học
 2. Backend ánh xạ từng BSSID vào đúng cột của vector đặc trưng theo
    `artifacts/feature_list.json` (36 AP). Thứ tự gửi không ảnh hưởng. BSSID lạ bị bỏ qua.
    RSSI ngoài khoảng vật lý cũng bị bỏ. AP vắng mặt điền −100 dBm.
-3. Vector qua scaler rồi vào mô hình **kNN k động** (Dynamic-k kNN), ra toạ độ `(x, y)`.
+3. Vector qua scaler rồi vào mô hình **kNN k động** (Dynamic-k kNN), ra toạ độ `(x, y)`
+   và **độ trải** `do_trai`, chỉ báo mô hình chắc chắn tới đâu (mục Độ tin cậy của mỗi lần
+   định vị).
 4. Khớp ít hơn 6 AP (ngưỡng đã dùng để loại mẫu huấn luyện) thì trả 422 `khong_du_ap`
    thay vì đoán bừa. Đứng ngoài thư viện sẽ rơi vào trường hợp này.
 5. Toạ độ được gộp với 2 lần quét trước của cùng thiết bị bằng **đồng thuận không gian**:
    chọn dự đoán có tổng khoảng cách tới các dự đoán còn lại nhỏ nhất. Cách này loại được
    một lần quét lạc thay vì bị nó kéo lệch như khi lấy trung bình. Im lặng quá 30 giây
    thì bắt đầu lại.
-6. Ghi cả toạ độ thô lẫn toạ độ đã gộp vào SQLite (`data/ips.db`), trả kết quả về app.
+6. Ghi toạ độ thô, toạ độ đã gộp và độ trải vào SQLite (`data/ips.db`), trả kết quả về app.
 
 App gọi quét mỗi 1 giây (lượt trước chưa xong thì bỏ qua). Máy phải tắt điều tiết quét Wi-Fi,
 còn bật thì Android chỉ cho 4 lần quét mỗi 2 phút. Số liệu RSSI thật mới bao lâu một lần do
@@ -48,7 +50,8 @@ chờ máy chủ:
   Không có trọng số nào cần học lại; kNN chỉ cần đúng bảng vân tay và các tham số này.
 - App (`mobile/lib/services/dinh_vi_tren_may.dart`) làm lại đúng thuật toán: ánh xạ BSSID,
   chặn khi khớp dưới 6 AP, khoảng cách Bray-Curtis, chọn k = 1 hoặc k lớn, gộp 3 lần quét.
-  `flutter test` đối chiếu với 200 lần quét test do Python đoán: lệch dưới 10⁻⁶ đơn vị lưới.
+  `flutter test` đối chiếu với 200 lần quét test do Python đoán: toạ độ lệch dưới 10⁻⁶,
+  độ trải dưới 10⁻⁵ đơn vị lưới.
 - App vẫn gửi `POST /predict` nhưng không chờ trả lời, nên máy chủ vẫn ghi lịch sử cho
   Dashboard và để phân tích. Mất mạng thì vị trí trên máy vẫn chạy.
 - Bản đồ (`GET /map`) và chỉ đường (`POST /route`) vẫn cần máy chủ.
@@ -69,6 +72,28 @@ Ngưỡng và k lớn tự chọn lúc `fit`, chỉ trên dữ liệu học, b�
 ngẫu nhiên 80/20 (đã khảo sát) và bỏ trọn từng điểm (chưa khảo sát). Trên tập test, khoảng
 một nửa số lần quét dùng k = 1. Mô hình triển khai đặt bằng `MO_HINH_TRIEN_KHAI` trong
 `ml/config.py`. `GET /health` cho biết mô hình nào đang chạy.
+
+### Độ tin cậy của mỗi lần định vị
+
+Lúc chạy thật không có toạ độ thật, nên không tính được sai số. Mô hình chỉ biết các vân tay
+giống lần quét nhất nằm ở đâu. Lấy k lớn láng giềng (15) của lần quét; mỗi láng giềng thuộc
+một điểm tham chiếu và nặng theo nghịch đảo khoảng cách Bray-Curtis. **Độ trải** là độ lệch
+chuẩn có trọng số của toạ độ các láng giềng:
+
+    tâm     = Σ pᵢ · cᵢ                 pᵢ: phần trọng số của điểm i, cᵢ: toạ độ điểm i
+    độ trải = √( Σ pᵢ · |cᵢ − tâm|² )
+
+Láng giềng dồn vào một chỗ thì độ trải nhỏ: mô hình chắc. Láng giềng rải ra nhiều chỗ xa nhau
+thì độ trải lớn: mô hình đang phân vân. Độ trải luôn tính bằng k lớn, kể cả khi mô hình đoán
+bằng k = 1, vì k = 1 cho độ trải 0.
+
+`POST /predict` trả `do_trai` (đơn vị lưới) của lần quét vừa gửi. App vẽ quầng mờ quanh chấm
+vị trí với bán kính bằng độ trải, như vòng độ chính xác của Google Maps; máy chủ không trả
+trường này (máy chủ của nhóm khác) thì app không vẽ quầng. Dashboard có cột độ trải trong bảng
+lịch sử.
+
+Đây là chỉ báo tương đối, **không** phải bán kính sai số: không nói được "68% số lần nằm trong
+vòng". Số liệu ở mục Kết quả.
 
 ### Bản đồ và toạ độ
 
@@ -99,6 +124,11 @@ gần nhất) tới một điểm hoặc một khu vực:
 - **Thuật toán**: A* (mặc định, heuristic là khoảng cách thẳng tới đích gần nhất) hoặc
   Dijkstra. Đích là khu vực thì chọn điểm gần nhất **theo đường đi**, không theo đường chim
   bay; đích là toạ độ (phòng không có điểm tham chiếu) thì cách dưới 2 m coi như đã tới.
+- **Chọn đích trong app**: mở khu vực từ Trang chủ hoặc Tìm kiếm thì đi tới chỗ gần nhất của
+  khu vực. Chạm một nhãn trên sơ đồ thì đi tới đúng chỗ của nhãn đó (điểm tham chiếu cùng khu
+  gần nhãn nhất, hoặc lối vào của địa điểm). Nhiều khu vực có ở cả hai cánh nhà (WC, Khu đọc,
+  Khu tự học, Lên tầng 2, Sảnh chờ, Ban công); nếu luôn đi tới chỗ gần nhất thì chạm nhãn ở
+  cánh bên kia vẫn bị dẫn về cánh bên này.
   Trên 1.892 truy vấn giữa các điểm tham chiếu, A* mở trung bình 15 nút, Dijkstra 107, cùng
   quãng đường (`python -m tools.so_sanh_tim_duong`).
 - **Chỉ dẫn** (`chi_dan`): mỗi bước kèm mã hướng (`bat_dau`, `di_thang`, `chech_trai/phai`,
@@ -152,6 +182,25 @@ k động dẫn đầu ở cột thứ nhất (cả 10 seed) và cột thứ ba;
 (`ml.quet_k`) cho thấy k = 1 tốt nhất khi chia ngẫu nhiên còn k lớn tốt nhất khi bỏ trọn
 một điểm. Đó là lý do chọn k động.
 
+### Độ trải so với sai số thật
+
+Mỗi lần quét kiểm có toạ độ thật, nên so được độ trải với sai số thật. Tương quan hạng
+Spearman (−1 đến +1, dương là độ trải lớn đi cùng sai số lớn) và sai số trung bình khi chia
+các lần quét làm ba nhóm bằng nhau theo độ trải:
+
+| Giao thức | Số lần quét | Spearman | Sai số TB, nhóm độ trải thấp / vừa / cao (m) |
+|---|---:|---:|---|
+| Khác đợt đo, A → B | 2.339 | +0,46 | 3,28 / 5,02 / 6,49 |
+| Khác đợt đo, B → A | 802 | +0,43 | 1,99 / 3,35 / 4,53 |
+| Bỏ trọn một điểm | 3.141 | +0,25 | 4,65 / 5,38 / 6,86 |
+
+Các chỉ số khác yếu hơn: d1 +0,30 / +0,34 / +0,01; số AP bắt được và tỉ lệ phiếu của điểm cao
+nhất dưới 0,40 về độ lớn. Thử đổi độ trải và d1 thành bán kính chứa 68% số lần (hồi quy phân
+vị): học trên một giao thức, kiểm ở giao thức khác thì độ phủ chỉ đạt 43–89%; bán kính cố định
+cũng 41–89%. Mức sai chung đổi theo tình huống (đứng đúng điểm tham chiếu hay ở giữa, cùng máy
+hay khác máy) mà mô hình không biết mình đang ở tình huống nào. Vì vậy độ trải chỉ dùng làm
+chỉ báo tương đối.
+
 ### UJIIndoorLoc — sai số 2D, mét
 
 Học trên tập học công bố, kiểm trên tập validation (đo sau 4 tháng, người và máy khác).
@@ -175,12 +224,12 @@ toạ độ chỉ từ các láng giềng cùng toà và tầng, còn ở đây 
 ### Chỉ đường
 
 - **So với đường ngắn nhất tham chiếu** (Dijkstra trên lưới điểm ảnh, 4.400 cặp điểm): lệch
-  trung vị 0,03 m, 90% số cặp lệch dưới 0,68 m (`tools/danh_gia_chi_duong.py`).
+  trung vị 0,09 m, 90% số cặp lệch dưới 0,34 m (`tools/danh_gia_chi_duong.py`).
 - **Quãng đường hiển thị từ vị trí dự đoán** so với quãng đường thật, trên tập test, cửa
-  sổ gộp 3: lệch trung vị 0,03 m, p90 2,16 m.
+  sổ gộp 3 (5.203 cặp): lệch trung vị 0,28 m, p90 3,95 m, lớn nhất 29 m.
 - **So sánh 6 thuật toán** (`tools/so_sanh_tim_duong.py`, 1.892 truy vấn): A* mở trung bình
-  18 nút (0,36 ms), Dijkstra 173 nút (2,0 ms), cùng quãng đường. BFS và tham lam chỉ cho
-  đường ngắn nhất ở khoảng 40% số truy vấn.
+  15 nút (0,12 ms), Dijkstra 107 nút (0,49 ms), cùng quãng đường. BFS và tham lam chỉ cho
+  đường ngắn nhất ở khoảng 36% số truy vấn.
 
 ### Hiệu năng
 
@@ -236,7 +285,7 @@ laptop `http://<IP>:8000`). Mặc định là PROD.
 | Endpoint | Việc |
 |---|---|
 | `GET /health` | Mô hình đang chạy, số đặc trưng, cửa sổ gộp |
-| `POST /predict` | `{device_id, scan: [{bssid, rssi}]}` → `{x, y, x_smooth, y_smooth, matched_ap, latency_ms, …}` |
+| `POST /predict` | `{device_id, scan: [{bssid, rssi}]}` → `{x, y, x_smooth, y_smooth, do_trai, matched_ap, latency_ms, …}` |
 | `GET /predictions` | Lịch sử vị trí (`device_id`, `gioi_han` ≤ 1000) |
 | `GET /map` | Phạm vi, điểm tham chiếu kèm tên, nhóm, mô tả; `met_moi_don_vi` để đổi ra mét |
 | `GET /graph` | Các cặp điểm tham chiếu nhìn thấy nhau, cho Dashboard vẽ |
@@ -279,7 +328,7 @@ Xem `mobile/README.md`.
 | `tools/` | Công cụ chạy một lần rồi commit kết quả |
 | `tests/` | Kiểm thử API |
 | `reports/` | Bảng và biểu đồ cho báo cáo |
-| `docs/` | Thiết kế hệ thống, đề cương, tài liệu tham khảo |
+| `docs/` | Thiết kế hệ thống, đề cương, tài liệu tham khảo, logo WiLoc (`docs/logo/`: `wiloc.svg` chỉ hình, `wiloc_icon.svg` kèm nền trắng bo góc) |
 | `deprecated/` | Mã và tài liệu cũ đã có bản thay thế, giữ để tham khảo khi viết báo cáo |
 
 ## Hạn chế
@@ -301,6 +350,9 @@ Xem `mobile/README.md`.
   mọi thiết bị qua `GET /predictions`. `ALLOWED_ORIGINS` mặc định là `*`.
 - **Sai số tại chỗ chưa đủ điểm.** Buổi đo 03/10/2026 mới so được 1 chỗ đứng biết toạ độ.
   Góc giữa sơ đồ và hướng bắc (dùng cho nón hướng) đo trên ảnh vệ tinh, chưa so tại chỗ.
+- **Độ trải không phải bán kính sai số.** Quầng trong app chỉ cho biết lần định vị này đáng tin
+  hơn hay kém hơn lần khác; độ phủ của nó đổi theo tình huống (43–89% khi thử). Độ trải tính trên
+  lần quét mới nhất, còn chấm vị trí là toạ độ đã gộp 3 lần quét. Chưa so với sai số thật tại chỗ.
 - **Vị trí nhảy khi ở giữa các điểm tham chiếu.** Gần RP sai khoảng 1–2 m; ở giữa các RP,
   tập láng giềng đổi theo dao động RSSI nên vị trí nhảy nhiều hướng (xem Hướng phát triển).
 - **Đợt B không có dữ liệu thô**: không có thời điểm quét, tên máy, hướng. Vì vậy đánh giá
@@ -319,7 +371,7 @@ Xem `mobile/README.md`.
 
 ## Hướng phát triển
 
-### Ưu tiên kết quả theo hướng thiết bị
+### Giảm nhảy vị trí khi người dùng đi
 
 Đo trên 2.045 dự đoán buổi 03/10/2026 (máy vivo X300): chỉ 1,9% lần quét đủ gần một vân tay
 để mô hình dùng k = 1; còn lại lấy trung bình 15 láng giềng. Bước nhảy thô giữa hai lần liên
@@ -327,27 +379,43 @@ tiếp có trung vị 2,4 m, P90 6,9 m; 41,7% bước dài hơn 3 m, xa hơn qu�
 quét. Ở giữa các RP, lần quét giống vài RP gần ngang nhau, RSSI dao động vài dBm là tập láng
 giềng đổi sang cụm khác.
 
-Ý tưởng chưa làm: khi người dùng **đang đi**, ưu tiên ứng viên nằm phía trước theo hướng điện
-thoại đang chỉ.
+Đã thử và **không** dùng: **bộ lọc cảm biến**. App gửi kèm mỗi lần quét hướng la bàn (quy về
+trục sơ đồ) và số bước đếm từ gia tốc kế. Máy chủ coi mỗi điểm tham chiếu mà kNN bỏ phiếu là
+một ứng viên, rồi nhân trọng số theo vị trí lần trước: bỏ ứng viên xa hơn 1,5 m/s × Δt + 3 m;
+đang đi thì ưu tiên ứng viên phía trước (`e^(0,5·cos Δθ)`); đứng yên thì ưu tiên ứng viên gần
+chỗ cũ (Gauss σ = 2 m). Giả lập người đi trên dữ liệu khác đợt đo (mỗi chiều 20 lượt × 100 lần
+quét, hướng la bàn nhiễu 20°), sai số trung bình:
 
-1. Ứng dụng gửi kèm mỗi lần quét: hướng (la bàn, đã quy về trục sơ đồ) và cờ đang đi / đứng
-   yên (gia tốc kế, biên độ rung theo nhịp bước).
-2. Máy chủ coi mỗi láng giềng của kNN là một ứng viên, nhân trọng số theo vị trí của nó so với
-   vị trí trước:
-   - đang đi: `e^(κ·cos Δθ)`, Δθ là góc giữa hướng tới ứng viên và hướng điện thoại; κ nhỏ,
-     ứng viên phía trước chỉ nặng gấp 2–3 lần phía sau, vì la bàn trong nhà bị thép làm lệch
-     và hướng cầm máy không luôn trùng hướng đi;
-   - đứng yên: không dùng hướng, ưu tiên ứng viên gần vị trí cũ (xoay máy tại chỗ không được
-     làm chấm trôi);
-   - luôn luôn: không dời quá tốc độ đi bộ (~1,5 m/s × thời gian giữa hai lần quét).
-3. Chạy song song với cách cũ, ghi cả hai cùng hướng và cờ đang đi vào CSDL; buổi đo sau đi
-   dọc vài đường ron biết toạ độ (ví dụ trục x = 0 từ cửa tới quầy), đứng tại vài chỗ đếm được
-   bằng gạch, rồi so độ nhảy và sai số của hai cách.
+| Cách | Sai số TB (m) |
+|---|---:|
+| Thô | 3,82 |
+| Gộp 3 lần quét (đang dùng) | 3,56 |
+| Chỉ chặn quãng theo thời gian | 3,22 |
+| Chặn quãng + số bước | 3,03 |
+| Chặn quãng + số bước + hướng | 2,90 |
+
+Lợi ích tốt nhất là 0,66 m (−19%), trong đó hướng la bàn chỉ góp khoảng 0,1 m. Số này còn lạc
+quan: tham số chọn trên chính giả lập, giả lập không có tường và người luôn đi đúng hướng máy
+chỉ. Lúc đứng yên bộ lọc còn nhảy nhiều hơn (1,87 so với 1,59 m). Đổi lại phải thêm cảm biến
+vào app, thêm trường vào API và CSDL, chỉnh tham số, và một buổi đo thực địa có mốc để kiểm.
+Lợi ích không đáng với công sức, nên giữ bộ gộp 3 lần quét.
 
 Đã thử và **không** hiệu quả: chỉ so lần quét với vân tay thu ở hướng gần giống (đợt A, 802 lần
 quét có hướng). Chia ngẫu nhiên, k = 15: 1,85 m khi so mọi hướng, 2,35 m khi lọc ±90°, 3,67 m
 khi lọc ±45°. Bỏ trọn một điểm, k = 15: 4,69 / 4,59 / 4,86 m. Mỗi RP chỉ có vài lần quét mỗi
 hướng nên lọc bớt thì láng giềng bị kéo sang RP khác; đợt B lại không ghi hướng.
+
+Cũng đã thử và **không** dùng (khác đợt đo, so với kNN k động):
+
+- **Horus** (mỗi điểm, mỗi AP một phân phối Gauss, chọn theo hậu nghiệm): 5,11 / 6,59 / 6,43 m
+  ở ba giao thức, so với 2,30 / 5,63 / 4,11 m của k động. Mỗi điểm có lần quét từ 4 hướng cầm
+  máy và nhiều máy; một phân phối Gauss gộp hết thành một trung bình nên mất phần riêng của
+  từng hướng, từng máy mà kNN giữ được.
+- **Cân chỉnh máy ở cửa ra vào**: người dùng đứng ở cửa vài giây, ước lượng độ lệch RSSI của
+  máy so với vân tay ở cửa rồi bù cho mọi lần quét sau. Chỉ dùng cửa chính thì tệ hơn (A → B
+  4,93 → 5,92 m với 10 lần quét); thêm cửa sau thì ngang gốc. Lệch chung giữa hai đợt chỉ
+  khoảng 0,7 dB và Bray-Curtis đã khử phần lệch đơn giản, còn RSSI ở chính cửa chính đổi −6 /
+  +5 dB giữa hai đợt do người qua lại, cửa đóng mở.
 
 Hai hướng khác cùng giải quyết chuyện nhảy, không cần thu thêm vân tay: bộ lọc hạt có mô hình
 bước chân và ràng buộc tường, giếng, lan can lấy từ `data/reference/mat_bang_tang1.yaml`; và

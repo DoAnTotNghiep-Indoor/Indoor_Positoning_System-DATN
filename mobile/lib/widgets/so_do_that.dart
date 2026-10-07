@@ -55,7 +55,7 @@ class _SoDoMatBangState extends State<SoDoMatBang> {
     if (gan == null) return;
     for (final k in theoDoi.khuVuc) {
       if (k.nhom == gan.nhom) {
-        moKhuVuc(context, k, rpId: gan.rpId);
+        moKhuVuc(context, k.chiTai(Offset(gan.x, gan.y)), rpId: gan.rpId);
         return;
       }
     }
@@ -214,6 +214,21 @@ class _LopDong extends CustomPainter {
     final vt = theoDoi.viTri;
     if (vt == null) return;
     final goc = SoDoThat.sangKhung(vt.xGop, vt.yGop, rong);
+
+    // Quầng độ tin cậy kiểu Google Maps, bán kính bằng độ trải: to là mô hình đang
+    // phân vân giữa nhiều chỗ xa nhau. Chỉ báo tương đối, không hứa phủ bao nhiêu %.
+    final quang =
+        (SoDoThat.sangKhung(vt.xGop + vt.doTrai, vt.yGop, rong) - goc).distance;
+    if (quang > 0) {
+      canvas.drawCircle(goc, quang, Paint()..color = mau.withValues(alpha: 0.10));
+      canvas.drawCircle(
+          goc,
+          quang,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1 / k
+            ..color = mau.withValues(alpha: 0.35));
+    }
 
     final h = laBan.huongSoDo;
     if (h != null) {
