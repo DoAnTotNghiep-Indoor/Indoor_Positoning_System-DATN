@@ -18,6 +18,34 @@ const _kieu = {
 
 (IconData, Color) kieuNhan(String icon) => _kieu[icon] ?? _kieu['diem']!;
 
+/// Chữ trơn in trên khối cầu thang: không biểu tượng, không chạm được, như chữ sơn trên sàn.
+class ChuTinh extends StatelessWidget {
+  final String ten;
+  const ChuTinh(this.ten, {super.key});
+
+  static double rongUoc(String ten) => ten.length * 6.2;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = Mau.of(context);
+    final toi = Theme.of(context).brightness == Brightness.dark;
+    const kieu =
+        TextStyle(fontSize: 11, fontWeight: FontWeight.w500, height: 1.1);
+    return Stack(children: [
+      Text(ten,
+          style: kieu.copyWith(
+              foreground: Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 2.4
+                ..strokeJoin = StrokeJoin.round
+                ..color = m.the)),
+      Text(ten,
+          style: kieu.copyWith(
+              color: toi ? const Color(0xFFB8BEC8) : _kieu['thang']!.$2)),
+    ]);
+  }
+}
+
 /// Nhãn kiểu Google Maps: biểu tượng trắng trên nền tròn tô màu theo loại, tên ở bên phải cùng màu,
 /// viền chữ cùng màu nền để đọc được trên mọi màu sàn. Nhãn neo vào tâm biểu tượng ([banKinh]), không
 /// neo giữa cả nhãn, nên chữ dài không kéo biểu tượng lệch khỏi chỗ của nó.

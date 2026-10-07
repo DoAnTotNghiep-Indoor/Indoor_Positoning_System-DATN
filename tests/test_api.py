@@ -163,7 +163,7 @@ def test_route_giua_hai_diem(client):
 
 
 def test_route_tu_toa_do_nguoi_dung(client):
-    d = client.post("/route", json={"tu_x": 5.0, "tu_y": 30.0, "den_nhom": "WC"}).json()
+    d = client.post("/route", json={"tu_x": 5.0, "tu_y": 30.0, "den_nhom": "WC phía căn tin"}).json()
     dau = d["duong_di"][0]
     assert dau["rp_id"] == ""
     assert math.hypot(dau["x"] - 5.0, dau["y"] - 30.0) < 0.2
@@ -212,7 +212,7 @@ def test_route_toi_toa_do_da_toi(client):
     ({"den_rp": "RP20", "tu_x": -16.2}, 422),
     ({"tu_rp": "RP01", "den_rp": "RP09", "den_nhom": "Căn tin"}, 422),
     ({"tu_rp": "RP01", "den_x": 3.0}, 422),
-    ({"tu_rp": "RP01", "den_nhom": "WC", "den_x": 3.0, "den_y": 3.0}, 422),
+    ({"tu_rp": "RP01", "den_nhom": "WC phía căn tin", "den_x": 3.0, "den_y": 3.0}, 422),
     ({"tu_rp": "RP01", "den_rp": "RP09", "thuat_toan": "bfs"}, 422),
 ])
 def test_route_loi(client, than, ma):

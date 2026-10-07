@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'khu_vuc.dart';
 
-/// 12 khu vực của thư viện, nhúng sẵn làm bản dự phòng khi chưa nối được
+/// 15 khu vực của thư viện, nhúng sẵn làm bản dự phòng khi chưa nối được
 /// máy chủ — lúc demo trước hội đồng, backend có thể chưa kịp bật. Nguồn là
 /// `data/reference/reference_points.csv`, cũng là thứ `GET /map` trả về.
 ///
@@ -36,20 +36,28 @@ class KhuVucThuVien {
       diem: [Offset(-30, 10), Offset(-8, 10), Offset(8, 10), Offset(30, 10), Offset(-15, 18), Offset(0, 18), Offset(0, 33), Offset(-22, 34), Offset(22, 34), Offset(0, 41), Offset(-22, 45), Offset(22, 45), Offset(28, 2.5), Offset(-28, 2.5)],
     ),
     KhuVuc(
-      nhom: 'Cầu thang tầng 2',
-      moTa: 'Cầu thang dẫn lên tầng 2',
-      moTaChiTiet: 'Lối di chuyển lên tầng 2 của thư viện. Thư viện bố trí 2 cầu thang di chuyển ở hai bên trái phải, thuận tiện cho việc di chuyển giữa các tầng.',
-      thuMucAnh: 'cau_thang_tang_2',
+      nhom: 'Cầu thang tầng 2 phía cửa sau',
+      moTa: 'Cầu thang lên tầng 2, cạnh lối ra cửa sau.',
+      moTaChiTiet: 'Một trong hai cầu thang lên tầng 2, nằm bên trái quầy thủ thư, cạnh lối ra cửa sau.',
+      thuMucAnh: 'cau_thang_tang_2_trai',
       icon: Icons.stairs_outlined,
-      diem: [Offset(-30, 52), Offset(29, 52)],
+      diem: [Offset(-30, 52)],
     ),
     KhuVuc(
-      nhom: 'Cửa ra vào',
-      moTa: 'Cửa ra vào thư viện',
-      moTaChiTiet: 'Cửa ra vào thư viện gồm 2 cửa là cửa chính ở trước thư viện và cửa sau dẫn ra bãi đỗ xe cổng sau, thuận tiện cho việc di chuyển và đảm bảo an ninh.',
-      thuMucAnh: 'cua_ra_vao',
+      nhom: 'Cầu thang tầng 2 phía phòng tạp chí',
+      moTa: 'Cầu thang lên tầng 2, cạnh phòng tạp chí.',
+      moTaChiTiet: 'Một trong hai cầu thang lên tầng 2, nằm bên phải quầy thủ thư, cạnh phòng báo và tạp chí.',
+      thuMucAnh: 'cau_thang_tang_2_phai',
+      icon: Icons.stairs_outlined,
+      diem: [Offset(29, 52)],
+    ),
+    KhuVuc(
+      nhom: 'Cửa chính',
+      moTa: 'Cửa chính phía trước thư viện.',
+      moTaChiTiet: 'Cửa chính ở mặt trước thư viện, mở vào sảnh cửa chính. Đây là lối vào chính của sinh viên và cán bộ giảng viên.',
+      thuMucAnh: 'cua_chinh',
       icon: Icons.door_front_door_outlined,
-      diem: [Offset(0, 0), Offset(-23, 52)],
+      diem: [Offset(0, 0)],
     ),
     KhuVuc(
       nhom: 'Hành lang',
@@ -84,6 +92,14 @@ class KhuVucThuVien {
       diem: [Offset(-43, 35), Offset(43, 35), Offset(-13, 41), Offset(13, 41), Offset(-13, 45), Offset(13, 45)],
     ),
     KhuVuc(
+      nhom: 'Lối ra',
+      moTa: 'Lối ra cửa sau thư viện.',
+      moTaChiTiet: 'Lối từ khu tự học vào hành lang sau quầy thủ thư, dẫn tới cửa sau ra bãi đỗ xe cổng sau.',
+      thuMucAnh: 'loi_ra',
+      icon: Icons.exit_to_app_outlined,
+      diem: [Offset(-23, 52)],
+    ),
+    KhuVuc(
       nhom: 'Phòng tạp chí',
       moTa: 'Phòng lưu trữ tạp chí và nhiều sách đa dạng thể loại.',
       moTaChiTiet: 'Phòng tạp chí lưu trữ nhiều loại tạp chí và sách đa dạng thể loại, phục vụ nhu cầu nghiên cứu và học tập.',
@@ -100,12 +116,20 @@ class KhuVucThuVien {
       diem: [Offset(-41, 0)],
     ),
     KhuVuc(
-      nhom: 'WC',
-      moTa: 'Nhà vệ sinh ở hai đầu hành lang phía nam.',
+      nhom: 'WC phía TV3,4',
+      moTa: 'Nhà vệ sinh đầu hành lang phía TV3,4.',
       moTaChiTiet: 'Nhà vệ sinh đặt ở hai đầu hành lang phía nam tầng 1, cạnh lối ra vào hai bên. Điểm này chỉ dùng làm đích đến khi dẫn đường, chưa có dữ liệu quét WiFi nên hệ thống không định vị người dùng vào đây.',
-      thuMucAnh: 'wc',
+      thuMucAnh: 'wc_trai',
       icon: Icons.wc_outlined,
-      diem: [Offset(42, 7), Offset(-42, 7)],
+      diem: [Offset(-42, 7)],
+    ),
+    KhuVuc(
+      nhom: 'WC phía căn tin',
+      moTa: 'Nhà vệ sinh đầu hành lang phía căn tin.',
+      moTaChiTiet: 'Nhà vệ sinh đặt ở hai đầu hành lang phía nam tầng 1, cạnh lối ra vào hai bên. Điểm này chỉ dùng làm đích đến khi dẫn đường, chưa có dữ liệu quét WiFi nên hệ thống không định vị người dùng vào đây.',
+      thuMucAnh: 'wc_phai',
+      icon: Icons.wc_outlined,
+      diem: [Offset(42, 7)],
     ),
   ];
 }

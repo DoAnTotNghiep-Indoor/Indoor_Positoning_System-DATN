@@ -297,8 +297,9 @@ tức điểm gần nhất theo đường đi chứ không theo đường chim b
 điểm tham chiếu, như phòng sau quầy) thì đích được kéo về điểm đi được gần nhất và thêm vào đồ
 thị như một nút tạm; cách đích dưới 2 m coi như đã tới.
 
-**Chọn đích trong ứng dụng.** Nhiều khu vực có ở cả hai cánh nhà (WC, Khu đọc, Khu tự học, Lên
-tầng 2, Sảnh chờ, Ban công). Mở khu vực từ Trang chủ hay Tìm kiếm thì gửi tên khu vực, máy chủ
+**Chọn đích trong ứng dụng.** Nhiều khu vực có ở cả hai cánh nhà (Khu đọc, Khu tự học, Sảnh
+chờ, Ban công). Chỗ nào mỗi bên có ảnh và mô tả riêng thì tách thành địa điểm riêng: hai WC, hai
+cầu thang lên tầng 2, cửa chính và lối ra cửa sau. Mở khu vực từ Trang chủ hay Tìm kiếm thì gửi tên khu vực, máy chủ
 chọn chỗ gần nhất theo đường đi. Chạm một nhãn trên sơ đồ thì người dùng đã chọn một chỗ cụ
 thể: ứng dụng gửi điểm tham chiếu cùng khu gần nhãn nhất (`den_rp`), hoặc lối vào của chính
 nhãn đó (`den_x`, `den_y`). Khoảng cách trong popup, trạng thái "đang ở đây" và báo đã tới đều
@@ -345,12 +346,12 @@ Ví dụ `POST /route`:
 
 ```json
 // Yêu cầu: điểm đầu là toạ độ hoặc tu_rp; đích là den_rp hoặc den_nhom
-{"tu_x": 5.0, "tu_y": 30.0, "den_nhom": "WC", "thuat_toan": "a_sao"}
+{"tu_x": 5.0, "tu_y": 30.0, "den_nhom": "WC phía căn tin", "thuat_toan": "a_sao"}
 
 // Phản hồi 200 (rút gọn)
 {"tu": "RP19", "den": "RP42", "quang_duong_m": 16.06, "so_chang": 2, "so_nut_mo": 54,
  "duong_di": [{"rp_id": "", "x": 5.0, "y": 30.0, "ten": "", "nhom": ""}, ...],
- "chi_dan": [{"tu_rp": "RP19", "den_rp": "RP42", "den_ten": "WC", "huong": "bat_dau",
+ "chi_dan": [{"tu_rp": "RP19", "den_rp": "RP42", "den_ten": "WC phía căn tin", "huong": "bat_dau",
               "goc_do": 0.0, "khoang_cach_m": 12.75}, ...]}
 ```
 

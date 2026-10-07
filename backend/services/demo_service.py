@@ -18,7 +18,7 @@ import pandas as pd
 from backend.config import ROOT_DIR
 
 TEP_QUET = ROOT_DIR / "data" / "processed" / "fingerprint_dataset_raw.csv"
-DIEM_XUAT_PHAT = "RP02"  # Cửa ra vào
+DIEM_XUAT_PHAT = "RP02"  # Cửa chính
 
 
 class PhatLaiQuet:

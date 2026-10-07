@@ -79,6 +79,9 @@ class NhanSoDo {
   final String? moTa;
   final Offset? den;
 
+  /// Thư mục ảnh của địa điểm riêng, như cột `thu_muc_anh` của điểm tham chiếu.
+  final String? anh;
+
   const NhanSoDo(
       {required this.ten,
       this.en,
@@ -88,7 +91,8 @@ class NhanSoDo {
       required this.cap,
       this.nhom,
       this.moTa,
-      this.den});
+      this.den,
+      this.anh});
 
   factory NhanSoDo.tuJson(Map<String, dynamic> j) {
     final den = j['den'] as List?;
@@ -104,6 +108,7 @@ class NhanSoDo {
       den: den == null
           ? null
           : Offset((den[0] as num).toDouble(), (den[1] as num).toDouble()),
+      anh: j['anh'] as String?,
     );
   }
 

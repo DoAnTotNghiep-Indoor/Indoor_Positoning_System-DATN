@@ -6,18 +6,22 @@ class AnhKhuVuc {
   AnhKhuVuc._();
 
   static const soAnh = <String, int>{
-    'ban_thu_thu': 2,
+    'ban_cong': 3,
+    'ban_thu_thu': 3,
     'can_tin': 2,
     'cau_thang': 3,
-    'cau_thang_tang_2': 2,
-    'cua_ra_vao': 3,
+    'cau_thang_tang_2_phai': 1,
+    'cau_thang_tang_2_trai': 1,
+    'cua_chinh': 2,
     'hanh_lang': 2,
     'hoi_truong_thu_vien': 5,
-    'khu_vuc_doc': 7,
+    'khu_vuc_doc': 3,
     'khu_vuc_tu_hoc': 5,
+    'loi_ra': 1,
     'phong_tap_chi': 3,
     'tv3_4': 3,
-    'wc': 2,
+    'wc_phai': 1,
+    'wc_trai': 1,
   };
 
   static List<String> duongDan(String thuMuc) => [

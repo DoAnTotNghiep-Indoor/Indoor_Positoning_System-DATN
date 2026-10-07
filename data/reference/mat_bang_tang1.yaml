@@ -18,7 +18,8 @@
 # đứt), ten, en, mau (nhóm màu của phòng / nhãn), co (cỡ chữ).
 #
 # Địa điểm trên app: nhãn có `nhom` mở popup của nhóm điểm tham chiếu đó (ảnh, mô tả, chỉ đường tới điểm gần
-# nhất của nhóm); nhãn có `mo_ta` là địa điểm riêng, chỉ đường tới `loi_vao` (mặc định tâm nhãn).
+# nhất của nhóm); nhãn có `mo_ta` là địa điểm riêng, chỉ đường tới `loi_vao` (mặc định tâm nhãn), `anh` là thư
+# mục ảnh của nó trong mobile/assets/images.
 #
 # Tìm đường (tools/luoi_di_lai.py): đi được trong vỏ, phòng, cầu thang, sàn; chặn bởi cạnh vỏ và phòng, tường,
 # lan can, `mep`, hai cạnh bên cầu thang, giếng, quầy, cột, kệ (trừ kệ `chan_duong: false`); cửa mở khe qua
@@ -90,11 +91,11 @@ phan_tu:
   # Sàn trống trước WC, ngang sàn cửa chính, sát dưới sảnh chờ; xuống từ khu tự học bằng một cầu thang
   # nay bị kệ sách chặn. Lan can bao cả thang lẫn sàn trống thành một khối 9 × ~13 viên (đếm tại chỗ);
   # vị trí cầu thang trong khối ước theo ảnh.
-  - {loai: san_thap, ten: Trước WC, nhom: WC, doi_xung: true, hcn: [tuong_ben - khoi_wc, sau_thang_len, tuong_ben, hang_cot - 3.5]}
-  - {loai: cau_thang, ten: Xuống WC, nhom: WC, doi_xung: true, huong: +y, hcn: [39, hang_cot - 3.5, 43.5, hang_cot], nguon: anh}
+  - {loai: san_thap, ten: Trước WC, nhom: ['WC phía TV3,4', WC phía căn tin], doi_xung: true, hcn: [tuong_ben - khoi_wc, sau_thang_len, tuong_ben, hang_cot - 3.5]}
+  - {loai: cau_thang, ten: Xuống WC, nhom: ['WC phía TV3,4', WC phía căn tin], doi_xung: true, huong: +y, hcn: [39, hang_cot - 3.5, 43.5, hang_cot], nguon: anh}
   - {loai: lan_can, doi_xung: true, diem: [[39, hang_cot], [tuong_ben - khoi_wc, hang_cot], [tuong_ben - khoi_wc, sau_thang_len]]}
   - {loai: lan_can, doi_xung: true, diem: [[43.5, hang_cot], [tuong_ben, hang_cot]]}
-  - {loai: phong, ten: WC, nhom: WC, mau: ve_sinh, co: 11, doi_xung: true, hcn: [tuong_ben, 9, 49.5, 13.5], nguon: doan}
+  - {loai: phong, ten: WC, nhom: ['WC phía TV3,4', WC phía căn tin], mau: ve_sinh, co: 11, doi_xung: true, hcn: [tuong_ben, 9, 49.5, 13.5], nguon: doan}
   - {loai: cua, doi_xung: true, diem: [[tuong_ben, 9.75], [tuong_ben, 12.75]], mo: -1}
 
   # Sàn dưới, cầu thang dưới, cột. Cột nằm trên hai mép bậc thang lớn x = ±9; bậc chạy giữa mặt trong cột.
@@ -116,7 +117,7 @@ phan_tu:
   - {loai: cau_thang, ten: Bậc lên quầy, nhom: Cầu thang, huong: +y, hcn: [-8, chan_bac_quay, 8, chan_bac_quay + sau_bac]}
   - {loai: cot, hinh: tron, doi_xung: true, tam: [9, 38.8], kich_thuoc: 2}
   # Ban công vuông có sofa: bề ngang bằng gian quầy, sâu gấp đôi cầu thang nhỏ. Chiều nhô (về phía cửa) chưa chắc.
-  - {loai: ban_cong, ten: Ban công, doi_xung: true, nguon: anh, mo_ta: Ban công đặt ghế sofa ở hai bên bậc lên quầy.,
+  - {loai: ban_cong, ten: Ban công, anh: ban_cong, doi_xung: true, nguon: anh, mo_ta: Ban công đặt ghế sofa ở hai bên bậc lên quầy.,
      hcn: [gian_quay, chan_bac_quay + sau_bac - 2*sau_bac, 2*gian_quay, chan_bac_quay + sau_bac]}
   - {loai: lan_can, doi_xung: true, nguon: anh,
      diem: [[gian_quay, chan_bac_quay], [gian_quay, chan_bac_quay - sau_bac], [2*gian_quay, chan_bac_quay - sau_bac], [2*gian_quay, chan_bac_quay]]}
@@ -130,15 +131,15 @@ phan_tu:
   - {loai: quay, hcn: [-2*gian_quay, mep_quay, -gian_quay, mep_quay + sau_quay]}
   - {loai: quay, ten: Quầy thủ thư, nhom: Bàn thủ thư, cap: 1, hcn: [-gian_quay, mep_quay, gian_quay, mep_quay + sau_quay]}
   - {loai: quay, hcn: [gian_quay, mep_quay, 2*gian_quay, mep_quay + sau_quay]}
-  - {loai: cau_thang, ten: Lên tầng 2, nhom: Cầu thang tầng 2, doi_xung: true, huong: +x, hcn: [thang_t2, mep_quay, 42, 56.25], nguon: doan}
+  - {loai: cau_thang, ten: Lên tầng 2, nhom: [Cầu thang tầng 2 phía cửa sau, Cầu thang tầng 2 phía phòng tạp chí], doi_xung: true, huong: +x, hcn: [thang_t2, mep_quay, 42, 56.25], nguon: doan}
   - {loai: cua, doi_xung: true, diem: [[29, mep_quay], [thang_t2, 57]], mo: 1}
   - {loai: cua, diem: [[22, mep_quay], [25.5, mep_quay]], mo: 1}
   - {loai: cua, diem: [[-3, tuong_sau], [3, tuong_sau]], mo: 1, doi: true}
 
   # --- Nhãn ---------------------------------------------------------------------------------------------
-  - {loai: nhan, tai: [0, 6], ten: Sảnh cửa chính, nhom: Cửa ra vào, co: 15, cap: 1}
-  - {loai: nhan, tai: [0, 1.2], ten: Cửa chính, nhom: Cửa ra vào, co: 12, icon: cua}
-  - {loai: nhan, tai: [-23.5, 57], ten: Lối ra, nhom: Cửa ra vào, co: 12, icon: cua}
+  - {loai: nhan, tai: [0, 6], ten: Sảnh cửa chính, nhom: Cửa chính, co: 15, cap: 1}
+  - {loai: nhan, tai: [0, 1.2], ten: Cửa chính, nhom: Cửa chính, co: 12, icon: cua}
+  - {loai: nhan, tai: [-23.5, 57], ten: Lối ra, nhom: Lối ra, co: 12, icon: cua}
   - {loai: nhan, tai: [0, 68.5], ten: Cửa sau, co: 12, icon: cua, mo_ta: Cửa sau dẫn ra bãi đỗ xe cổng sau., loi_vao: [0, 70]}
   - {loai: nhan, doi_xung: true, tai: [27, 27], ten: Khu tự học, en: Reading Space, nhom: Khu vực tự học, mau: hoc_tap, co: 20, cap: 1}
   - {loai: nhan, doi_xung: true, tai: [36, 44], ten: Khu đọc, nhom: Khu vực đọc, mau: hoc_tap, co: 15}

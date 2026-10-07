@@ -19,17 +19,20 @@ RA = config.ROOT_DIR / "mobile" / "lib" / "data" / "khu_vuc_thu_vien.dart"
 # bộ Material mà cả ứng dụng đang dùng, để nét icon đồng bộ.
 ICON = {
     "TV3,4": "Icons.computer_outlined",
-    "Cửa ra vào": "Icons.door_front_door_outlined",
+    "Cửa chính": "Icons.door_front_door_outlined",
+    "Lối ra": "Icons.exit_to_app_outlined",
     "Hội trường thư viện": "Icons.stadium_outlined",
     "Cầu thang": "Icons.stairs_outlined",
-    "Cầu thang tầng 2": "Icons.stairs_outlined",
+    "Cầu thang tầng 2 phía cửa sau": "Icons.stairs_outlined",
+    "Cầu thang tầng 2 phía phòng tạp chí": "Icons.stairs_outlined",
     "Khu vực tự học": "Icons.school_outlined",
     "Khu vực đọc": "Icons.menu_book_outlined",
     "Căn tin": "Icons.restaurant_outlined",
     "Hành lang": "Icons.linear_scale_outlined",
     "Bàn thủ thư": "Icons.support_agent_outlined",
     "Phòng tạp chí": "Icons.article_outlined",
-    "WC": "Icons.wc_outlined",
+    "WC phía TV3,4": "Icons.wc_outlined",
+    "WC phía căn tin": "Icons.wc_outlined",
 }
 
 

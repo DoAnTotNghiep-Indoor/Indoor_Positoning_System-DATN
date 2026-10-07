@@ -44,7 +44,7 @@ class KhuVuc {
           nhom: e.key,
           moTa: e.value.first.moTa!,
           moTaChiTiet: '',
-          thuMucAnh: '',
+          thuMucAnh: e.value.first.anh ?? '',
           icon: kieuNhan(e.value.first.icon).$1,
           diem: [for (final n in e.value) n.den!],
           theoToaDo: true,

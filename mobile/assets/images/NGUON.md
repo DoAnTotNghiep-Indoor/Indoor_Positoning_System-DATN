@@ -4,14 +4,22 @@ Hai nguồn, ghi tách bạch vì một bên là dữ liệu kế thừa:
 
 | Thư mục | Số ảnh | Nguồn |
 |---|---:|---|
-| 11 thư mục còn lại | 37 | **Nhóm CTK45** chụp tại Thư viện ĐH Đà Lạt, lấy từ nhánh `Backup` của kho `github.com/NgocSongNe/IPS` |
-| `wc/` | 2 | **Nhóm 15** chụp ngày 07/09/2026 |
+| 14 thư mục còn lại | 37 | **Nhóm CTK45** chụp tại Thư viện ĐH Đà Lạt, lấy từ nhánh `Backup` của kho `github.com/NgocSongNe/IPS` |
+| `wc_trai/`, `wc_phai/` | 2 | **Nhóm 15** chụp ngày 07/09/2026 |
 
-`wc/1.webp` là nhà vệ sinh phía TV 3,4 (RP43, x = −42); `wc/2.webp` là phía căn tin
-(RP42, x = +42) — đánh số theo thứ tự trái sang phải trên sơ đồ.
+`trai`/`phai` theo sơ đồ (cửa chính ở dưới): bên trái là phía TV3,4 và lối ra cửa sau, bên phải
+là phía căn tin và phòng tạp chí.
 
-Tên thư mục giữ nguyên như bản gốc vì nó khớp đúng cột `thu_muc_anh` trong
-`data/reference/reference_points.csv` — nhờ vậy `GET /map` trả về tên thư mục là
+Ngày 07/10/2026 chia lại ảnh CTK45 theo đúng chỗ chụp, vì bản gốc gộp mỗi nhóm một thư mục:
+`cua_ra_vao` tách thành `cua_chinh` (2 ảnh) và `loi_ra` (1); `cau_thang_tang_2` tách thành
+`cau_thang_tang_2_trai` và `cau_thang_tang_2_phai`; ba ảnh sofa trong `khu_vuc_doc` là ban
+công nên chuyển sang `ban_cong`; ảnh góc trưng bày cờ và tranh trong `khu_vuc_doc` là ở quầy nên
+chuyển sang `ban_thu_thu`. Ảnh `hanh_lang` thực ra chụp dãy kệ sách chắn lối xuống WC, giữ tạm
+tới đợt chụp lại.
+
+Tên thư mục khớp đúng cột `thu_muc_anh` trong
+`data/reference/reference_points.csv` (địa điểm chỉ có trên sơ đồ như ban công thì khớp khoá
+`anh` trong `mat_bang_tang1.yaml`) — nhờ vậy `GET /map` trả về tên thư mục là
 ứng dụng biết lấy ảnh nào mà không cần một bảng tra thứ hai.
 
 ## Xử lý trước khi đưa vào kho mã

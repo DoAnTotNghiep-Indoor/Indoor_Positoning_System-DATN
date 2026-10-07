@@ -67,15 +67,19 @@ flutter:
     # 15 chụp ngày 07/09/2026. Đều thu về cạnh dài 1024 px chất lượng 80 — thừa
     # nét cho màn điện thoại mà không phình kho mã. Xem assets/images/NGUON.md.
     # Flutter không nhận mẫu lồng nhau nên phải liệt kê từng thư mục.
+    - assets/images/ban_cong/
     - assets/images/ban_thu_thu/
     - assets/images/can_tin/
     - assets/images/cau_thang/
-    - assets/images/cau_thang_tang_2/
-    - assets/images/cua_ra_vao/
+    - assets/images/cau_thang_tang_2_phai/
+    - assets/images/cau_thang_tang_2_trai/
+    - assets/images/cua_chinh/
     - assets/images/hanh_lang/
     - assets/images/hoi_truong_thu_vien/
     - assets/images/khu_vuc_doc/
     - assets/images/khu_vuc_tu_hoc/
+    - assets/images/loi_ra/
     - assets/images/phong_tap_chi/
     - assets/images/tv3_4/
-    - assets/images/wc/
+    - assets/images/wc_phai/
+    - assets/images/wc_trai/

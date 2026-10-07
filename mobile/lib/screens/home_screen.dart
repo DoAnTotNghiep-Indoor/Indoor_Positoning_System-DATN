@@ -26,7 +26,11 @@ class HomeScreen extends StatelessWidget {
     final hienTai = theoDoi.khuHienTai;
 
     final nhanh = [
-      for (final ten in _truyCapNhanh) ...ds.where((k) => k.nhom == ten),
+      // "WC" tách theo hai đầu nhà; ô truy cập nhanh lấy cái gần nhất.
+      for (final ten in _truyCapNhanh)
+        ...sapTheoKhoangCach(
+                ds.where((k) => k.nhom.startsWith(ten)).toList(), vt)
+            .take(1),
     ];
     final ganBan =
         vt == null ? ds : ds.where((k) => k != hienTai).take(6).toList();

@@ -104,7 +104,7 @@ ICON_LOAI = {'cau_thang': 'thang', 'gieng': 'thang', 'quay': 'quay', 'ban_cong':
 
 
 def nhan_cua(e):
-    """Phần tử có tên -> nhãn {ten, en, x, y, mau, co, icon, cap, nhom, mo_ta, den}; không tên thì None.
+    """Phần tử có tên -> nhãn {ten, en, x, y, mau, co, icon, cap, nhom, mo_ta, den, anh}; không tên thì None.
     `den` là điểm chỉ đường của địa điểm riêng (có `mo_ta`)."""
     if not e.get('ten'):
         return None
@@ -116,7 +116,7 @@ def nhan_cua(e):
             'co': e.get('co', 13 if to else 11),
             'icon': e.get('icon') or ICON_MAU.get(e.get('mau')) or ICON_LOAI.get(loai, 'diem'),
             'cap': e.get('cap', 2 if to else 3), 'nhom': e.get('nhom'), 'mo_ta': e.get('mo_ta'),
-            'den': [round(v, 2) for v in den] if den else None}
+            'den': [round(v, 2) for v in den] if den else None, 'anh': e.get('anh')}
 
 
 def ve(e):

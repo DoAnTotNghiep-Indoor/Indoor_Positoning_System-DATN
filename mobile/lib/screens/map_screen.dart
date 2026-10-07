@@ -362,10 +362,30 @@ class _MapScreenState extends State<MapScreen>
     ]..sort((a, b) => a.cap.compareTo(b.cap));
     final daDat = <Rect>[];
     final ra = <Widget>[];
+    // Chữ cầu thang in giữa khối, xoay theo sơ đồ; quá nửa vòng thì lật để không đọc ngược.
+    var xoay = _gocXoay;
+    if (xoay.abs() > math.pi / 2) xoay -= math.pi * xoay.sign;
     for (final n in ds) {
       final ten = ngonNgu == 'en' ? n.en ?? n.ten : n.ten;
       final p = MatrixUtils.transformPoint(
           mt, goc + SoDoThat.sangKhung(n.x, n.y, rong));
+      if (n.icon == 'thang') {
+        final o = Rect.fromCenter(
+            center: p, width: ChuTinh.rongUoc(ten), height: 14);
+        if (daDat.any(o.overlaps)) continue;
+        daDat.add(o);
+        ra.add(Positioned(
+          left: p.dx,
+          top: p.dy,
+          child: IgnorePointer(
+            child: FractionalTranslation(
+              translation: const Offset(-0.5, -0.5),
+              child: Transform.rotate(angle: xoay, child: ChuTinh(ten)),
+            ),
+          ),
+        ));
+        continue;
+      }
       final to = n.cap == 1;
       final r = NhanNoi.banKinh(to);
       final o =

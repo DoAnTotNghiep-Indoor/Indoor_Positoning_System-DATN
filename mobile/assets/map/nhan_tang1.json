@@ -144,7 +144,7 @@
   "y": 12.85,
   "icon": "wc",
   "cap": 3,
-  "nhom": "WC"
+  "nhom": "WC phía căn tin"
  },
  {
   "ten": "Trước WC",
@@ -152,7 +152,7 @@
   "y": 12.85,
   "icon": "wc",
   "cap": 3,
-  "nhom": "WC"
+  "nhom": "WC phía TV3,4"
  },
  {
   "ten": "Xuống WC",
@@ -160,7 +160,7 @@
   "y": 18.95,
   "icon": "thang",
   "cap": 3,
-  "nhom": "WC"
+  "nhom": "WC phía căn tin"
  },
  {
   "ten": "Xuống WC",
@@ -168,7 +168,7 @@
   "y": 18.95,
   "icon": "thang",
   "cap": 3,
-  "nhom": "WC"
+  "nhom": "WC phía TV3,4"
  },
  {
   "ten": "WC",
@@ -176,7 +176,7 @@
   "y": 11.25,
   "icon": "wc",
   "cap": 2,
-  "nhom": "WC"
+  "nhom": "WC phía căn tin"
  },
  {
   "ten": "WC",
@@ -184,7 +184,7 @@
   "y": 11.25,
   "icon": "wc",
   "cap": 2,
-  "nhom": "WC"
+  "nhom": "WC phía TV3,4"
  },
  {
   "ten": "Cầu thang",
@@ -212,7 +212,8 @@
   "den": [
    12.75,
    36.0
-  ]
+  ],
+  "anh": "ban_cong"
  },
  {
   "ten": "Ban công",
@@ -224,7 +225,8 @@
   "den": [
    -12.75,
    36.0
-  ]
+  ],
+  "anh": "ban_cong"
  },
  {
   "ten": "Xuống",
@@ -256,7 +258,7 @@
   "y": 54.5,
   "icon": "thang",
   "cap": 3,
-  "nhom": "Cầu thang tầng 2"
+  "nhom": "Cầu thang tầng 2 phía phòng tạp chí"
  },
  {
   "ten": "Lên tầng 2",
@@ -264,7 +266,7 @@
   "y": 54.5,
   "icon": "thang",
   "cap": 3,
-  "nhom": "Cầu thang tầng 2"
+  "nhom": "Cầu thang tầng 2 phía cửa sau"
  },
  {
   "ten": "Sảnh cửa chính",
@@ -272,7 +274,7 @@
   "y": 6.0,
   "icon": "diem",
   "cap": 1,
-  "nhom": "Cửa ra vào"
+  "nhom": "Cửa chính"
  },
  {
   "ten": "Cửa chính",
@@ -280,7 +282,7 @@
   "y": 1.2,
   "icon": "cua",
   "cap": 2,
-  "nhom": "Cửa ra vào"
+  "nhom": "Cửa chính"
  },
  {
   "ten": "Lối ra",
@@ -288,7 +290,7 @@
   "y": 57.0,
   "icon": "cua",
   "cap": 2,
-  "nhom": "Cửa ra vào"
+  "nhom": "Lối ra"
  },
  {
   "ten": "Cửa sau",

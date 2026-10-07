@@ -79,7 +79,8 @@ LoaiKhu loaiCua(String nhom) => switch (nhom) {
       'Căn tin' ||
       'Hội trường thư viện' ||
       'Bàn thủ thư' ||
-      'WC' ||
+      'WC phía TV3,4' ||
+      'WC phía căn tin' ||
       'Phòng nghiệp vụ 1' ||
       'Phòng nghiệp vụ 2' ||
       'Sảnh chờ' ||
