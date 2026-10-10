@@ -197,7 +197,7 @@ if DIEM:
 
 # App cắt quanh khối giữa (hai toà chéo nằm ngoài vùng định vị, vẽ hết thì khối giữa nhỏ đi một nửa);
 # bản tham chiếu vẽ đủ.
-(x0, y0), (x1, y1) = (P(-95, 78), P(95, -55)) if KHUNG_APP else (P(-136, 78), P(141, -102))
+(x0, y0), (x1, y1) = (P(-95, 84), P(95, -55)) if KHUNG_APP else (P(-136, 108), P(141, -102))
 w, h = x1 - x0, y1 - y0
 cg = []
 if not KHUNG_APP:

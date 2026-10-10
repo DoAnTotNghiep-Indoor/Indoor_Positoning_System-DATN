@@ -18,7 +18,53 @@
   "nhom": "Hội trường thư viện"
  },
  {
-  "ten": "Phòng báo & tạp chí",
+  "ten": "Phòng nghiệp vụ 1",
+  "en": "Technical Dept. 1",
+  "x": -78.75,
+  "y": 72.0,
+  "icon": "van_phong",
+  "cap": 1,
+  "mo_ta": "Toà nghiệp vụ của cán bộ thư viện, cửa ở cuối hành lang sau Lối ra.",
+  "den": [
+   -47.5,
+   71.0
+  ]
+ },
+ {
+  "ten": "Phòng học nhóm",
+  "en": "Group Study",
+  "x": -14.0,
+  "y": 77.0,
+  "icon": "doc",
+  "cap": 2,
+  "mo_ta": "Phòng học và thảo luận theo nhóm.",
+  "den": [
+   -22.0,
+   71.0
+  ]
+ },
+ {
+  "ten": "Thang máy",
+  "en": "Elevator",
+  "x": -44.25,
+  "y": 67.75,
+  "icon": "thang",
+  "cap": 2,
+  "mo_ta": "Thang máy lên các tầng trên.",
+  "den": [
+   -44.25,
+   71.0
+  ]
+ },
+ {
+  "ten": "Lên tầng 2",
+  "x": 8.25,
+  "y": 77.0,
+  "icon": "thang",
+  "cap": 3
+ },
+ {
+  "ten": "Hành lang tạp chí",
   "en": "Periodicals",
   "x": 23.5,
   "y": 57.25,
@@ -27,55 +73,16 @@
   "nhom": "Phòng tạp chí"
  },
  {
-  "ten": "Phòng nghiệp vụ 2",
-  "en": "Technical Dept. 2",
-  "x": 17.5,
-  "y": 66.88,
-  "icon": "van_phong",
-  "cap": 2,
-  "mo_ta": "Phòng làm việc nghiệp vụ của cán bộ thư viện, phía sau quầy thủ thư.",
-  "den": [
-   3.0,
-   66.0
-  ]
- },
- {
-  "ten": "Phòng học nhóm",
-  "en": "Group Study",
-  "x": -17.5,
-  "y": 69.0,
+  "ten": "Nhà sách",
+  "en": "Bookstore",
+  "x": 31.25,
+  "y": 65.0,
   "icon": "doc",
   "cap": 2,
-  "mo_ta": "Phòng học và thảo luận theo nhóm.",
+  "mo_ta": "Nhà sách, vào qua hành lang tạp chí cạnh thang lên tầng 2.",
   "den": [
-   -17.5,
-   64.0
-  ]
- },
- {
-  "ten": "Phòng nghiệp vụ 1",
-  "en": "Technical Dept. 1",
-  "x": -37.75,
-  "y": 66.25,
-  "icon": "van_phong",
-  "cap": 2,
-  "mo_ta": "Phòng làm việc nghiệp vụ của cán bộ thư viện.",
-  "den": [
-   -28.5,
-   64.0
-  ]
- },
- {
-  "ten": "Phòng đọc sau đại học",
-  "en": "Postgraduate",
-  "x": 37.75,
-  "y": 66.25,
-  "icon": "doc",
-  "cap": 2,
-  "mo_ta": "Phòng đọc dành cho học viên sau đại học.",
-  "den": [
-   37.75,
-   66.25
+   23.75,
+   63.75
   ]
  },
  {
@@ -287,7 +294,7 @@
  {
   "ten": "Lối ra",
   "x": -23.5,
-  "y": 57.0,
+  "y": 55.0,
   "icon": "cua",
   "cap": 2,
   "nhom": "Lối ra"
@@ -295,13 +302,13 @@
  {
   "ten": "Cửa sau",
   "x": 0.0,
-  "y": 68.5,
+  "y": 79.5,
   "icon": "cua",
   "cap": 2,
   "mo_ta": "Cửa sau dẫn ra bãi đỗ xe cổng sau.",
   "den": [
    0.0,
-   70.0
+   79.0
   ]
  },
  {

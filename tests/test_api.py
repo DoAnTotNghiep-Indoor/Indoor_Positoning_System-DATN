@@ -169,7 +169,7 @@ def test_route_tu_toa_do_nguoi_dung(client):
     assert math.hypot(dau["x"] - 5.0, dau["y"] - 30.0) < 0.2
 
 
-@pytest.mark.parametrize("dich", [{"den_nhom": "Căn tin"}, {"den_x": -17.5, "den_y": 64}])
+@pytest.mark.parametrize("dich", [{"den_nhom": "Căn tin"}, {"den_x": -22, "den_y": 71}])
 def test_route_a_sao_bang_dijkstra_nhung_mo_it_nut_hon(client, dich):
     than = {"tu_x": 22, "tu_y": 52, **dich}
     a = client.post("/route", json=than).json()
@@ -179,8 +179,8 @@ def test_route_a_sao_bang_dijkstra_nhung_mo_it_nut_hon(client, dich):
 
 
 @pytest.mark.parametrize("tu,dich,tren,duoi", [
-    # Phòng học nhóm sau quầy: đi qua lối ra (x ≈ -23, y ≈ 57) vào hành lang cửa sau.
-    ((0, 45), (-17.5, 64), (-30, 52.75), (-17, 61.75)),
+    # Phòng học nhóm sau quầy: đi qua cửa ra vào ở chân hành lang chữ T (x -26..-18, y ≈ 53).
+    ((0, 45), (-22, 71), (-26, 52.5), (-18, 54)),
     # Từ khu tự học xuống sảnh cửa chính phải qua cầu thang dưới (|x| < 8), không trèo lan can.
     ((25, 25), (0, 5), (-8, 15), (8, 19)),
 ])

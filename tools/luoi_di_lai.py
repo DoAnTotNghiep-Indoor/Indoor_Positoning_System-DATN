@@ -33,7 +33,7 @@ RA = config.REFERENCE_DIR / "ban_do_tang1.json"
 
 K = 4                  # điểm ảnh mỗi đơn vị lưới
 X0, X1 = -50.0, 50.0   # khối giữa ±45,5 cộng WC nhô ra tới ±49,5
-Y0, Y1 = -6.0, 76.0    # bậc ngoài cửa chính tới vòm cửa sau
+Y0, Y1 = -6.0, 82.0    # bậc ngoài cửa chính tới vòm cửa sau
 NET = K                # độ dày nét chặn
 NET_CUA = int(1.6 * K)
 

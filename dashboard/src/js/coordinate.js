@@ -5,9 +5,9 @@
 export const SO_DO = {
   anh: 'so_do_tang1.svg',
   khungX: -580.2,
-  khungY: -282.0,
+  khungY: -351.8,
   khungRong: 2209.3,
-  khungCao: 1547.4,
+  khungCao: 1617.2,
   gocXPx: 24.5,
   gocYPx: 625.5,
   pxMoiDonViX: 11.6279,

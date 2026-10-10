@@ -40,7 +40,8 @@ moc:
   dinh_thang_len: 28.5    # 14 bậc × 30 cm ≈ 12 viên
   hang_cot: 20.7          # hàng cột giữa khu tự học (Map.png)
   khoi_wc: 9              # khối lan can quanh lối xuống WC rộng 9 viên từ tường bên, sâu tới hàng cột
-  tuong_sau: 72           # sau quầy: theo sơ đồ trường, chưa đo
+  tuong_sau: 73           # chưa đo: chân chữ T (16) + thanh ngang; cửa học nhóm sát mép ngoài khối giữa
+  chu_t: 53               # cửa ra vào ở chân chữ T (Lối ra); chân dài 8 + 8 tới thanh ngang
 
 phan_tu:
   # --- Ngoài khối giữa ---------------------------------------------------------------------------------
@@ -52,30 +53,54 @@ phan_tu:
 
   # --- Vỏ khối giữa ------------------------------------------------------------------------------------
   - loai: vo
-    diem: [[-tuong_ben, 0], [tuong_ben, 0], [tuong_ben, tuong_sau], [42, tuong_sau + 3.5], [33, tuong_sau + 3.5],
-           [30, tuong_sau], [-30, tuong_sau], [-33, tuong_sau + 3.5], [-42, tuong_sau + 3.5], [-tuong_ben, tuong_sau]]
-  - {loai: vom, hcn: [-5, tuong_sau, 5, tuong_sau + 1.6]}
+    diem: [[-tuong_ben, 0], [tuong_ben, 0], [tuong_ben, tuong_sau], [12.5, tuong_sau], [12.5, tuong_sau + 8], [-4, tuong_sau + 8], [-4, tuong_sau], [-tuong_ben, tuong_sau]]
+  # Hai góc sau vuông, nối thẳng sang hai toà vuông (ảnh vệ tinh, người dùng xác nhận); sơ đồ trường vẽ nhô ra là sai.
+  - {loai: vom, hcn: [-5, tuong_sau + 8, 5, tuong_sau + 9.6]}
   # Khu tự học tô màu; lối đi giữa toà rộng đúng bằng bậc thang (x ±8) để trống từ cầu thang dưới tới bậc lên quầy.
   - {loai: vung, mau: hoc_tap, doi_xung: true,
      diem: [[8, dinh_thang_duoi], [8, chan_bac_quay - sau_bac], [2*gian_quay, chan_bac_quay - sau_bac], [2*gian_quay, chan_bac_quay],
             [26, chan_bac_quay], [26, 50], [tuong_ben, 50], [tuong_ben, hang_cot], [tuong_ben - khoi_wc, hang_cot],
             [tuong_ben - khoi_wc, 13.5], [mep_san_duoi, 13.5], [mep_san_duoi, dinh_thang_duoi]]}
 
-  # --- Sau quầy (theo thứ tự trên sơ đồ trường, kích thước đoán) ----------------------------------------
-  - {loai: phong, ten: Phòng báo & tạp chí, en: Periodicals, nhom: Phòng tạp chí, mau: hoc_tap, co: 13, hcn: [17, mep_quay, thang_t2, mep_quay + sau_quay], nguon: doan}
-  - {loai: phong, ten: Phòng nghiệp vụ 2, en: Technical Dept. 2, mau: nghiep_vu, co: 13, hcn: [5, mep_quay + sau_quay, thang_t2, tuong_sau], nguon: doan,
-     mo_ta: 'Phòng làm việc nghiệp vụ của cán bộ thư viện, phía sau quầy thủ thư.', loi_vao: [3, 66]}
-  - {loai: phong, ten: Phòng học nhóm, en: Group Study, mau: hoc_tap, co: 13, hcn: [-thang_t2, 66, -5, tuong_sau], nguon: doan,
-     mo_ta: Phòng học và thảo luận theo nhóm., loi_vao: [-17.5, 64]}
-  - {loai: phong, ten: Phòng nghiệp vụ 1, en: Technical Dept. 1, mau: nghiep_vu, co: 13, nguon: doan,
-     mo_ta: Phòng làm việc nghiệp vụ của cán bộ thư viện., loi_vao: [-28.5, 64],
-     diem: [[-tuong_ben, 57], [-thang_t2, 57], [-thang_t2, tuong_sau], [-33, tuong_sau + 3.5], [-42, tuong_sau + 3.5], [-tuong_ben, tuong_sau]]}
-  - {loai: phong, ten: Phòng đọc sau đại học, en: Postgraduate, mau: hoc_tap, co: 13, nguon: doan,
-     mo_ta: Phòng đọc dành cho học viên sau đại học.,
-     diem: [[tuong_ben, 57], [thang_t2, 57], [thang_t2, tuong_sau], [33, tuong_sau + 3.5], [42, tuong_sau + 3.5], [tuong_ben, tuong_sau]]}
-  # Lối ra (RP34) hở vào hành lang sau quầy dẫn tới cửa sau.
-  - {loai: tuong, diem: [[-thang_t2, mep_quay], [-thang_t2, mep_quay + sau_quay]], nguon: doan}
-  - {loai: tuong, diem: [[-2*gian_quay, mep_quay + sau_quay], [5, mep_quay + sau_quay]], nguon: doan}
+  # --- Sau quầy -------------------------------------------------------------------------------------
+  # Người đo kể và ảnh (10/10/2026). Sau Lối ra là hành lang chữ T có tường riêng: chân dọc thẳng hàng Lối ra, từ cửa
+  # ra vào (khung gỗ, vách kính bên cạnh nhìn ra thang lên tầng 2) dài 8 + 8 ô tới thanh ngang chạy sát tường sau; thanh
+  # ngang toả mỗi bên ~22 ô: trái tới cửa nghiệp vụ 1 (toà vuông phía Nam), phải tới cửa trong của sảnh cửa sau. Cửa học nhóm ở tường
+  # sau, thẳng hàng chân T; phòng nằm ngoài khối giữa. Tường chân T phía quầy liền (cửa nội bộ bỏ qua). Thang máy hẹp
+  # (2-3 ô) sát nghiệp vụ 1, đối diện học nhóm. Sảnh cửa sau nhô ra ngoài tường sau giữa học nhóm và thang lên tầng 2:
+  # cửa đôi ngoài và cửa trong song song, cách 8 ô (người dùng kể, ảnh).
+  # Toà nghiệp vụ 1: đọc từ ảnh vệ tinh (như hai toà chéo), thẳng theo lưới nhà, mép giáp khối giữa ở tường bên.
+  - {loai: phong, ten: Phòng nghiệp vụ 1, en: Technical Dept. 1, mau: nghiep_vu, co: 20, cap: 1, nguon: ve_tinh,
+     hcn: [-112, 39, -tuong_ben, 105], mo_ta: 'Toà nghiệp vụ của cán bộ thư viện, cửa ở cuối hành lang sau Lối ra.',
+     loi_vao: [-47.5, chu_t + 18]}
+  - {loai: cua, diem: [[-tuong_ben, chu_t + 16.5], [-tuong_ben, chu_t + 19.5]], mo: 1}
+  - {loai: phong, ten: Phòng học nhóm, en: Group Study, mau: hoc_tap, co: 13, nguon: doan,
+     mo_ta: Phòng học và thảo luận theo nhóm., loi_vao: [-22, chu_t + 18], hcn: [-24, tuong_sau, -4, tuong_sau + 8]}
+  - {loai: cua, diem: [[-23.75, tuong_sau], [-20.25, tuong_sau]], mo: -1, doi: true}   # cửa đôi 17a sát mép trái phòng (ảnh)
+  - {loai: phong, ten: Thang máy, en: Elevator, icon: thang, mau: nghiep_vu, co: 11, nguon: doan, hcn: [-tuong_ben, chu_t + 13.5, -43, chu_t + 16],
+     mo_ta: Thang máy lên các tầng trên., loi_vao: [-44.25, chu_t + 18]}
+  - {loai: cua, diem: [[-45, chu_t + 16], [-43.5, chu_t + 16]], mo: 1}
+  # Khối kín quanh chữ T, chưa rõ là gì: dưới thanh ngang bên trái chân T, sau quầy bên phải chân T.
+  - {loai: phong, mau: nghiep_vu, nguon: doan,
+     diem: [[-tuong_ben, 57], [-26, 57], [-26, chu_t + 16], [-43, chu_t + 16], [-43, chu_t + 13.5], [-tuong_ben, chu_t + 13.5]]}
+  - {loai: phong, mau: nghiep_vu, nguon: doan, hcn: [-18, mep_quay + sau_quay, 4, chu_t + 16]}
+  - {loai: tuong, diem: [[-26, 57], [-26, chu_t], [-18, chu_t], [-18, mep_quay + sau_quay]], nguon: doan}
+  - {loai: cua, diem: [[-23.5, chu_t], [-20.5, chu_t]], mo: -1, doi: true}
+  - {loai: tuong, diem: [[-4, tuong_sau], [4, tuong_sau]], nguon: doan}
+  - {loai: cua, diem: [[-3, tuong_sau + 8], [3, tuong_sau + 8]], mo: 1, doi: true}
+  - {loai: cau_thang, ten: Lên tầng 2, huong: +x, hcn: [4, tuong_sau, 12.5, tuong_sau + 8], nguon: doan}
+  # "Phòng nghiệp vụ 2" của sơ đồ trường nằm đúng chỗ sảnh và khoảng sau quầy nên bỏ; khối sau thang chưa rõ.
+  - {loai: phong, mau: nghiep_vu, nguon: doan,
+     hcn: [4, mep_quay + sau_quay, 17, tuong_sau]}
+  # Phòng tạp chí thực là hành lang (tủ gửi đồ bên trái, vách kính nhìn ra thang lên tầng 2 bên phải), cuối là cửa
+  # đôi vào nhà sách; biển CTK45 ghi "Phòng đọc sau đại học" cùng lối vào này.
+  - {loai: phong, ten: Hành lang tạp chí, en: Periodicals, nhom: Phòng tạp chí, mau: hoc_tap, co: 12, hcn: [17, mep_quay, thang_t2, mep_quay + sau_quay], nguon: anh}
+  - {loai: cua, diem: [[21.5, mep_quay + sau_quay], [26, mep_quay + sau_quay]], mo: 1, doi: true}
+  - {loai: phong, ten: Nhà sách, en: Bookstore, mau: hoc_tap, co: 13, nguon: doan,
+     mo_ta: 'Nhà sách, vào qua hành lang tạp chí cạnh thang lên tầng 2.', loi_vao: [23.75, mep_quay + sau_quay + 2],
+     diem: [[17, mep_quay + sau_quay], [thang_t2, mep_quay + sau_quay], [thang_t2, 57], [tuong_ben, 57], [tuong_ben, tuong_sau],
+            [17, tuong_sau]]}
+  - {loai: tuong, diem: [[-thang_t2, mep_quay], [-thang_t2, 57]], nguon: doan}
 
   # --- Phía cửa chính (đếm gạch 03/10/2026) -------------------------------------------------------------
   - {loai: san_cao, ten: Sảnh chờ, doi_xung: true, hcn: [dinh_thang_len, 0, tuong_ben, sau_thang_len], nguon: doan,
@@ -134,12 +159,12 @@ phan_tu:
   - {loai: cau_thang, ten: Lên tầng 2, nhom: [Cầu thang tầng 2 phía cửa sau, Cầu thang tầng 2 phía phòng tạp chí], doi_xung: true, huong: +x, hcn: [thang_t2, mep_quay, 42, 56.25], nguon: doan}
   - {loai: cua, doi_xung: true, diem: [[29, mep_quay], [thang_t2, 57]], mo: 1}
   - {loai: cua, diem: [[22, mep_quay], [25.5, mep_quay]], mo: 1}
-  - {loai: cua, diem: [[-3, tuong_sau], [3, tuong_sau]], mo: 1, doi: true}
+  - {loai: cua, diem: [[-3, tuong_sau], [3, tuong_sau]], mo: 1, doi: true}   # cửa trong sảnh cửa sau
 
   # --- Nhãn ---------------------------------------------------------------------------------------------
   - {loai: nhan, tai: [0, 6], ten: Sảnh cửa chính, nhom: Cửa chính, co: 15, cap: 1}
   - {loai: nhan, tai: [0, 1.2], ten: Cửa chính, nhom: Cửa chính, co: 12, icon: cua}
-  - {loai: nhan, tai: [-23.5, 57], ten: Lối ra, nhom: Lối ra, co: 12, icon: cua}
-  - {loai: nhan, tai: [0, 68.5], ten: Cửa sau, co: 12, icon: cua, mo_ta: Cửa sau dẫn ra bãi đỗ xe cổng sau., loi_vao: [0, 70]}
+  - {loai: nhan, tai: [-23.5, 55], ten: Lối ra, nhom: Lối ra, co: 12, icon: cua}
+  - {loai: nhan, tai: [0, tuong_sau + 6.5], ten: Cửa sau, co: 12, icon: cua, mo_ta: Cửa sau dẫn ra bãi đỗ xe cổng sau., loi_vao: [0, tuong_sau + 6]}
   - {loai: nhan, doi_xung: true, tai: [27, 27], ten: Khu tự học, en: Reading Space, nhom: Khu vực tự học, mau: hoc_tap, co: 20, cap: 1}
   - {loai: nhan, doi_xung: true, tai: [36, 44], ten: Khu đọc, nhom: Khu vực đọc, mau: hoc_tap, co: 15}

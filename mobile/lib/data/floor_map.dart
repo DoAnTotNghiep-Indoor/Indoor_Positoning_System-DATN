@@ -16,9 +16,9 @@ class SoDoThat {
   static const anhToi = 'assets/map/so_do_tang1_toi.svg';
   static const nhan = 'assets/map/nhan_tang1.json';
   static const khungX = -580.2;
-  static const khungY = -282.0;
+  static const khungY = -351.8;
   static const khungRong = 2209.3;
-  static const khungCao = 1547.4;
+  static const khungCao = 1617.2;
 
   /// Tâm khối thư viện (đơn vị lưới), để căn khi chưa có vị trí.
   static const tamToaX = 0.0;

@@ -101,8 +101,9 @@ class KhuVucThuVien {
     ),
     KhuVuc(
       nhom: 'Phòng tạp chí',
-      moTa: 'Phòng lưu trữ tạp chí và nhiều sách đa dạng thể loại.',
-      moTaChiTiet: 'Phòng tạp chí lưu trữ nhiều loại tạp chí và sách đa dạng thể loại, phục vụ nhu cầu nghiên cứu và học tập.',
+      moTa: 'Hành lang có tủ gửi đồ, dẫn vào nhà sách.',
+      moTaChiTiet:
+          'Lối vào có biển Phòng tạp chí và Phòng đọc sau đại học, thực chất là hành lang: tủ gửi đồ một bên, vách kính nhìn ra cầu thang lên tầng 2 bên kia, cuối là cửa đôi vào nhà sách.',
       thuMucAnh: 'phong_tap_chi',
       icon: Icons.article_outlined,
       diem: [Offset(22, 52)],
