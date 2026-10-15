@@ -28,7 +28,7 @@ Tổng quan hệ thống ở `README.md`, thiết kế ở `docs/thiet_ke_he_tho
 - Chú thích chỉ ghi lý do không hiển nhiên, cạm bẫy, nguồn của một con số. Không nhắc lại điều code đã nói,
   không kể lịch sử ("trước đây...", "bản cũ...").
 - Test gọn: gộp ca giống nhau bằng `parametrize`, không docstring kể chuyện sửa lỗi.
-- Khi báo số liệu (sai số, thời gian, số dòng...) thì chạy để đo, không lấy từ tài liệu cũ.
+- Khi báo số liệu (sai số, thời gian, số dòng...) thì chạy để đo khi được yêu cầu, có thể gợi ý khi có thay đổi
 
 ## Tài liệu
 

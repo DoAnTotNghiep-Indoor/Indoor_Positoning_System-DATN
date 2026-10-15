@@ -11,8 +11,7 @@ Thiết kế giao diện: [Figma](https://www.figma.com/design/3dzSOBhBIhb3e9zku
 - **Định vị liên tục**: gọi quét mỗi 1 giây khi app mở, dừng khi app chạy nền. Máy cần tắt
   **Điều tiết quét Wi-Fi** trong Tuỳ chọn nhà phát triển; còn bật thì Android chỉ cho 4 lần quét
   mỗi 2 phút và app đọc lại kết quả cũ. Cài đặt hiện nhịp RSSI thật sự đổi.
-- **Bản đồ**: sơ đồ tầng 1 (sáng/tối), chấm vị trí kèm nón hướng theo la bàn và quầng độ trải
-  (to là mô hình đang phân vân; chỉ báo tương đối, không phải bán kính sai số). Nhãn địa điểm
+- **Bản đồ**: sơ đồ tầng 1 (sáng/tối), chấm vị trí kèm nón hướng theo la bàn. Nhãn địa điểm
   kiểu Google Maps, chạm được.
 - **Tra cứu**: tìm khu vực và địa điểm theo tên hoặc nhóm, popup có ảnh và giới thiệu.
 - **Chỉ đường**: vẽ tuyến từ vị trí hiện tại tới khu vực đã chọn. Mở từ danh sách thì tới chỗ
@@ -93,8 +92,7 @@ assets/                       font Inter, SVG sơ đồ, ảnh khu vực, mô h�
 - **Mô hình cục bộ**: `assets/model/k_dong.json` sinh bằng `python -m ml.xuat_mo_hinh` ở thư
   mục gốc, chạy lại sau mỗi lần `ml.train` rồi build lại app (`tests/test_xuat_mo_hinh.py`
   báo lỗi nếu quên). `test/dinh_vi_tren_may_test.dart` kiểm bản Dart đoán trùng Python trên
-  200 lần quét test (`test/du_lieu/doi_chieu_k_dong.json`, cùng lệnh sinh ra), cả toạ độ lẫn
-  độ trải. Một lần đoán
+  200 lần quét test (`test/du_lieu/doi_chieu_k_dong.json`, cùng lệnh sinh ra). Một lần đoán
   trên X300 khoảng 0,7 ms; không cần LiteRT hay NPU vì kNN chỉ là tính khoảng cách.
 - **Hệ toạ độ**: phép đổi trong `lib/data/floor_map.dart` dùng chung bộ hằng số
   với backend và Dashboard, lấy từ `data/reference/ban_do_tang1.json`.

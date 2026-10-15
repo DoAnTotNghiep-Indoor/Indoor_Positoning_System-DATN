@@ -215,21 +215,6 @@ class _LopDong extends CustomPainter {
     if (vt == null) return;
     final goc = SoDoThat.sangKhung(vt.xGop, vt.yGop, rong);
 
-    // Quầng độ tin cậy kiểu Google Maps, bán kính bằng độ trải: to là mô hình đang
-    // phân vân giữa nhiều chỗ xa nhau. Chỉ báo tương đối, không hứa phủ bao nhiêu %.
-    final quang =
-        (SoDoThat.sangKhung(vt.xGop + vt.doTrai, vt.yGop, rong) - goc).distance;
-    if (quang > 0) {
-      canvas.drawCircle(goc, quang, Paint()..color = mau.withValues(alpha: 0.10));
-      canvas.drawCircle(
-          goc,
-          quang,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1 / k
-            ..color = mau.withValues(alpha: 0.35));
-    }
-
     final h = laBan.huongSoDo;
     if (h != null) {
       // Trục y canvas hướng xuống nên 0° (trục +y sơ đồ, hướng lên) là -π/2.

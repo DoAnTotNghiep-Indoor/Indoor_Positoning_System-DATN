@@ -43,7 +43,7 @@ def du_lieu_app(sieu: dict, hop_dong: dict, can, mo) -> dict:
 
 
 def doi_chieu(du_lieu: dict, can, mo) -> dict:
-    """Lần quét test ở dạng app gửi lên, kèm toạ độ và độ trải mà chính mô hình Python tính."""
+    """Lần quét test ở dạng app gửi lên, kèm toạ độ mà chính mô hình Python tính."""
     ap = du_lieu["ap"]
     bang = pd.read_csv(config.PROCESSED_DIR / "fingerprint_dataset_raw.csv")
     bang = bang[bang["split"] == "test"].head(SO_LAN_DOI_CHIEU)
@@ -51,7 +51,7 @@ def doi_chieu(du_lieu: dict, can, mo) -> dict:
             for _, hang in bang[ap].iterrows()]
     X = bang[ap].fillna(du_lieu["gia_tri_thieu"]).to_numpy(float)
     X = can.transform(X)
-    return {"quet": quet, "toa_do": mo.predict(X).tolist(), "do_trai": mo.do_trai(X).tolist()}
+    return {"quet": quet, "toa_do": mo.predict(X).tolist()}
 
 
 def nap() -> tuple:

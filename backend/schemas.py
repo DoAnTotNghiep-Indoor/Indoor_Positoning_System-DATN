@@ -32,8 +32,6 @@ class KetQuaDuDoan(BaseModel):
     y: float
     x_smooth: float
     y_smooth: float
-    # Chỉ báo tương đối, đơn vị lưới: độ trải toạ độ các láng giềng của lần quét này.
-    do_trai: float
     model: str
     timestamp: datetime
 
@@ -50,7 +48,6 @@ class MucLichSu(BaseModel):
     y: float
     x_gop: float
     y_gop: float
-    do_trai: float | None
     so_ap_bat_duoc: int
     mo_hinh: str
     do_tre_ms: float

@@ -24,16 +24,14 @@ Hệ thống định vị người dùng trong tầng 1 Thư viện Đại học
 2. Backend ánh xạ từng BSSID vào đúng cột của vector đặc trưng theo
    `artifacts/feature_list.json` (36 AP). Thứ tự gửi không ảnh hưởng. BSSID lạ bị bỏ qua.
    RSSI ngoài khoảng vật lý cũng bị bỏ. AP vắng mặt điền −100 dBm.
-3. Vector qua scaler rồi vào mô hình **kNN k động** (Dynamic-k kNN), ra toạ độ `(x, y)`
-   và **độ trải** `do_trai`, chỉ báo mô hình chắc chắn tới đâu (mục Độ tin cậy của mỗi lần
-   định vị).
+3. Vector qua scaler rồi vào mô hình **kNN k động** (Dynamic-k kNN), ra toạ độ `(x, y)`.
 4. Khớp ít hơn 6 AP (ngưỡng đã dùng để loại mẫu huấn luyện) thì trả 422 `khong_du_ap`
    thay vì đoán bừa. Đứng ngoài thư viện sẽ rơi vào trường hợp này.
 5. Toạ độ được gộp với 2 lần quét trước của cùng thiết bị bằng **đồng thuận không gian**:
    chọn dự đoán có tổng khoảng cách tới các dự đoán còn lại nhỏ nhất. Cách này loại được
    một lần quét lạc thay vì bị nó kéo lệch như khi lấy trung bình. Im lặng quá 30 giây
    thì bắt đầu lại.
-6. Ghi toạ độ thô, toạ độ đã gộp và độ trải vào SQLite (`data/ips.db`), trả kết quả về app.
+6. Ghi toạ độ thô và toạ độ đã gộp vào SQLite (`data/ips.db`), trả kết quả về app.
 
 App gọi quét mỗi 1 giây (lượt trước chưa xong thì bỏ qua). Máy phải tắt điều tiết quét Wi-Fi,
 còn bật thì Android chỉ cho 4 lần quét mỗi 2 phút. Số liệu RSSI thật mới bao lâu một lần do
@@ -50,8 +48,8 @@ chờ máy chủ:
   Không có trọng số nào cần học lại; kNN chỉ cần đúng bảng vân tay và các tham số này.
 - App (`mobile/lib/services/dinh_vi_tren_may.dart`) làm lại đúng thuật toán: ánh xạ BSSID,
   chặn khi khớp dưới 6 AP, khoảng cách Bray-Curtis, chọn k = 1 hoặc k lớn, gộp 3 lần quét.
-  `flutter test` đối chiếu với 200 lần quét test do Python đoán: toạ độ lệch dưới 10⁻⁶,
-  độ trải dưới 10⁻⁵ đơn vị lưới.
+  `flutter test` đối chiếu với 200 lần quét test do Python đoán: toạ độ lệch dưới 10⁻⁶
+  đơn vị lưới.
 - App vẫn gửi `POST /predict` nhưng không chờ trả lời, nên máy chủ vẫn ghi lịch sử cho
   Dashboard và để phân tích. Mất mạng thì vị trí trên máy vẫn chạy.
 - Bản đồ (`GET /map`) và chỉ đường (`POST /route`) vẫn cần máy chủ.
@@ -72,28 +70,6 @@ Ngưỡng và k lớn tự chọn lúc `fit`, chỉ trên dữ liệu học, b�
 ngẫu nhiên 80/20 (đã khảo sát) và bỏ trọn từng điểm (chưa khảo sát). Trên tập test, khoảng
 một nửa số lần quét dùng k = 1. Mô hình triển khai đặt bằng `MO_HINH_TRIEN_KHAI` trong
 `ml/config.py`. `GET /health` cho biết mô hình nào đang chạy.
-
-### Độ tin cậy của mỗi lần định vị
-
-Lúc chạy thật không có toạ độ thật, nên không tính được sai số. Mô hình chỉ biết các vân tay
-giống lần quét nhất nằm ở đâu. Lấy k lớn láng giềng (15) của lần quét; mỗi láng giềng thuộc
-một điểm tham chiếu và nặng theo nghịch đảo khoảng cách Bray-Curtis. **Độ trải** là độ lệch
-chuẩn có trọng số của toạ độ các láng giềng:
-
-    tâm     = Σ pᵢ · cᵢ                 pᵢ: phần trọng số của điểm i, cᵢ: toạ độ điểm i
-    độ trải = √( Σ pᵢ · |cᵢ − tâm|² )
-
-Láng giềng dồn vào một chỗ thì độ trải nhỏ: mô hình chắc. Láng giềng rải ra nhiều chỗ xa nhau
-thì độ trải lớn: mô hình đang phân vân. Độ trải luôn tính bằng k lớn, kể cả khi mô hình đoán
-bằng k = 1, vì k = 1 cho độ trải 0.
-
-`POST /predict` trả `do_trai` (đơn vị lưới) của lần quét vừa gửi. App vẽ quầng mờ quanh chấm
-vị trí với bán kính bằng độ trải, như vòng độ chính xác của Google Maps; máy chủ không trả
-trường này (máy chủ của nhóm khác) thì app không vẽ quầng. Dashboard có cột độ trải trong bảng
-lịch sử.
-
-Đây là chỉ báo tương đối, **không** phải bán kính sai số: không nói được "68% số lần nằm trong
-vòng". Số liệu ở mục Kết quả.
 
 ### Bản đồ và toạ độ
 
@@ -184,7 +160,15 @@ một điểm. Đó là lý do chọn k động.
 
 ### Độ trải so với sai số thật
 
-Mỗi lần quét kiểm có toạ độ thật, nên so được độ trải với sai số thật. Tương quan hạng
+Đã thử và **không** dùng: chỉ báo độ tin cậy cho mỗi lần định vị. **Độ trải** là độ lệch chuẩn
+có trọng số của toạ độ k lớn (15) láng giềng, mỗi láng giềng nặng theo nghịch đảo khoảng cách
+Bray-Curtis:
+
+    tâm     = Σ pᵢ · cᵢ                 pᵢ: phần trọng số của điểm i, cᵢ: toạ độ điểm i
+    độ trải = √( Σ pᵢ · |cᵢ − tâm|² )
+
+Láng giềng dồn một chỗ thì độ trải nhỏ, rải ra nhiều chỗ xa nhau thì lớn. Mỗi lần quét kiểm có
+toạ độ thật, nên so được độ trải với sai số thật. Tương quan hạng
 Spearman (−1 đến +1, dương là độ trải lớn đi cùng sai số lớn) và sai số trung bình khi chia
 các lần quét làm ba nhóm bằng nhau theo độ trải:
 
@@ -198,8 +182,9 @@ Các chỉ số khác yếu hơn: d1 +0,30 / +0,34 / +0,01; số AP bắt đư�
 nhất dưới 0,40 về độ lớn. Thử đổi độ trải và d1 thành bán kính chứa 68% số lần (hồi quy phân
 vị): học trên một giao thức, kiểm ở giao thức khác thì độ phủ chỉ đạt 43–89%; bán kính cố định
 cũng 41–89%. Mức sai chung đổi theo tình huống (đứng đúng điểm tham chiếu hay ở giữa, cùng máy
-hay khác máy) mà mô hình không biết mình đang ở tình huống nào. Vì vậy độ trải chỉ dùng làm
-chỉ báo tương đối.
+hay khác máy) mà mô hình không biết mình đang ở tình huống nào. Độ trải từng được vẽ thành quầng
+quanh chấm vị trí trong app; dùng thử thực tế thấy không hiệu quả, nên đã gỡ khỏi app, API và
+CSDL (10/10/2026).
 
 ### UJIIndoorLoc — sai số 2D, mét
 
@@ -285,7 +270,7 @@ laptop `http://<IP>:8000`). Mặc định là PROD.
 | Endpoint | Việc |
 |---|---|
 | `GET /health` | Mô hình đang chạy, số đặc trưng, cửa sổ gộp |
-| `POST /predict` | `{device_id, scan: [{bssid, rssi}]}` → `{x, y, x_smooth, y_smooth, do_trai, matched_ap, latency_ms, …}` |
+| `POST /predict` | `{device_id, scan: [{bssid, rssi}]}` → `{x, y, x_smooth, y_smooth, matched_ap, latency_ms, …}` |
 | `GET /predictions` | Lịch sử vị trí (`device_id`, `gioi_han` ≤ 1000) |
 | `GET /map` | Phạm vi, điểm tham chiếu kèm tên, nhóm, mô tả; `met_moi_don_vi` để đổi ra mét |
 | `GET /graph` | Các cặp điểm tham chiếu nhìn thấy nhau, cho Dashboard vẽ |
@@ -350,9 +335,6 @@ Xem `mobile/README.md`.
   mọi thiết bị qua `GET /predictions`. `ALLOWED_ORIGINS` mặc định là `*`.
 - **Sai số tại chỗ chưa đủ điểm.** Buổi đo 03/10/2026 mới so được 1 chỗ đứng biết toạ độ.
   Góc giữa sơ đồ và hướng bắc (dùng cho nón hướng) đo trên ảnh vệ tinh, chưa so tại chỗ.
-- **Độ trải không phải bán kính sai số.** Quầng trong app chỉ cho biết lần định vị này đáng tin
-  hơn hay kém hơn lần khác; độ phủ của nó đổi theo tình huống (43–89% khi thử). Độ trải tính trên
-  lần quét mới nhất, còn chấm vị trí là toạ độ đã gộp 3 lần quét. Chưa so với sai số thật tại chỗ.
 - **Vị trí nhảy khi ở giữa các điểm tham chiếu.** Gần RP sai khoảng 1–2 m; ở giữa các RP,
   tập láng giềng đổi theo dao động RSSI nên vị trí nhảy nhiều hướng (xem Hướng phát triển).
 - **Đợt B không có dữ liệu thô**: không có thời điểm quét, tên máy, hướng. Vì vậy đánh giá

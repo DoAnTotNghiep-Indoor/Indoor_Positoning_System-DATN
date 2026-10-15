@@ -16,7 +16,7 @@ giao diện. Cách cài đặt và kết quả thực nghiệm xem `README.md`.
 
 ### 1.2. Chức năng
 
-1. **Định vị**: nhận một lần quét WiFi, trả toạ độ `(x, y)` kèm độ trải (chỉ báo độ tin cậy);
+1. **Định vị**: nhận một lần quét WiFi, trả toạ độ `(x, y)`;
    từ chối khi lần quét khớp quá ít AP đã biết.
 2. **Làm mượt vị trí**: gộp vài lần quét gần nhau của cùng thiết bị để loại lần quét lạc.
 3. **Bản đồ**: cung cấp sơ đồ tầng 1, danh sách điểm tham chiếu kèm tên, nhóm khu vực, mô tả.
@@ -87,14 +87,14 @@ sequenceDiagram
   A->>R: {device_id, scan: [{bssid, rssi}]}
   R->>F: ánh xạ theo feature_list.json
   F->>M: vector đã chuẩn hoá
-  M-->>R: (x, y), độ trải, số AP khớp
+  M-->>R: (x, y), số AP khớp
   alt khớp < 6 AP
     R-->>A: 422 khong_du_ap
   else
     R->>G: thêm (x, y) vào cửa sổ của thiết bị
     G-->>R: (x_smooth, y_smooth)
-    R->>D: ghi toạ độ thô, đã gộp, độ trải
-    R-->>A: {x, y, x_smooth, y_smooth, do_trai, matched_ap, ...}
+    R->>D: ghi toạ độ thô, đã gộp
+    R-->>A: {x, y, x_smooth, y_smooth, matched_ap, ...}
   end
 ```
 
@@ -107,8 +107,6 @@ sequenceDiagram
 - **Gộp.** `BoGop` giữ 3 dự đoán gần nhất của mỗi thiết bị và trả dự đoán có tổng khoảng cách
   tới các dự đoán còn lại nhỏ nhất (đồng thuận không gian). Một lần quét lạc không kéo lệch kết
   quả như khi lấy trung bình hay EMA. Thiết bị im lặng quá 30 giây thì bắt đầu cửa sổ mới.
-- **Độ trải.** Kèm mỗi toạ độ, mô hình trả độ trải của lần quét đó (mục 4.4). Ứng dụng vẽ
-  thành quầng mờ quanh chấm vị trí.
 - **Chu kỳ.** Ứng dụng gọi quét mỗi 1 giây và chờ đúng sự kiện quét xong của hệ thống. Máy đo phải
   tắt điều tiết quét Wi-Fi; còn bật thì Android chỉ cho 4 lần quét mỗi 2 phút. Kể cả khi tắt,
   firmware vẫn có thể trả lại kết quả cũ: trên vivo X300 số liệu thật mới khoảng 7,6 s một lần khi
@@ -131,7 +129,6 @@ bật, ứng dụng tự làm các bước ánh xạ, chặn ngưỡng AP, mô h
   API qua WiFi nội bộ khứ hồi trung vị 58 ms, trong đó mô hình trên máy chủ 3,3 ms. Cả hai đều
   nhỏ so với nhịp số liệu WiFi mới (2–8 s), nên lợi ích chính là không cần mạng. Không dùng NPU (LiteRT):
   kNN chỉ là phép tính khoảng cách, không phải mạng nơ-ron.
-- Độ trải cũng tính trên máy, cùng công thức với Python (lệch dưới 10⁻⁵ đơn vị lưới).
 - Bản đồ và chỉ đường vẫn lấy từ máy chủ.
 
 ## 4. Tiền xử lý và mô hình
@@ -190,23 +187,19 @@ trung vị và CDF tại 50/75/90%. Ba giao thức:
 Mỗi điểm tham chiếu chỉ được đo trong một phiên, nên chia ngẫu nhiên có rò rỉ: lần quét học
 và kiểm cùng phiên. Đó là chặn lạc quan; bỏ trọn một điểm là chặn bi quan.
 
-### 4.4. Độ tin cậy của mỗi lần định vị
+### 4.4. Chỉ báo độ tin cậy (đã thử, không dùng)
 
-Lúc chạy không có toạ độ thật nên không tính được sai số, chỉ ước lượng được mô hình chắc tới
-đâu. Chỉ báo chọn là **độ trải**: độ lệch chuẩn có trọng số của toạ độ k lớn láng giềng,
+Lúc chạy không có toạ độ thật nên không tính được sai số. Đã thử **độ trải**, độ lệch chuẩn có
+trọng số của toạ độ k lớn láng giềng:
 
     tâm = Σ pᵢ · cᵢ,   độ trải = √( Σ pᵢ · |cᵢ − tâm|² )
 
 với pᵢ là phần trọng số (nghịch đảo khoảng cách Bray-Curtis) của điểm tham chiếu i, cᵢ là toạ
-độ điểm đó. Láng giềng dồn một chỗ thì độ trải nhỏ; rải ra hai cánh nhà thì độ trải lớn. Luôn
-tính bằng k lớn, kể cả khi đoán bằng k = 1.
-
-So với sai số thật trên ba giao thức, độ trải là chỉ số tốt nhất trong bốn chỉ số đã thử (độ
-trải, d1, số AP bắt được, tỉ lệ phiếu của điểm cao nhất): Spearman +0,46 (khác đợt A → B), +0,43
-(B → A), +0,25 (bỏ trọn một điểm). Chia ba nhóm theo độ trải, sai số trung bình tăng đều, ví dụ
-A → B 3,28 / 5,02 / 6,49 m. Không đổi được thành bán kính có độ phủ cố định: bán kính 68% học
-trên giao thức này phủ 43–89% ở giao thức khác. Vì vậy độ trải chỉ là chỉ báo tương đối; API
-trả nguyên giá trị theo đơn vị lưới, không kèm phần trăm.
+độ điểm đó. Đây là chỉ số đi cùng sai số thật tốt nhất trong bốn chỉ số đã thử: Spearman +0,46
+(khác đợt A → B), +0,43 (B → A), +0,25 (bỏ trọn một điểm). Nhưng không đổi được thành bán kính
+có độ phủ cố định (bán kính 68% học trên giao thức này phủ 43–89% ở giao thức khác). Ứng dụng
+từng vẽ độ trải thành quầng quanh chấm vị trí; dùng thử thực tế không hiệu quả nên đã gỡ khỏi
+ứng dụng, API và CSDL.
 
 ## 5. Cơ sở dữ liệu
 
@@ -230,7 +223,6 @@ erDiagram
     float y
     float x_gop
     float y_gop
-    float do_trai
     int so_ap_bat_duoc
     string mo_hinh
     float do_tre_ms
@@ -238,9 +230,7 @@ erDiagram
 ```
 
 Một phiên là một thiết bị định vị liên tục; vắng quá 30 giây thì mở phiên mới. Bảng dự đoán
-giữ cả toạ độ thô lẫn toạ độ đã gộp để đo hiệu quả bước gộp, và độ trải để sau buổi đo thực
-địa so với sai số thật. CSDL tạo trước khi có cột `do_trai` được tự thêm cột lúc khởi động,
-dòng cũ để trống. Thời điểm lưu theo UTC. Bật WAL
+giữ cả toạ độ thô lẫn toạ độ đã gộp để đo hiệu quả bước gộp. Thời điểm lưu theo UTC. Bật WAL
 để ghi nhanh và đọc không chặn ghi.
 
 ## 6. Dữ liệu không gian
@@ -334,7 +324,7 @@ Ví dụ `POST /predict`:
 {"device_id": "a1b2", "scan": [{"bssid": "f4:6d:2f:...", "rssi": -62}, ...]}
 
 // Phản hồi 200
-{"device_id": "a1b2", "x": -22.0, "y": 34.0, "x_smooth": -22.0, "y_smooth": 34.0, "do_trai": 9.6,
+{"device_id": "a1b2", "x": -22.0, "y": 34.0, "x_smooth": -22.0, "y_smooth": 34.0,
  "model": "fingerprint_knn_dong", "timestamp": "2026-10-01T07:29:47Z",
  "matched_ap": 32, "scan_count": 3, "latency_ms": 4.2}
 
@@ -364,7 +354,7 @@ Lỗi: 404 khi điểm hoặc khu vực không tồn tại, 409 khi không có �
 | Màn | Nội dung |
 |---|---|
 | Trang chủ | Khu vực đang đứng, danh sách khu vực gần nhất |
-| Bản đồ | Sơ đồ tầng 1, chấm vị trí kèm quầng độ trải, nón hướng la bàn, nhãn địa điểm, tuyến đường, lọc theo nhóm khu vực |
+| Bản đồ | Sơ đồ tầng 1, chấm vị trí kèm nón hướng la bàn, nhãn địa điểm, tuyến đường, lọc theo nhóm khu vực |
 | Tìm kiếm | Tìm khu vực và địa điểm theo tên hoặc nhóm, không phân biệt dấu |
 | Cài đặt | Mô hình cục bộ, máy chủ (PROD, DEMO, tuỳ chỉnh), nhịp số liệu WiFi mới, ngôn ngữ, chế độ sáng/tối, quyền truy cập |
 
@@ -386,5 +376,5 @@ dùng nền đặc để dễ đọc.
 
 Một trang gồm: thẻ trạng thái hệ thống, sơ đồ với điểm tham chiếu, cạnh đồ thị và thiết bị
 đang định vị kèm vệt đường, bảng thiết bị, hộp thử chỉ đường, biểu đồ độ dịch giữa toạ độ thô
-và toạ độ đã gộp, bảng lịch sử (kèm độ trải quy ra mét). Trang hỏi `/predictions` mỗi 2 giây; thiết bị im lặng quá 20
+và toạ độ đã gộp, bảng lịch sử. Trang hỏi `/predictions` mỗi 2 giây; thiết bị im lặng quá 20
 giây bị ẩn khỏi sơ đồ.
