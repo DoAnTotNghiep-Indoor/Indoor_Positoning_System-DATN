@@ -218,8 +218,8 @@ toạ độ chỉ từ các láng giềng cùng toà và tầng, còn ở đây 
 
 ### Hiệu năng
 
-- Mô hình dự đoán khoảng 4 ms một lần quét; cả `/predict` (kèm gộp và ghi CSDL) khoảng
-  10 ms; `/route` khoảng 7 ms.
+- Mô hình dự đoán trung vị 2,5 ms một lần quét (bảng năm mô hình: `python -m ml.toc_do`); cả
+  `/predict` (kèm gộp và ghi CSDL) khoảng 10 ms; `/route` khoảng 7 ms.
 - Đo trên vivo X300, bản release, 200 lần quét test: mô hình cục bộ trung vị 0,72 ms mỗi lần
   đoán; gọi `/predict` qua WiFi nội bộ khứ hồi trung vị 58 ms, phần lớn là mạng.
 - Máy chủ trên VM Azure Central India, ra ngoài qua Cloudflare Tunnel, đo từ Việt Nam

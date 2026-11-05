@@ -19,8 +19,9 @@ tổng 3.200 lần. Dữ liệu thô có trong tay (`data/raw/combined_data.csv`
 Cách tách đợt B (`ml.preprocess.nap_dot_b`):
 
 1. Bỏ các dòng trùng nhau trong tệp (6.338 → 3.150 dòng khác nhau).
-2. Bỏ các dòng trùng khít một lần quét của đợt A trên 72 cột (802 dòng) — 802/802 lần quét
-   đợt A đều có mặt trong tệp, cùng nhãn RP (20 lần "RP41" của dữ liệu thô là RP26).
+2. Bỏ các dòng trùng khít một lần quét của đợt A trên 72 cột (801 dòng, vì đợt A có hai lần
+   quét giống hệt nhau) — 802/802 lần quét đợt A đều có mặt trong tệp, cùng nhãn RP (20 lần
+   "RP41" của dữ liệu thô là RP26).
 3. Còn 2.349 dòng, khoảng 60 mỗi RP, đủ 40 RP. Giá trị −100 coi là không bắt được, như ô
    trống của đợt A.
 
