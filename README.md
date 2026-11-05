@@ -155,8 +155,8 @@ Mọi bảng trong `reports/tables/` và số in ra từ `ml.*` tính theo đơn
 
 k động dẫn đầu ở cột thứ nhất (cả 10 seed) và cột thứ ba; ở cột thứ hai XGBoost thấp hơn
 0,30 m. So với hai mô hình cơ sở kNN và WKNN, k động thấp hơn ở cả ba cột. Quét k = 1..61
-(`ml.quet_k`) cho thấy k = 1 tốt nhất khi chia ngẫu nhiên còn k lớn tốt nhất khi bỏ trọn
-một điểm. Đó là lý do chọn k động.
+(`ml.quet_k`) cho thấy k nhỏ (1–2) tốt nhất khi chia ngẫu nhiên, còn k khoảng 11–15 tốt
+nhất khi bỏ trọn một điểm. Đó là lý do chọn k động.
 
 ### Độ trải so với sai số thật
 

@@ -76,12 +76,14 @@ def nap():
     meta = json.loads((config.ARTIFACTS_DIR / "model_metadata.json").read_text(encoding="utf-8"))
     fl = json.loads((config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON).read_text(encoding="utf-8"))
     te = pd.read_csv(config.SPLITS_DIR / "test.csv")
+    # Mô hình học và đoán theo đơn vị lưới; mọi hình vẽ theo mét.
+    te[["x", "y"]] *= config.MET_MOI_DON_VI
     ap = fl["ap_columns"]
 
     loi, du_doan = {}, {}
     for khoa, tt in meta["cac_mo_hinh"].items():
         m = joblib.load(config.ARTIFACTS_DIR / f"model_{khoa}.pkl")
-        p = m.predict(te[ap].to_numpy(float))
+        p = m.predict(te[ap].to_numpy(float)) * config.MET_MOI_DON_VI
         du_doan[tt["ten"]] = p
         loi[tt["ten"]] = evaluate.khoang_cach_loi(te[["x", "y"]].to_numpy(float), p)
 
@@ -158,6 +160,7 @@ def hieu_qua_gop(meta: dict, te: pd.DataFrame, ap: list[str], du_doan: dict) -> 
     yh = hoc[["x", "y"]].to_numpy(float)
     q = evaluate.du_doan_ngoai_phan(importlib.import_module(f"ml.models.{khoa}"), tt["tham_so"],
                                     hoc[ap].to_numpy(float), yh, hoc["rp_id"])
+    yh, q = yh * config.MET_MOI_DON_VI, q * config.MET_MOI_DON_VI
     w = postprocess.CUA_SO_MAC_DINH
 
     def dung_yen(fn):

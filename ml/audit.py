@@ -120,16 +120,18 @@ def chay() -> int:
     else:
         print(f"  [ok] Không mẫu test nào có bản sao (gần nhất {D.min():.3f})")
 
-    tg = pd.to_datetime(d["scan_id"], format="%Y:%m:%d:%H:%M:%S")
+    # Đợt B không có thời điểm quét: chỉ so được cặp mà cả hai mẫu thuộc đợt A.
+    tg = pd.to_datetime(d["scan_id"].where(d["dot"] == "A"), format="%Y:%m:%d:%H:%M:%S")
     chenh = np.abs(
         (tg[la_te].to_numpy() - tg[la_tr].to_numpy()[D.argmin(axis=1)]) / np.timedelta64(1, "s")
     )
+    so_cap = int(np.isfinite(chenh).sum())
     if (chenh < NGUONG_GIAY).sum():
         ro_ri = True
-        print(f"  [!] {int((chenh < NGUONG_GIAY).sum())} mẫu test có mẫu train cách dưới "
+        print(f"  [!] {int((chenh < NGUONG_GIAY).sum())}/{so_cap} mẫu test có mẫu train cách dưới "
               f"{NGUONG_GIAY} giây — gần như cùng một phép đo")
     else:
-        print(f"  [ok] Mẫu train gần nhất cách ít nhất {chenh.min():.0f} giây")
+        print(f"  [ok] {so_cap} cặp đợt A: mẫu train gần nhất cách ít nhất {np.nanmin(chenh):.0f} giây")
 
     print("\n2. ĐỘ ỔN ĐỊNH CỦA TỪNG VỊ TRÍ")
     phan_tan = raw.groupby("rp_id")[ap].apply(
@@ -144,21 +146,22 @@ def chay() -> int:
     for ten, v in bat_on.items():
         print(f"    {ten}  {v:.1f}  ({v / trung_vi:.1f}x trung vị) — nên kiểm tra thực địa")
 
-    print("\n3. SO SÁNH GIỮA CÁC BUỔI THU")
-    ngay = pd.to_datetime(raw["scan_id"], format="%Y:%m:%d:%H:%M:%S").dt.date
+    print("\n3. SO SÁNH GIỮA CÁC BUỔI THU (đợt A; đợt B không có thời điểm quét)")
+    a = raw[raw["dot"] == "A"]
+    ngay = pd.to_datetime(a["scan_id"], format="%Y:%m:%d:%H:%M:%S").dt.date
     buoi = pd.DataFrame({
         "ngay": ngay,
-        "rp_id": raw["rp_id"],
-        "so_ap": (raw[ap] > gt_thieu).sum(axis=1),
+        "rp_id": a["rp_id"],
+        "so_ap": (a[ap] > gt_thieu).sum(axis=1),
     }).groupby("ngay").agg(
         so_diem=("rp_id", "nunique"), so_mau=("rp_id", "size"), ap_tb=("so_ap", "mean")
     )
     buoi["phan_tan"] = [
-        float(phan_tan[raw.loc[ngay == n, "rp_id"].unique()].mean()) for n in buoi.index
+        float(phan_tan[a.loc[ngay == n, "rp_id"].unique()].mean()) for n in buoi.index
     ]
 
     for n, r in buoi.iterrows():
-        diem = sorted(raw.loc[ngay == n, "rp_id"].unique())
+        diem = sorted(a.loc[ngay == n, "rp_id"].unique())
         print(f"  {n}  {r.so_diem:2.0f} điểm ({diem[0]}–{diem[-1]}) · {r.so_mau:3.0f} mẫu · "
               f"phân tán {r.phan_tan:5.1f} · AP trung bình {r.ap_tb:4.1f}")
 

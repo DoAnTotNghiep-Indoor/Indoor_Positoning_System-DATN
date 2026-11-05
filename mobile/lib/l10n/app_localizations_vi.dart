@@ -76,6 +76,31 @@ class LVi extends L {
   }
 
   @override
+  String mapNextTurn(String huong, String met) {
+    return '$huong sau $met m';
+  }
+
+  @override
+  String mapStraightToEnd(String met) {
+    return 'Đi thẳng $met m là tới';
+  }
+
+  @override
+  String get mapTurnLeft => 'Rẽ trái';
+
+  @override
+  String get mapTurnRight => 'Rẽ phải';
+
+  @override
+  String get mapBearLeft => 'Chếch trái';
+
+  @override
+  String get mapBearRight => 'Chếch phải';
+
+  @override
+  String get mapUTurn => 'Quay đầu';
+
+  @override
   String get mapClearRoute => 'Huỷ chỉ đường';
 
   @override

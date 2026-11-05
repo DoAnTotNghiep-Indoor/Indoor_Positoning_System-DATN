@@ -29,7 +29,6 @@ from ml.train import nap_du_lieu
 
 CAC_K = [1, 2, 3, 4, 5, 7, 9, 11, 15, 21, 31, 41, 61]
 SO_SEED = 10
-MET_MOI_DON_VI = 0.3508
 
 MO_HINH = [knn, wknn, fingerprint_knn]
 
@@ -82,7 +81,7 @@ def run() -> pd.DataFrame:
 
     bang = pd.DataFrame(dong)
     for cot in ("validation", "test_10_seed", "test_10_seed_lech_chuan", "bo_diem", "bo_diem_trung_vi"):
-        bang[cot + "_m"] = bang[cot] * MET_MOI_DON_VI
+        bang[cot + "_m"] = bang[cot] * config.MET_MOI_DON_VI
     (config.REPORTS_DIR / "tables").mkdir(parents=True, exist_ok=True)
     config.ghi_csv(bang, config.REPORTS_DIR / "tables" / "quet_k.csv", index=False)
     _ve(bang)

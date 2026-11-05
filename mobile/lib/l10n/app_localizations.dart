@@ -211,6 +211,48 @@ abstract class L {
   /// **'Đã đến {noi}'**
   String mapArrived(String noi);
 
+  /// No description provided for @mapNextTurn.
+  ///
+  /// In vi, this message translates to:
+  /// **'{huong} sau {met} m'**
+  String mapNextTurn(String huong, String met);
+
+  /// No description provided for @mapStraightToEnd.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đi thẳng {met} m là tới'**
+  String mapStraightToEnd(String met);
+
+  /// No description provided for @mapTurnLeft.
+  ///
+  /// In vi, this message translates to:
+  /// **'Rẽ trái'**
+  String get mapTurnLeft;
+
+  /// No description provided for @mapTurnRight.
+  ///
+  /// In vi, this message translates to:
+  /// **'Rẽ phải'**
+  String get mapTurnRight;
+
+  /// No description provided for @mapBearLeft.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chếch trái'**
+  String get mapBearLeft;
+
+  /// No description provided for @mapBearRight.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chếch phải'**
+  String get mapBearRight;
+
+  /// No description provided for @mapUTurn.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quay đầu'**
+  String get mapUTurn;
+
   /// No description provided for @mapClearRoute.
   ///
   /// In vi, this message translates to:

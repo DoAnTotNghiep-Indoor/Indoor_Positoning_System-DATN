@@ -76,6 +76,31 @@ class LEn extends L {
   }
 
   @override
+  String mapNextTurn(String huong, String met) {
+    return '$huong in $met m';
+  }
+
+  @override
+  String mapStraightToEnd(String met) {
+    return 'Go straight $met m to arrive';
+  }
+
+  @override
+  String get mapTurnLeft => 'Turn left';
+
+  @override
+  String get mapTurnRight => 'Turn right';
+
+  @override
+  String get mapBearLeft => 'Bear left';
+
+  @override
+  String get mapBearRight => 'Bear right';
+
+  @override
+  String get mapUTurn => 'Turn around';
+
+  @override
   String get mapClearRoute => 'End directions';
 
   @override

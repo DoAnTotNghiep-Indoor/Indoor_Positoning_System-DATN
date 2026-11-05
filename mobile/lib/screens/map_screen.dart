@@ -452,8 +452,9 @@ class _TheTuyen extends StatelessWidget {
     final t = L.of(context);
     final m = Mau.of(context);
     final dich = theoDoi.dichTuyen!.nhom;
-    final met = intl.NumberFormat('#0.#', t.localeName)
-        .format(theoDoi.tuyen!.quangDuongM);
+    final so = intl.NumberFormat('#0.#', t.localeName);
+    final met = so.format(theoDoi.tuyen!.quangDuongM);
+    final buoc = theoDoi.daToi ? null : _buocKe(t, so, theoDoi.tuyen!.chiDan);
     return KinhNoi(
       height: null,
       padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
@@ -466,11 +467,29 @@ class _TheTuyen extends StatelessWidget {
               color: theoDoi.daToi ? m.dich : m.nhan),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              theoDoi.daToi ? t.mapArrived(dich) : t.mapRouteChip(met, dich),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  theoDoi.daToi
+                      ? t.mapArrived(dich)
+                      : t.mapRouteChip(met, dich),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                if (buoc != null)
+                  Text(
+                    buoc,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: m.nhan),
+                  ),
+              ],
             ),
           ),
           IconButton(
@@ -481,5 +500,21 @@ class _TheTuyen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// "Rẽ trái sau 6 m": bước đầu là đoạn đang đi, bước sau cho biết hướng rẽ.
+  /// Máy chủ gộp các đoạn đi thẳng nên bước thứ hai không bao giờ là di_thang.
+  static String? _buocKe(L t, intl.NumberFormat so, List<BuocChiDan> chiDan) {
+    if (chiDan.isEmpty) return null;
+    final met = so.format(chiDan.first.khoangCachM);
+    if (chiDan.length == 1) return t.mapStraightToEnd(met);
+    final huong = switch (chiDan[1].huong) {
+      're_trai' => t.mapTurnLeft,
+      're_phai' => t.mapTurnRight,
+      'chech_trai' => t.mapBearLeft,
+      'chech_phai' => t.mapBearRight,
+      _ => t.mapUTurn,
+    };
+    return t.mapNextTurn(huong, met);
   }
 }

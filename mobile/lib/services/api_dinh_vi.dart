@@ -82,6 +82,20 @@ class DiemThamChieu {
       );
 }
 
+/// Một bước chỉ dẫn: `huong` là mã của máy chủ (bat_dau, chech_trai, re_phai,
+/// quay_dau...), [khoangCachM] là quãng phải đi trong bước đó.
+class BuocChiDan {
+  final String huong;
+  final double khoangCachM;
+
+  const BuocChiDan({required this.huong, required this.khoangCachM});
+
+  factory BuocChiDan.tuJson(Map<String, dynamic> j) => BuocChiDan(
+        huong: j['huong'] as String,
+        khoangCachM: (j['khoang_cach_m'] as num).toDouble(),
+      );
+}
+
 class KetQuaChiDuong {
   final double quangDuongM;
   final int soChang;
@@ -90,10 +104,15 @@ class KetQuaChiDuong {
   /// chặng thẳng hàng nên thiếu điểm giữa, vẽ ra sẽ cắt góc xuyên tường.
   final List<DiemThamChieu> duongDi;
 
+  /// Chỉ dẫn rẽ, chỉ để hiện chữ; tuyến tính lại từ vị trí mới nên bước đầu
+  /// luôn là đoạn đang đi.
+  final List<BuocChiDan> chiDan;
+
   const KetQuaChiDuong({
     required this.quangDuongM,
     required this.soChang,
     this.duongDi = const [],
+    this.chiDan = const [],
   });
 
   factory KetQuaChiDuong.tuJson(Map<String, dynamic> j) => KetQuaChiDuong(
@@ -102,6 +121,10 @@ class KetQuaChiDuong {
         duongDi: [
           for (final d in (j['duong_di'] ?? const []) as List)
             DiemThamChieu.tuJson(d as Map<String, dynamic>),
+        ],
+        chiDan: [
+          for (final b in (j['chi_dan'] ?? const []) as List)
+            BuocChiDan.tuJson(b as Map<String, dynamic>),
         ],
       );
 }

@@ -66,6 +66,30 @@
       }
     }
   },
+  "mapNextTurn": "{huong} sau {met} m",
+  "@mapNextTurn": {
+    "placeholders": {
+      "huong": {
+        "type": "String"
+      },
+      "met": {
+        "type": "String"
+      }
+    }
+  },
+  "mapStraightToEnd": "Đi thẳng {met} m là tới",
+  "@mapStraightToEnd": {
+    "placeholders": {
+      "met": {
+        "type": "String"
+      }
+    }
+  },
+  "mapTurnLeft": "Rẽ trái",
+  "mapTurnRight": "Rẽ phải",
+  "mapBearLeft": "Chếch trái",
+  "mapBearRight": "Chếch phải",
+  "mapUTurn": "Quay đầu",
   "mapClearRoute": "Huỷ chỉ đường",
   "mapResetRotation": "Đưa bản đồ về hướng ban đầu",
   "mapShowSection": "Hiển thị",
