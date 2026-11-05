@@ -321,6 +321,14 @@ void main() {
         ['RP09', 'RP10', 'RP11', 'RP39']);
   });
 
+  test('Đọc chi_dan để báo bước kế tiếp', () {
+    final kq =
+        KetQuaChiDuong.tuJson(jsonDecode(_tuyen()) as Map<String, dynamic>);
+
+    expect(kq.chiDan.map((b) => b.huong).toList(), ['bat_dau', 're_trai']);
+    expect(kq.chiDan.first.khoangCachM, 20.0);
+  });
+
   test('Thiếu duong_di thì trả danh sách rỗng chứ không ném lỗi', () {
     // Máy chủ cũ chưa trả trường này; app phải chạy được, chỉ là không vẽ tuyến.
     final j = jsonDecode(_tuyen()) as Map<String, dynamic>;
