@@ -272,9 +272,9 @@ def filter_sparse_scans(
 
 # ======================== Bước 7 — điền RSSI thiếu ========================
 # Ô trống = AP không được phát hiện, cần số đại diện cho "yếu hơn mọi tín hiệu
-# từng đo": min(RSSI) - 1, ra -96 dBm; hơn hằng số -98 vốn có thể trùng tín
-# hiệu yếu thật. PHẢI ghi vào feature_list.json, nếu không vector lúc dự đoán
-# lệch phân bố so với lúc huấn luyện.
+# từng đo": min(RSSI) - 1 trên train, ra -100 dBm với dữ liệu A + B; hơn hằng
+# số vốn có thể trùng tín hiệu yếu thật. PHẢI ghi vào feature_list.json, nếu
+# không vector lúc dự đoán lệch phân bố so với lúc huấn luyện.
 
 def compute_missing_value(fingerprint: pd.DataFrame, ap_cols: list[str]) -> float:
     return float(np.nanmin(fingerprint[ap_cols].to_numpy(dtype=float))) - 1.0

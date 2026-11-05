@@ -24,7 +24,6 @@ from ml import models as goi_mo_hinh
 from ml import preprocess as pre
 from ml.danh_gia_cheo import _luoi_da_dung, _tham_so, nap_bang_rong
 
-MET_MOI_DON_VI = 0.3508
 HAI_CHIEU = (("A", "B"), ("B", "A"))
 
 
@@ -77,8 +76,8 @@ def run(ten_mo_hinh: list[str] | None = None) -> pd.DataFrame:
         hang["loi_trung_binh"] = float(np.mean(cac_loi))
         dong.append(hang)
         print(f"  {mo_dun.TEN:36s} " + "  ".join(
-            f"{k} {hang[f'loi_trung_binh_{k}'] * MET_MOI_DON_VI:5.2f} m" for k in chieu)
-            + f"  · TB {hang['loi_trung_binh'] * MET_MOI_DON_VI:5.2f} m")
+            f"{k} {hang[f'loi_trung_binh_{k}'] * config.MET_MOI_DON_VI:5.2f} m" for k in chieu)
+            + f"  · TB {hang['loi_trung_binh'] * config.MET_MOI_DON_VI:5.2f} m")
 
     bang = pd.DataFrame(dong).sort_values("loi_trung_binh").reset_index(drop=True)
     (config.REPORTS_DIR / "tables").mkdir(parents=True, exist_ok=True)

@@ -97,7 +97,7 @@ def huan_luyen_mot(module, tap: dict, ap_cols: list[str], nhanh: bool) -> dict:
     tham_so, loi_va = quet_luoi(module, X_tr, y_tr, X_va, y_va, nhanh)
     giay_quet = time.perf_counter() - bat_dau
     print(f"    tham số  {tham_so}")
-    print(f"    validation {loi_va:.3f} m · quét {giay_quet:.1f}s")
+    print(f"    validation {loi_va:.3f} đv · quét {giay_quet:.1f}s")
 
     # 2. Huấn luyện lại trên train + validation
     X_full = np.vstack([X_tr, X_va])
@@ -112,9 +112,9 @@ def huan_luyen_mot(module, tap: dict, ap_cols: list[str], nhanh: bool) -> dict:
     ms = evaluate.do_thoi_gian_du_doan(model, X_te)
     ket_qua = evaluate.danh_gia(y_te, y_pred, module.TEN, thoi_gian_ms=ms)
 
-    print(f"    TEST  trung bình {ket_qua['loi_trung_binh']:.3f} m · "
-          f"trung vị {ket_qua['loi_trung_vi']:.3f} m · "
-          f"CDF90 {ket_qua['cdf_90']:.3f} m · {ms:.2f} ms/mẫu")
+    print(f"    TEST  trung bình {ket_qua['loi_trung_binh']:.3f} đv · "
+          f"trung vị {ket_qua['loi_trung_vi']:.3f} đv · "
+          f"CDF90 {ket_qua['cdf_90']:.3f} đv · {ms:.2f} ms/mẫu")
 
     return {
         "module": module,
@@ -222,7 +222,7 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
                    index=False)
 
     print("\n" + "=" * 66)
-    print("BẢNG SO SÁNH — sai số trên tập test, đơn vị mét")
+    print("BẢNG SO SÁNH — sai số trên tập test, đơn vị lưới")
     print("=" * 66)
     hien = bang[["mo_hinh", "loi_trung_binh", "loi_trung_vi", "cdf_50",
                  "cdf_75", "cdf_90", "loi_lon_nhat", "thoi_gian_du_doan_ms"]]
@@ -233,14 +233,14 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
     r_co_so = chon_theo_validation(tat_ca, lambda r: r["module"].TEN in ("kNN", "WKNN"))
     co_so = r_co_so["ket_qua_test"]["loi_trung_binh"] if r_co_so else 0.0
     tot = tot_nhat["ket_qua_test"]["loi_trung_binh"]
-    print(f"\nTriển khai: {tot_nhat['module'].TEN} — {tot:.3f} m")
+    print(f"\nTriển khai: {tot_nhat['module'].TEN} — {tot:.3f} đv")
     if co_so > 0:
-        print(f"So với cơ sở tốt nhất ({co_so:.3f} m): "
+        print(f"So với cơ sở tốt nhất ({co_so:.3f} đv): "
               f"{'giảm' if tot < co_so else 'TĂNG'} {abs(tot - co_so) / co_so * 100:.1f}%")
         print("Mục tiêu: thấp hơn cơ sở 10-20%")
 
     print(f"\nĐiểm sai nhiều nhất: " + ", ".join(
-        f"{r.rp_id} ({r.loi_trung_binh:.1f} m)" for r in theo_diem.head(3).itertuples()))
+        f"{r.rp_id} ({r.loi_trung_binh:.1f} đv)" for r in theo_diem.head(3).itertuples()))
 
     hoc = pd.concat([tap["train"], tap["validation"]], ignore_index=True)
     y_ngoai = evaluate.du_doan_ngoai_phan(
@@ -252,9 +252,9 @@ def run(ten_mo_hinh: list[str] | None = None, nhanh: bool = False) -> pd.DataFra
     print(f"Sau khi gộp, cửa sổ {gop['cua_so']} lần quét, theo thứ tự thời gian:")
     for nhan, g in ((f"test, {gop['so_lan_quet']} lần quét/điểm", ct),
                     ("chuỗi dài train+val, ngoài phần", cd)):
-        print(f"  {nhan:32s} {g['khong_gop']:5.2f} → {g['loi_trung_binh']:5.2f} m · "
+        print(f"  {nhan:32s} {g['khong_gop']:5.2f} → {g['loi_trung_binh']:5.2f} đv · "
               f"sai {g['so_mau_sai_khong_gop']} → {g['so_mau_sai']}/{g['so_mau']}")
-    print(f"  {'đứng yên (chặn dưới)':32s} {dy['loi_trung_binh']:5.2f} m · "
+    print(f"  {'đứng yên (chặn dưới)':32s} {dy['loi_trung_binh']:5.2f} đv · "
           f"sai {dy['so_vi_tri_sai']}/{dy['so_vi_tri']} vị trí")
 
     metadata["hau_xu_ly_gop"] = gop

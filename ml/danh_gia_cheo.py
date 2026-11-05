@@ -164,14 +164,14 @@ def _in_doi_chieu(bang_bo_diem: pd.DataFrame) -> None:
     ngau_nhien = pd.read_csv(cu).set_index("mo_hinh")["loi_trung_binh"]
 
     print("\n" + "-" * 72)
-    print("HAI GIAO THỨC, CÙNG NĂM MÔ HÌNH — sai số trung bình, mét")
+    print("HAI GIAO THỨC, CÙNG NĂM MÔ HÌNH — sai số trung bình, đơn vị lưới")
     print("-" * 72)
     print(f"{'mô hình':28s} {'chia ngẫu nhiên':>16s} {'bỏ trọn một điểm':>18s}")
     for _, d in bang_bo_diem.iterrows():
         a = ngau_nhien.get(d["mo_hinh"])
-        print(f"{d['mo_hinh']:28s} {a:14.2f} m {d['loi_trung_binh']:16.2f} m"
+        print(f"{d['mo_hinh']:28s} {a:14.2f} đv {d['loi_trung_binh']:16.2f} đv"
               if a is not None else
-              f"{d['mo_hinh']:28s} {'—':>16s} {d['loi_trung_binh']:16.2f} m")
+              f"{d['mo_hinh']:28s} {'—':>16s} {d['loi_trung_binh']:16.2f} đv")
     print("\nCột trái là chặn lạc quan, cột phải là chặn bi quan. Xem docstring "
           "đầu tệp\nvề lý do hai cột lệch nhau và vì sao thứ hạng đảo.")
 

@@ -72,6 +72,9 @@ MIN_AP_PER_SCAN = 6
 RSSI_NHO_NHAT = -100.0
 RSSI_LON_NHAT = 0.0
 
+# Hình 7 báo cáo CTK45: bốn kích thước dọc 19,6 m trên 55,87 đơn vị lưới.
+MET_MOI_DON_VI = 0.3508
+
 # Bước 8: hệ số Hampel filter (k * MAD)
 HAMPEL_K = 3.0
 MAD_SCALE = 1.4826  # hệ số hiệu chỉnh cho phân phối Gaussian
