@@ -168,8 +168,8 @@ Tham số mỗi mô hình chọn bằng tìm kiếm lưới trên tập validati
 luôn ưu tiên mô hình nhớ đúng điểm đã khảo sát (k = 1).
 
 **k động.** Bộ dữ liệu chỉ có 40 toạ độ khác nhau, nên bài toán gần với nhận lại điểm đã khảo
-sát. k = 1 tốt nhất khi người dùng đứng đúng điểm đã đo; k lớn tốt nhất khi đứng giữa các
-điểm. Mô hình đo khoảng cách Bray-Curtis d1 tới vân tay gần nhất: d1 nhỏ hơn ngưỡng thì dùng
+sát. k nhỏ (1–2) tốt nhất khi người dùng đứng đúng điểm đã đo; k khoảng 11–15 tốt nhất khi
+đứng giữa các điểm. Mô hình đo khoảng cách Bray-Curtis d1 tới vân tay gần nhất: d1 nhỏ hơn ngưỡng thì dùng
 k = 1, ngược lại dùng k lớn để nội suy. Ngưỡng và k lớn chọn trong `fit`, chỉ trên dữ liệu học,
 bằng hai tình huống giả lập: chia ngẫu nhiên 80/20 và bỏ trọn từng điểm.
 
