@@ -1,5 +1,5 @@
 {
-  "huan_luyen_luc": "2026-10-03T18:16:32",
+  "huan_luyen_luc": "2026-11-08T13:49:09",
   "mo_hinh_active": "fingerprint_knn_dong",
   "file_active": "model_fingerprint_knn_dong.pkl",
   "hop_dong_du_lieu": {
@@ -22,8 +22,8 @@
         "metric": "manhattan"
       },
       "loi_validation": 9.550472853048428,
-      "giay_quet_luoi": 4.0,
-      "giay_huan_luyen": 0.012,
+      "giay_quet_luoi": 3.74,
+      "giay_huan_luyen": 0.01,
       "mo_hinh": "kNN",
       "so_mau": 473,
       "loi_trung_binh": 9.883384261275298,
@@ -35,10 +35,14 @@
       "mae_y": 4.564482029598309,
       "rmse_x": 14.676713517055976,
       "rmse_y": 10.046719616514343,
+      "rmse": 17.786019642252388,
+      "ti_le_duoi_2m": 56.87103594080338,
+      "ti_le_duoi_3m": 61.52219873150106,
+      "ti_le_duoi_5m": 71.24735729386892,
       "cdf_50": 0.0,
       "cdf_75": 15.0,
       "cdf_90": 30.242318893347026,
-      "thoi_gian_du_doan_ms": 0.27305199997499585
+      "thoi_gian_du_doan_ms": 0.25711199967190623
     },
     "wknn": {
       "ten": "WKNN",
@@ -47,7 +51,7 @@
         "metric": "manhattan"
       },
       "loi_validation": 10.040226003389726,
-      "giay_quet_luoi": 1.81,
+      "giay_quet_luoi": 1.6,
       "giay_huan_luyen": 0.001,
       "mo_hinh": "WKNN",
       "so_mau": 473,
@@ -60,10 +64,14 @@
       "mae_y": 4.888015018823513,
       "rmse_x": 12.013681985533973,
       "rmse_y": 8.717260878212079,
+      "rmse": 14.843153036614233,
+      "ti_le_duoi_2m": 46.088794926004226,
+      "ti_le_duoi_3m": 57.082452431289646,
+      "ti_le_duoi_5m": 74.84143763213531,
       "cdf_50": 6.771314736314234,
       "cdf_75": 14.31738005303903,
       "cdf_90": 23.87105924236652,
-      "thoi_gian_du_doan_ms": 0.37833600013982505
+      "thoi_gian_du_doan_ms": 0.292261999566108
     },
     "random_forest": {
       "ten": "Random Forest",
@@ -72,8 +80,8 @@
         "max_depth": null
       },
       "loi_validation": 9.69597849584891,
-      "giay_quet_luoi": 4.7,
-      "giay_huan_luyen": 1.5,
+      "giay_quet_luoi": 3.88,
+      "giay_huan_luyen": 1.134,
       "mo_hinh": "Random Forest",
       "so_mau": 473,
       "loi_trung_binh": 9.595030693877288,
@@ -85,10 +93,14 @@
       "mae_y": 5.095594080338266,
       "rmse_x": 10.966074912823526,
       "rmse_y": 7.401658785570481,
+      "rmse": 13.230243828881997,
+      "ti_le_duoi_2m": 42.071881606765324,
+      "ti_le_duoi_3m": 57.71670190274841,
+      "ti_le_duoi_5m": 79.70401691331924,
       "cdf_50": 6.7207725746375315,
       "cdf_75": 12.663558109788893,
       "cdf_90": 20.85713563842303,
-      "thoi_gian_du_doan_ms": 88.13074399949983
+      "thoi_gian_du_doan_ms": 69.43489799974486
     },
     "xgboost_model": {
       "ten": "XGBoost",
@@ -101,8 +113,8 @@
         "reg_lambda": 1
       },
       "loi_validation": 8.83637385031682,
-      "giay_quet_luoi": 102.34,
-      "giay_huan_luyen": 2.952,
+      "giay_quet_luoi": 94.52,
+      "giay_huan_luyen": 2.186,
       "mo_hinh": "XGBoost",
       "so_mau": 473,
       "loi_trung_binh": 9.01230974075682,
@@ -114,10 +126,14 @@
       "mae_y": 4.453582657394777,
       "rmse_x": 10.814034407700609,
       "rmse_y": 6.358679654676068,
+      "rmse": 12.544965010781178,
+      "ti_le_duoi_2m": 44.18604651162791,
+      "ti_le_duoi_3m": 61.733615221987314,
+      "ti_le_duoi_5m": 81.18393234672304,
       "cdf_50": 6.583728762680338,
       "cdf_75": 11.555030019986015,
       "cdf_90": 19.619148918008456,
-      "thoi_gian_du_doan_ms": 1.1748200003057718
+      "thoi_gian_du_doan_ms": 0.8250740001676604
     },
     "fingerprint_knn_dong": {
       "ten": "kNN k động",
@@ -125,8 +141,8 @@
         "beta": 3.5
       },
       "loi_validation": 6.280232106951057,
-      "giay_quet_luoi": 2.4,
-      "giay_huan_luyen": 1.858,
+      "giay_quet_luoi": 1.87,
+      "giay_huan_luyen": 1.437,
       "mo_hinh": "kNN k động",
       "so_mau": 473,
       "loi_trung_binh": 6.625816932016666,
@@ -138,10 +154,14 @@
       "mae_y": 3.6803307186249454,
       "rmse_x": 9.695625813605155,
       "rmse_y": 7.0467157125781235,
+      "rmse": 11.985881788643757,
+      "ti_le_duoi_2m": 63.213530655391125,
+      "ti_le_duoi_3m": 71.45877378435517,
+      "ti_le_duoi_5m": 82.02959830866807,
       "cdf_50": 2.227405327783835,
       "cdf_75": 10.275127923645714,
       "cdf_90": 19.235598683114237,
-      "thoi_gian_du_doan_ms": 2.4937680002767593
+      "thoi_gian_du_doan_ms": 1.9695660000434143
     }
   },
   "hau_xu_ly_gop": {

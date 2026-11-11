@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
-from ml import config, evaluate
+from ml import config, evaluate, report
 from ml import models as goi_mo_hinh
 from ml import preprocess as pre
 from ml.danh_gia_cheo import _luoi_da_dung, _tham_so, nap_bang_rong
@@ -61,16 +61,20 @@ def run(ten_mo_hinh: list[str] | None = None) -> pd.DataFrame:
         muon = {t.lower() for t in ten_mo_hinh}
         chon = [m for m in chon if m.__name__.rsplit(".", 1)[-1].lower() in muon]
 
-    dong = []
+    dong, loi_met = [], {k: {} for k in chieu}
     for mo_dun in chon:
         khoa = mo_dun.__name__.rsplit(".", 1)[-1]
         tham_so = _tham_so(khoa, mo_dun)
         hang = {"mo_hinh": mo_dun.TEN}
         cac_loi = []
         for ten_chieu, (Xh, Yh, Xt, Yt) in chieu.items():
-            loi = evaluate.khoang_cach_loi(Yt, mo_dun.build(**tham_so).fit(Xh, Yh).predict(Xt))
-            hang[f"loi_trung_binh_{ten_chieu}"] = float(loi.mean())
-            hang[f"loi_trung_vi_{ten_chieu}"] = float(np.median(loi))
+            p = mo_dun.build(**tham_so).fit(Xh, Yh).predict(Xt)
+            loi = evaluate.khoang_cach_loi(Yt, p)
+            loi_met[ten_chieu][mo_dun.TEN] = loi * config.MET_MOI_DON_VI
+            dg = evaluate.danh_gia(Yt, p)
+            for c in ("loi_trung_binh", "loi_trung_vi", "cdf_75", "cdf_90", "rmse",
+                      *(f"ti_le_duoi_{t}m" for t in evaluate.NGUONG_MET)):
+                hang[f"{c}_{ten_chieu}"] = dg[c]
             cac_loi.append(loi.mean())
         # Trung bình hai chiều, mỗi chiều nặng như nhau dù số lần quét kiểm khác nhau.
         hang["loi_trung_binh"] = float(np.mean(cac_loi))
@@ -82,6 +86,9 @@ def run(ten_mo_hinh: list[str] | None = None) -> pd.DataFrame:
     bang = pd.DataFrame(dong).sort_values("loi_trung_binh").reset_index(drop=True)
     (config.REPORTS_DIR / "tables").mkdir(parents=True, exist_ok=True)
     config.ghi_csv(bang, config.REPORTS_DIR / "tables" / "model_comparison_khac_dot.csv", index=False)
+    if not ten_mo_hinh:
+        print(report.cdf({f"Khác đợt: học {k[0]}, kiểm {k[-1]} ({len(chieu[k][2])} lần quét)": v
+                          for k, v in loi_met.items()}, "cdf_khac_dot.png"))
     return bang
 
 

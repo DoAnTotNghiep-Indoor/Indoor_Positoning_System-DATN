@@ -15,8 +15,11 @@ import time
 import numpy as np
 import pandas as pd
 
+from ml import config
+
 # Các mốc phần trăm dùng cho đường CDF trong báo cáo
 CDF_PERCENTILES = (50, 75, 90)
+NGUONG_MET = (2, 3, 5)
 
 
 def khoang_cach_loi(y_that: np.ndarray, y_du_doan: np.ndarray) -> np.ndarray:
@@ -75,7 +78,11 @@ def danh_gia(
         "mae_y": float(np.abs(lech[:, 1]).mean()),
         "rmse_x": float(np.sqrt((lech[:, 0] ** 2).mean())),
         "rmse_y": float(np.sqrt((lech[:, 1] ** 2).mean())),
+        "rmse": float(np.sqrt((loi ** 2).mean())),
     }
+    # Toạ độ theo đơn vị lưới nhưng ngưỡng đặt theo mét; tỉ lệ tính bằng %.
+    for t in NGUONG_MET:
+        ket_qua[f"ti_le_duoi_{t}m"] = float((loi * config.MET_MOI_DON_VI <= t).mean() * 100)
 
     # CDF: p% số mẫu có sai số dưới ngưỡng này
     for p in CDF_PERCENTILES:

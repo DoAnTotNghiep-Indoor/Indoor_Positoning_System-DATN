@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
-from ml import config, evaluate
+from ml import config, evaluate, report
 from ml import preprocess as pre
 from ml import models as goi_mo_hinh
 
@@ -125,10 +125,11 @@ def run(ten_mo_hinh: list[str] | None = None,
         chon = [m for m in chon if m.__name__.rsplit(".", 1)[-1].lower() in muon
                 or m.TEN.lower() in muon]
 
-    ket_qua = []
+    ket_qua, loi_met = [], {}
     for mo_dun in chon:
         khoa = mo_dun.__name__.rsplit(".", 1)[-1]
         loi = chay_mot_mo_hinh(mo_dun, cac_gap, _tham_so(khoa, mo_dun))
+        loi_met[mo_dun.TEN] = loi * config.MET_MOI_DON_VI
         # danh_gia() nhận toạ độ chứ không nhận sai số, nên dựng lại một cặp (thật,
         # dự đoán) lệch nhau đúng bằng sai số đã đo — mọi chỉ số khoảng cách và CDF
         # ra y hệt.
@@ -139,6 +140,8 @@ def run(ten_mo_hinh: list[str] | None = None,
     bang = evaluate.bang_so_sanh(ket_qua)
     bang = bang.drop(columns=[c for c in ("mae_x", "mae_y", "rmse_x", "rmse_y")
                               if c in bang.columns])
+    if not ten_mo_hinh:
+        print(report.cdf({f"Bỏ trọn một điểm ({len(fp)} lần quét)": loi_met}, "cdf_bo_diem.png"))
 
     (config.REPORTS_DIR / "tables").mkdir(parents=True, exist_ok=True)
     config.ghi_csv(bang,

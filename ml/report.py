@@ -122,27 +122,28 @@ def so_sanh_mo_hinh(loi: dict, thu_tu: list[str]) -> str:
     return _luu(fig, "model_comparison.png")
 
 
-def cdf(loi: dict, thu_tu: list[str]) -> str:
-    """Đường CDF. Kiểu nét khác nhau để đọc được cả khi in đen trắng."""
-    fig, ax = plt.subplots(figsize=(8, 4.8))
-    _khung(ax)
-
-    for i, ten in enumerate(thu_tu):
-        x, y = evaluate.duong_cdf(loi[ten])
-        ax.plot(x, y, color=SERIES[i], linestyle=NET[i], linewidth=2,
-                label=ten, zorder=3, solid_capstyle="round")
-
-    for p in (50, 75, 90):
-        ax.axhline(p, color=TRUC, linewidth=0.8, linestyle=":", zorder=1)
-        ax.text(ax.get_xlim()[1], p, f" {p}%", va="center", fontsize=8, color=MUC_MO)
-
-    ax.set_xlabel("Sai số khoảng cách (m)", color=MUC_PHU, fontsize=9.5)
-    ax.set_ylabel("Tỉ lệ tích luỹ số mẫu (%)", color=MUC_PHU, fontsize=9.5)
-    ax.set_ylim(0, 101)
-    ax.set_title("Phân bố tích luỹ sai số — đọc theo chiều ngang tại mốc 90%",
-                 color=MUC_CHINH, fontsize=11.5, fontweight="bold", loc="left", pad=12)
-    ax.legend(frameon=False, fontsize=9, loc="lower right", labelcolor=MUC_PHU)
-    return _luu(fig, "cdf_error.png")
+def cdf(cac_khung: dict[str, dict], ten_file: str) -> str:
+    """Đường CDF theo mét, mỗi khung một tập kiểm. Kiểu nét khác nhau để đọc được khi in
+    đen trắng; thứ tự và màu lấy theo khung đầu nên cùng mô hình cùng màu ở mọi khung."""
+    dau = next(iter(cac_khung.values()))
+    thu_tu = sorted(dau, key=lambda t: dau[t].mean())
+    fig, cac_ax = plt.subplots(1, len(cac_khung), figsize=(8 * len(cac_khung) ** 0.6, 4.8),
+                               squeeze=False, sharey=True)
+    for ax, (tieu_de, loi) in zip(cac_ax[0], cac_khung.items()):
+        _khung(ax)
+        for i, ten in enumerate(thu_tu):
+            x, y = evaluate.duong_cdf(loi[ten])
+            ax.plot(x, y, color=SERIES[i], linestyle=NET[i], linewidth=2,
+                    label=ten, zorder=3, solid_capstyle="round")
+        for p in (50, 75, 90):
+            ax.axhline(p, color=TRUC, linewidth=0.8, linestyle=":", zorder=1)
+            ax.text(ax.get_xlim()[1], p, f" {p}%", va="center", fontsize=8, color=MUC_MO)
+        ax.set_xlabel("Sai số khoảng cách (m)", color=MUC_PHU, fontsize=9.5)
+        ax.set_ylim(0, 101)
+        ax.set_title(tieu_de, color=MUC_CHINH, fontsize=11, fontweight="bold", loc="left", pad=8)
+    cac_ax[0][0].set_ylabel("Tỉ lệ tích luỹ số lần quét (%)", color=MUC_PHU, fontsize=9.5)
+    cac_ax[0][-1].legend(frameon=False, fontsize=9, loc="lower right", labelcolor=MUC_PHU)
+    return _luu(fig, ten_file)
 
 
 def hieu_qua_gop(meta: dict, te: pd.DataFrame, ap: list[str], du_doan: dict) -> str:
@@ -357,7 +358,7 @@ def chay(cho_phep_luoi_rut_gon: bool = False) -> None:
     # không lấy mô hình tốt nhất trên test.
     ket_qua = [
         so_sanh_mo_hinh(loi, thu_tu),
-        cdf(loi, thu_tu),
+        cdf({"Chia ngẫu nhiên (seed 42, 473 lần quét test)": loi}, "cdf_error.png"),
         hieu_qua_gop(meta, te, ap, du_doan),
         ban_do_loi(meta, te, du_doan),
         do_quan_trong(ap),
