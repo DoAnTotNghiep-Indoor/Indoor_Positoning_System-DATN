@@ -33,8 +33,8 @@ def test_health(client):
 
 
 @pytest.mark.parametrize("duong_dan", [
-    "/health", "/map", "/graph", "/predictions",
-    "/", "/src/js/dashboard.js", "/src/css/style.css"])
+    "/health", "/map", "/graph", "/predictions", "/ap-la",
+    "/", "/quan-ly.html", "/src/js/dashboard.js", "/src/css/style.css"])
 def test_moi_duong_dan_deu_tra_ve(client, duong_dan):
     # Dashboard mount ở "/" nhận mọi đường dẫn còn lại, không được che API.
     assert client.get(duong_dan).status_code == 200
@@ -101,6 +101,30 @@ def test_gop_cua_so_va_lich_su(client):
     ds = client.get("/predictions", params={"device_id": "gop"}).json()
     assert len(ds) == 3 and {m["device_id"] for m in ds} == {"gop"}
     assert ds[0]["luc"].endswith("Z") or "+" in ds[0]["luc"][10:]
+
+
+def lay_ap_la(client):
+    r = client.get("/ap-la", params={"gioi_han": 1000}).json()
+    return r["so_lan_quet"], {a["bssid"]: a for a in r["ap"]}
+
+
+def test_ghi_ap_la(client):
+    """AP lạ cộng dồn theo BSSID, kể cả lần quét bị từ chối; AP của mô hình không bị ghi."""
+    moi, ngau_nhien = "00:aa:bb:cc:dd:01", "02:aa:bb:cc:dd:02"
+    bi_loai = sorted(set(HOP_DONG["bssid_du_lieu"]) - set(AP))[0]
+    tong_truoc, _ = lay_ap_la(client)
+    du_doan(client, quet() + quet([moi.upper(), ngau_nhien, bi_loai], -70) + quet([moi], -60), "la-1")
+    du_doan(client, quet() + quet([moi], -80), "la-1")
+    assert du_doan(client, quet([moi], -50), "la-2").status_code == 422
+
+    tong, ds = lay_ap_la(client)
+    assert tong == tong_truoc + 3
+    a = ds[moi]
+    assert (a["so_lan"], a["rssi_manh_nhat"]) == (3, -50)
+    assert a["rssi_tb"] == pytest.approx((-60 - 80 - 50) / 3)
+    assert not a["trong_du_lieu"] and not a["mac_ngau_nhien"]
+    assert ds[ngau_nhien]["mac_ngau_nhien"] and ds[bi_loai]["trong_du_lieu"]
+    assert not {b.lower() for b in AP} & set(ds)
 
 
 @pytest.mark.parametrize("than", [

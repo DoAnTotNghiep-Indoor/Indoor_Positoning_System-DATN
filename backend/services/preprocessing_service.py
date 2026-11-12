@@ -46,6 +46,8 @@ class FeatureMapper:
 
         # Cùng ngưỡng bước 6 dùng để loại mẫu huấn luyện.
         self.min_ap_per_scan: int = int(hop_dong["min_ap_per_scan"])
+        self.min_appear_rate: float = float(hop_dong["min_appear_rate"])
+        self.bssid_du_lieu: set[str] = {b.lower() for b in hop_dong["bssid_du_lieu"]}
         self.scaler = joblib.load(doc_artifact(thu_muc / "scaler.pkl"))
 
         # Hạ chữ thường ở máy chủ: BSSID của Android hoa hay thường tuỳ hãng.
@@ -70,6 +72,15 @@ class FeatureMapper:
         co = dem > 0
         vector[co] = tong[co] / dem[co]
         return vector
+
+    def ap_la(self, scan: list[dict]) -> dict[str, float]:
+        """{BSSID: RSSI mạnh nhất} của các AP không thuộc mô hình, đọc lỗi thì bỏ."""
+        ra: dict[str, float] = {}
+        for muc in scan:
+            bssid, rssi = muc["bssid"].lower(), muc["rssi"]
+            if bssid not in self._vi_tri and RSSI_NHO_NHAT <= rssi < RSSI_LON_NHAT:
+                ra[bssid] = max(rssi, ra.get(bssid, rssi))
+        return ra
 
     def chuan_hoa(self, vector: np.ndarray) -> np.ndarray:
         """Áp scaler của tập train; ra ngoài [0, 1] là bình thường."""

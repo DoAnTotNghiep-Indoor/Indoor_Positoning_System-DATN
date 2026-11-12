@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý — IPS Thư viện ĐH Đà Lạt</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="src/css/style.css">
+</head>
+<body>
+  <header class="thanh-tren">
+    <div>
+      <h1>Quản lý — Thư viện ĐH Đà Lạt</h1>
+      <p class="phu-de">Thiết bị đang sử dụng ứng dụng</p>
+    </div>
+    <div class="thanh-phai">
+      <span id="trang-thai-ket-noi" class="huy-hieu mat">Đang nối…</span>
+    </div>
+  </header>
+
+  <nav class="dieu-huong" aria-label="Chuyển trang">
+    <a href="./">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+      <span>Giám sát định vị</span>
+    </a>
+    <a href="quan-ly.html" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18h3"/></svg>
+      <span>Quản lý thiết bị</span>
+    </a>
+  </nav>
+
+  <main class="luoi-quan-ly">
+    <section class="khung">
+      <h2>Thiết bị đang sử dụng</h2>
+      <div class="hop-canvas">
+        <canvas id="so-do"></canvas>
+      </div>
+      <p class="ghi-chu">
+        Mỗi chấm là một điện thoại đang mở ứng dụng, ghi 6 ký tự cuối của mã thiết bị. Im lặng
+        quá 20 giây thì chấm biến mất.
+      </p>
+    </section>
+
+    <section class="khung">
+      <h2>Số thiết bị</h2>
+      <div id="the-dem" class="luoi-the"></div>
+      <p class="ghi-chu">
+        Đang sử dụng: thiết bị có lần định vị trong 20 giây gần nhất. Tự cập nhật 2 giây một lần.
+      </p>
+    </section>
+  </main>
+
+  <section class="khung">
+    <div class="dau-khung">
+      <h2>AP lạ điện thoại bắt được</h2>
+      <label class="loc"><input type="checkbox" id="chi-ap-moi"> Chỉ AP mới</label>
+    </div>
+    <div id="the-ap-la" class="luoi-the luoi-the-3"></div>
+    <div id="bang-ap-la" class="hop-bang"></div>
+    <p class="ghi-chu">
+      BSSID có trong lần quét nhưng mô hình không dùng, chỉ để theo dõi, không ảnh hưởng định vị.
+      <strong>Mới</strong>: chưa từng có trong dữ liệu đo, có thể là AP thư viện vừa lắp.
+      <strong>Đã có, bị loại</strong>: có trong dữ liệu nhưng xuất hiện quá ít nên bị loại khi
+      huấn luyện. Tỉ lệ in đậm khi đạt ngưỡng thường xuyên, cũng là ngưỡng giữ AP khi huấn luyện.
+      MAC ngẫu nhiên thường là điểm phát Wi-Fi của điện thoại, không phải AP cố định.
+      Tự cập nhật 10 giây một lần.
+    </p>
+  </section>
+
+  <footer>
+    <a href="docs" target="_blank" rel="noopener">Tài liệu API (Swagger)</a>
+  </footer>
+
+  <script type="module" src="src/js/quan-ly.js"></script>
+</body>
+</html>

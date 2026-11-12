@@ -12,7 +12,7 @@ Hệ thống định vị người dùng trong tầng 1 Thư viện Đại học
 |---|---|---|
 | Ứng dụng Android WiLoc (Flutter) | `mobile/` | Quét WiFi liên tục, định vị qua máy chủ hoặc ngay trên máy, hiện vị trí và nón hướng la bàn trên sơ đồ, tra cứu khu vực, chỉ đường. Song ngữ Việt/Anh, sáng/tối |
 | Backend (FastAPI + SQLite) | `backend/` | Dự đoán toạ độ, gộp các lần quét, lưu lịch sử, phục vụ bản đồ và tìm đường |
-| Web Dashboard | `dashboard/` | Giám sát: sơ đồ với các thiết bị đang định vị và vệt đường, bảng thiết bị, thử chỉ đường, lịch sử. HTML/CSS/JS thuần, không thư viện ngoài |
+| Web Dashboard | `dashboard/` | Hai trang. Giám sát: sơ đồ với các thiết bị đang định vị và vệt đường, bảng thiết bị, thử chỉ đường, lịch sử. Quản lý (`quan-ly.html`): sơ đồ và số thiết bị đang sử dụng ứng dụng, bảng AP lạ điện thoại bắt được (AP mới lắp hay AP đã biết nhưng bị loại). HTML/CSS/JS thuần, không thư viện ngoài |
 | Máy học | `ml/` | Tiền xử lý 12 bước, huấn luyện và so sánh 5 mô hình, đánh giá, vẽ biểu đồ |
 | Công cụ | `tools/` | Trích hình học từ sơ đồ, vẽ sơ đồ SVG cho app, sinh danh sách khu vực, thu vân tay qua cáp USB, đánh giá chỉ đường |
 
@@ -296,6 +296,7 @@ laptop `http://<IP>:8000`). Mặc định là PROD.
 | `GET /health` | Mô hình đang chạy, số đặc trưng, cửa sổ gộp |
 | `POST /predict` | `{device_id, scan: [{bssid, rssi}]}` → `{x, y, x_smooth, y_smooth, matched_ap, latency_ms, …}` |
 | `GET /predictions` | Lịch sử vị trí (`device_id`, `gioi_han` ≤ 1000) |
+| `GET /ap-la` | BSSID điện thoại bắt được nhưng mô hình không dùng: mới hay đã có trong dữ liệu, tỉ lệ lần quét, RSSI |
 | `GET /map` | Phạm vi, điểm tham chiếu kèm tên, nhóm, mô tả; `met_moi_don_vi` để đổi ra mét |
 | `GET /graph` | Các cặp điểm tham chiếu nhìn thấy nhau, cho Dashboard vẽ |
 | `POST /route` | Điểm đầu `tu_rp` hoặc `tu_x, tu_y`; đích `den_rp`, `den_nhom` hoặc `den_x, den_y`; `thuat_toan` = `a_sao` / `dijkstra` |

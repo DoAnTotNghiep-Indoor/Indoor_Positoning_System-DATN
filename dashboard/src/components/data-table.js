@@ -26,7 +26,8 @@ export function veBang(el, cot, hang, khiRong = 'Chưa có dữ liệu') {
     for (const c of cot) {
       const td = tr.insertCell();
       td.textContent = c.lay(h);
-      if (c.so) td.className = 'so';
+      // `lop(h)`: lớp CSS theo giá trị của dòng, ví dụ tô nhãn.
+      td.className = [c.so ? 'so' : '', c.lop?.(h) ?? ''].join(' ').trim();
     }
   }
   el.append(bang);

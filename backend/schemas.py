@@ -55,6 +55,27 @@ class MucLichSu(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class MucApLa(BaseModel):
+    bssid: str
+    trong_du_lieu: bool = Field(description="Có trong dữ liệu huấn luyện nhưng bị loại vì hiếm gặp; "
+                                            "False là AP chưa từng đo, có thể vừa lắp")
+    mac_ngau_nhien: bool = Field(description="Bit quản trị cục bộ của MAC bật: thường là điểm "
+                                             "phát Wi-Fi của điện thoại, không phải AP cố định")
+    so_lan: int = Field(description="Số lần quét có AP này")
+    ti_le: float = Field(description="% số lần quét có AP này")
+    rssi_tb: float
+    rssi_manh_nhat: float
+    lan_dau: datetime
+    lan_cuoi: datetime
+
+
+class ThongKeApLa(BaseModel):
+    so_lan_quet: int = Field(description="Tổng số lần quét máy chủ đã nhận")
+    nguong_thuong_xuyen: float = Field(description="% lần quét để coi là thường xuyên; cùng "
+                                                   "ngưỡng giữ AP khi huấn luyện")
+    ap: list[MucApLa]
+
+
 class TrangThai(BaseModel):
     trang_thai: str
     mo_hinh: str

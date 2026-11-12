@@ -72,6 +72,8 @@ export const api = {
     return goi(`predictions?${t}`);
   },
 
+  apLa: (gioiHan = 200) => goi(`ap-la?gioi_han=${gioiHan}`),
+
   chiDuong: (tuRp, denRp) =>
     goi('route', {
       method: 'POST',

@@ -1,7 +1,7 @@
 """Kết nối SQLite bất đồng bộ và định nghĩa bảng.
 
-Chỉ hai bảng lịch sử định vị; điểm tham chiếu và mô hình đã có nguồn ở
-`data/reference/` và `artifacts/`.
+Hai bảng lịch sử định vị và hai bảng theo dõi AP lạ; điểm tham chiếu và mô hình đã có
+nguồn ở `data/reference/` và `artifacts/`.
 """
 
 from __future__ import annotations
@@ -86,6 +86,29 @@ class DuDoanViTri(Base):
     @property
     def device_id(self) -> str:
         return self.phien.device_id
+
+
+class ApLa(Base):
+    """BSSID điện thoại bắt được nhưng không thuộc các AP của mô hình: dấu hiệu thư viện
+    đã lắp AP mới. Gộp sẵn theo BSSID để bảng không phình theo số lần quét."""
+
+    __tablename__ = "unknown_aps"
+
+    bssid: Mapped[str] = mapped_column(String(64), primary_key=True)
+    so_lan: Mapped[int] = mapped_column(Integer)
+    tong_rssi: Mapped[float] = mapped_column(Float)
+    rssi_manh_nhat: Mapped[float] = mapped_column(Float)
+    lan_dau: Mapped[datetime] = mapped_column(LUC)
+    lan_cuoi: Mapped[datetime] = mapped_column(LUC)
+
+
+class BoDem(Base):
+    """Tổng số lần quét đã nhận, làm mẫu số cho tỉ lệ xuất hiện của AP lạ."""
+
+    __tablename__ = "counters"
+
+    ten: Mapped[str] = mapped_column(String(32), primary_key=True)
+    gia_tri: Mapped[int] = mapped_column(Integer)
 
 
 @event.listens_for(Engine, "connect")

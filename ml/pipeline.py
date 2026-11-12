@@ -167,6 +167,9 @@ def run(min_appear_rate: float | None = None) -> dict:
         "missing_rssi_value": gia_tri_thieu,
         "min_ap_per_scan": config.MIN_AP_PER_SCAN,
         "min_appear_rate": ty_le_ap,
+        # Mọi BSSID có trong dữ liệu, kể cả AP bị loại ở bước 5: backend dùng để tách AP
+        # mới lắp khỏi AP đã biết nhưng hiếm gặp.
+        "bssid_du_lieu": sorted(ty_le_xuat_hien.index),
         "target_columns": config.TARGET_COLS,
         "scaler_file": config.SCALER_PKL,
         "created_at": bat_dau.isoformat(timespec="seconds"),

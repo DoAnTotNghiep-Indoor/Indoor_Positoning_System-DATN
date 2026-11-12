@@ -203,8 +203,8 @@ từng vẽ độ trải thành quầng quanh chấm vị trí; dùng thử th�
 
 ## 5. Cơ sở dữ liệu
 
-SQLite, tự tạo bảng lúc khởi động. Chỉ lưu lịch sử định vị; điểm tham chiếu và mô hình đã có
-nguồn là `data/reference/` và `artifacts/`.
+SQLite, tự tạo bảng lúc khởi động. Lưu lịch sử định vị và AP lạ; điểm tham chiếu và mô hình đã
+có nguồn là `data/reference/` và `artifacts/`.
 
 ```mermaid
 erDiagram
@@ -227,11 +227,32 @@ erDiagram
     string mo_hinh
     float do_tre_ms
   }
+  unknown_aps {
+    string bssid PK
+    int so_lan
+    float tong_rssi
+    float rssi_manh_nhat
+    datetime lan_dau
+    datetime lan_cuoi
+  }
+  counters {
+    string ten PK
+    int gia_tri
+  }
 ```
 
 Một phiên là một thiết bị định vị liên tục; vắng quá 30 giây thì mở phiên mới. Bảng dự đoán
 giữ cả toạ độ thô lẫn toạ độ đã gộp để đo hiệu quả bước gộp. Thời điểm lưu theo UTC. Bật WAL
 để ghi nhanh và đọc không chặn ghi.
+
+Hai bảng còn lại theo dõi AP lạ: BSSID điện thoại bắt được nhưng không thuộc 36 AP mô hình dùng.
+Mỗi lần quét gửi lên `/predict` được ghi trước khi DEMO thay lần quét và trước khi chặn thiếu
+AP, vì khi thư viện thay nhiều AP thì chính các lần quét bị chặn mới chứa AP mới. Bảng gộp sẵn
+theo BSSID (số lần, tổng và mạnh nhất của RSSI, lần đầu, lần cuối) nên không phình theo số lần
+quét; `counters` giữ tổng số lần quét làm mẫu số cho tỉ lệ. Mỗi lần quét chỉ hai câu upsert
+(`INSERT … ON CONFLICT DO UPDATE`), cộng ngay trong SQL nên hai request cùng lúc không mất lượt
+đếm, và ghi chung giao dịch với vị trí nên mỗi request vẫn chỉ một lần commit. Không đếm số thiết bị: mã thiết bị đổi mỗi lần mở ứng dụng nên con số chỉ là số lần mở. Mô hình không dùng các AP này; muốn dùng phải có vân tay
+chứa chúng rồi huấn luyện lại.
 
 ## 6. Dữ liệu không gian
 
@@ -312,6 +333,7 @@ lớn nhất 29 m khi vị trí đoán rơi sang sàn khác mức bên kia lan c
 | GET | `/health` | Mô hình đang chạy, số đặc trưng, giá trị điền thiếu, cửa sổ gộp |
 | POST | `/predict` | Định vị một lần quét |
 | GET | `/predictions` | Lịch sử vị trí, lọc theo `device_id`, `gioi_han` từ 1 đến 1000 |
+| GET | `/ap-la` | AP lạ gặp nhiều nhất trước: mới hay đã có trong dữ liệu, MAC ngẫu nhiên, tỉ lệ lần quét, RSSI |
 | GET | `/map` | Phạm vi, điểm tham chiếu (tên, nhóm, mô tả, thư mục ảnh), thống kê đồ thị, `met_moi_don_vi` |
 | GET | `/graph` | Các cặp điểm tham chiếu nhìn thấy nhau |
 | POST | `/route` | Chỉ đường tới điểm tham chiếu, khu vực hoặc toạ độ |
@@ -374,7 +396,24 @@ dùng nền đặc để dễ đọc.
 
 ### 9.2. Web Dashboard
 
-Một trang gồm: thẻ trạng thái hệ thống, sơ đồ với điểm tham chiếu, cạnh đồ thị và thiết bị
-đang định vị kèm vệt đường, bảng thiết bị, hộp thử chỉ đường, biểu đồ độ dịch giữa toạ độ thô
-và toạ độ đã gộp, bảng lịch sử. Trang hỏi `/predictions` mỗi 2 giây; thiết bị im lặng quá 20
-giây bị ẩn khỏi sơ đồ.
+Hai trang, chuyển qua thanh điều hướng phía trên.
+
+Trang Giám sát định vị gồm: thẻ trạng thái hệ thống, sơ đồ với điểm tham chiếu, cạnh đồ thị và
+thiết bị đang định vị kèm vệt đường, bảng thiết bị, hộp thử chỉ đường, biểu đồ độ dịch giữa toạ
+độ thô và toạ độ đã gộp, bảng lịch sử. Trang hỏi `/predictions` mỗi 2 giây; thiết bị im lặng quá
+20 giây bị ẩn khỏi sơ đồ.
+
+Trang Quản lý (`quan-ly.html`) chỉ cho biết bao nhiêu thiết bị đang sử dụng ứng dụng và đang ở
+đâu: sơ đồ bên trái (2/3 bề ngang) vẽ mỗi điện thoại đang mở ứng dụng một chấm, ghi 6 ký tự cuối
+của mã thiết bị; khung bên phải (1/3) đếm số thiết bị có lần định vị trong 20 giây gần nhất. Cùng
+nguồn `/predictions` và cùng nhịp với trang giám sát. Ứng dụng không có đăng nhập; mã thiết bị
+sinh ngẫu nhiên mỗi lần mở ứng dụng nên trang không biết người dùng là ai, và mở lại ứng dụng thì
+được tính là thiết bị mới.
+
+Dưới sơ đồ là bảng AP lạ, lấy từ `/ap-la` mỗi 10 giây. AP được chia hai loại: **Mới** (chưa từng
+có trong dữ liệu đo, có thể là AP thư viện vừa lắp) và **Đã có, bị loại** (có trong dữ liệu nhưng
+xuất hiện dưới 20% số lần quét nên bị loại ở bước 5). Danh sách mọi BSSID của dữ liệu do bước 11
+ghi vào `feature_list.json` (`bssid_du_lieu`). Tỉ lệ in đậm khi đạt 20%, cùng ngưỡng giữ AP lúc
+huấn luyện. MAC có bit quản trị cục bộ bật được đánh dấu ngẫu nhiên: thường là điểm phát Wi-Fi
+của điện thoại chứ không phải AP cố định. Ba thẻ trên bảng đếm số lần quét đã nhận, số AP lạ và
+số AP mới thường xuyên có MAC cố định, là dấu hiệu rõ nhất cần cập nhật dữ liệu.

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — IPS Thư viện ĐH Đà Lạt</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="src/css/style.css">
 </head>
 <body>
@@ -17,6 +18,17 @@
       <span id="trang-thai-ket-noi" class="huy-hieu mat">Đang nối…</span>
     </div>
   </header>
+
+  <nav class="dieu-huong" aria-label="Chuyển trang">
+    <a href="./" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+      <span>Giám sát định vị</span>
+    </a>
+    <a href="quan-ly.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18h3"/></svg>
+      <span>Quản lý thiết bị</span>
+    </a>
+  </nav>
 
   <p id="loi" class="bao-loi" hidden></p>
 

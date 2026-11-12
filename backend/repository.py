@@ -4,12 +4,16 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
+# Upsert là chỗ duy nhất gắn với SQLite; PostgreSQL có `insert` cùng API.
+from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import settings
-from backend.database import DuDoanViTri, PhienDinhVi, bay_gio
+from backend.database import ApLa, BoDem, DuDoanViTri, PhienDinhVi, bay_gio
+
+SO_LAN_QUET = "so_lan_quet"
 
 
 async def lay_hoac_tao_phien(session: AsyncSession, device_id: str) -> PhienDinhVi:
@@ -70,3 +74,34 @@ async def lich_su(
     if device_id:
         cau = cau.join(PhienDinhVi).where(PhienDinhVi.device_id == device_id)
     return list(await session.scalars(cau))
+
+
+async def ghi_ap_la(session: AsyncSession, ap_la: dict[str, float]) -> None:
+    """Đếm một lần quét và cộng dồn các AP lạ trong đó. Không commit: `/predict` ghi chung
+    giao dịch với vị trí.
+
+    Upsert một câu cho cả lần quét: cộng ngay trong SQL nên hai request cùng lúc không mất
+    lượt đếm, và AP mới không đụng khoá chính khi hai máy cùng thấy nó lần đầu.
+    """
+    dem = insert(BoDem).values(ten=SO_LAN_QUET, gia_tri=1)
+    await session.execute(dem.on_conflict_do_update(
+        index_elements=[BoDem.ten], set_={"gia_tri": BoDem.gia_tri + 1}))
+    if ap_la:
+        luc = bay_gio()
+        moi = insert(ApLa).values([
+            {"bssid": b, "so_lan": 1, "tong_rssi": r, "rssi_manh_nhat": r, "lan_dau": luc, "lan_cuoi": luc}
+            for b, r in ap_la.items()])
+        await session.execute(moi.on_conflict_do_update(index_elements=[ApLa.bssid], set_={
+            "so_lan": ApLa.so_lan + 1,
+            "tong_rssi": ApLa.tong_rssi + moi.excluded.tong_rssi,
+            # max hai đối số của SQLite là hàm vô hướng, không phải hàm gộp.
+            "rssi_manh_nhat": func.max(ApLa.rssi_manh_nhat, moi.excluded.rssi_manh_nhat),
+            "lan_cuoi": moi.excluded.lan_cuoi,
+        }))
+
+
+async def ds_ap_la(session: AsyncSession, gioi_han: int) -> tuple[int, list[ApLa]]:
+    """(Tổng số lần quét, AP lạ gặp nhiều lần nhất trước)."""
+    tong = await session.scalar(select(BoDem.gia_tri).where(BoDem.ten == SO_LAN_QUET))
+    ds = await session.scalars(select(ApLa).order_by(ApLa.so_lan.desc(), ApLa.bssid).limit(gioi_han))
+    return tong or 0, list(ds)
