@@ -154,9 +154,33 @@ Mọi bảng trong `reports/tables/` và số in ra từ `ml.*` tính theo đơn
   thời điểm, gần với lúc dùng thật nhất.
 
 k động dẫn đầu ở cột thứ nhất (cả 10 seed) và cột thứ ba; ở cột thứ hai XGBoost thấp hơn
-0,30 m. So với hai mô hình cơ sở kNN và WKNN, k động thấp hơn ở cả ba cột. Quét k = 1..61
-(`ml.quet_k`) cho thấy k nhỏ (1–2) tốt nhất khi chia ngẫu nhiên, còn k khoảng 11–15 tốt
-nhất khi bỏ trọn một điểm. Đó là lý do chọn k động.
+0,30 m. So với hai mô hình cơ sở kNN và WKNN, k động thấp hơn ở cả ba cột.
+
+### k cố định và k động — sai số trung bình, mét
+
+`ml.quet_k` so 13 k cố định (1–61) với 24 cặp k động (k nhỏ 1–3, k lớn 7–61 hoặc tự chọn)
+cho kNN, WKNN (Manhattan) và kNN Bray-Curtis (beta 3,5). Mỗi cấu hình được học lại trên test
+seed 42 (học train + validation như `ml.train`) và trên ba giao thức. Đủ bảng ở
+`reports/tables/quet_k.csv`, hình ở `reports/figures/quet_k.png`. Họ Bray-Curtis:
+
+| Cách chọn k | Test seed 42 | Chia ngẫu nhiên | Bỏ trọn một điểm | Khác đợt đo | TB ba giao thức |
+|---|---:|---:|---:|---:|---:|
+| k = 1 | **2,15** | **2,05** | 6,89 | 4,61 | 4,52 |
+| k = 4 | 2,49 | 2,33 | 5,66 | 4,20 | 4,06 |
+| k = 7 | 2,66 | 2,51 | 5,45 | 4,14 | 4,03 |
+| k = 15 | 2,97 | 2,91 | 5,32 | 4,13 | 4,12 |
+| k = 41 | 3,65 | 3,62 | **5,27** | 4,35 | 4,42 |
+| **k động 1 / tự chọn** (triển khai) | 2,32 | 2,30 | 5,63 | **4,11** | **4,01** |
+
+- Không k cố định nào tốt nhất ở cả ba giao thức. k động dùng k = 1 cho 50% lần quét khi chia
+  ngẫu nhiên, 14% khi bỏ trọn một điểm, 9% khi khác đợt đo, nên gần mức k = 1 ở cột chia ngẫu
+  nhiên và gần mức k = 4–7 ở hai cột sau.
+- So với k cố định tốt nhất theo trung bình ba giao thức (k = 7), k động chỉ thấp hơn 0,02 m. Phần
+  lớn mức giảm đến từ khoảng cách Bray-Curtis: cùng k = 1, kNN Manhattan sai 3,32 / 7,26 / 5,81 m.
+- Với kNN và WKNN Manhattan, k động không hơn k = 5 cố định (TB ba giao thức 4,97 và 4,95 m so với
+  4,97 và 4,92 m).
+- Các cặp k động khác (2/11, 3/15, 1/7...) chênh mô hình triển khai dưới 0,03 m, nhỏ hơn độ
+  lệch chuẩn qua 10 seed (0,15 m).
 
 ### Độ trải so với sai số thật
 
@@ -287,7 +311,7 @@ python -m ml.report           # biểu đồ -> reports/figures/
 python -m ml.on_dinh          # chia ngẫu nhiên 10 seed
 python -m ml.danh_gia_cheo    # bỏ trọn một điểm
 python -m ml.khac_dot         # khác đợt đo
-python -m ml.quet_k           # quét k = 1..61
+python -m ml.quet_k           # k cố định 1..61 và k động, test seed 42 + ba giao thức, ~5 phút
 python -m ml.ujiindoorloc     # UJIIndoorLoc, ~10 phút; tải dữ liệu theo data/raw/ujiindoorloc/README.md
 python -m tools.danh_gia_chi_duong
 python -m tools.so_sanh_tim_duong
