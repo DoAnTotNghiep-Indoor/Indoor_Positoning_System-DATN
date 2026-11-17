@@ -1,5 +1,5 @@
 phep_do,cach,so_cap,tb_m,trung_vi_m,p90_m,max_m,tuong_doi_tb,ty_le_tren_1m
-cua_so_truot,moi_m,6622,1.4439,0.274,3.9951,29.1407,0.1579,0.3349
-mot_lan_quet,moi_m,6622,1.7441,0.4426,4.8315,29.1407,0.1846,0.3837
+cua_so_truot,moi_m,6622,0.478,0.0563,0.9572,28.7656,0.048,0.092
+mot_lan_quet,moi_m,6622,1.0362,0.0831,3.4054,28.7656,0.1038,0.2022
 thuat_toan,moi_m,5600,inf,0.1005,0.3461,inf,0.0095,0.047
 thuat_toan,dijkstra_m,5600,inf,0.1005,0.3461,inf,0.0095,0.047

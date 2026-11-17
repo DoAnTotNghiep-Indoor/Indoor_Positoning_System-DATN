@@ -44,7 +44,7 @@ artifacts/*.joblib
 # Trừ các tệp backend cần để chạy ngay sau khi clone: scaler và mô hình đang
 # triển khai (k động). Các mô hình còn lại sinh lại bằng `python -m ml.train`.
 !artifacts/scaler.pkl
-!artifacts/model_fingerprint_knn_dong.pkl
+!artifacts/model_bo_ba.pkl
 
 # Node / build
 node_modules/

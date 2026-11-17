@@ -51,7 +51,7 @@ flowchart TB
   subgraph Online["Trực tuyến"]
     B1[Ứng dụng Android] -- POST /predict --> B2[FastAPI]
     B2 --> B3[FeatureMapper<br/>BSSID → vector]
-    B3 --> B4[Mô hình k động]
+    B3 --> B4[Bộ 3: HistGB + KAN + Transformer]
     B4 --> B5[Gộp cửa sổ 3 lần quét]
     B5 --> B6[(SQLite)]
     B1 -- POST /route --> B7[Tìm đường A*]
@@ -68,7 +68,7 @@ flowchart TB
 | Ứng dụng di động | Flutter (Android) | `mobile/` |
 | Backend | FastAPI, SQLAlchemy async, SQLite | `backend/` |
 | Web Dashboard | HTML, CSS, JavaScript (ES module) | `dashboard/` |
-| Máy học | scikit-learn, XGBoost, pandas, NumPy | `ml/` |
+| Máy học | scikit-learn, XGBoost, PyTorch, pandas, NumPy | `ml/` |
 
 Backend chia ba tầng: `routers/` nhận request và kiểm schema, `services/` chứa nghiệp vụ (dự
 đoán, gộp, tìm đường, chế độ demo), `repository.py` là nơi duy nhất đọc ghi CSDL.
@@ -87,11 +87,11 @@ sequenceDiagram
   A->>R: {device_id, scan: [{bssid, rssi}]}
   R->>F: ánh xạ theo feature_list.json
   F->>M: vector đã chuẩn hoá
-  M-->>R: (x, y), số AP khớp
+  M-->>R: vector điểm, (x, y), số AP khớp
   alt khớp < 6 AP
     R-->>A: 422 khong_du_ap
   else
-    R->>G: thêm (x, y) vào cửa sổ của thiết bị
+    R->>G: thêm vector điểm vào cửa sổ của thiết bị
     G-->>R: (x_smooth, y_smooth)
     R->>D: ghi toạ độ thô, đã gộp
     R-->>A: {x, y, x_smooth, y_smooth, matched_ap, ...}
@@ -104,9 +104,11 @@ sequenceDiagram
 - **Ngưỡng AP.** Mô hình luôn trả một toạ độ, kể cả khi vector toàn giá trị điền thiếu. Vì vậy
   backend từ chối lần quét khớp dưới `min_ap_per_scan` = 6 AP, cũng là ngưỡng đã dùng để loại
   mẫu huấn luyện.
-- **Gộp.** `BoGop` giữ 3 dự đoán gần nhất của mỗi thiết bị và trả dự đoán có tổng khoảng cách
-  tới các dự đoán còn lại nhỏ nhất (đồng thuận không gian). Một lần quét lạc không kéo lệch kết
-  quả như khi lấy trung bình hay EMA. Thiết bị im lặng quá 30 giây thì bắt đầu cửa sổ mới.
+- **Gộp.** `BoGop` giữ vector điểm của 3 lần quét gần nhất của mỗi thiết bị, cộng lại (tức nhân
+  xác suất) rồi lấy trung vị hình học có trọng số trên toạ độ 40 điểm, bằng đúng hàm gộp của mô
+  hình (`postprocess.cach_gop`). Một lần quét lạc chỉ góp một phần ba, hai lần quét đồng ý với
+  nhau sẽ áp đảo nó. Thiết bị im lặng quá 30 giây thì bắt đầu cửa sổ mới. Mô hình chỉ ra toạ độ
+  (khi đặt `MO_HINH_TRIEN_KHAI` khác) thì gộp toạ độ bằng đồng thuận không gian.
 - **Chu kỳ.** Ứng dụng gọi quét mỗi 1 giây và chờ đúng sự kiện quét xong của hệ thống. Máy đo phải
   tắt điều tiết quét Wi-Fi; còn bật thì Android chỉ cho 4 lần quét mỗi 2 phút. Kể cả khi tắt,
   firmware vẫn có thể trả lại kết quả cũ: trên vivo X300 số liệu thật mới khoảng 7,6 s một lần khi
@@ -116,19 +118,21 @@ sequenceDiagram
 **Định vị trên máy (Mô hình cục bộ).** Tuỳ chọn trong Cài đặt của ứng dụng, mặc định tắt. Khi
 bật, ứng dụng tự làm các bước ánh xạ, chặn ngưỡng AP, mô hình và gộp ở trên, không chờ máy chủ:
 
-- Mô hình kNN k động không có trọng số cần học; "mô hình" là bảng vân tay cùng vài tham số.
-  `ml.xuat_mo_hinh` xuất phần này ra `mobile/assets/model/k_dong.json` (khoảng 790 KB): danh
-  sách 36 BSSID, giá trị điền thiếu, tham số min-max, 2.668 vân tay đã nâng mũ beta, nhãn và 40
-  toạ độ, ngưỡng d1, k lớn. Bước học vẫn chạy trên máy tính như cũ.
-- Mã Dart dịch đúng thuật toán Python. Hai bài kiểm giữ hai bên khớp nhau: `flutter test` so
-  với 200 lần quét test do Python đoán (lệch dưới 10⁻⁶ đơn vị lưới), còn pytest báo lỗi khi tệp
-  trong app lệch với mô hình vừa học.
+- `ml.xuat_mo_hinh` xuất Bộ 3 ra `mobile/assets/model/bo_ba.json` (khoảng 9,5 MB): danh sách 36
+  BSSID, giá trị điền thiếu, tham số min-max, 40 toạ độ, 6.000 cây HistGB nối phẳng (khoảng 290
+  nghìn nút, chiếm gần hết dung lượng), trọng số KAN và Transformer. Bước học vẫn chạy trên máy
+  tính. Ứng dụng đọc và dựng mô hình trên một isolate riêng.
+- Mã Dart dịch đúng thuật toán Python, không dùng thư viện học máy hay NPU (LiteRT): hai mạng nhỏ
+  (KAN khoảng 44 nghìn, Transformer khoảng 20 nghìn tham số) và phép đi cây. Hai bài kiểm giữ hai
+  bên khớp nhau: `flutter test` so với 200 lần quét test do Python đoán, cả một lần quét lẫn gộp
+  3 lần (toạ độ lệch dưới 10⁻⁴ đơn vị lưới; Python tính hai mạng bằng float32, Dart bằng
+  float64), còn pytest báo lỗi khi tệp trong app lệch với mô hình vừa học.
 - Ứng dụng vẫn gửi `POST /predict` nhưng không chờ trả lời: máy chủ tiếp tục ghi CSDL cho
   Dashboard và cho phân tích sau buổi đo, còn vị trí trên điện thoại không phụ thuộc mạng.
-- Đo trên vivo X300 (bản release, 200 lần quét): một lần đoán trên máy trung vị 0,72 ms; gọi
-  API qua WiFi nội bộ khứ hồi trung vị 58 ms, trong đó mô hình trên máy chủ 3,3 ms. Cả hai đều
-  nhỏ so với nhịp số liệu WiFi mới (2–8 s), nên lợi ích chính là không cần mạng. Không dùng NPU (LiteRT):
-  kNN chỉ là phép tính khoảng cách, không phải mạng nơ-ron.
+- Đo trên Samsung Galaxy Z Fold3 (bản profile, 200 lần quét test chạy 5 lượt): nạp mô hình 270 ms,
+  một lần đoán kể cả gộp trung vị 4,4 ms, P95 5,3 ms, lệch Python dưới 2·10⁻⁵ đơn vị lưới. Trên máy
+  chủ (Python) trung vị 5,4 ms. Các con số này đều nhỏ so với nhịp số liệu WiFi mới (2–8 s), nên
+  lợi ích chính của mô hình cục bộ là không cần mạng.
 - Bản đồ và chỉ đường vẫn lấy từ máy chủ.
 
 ## 4. Tiền xử lý và mô hình
@@ -161,11 +165,25 @@ bật, ứng dụng tự làm các bước ánh xạ, chặn ngưỡng AP, mô h
 | WKNN | Như kNN, trọng số nghịch đảo khoảng cách |
 | Random Forest | Hồi quy hai đầu ra |
 | XGBoost | Hai mô hình con cho x và y |
-| **kNN k động (Dynamic-k kNN)** | Khoảng cách Bray-Curtis, k chọn theo từng lần quét |
+| kNN k động (Dynamic-k kNN) | Khoảng cách Bray-Curtis, k chọn theo từng lần quét |
+| **Bộ 3 (triển khai)** | HistGB, KAN, Transformer phân lớp 40 điểm, gộp bằng nhân xác suất |
 
 Tham số mỗi mô hình chọn bằng tìm kiếm lưới trên tập validation. Riêng mô hình triển khai
-được chỉ định (`MO_HINH_TRIEN_KHAI` trong `ml/config.py`), vì validation chia ngẫu nhiên nên
-luôn ưu tiên mô hình nhớ đúng điểm đã khảo sát (k = 1).
+được chỉ định (`MO_HINH_TRIEN_KHAI` trong `ml/config.py`), vì validation chia ngẫu nhiên chỉ
+phản ánh một trong ba giao thức. Chọn theo sai số trung bình sau khi gộp 3 lần quét:
+
+| Mô hình | Chia ngẫu nhiên, 10 seed | Bỏ trọn một điểm | Khác đợt đo, TB hai chiều |
+|---|---:|---:|---:|
+| Bộ 3 | 0,49 m | 5,37 m | 2,75 m |
+| kNN k động | 1,80 m | 5,14 m | 3,73 m |
+
+**Bộ 3.** Ba bộ phân lớp khác loại nên thường sai ở những lần quét khác nhau: HistGB (cây tăng
+cường, 150 vòng), KAN 36 → 64 → 40 (mỗi cạnh là một hàm B-spline học được) và Transformer trên
+tập AP (mỗi AP nghe thấy là một token, AP không nghe thấy bị che khỏi attention). Cả ba học trên
+dữ liệu nhân 5 lần: lệch máy, nhiễu, mất AP. Mỗi lần quét cho vector điểm bằng trung bình
+log(p + 0,001) của ba mô hình; toạ độ là trung vị hình học có trọng số trên 40 điểm. Một điểm
+chiếm từ nửa trọng số trở lên thì kết quả rơi đúng điểm đó, nên ở chỗ chưa khảo sát Bộ 3 kém kNN
+k động 0,23 m. KAN và Transformer học trên GPU nếu có.
 
 **k động.** Bộ dữ liệu chỉ có 40 toạ độ khác nhau, nên bài toán gần với nhận lại điểm đã khảo
 sát. k = 1 tốt nhất khi người dùng đứng đúng điểm đã đo; k từ 11 trở lên tốt nhất khi đứng
@@ -323,7 +341,7 @@ chặng dưới 0,5 m dồn vào chặng kề. API trả mã hướng; ứng d�
 
 **Kết quả.** Trên 1.892 truy vấn giữa các điểm tham chiếu, A* mở trung bình 15 nút, Dijkstra
 107, cùng quãng đường. So với đường ngắn nhất trên lưới mịn, riêng thuật toán lệch trung bình
-0,16 m; quãng đường báo khi đứng ở vị trí mô hình đoán so với từ vị trí thật lệch trung bình 1,45 m,
+0,16 m; quãng đường báo khi đứng ở vị trí mô hình đoán so với từ vị trí thật lệch trung bình 0,48 m,
 lớn nhất 29 m khi vị trí đoán rơi sang sàn khác mức bên kia lan can.
 
 ## 8. API
@@ -347,7 +365,7 @@ Ví dụ `POST /predict`:
 
 // Phản hồi 200
 {"device_id": "a1b2", "x": -22.0, "y": 34.0, "x_smooth": -22.0, "y_smooth": 34.0,
- "model": "fingerprint_knn_dong", "timestamp": "2026-10-01T07:29:47Z",
+ "model": "bo_ba", "timestamp": "2026-10-01T07:29:47Z",
  "matched_ap": 32, "scan_count": 3, "latency_ms": 4.2}
 
 // Phản hồi 422 khi khớp quá ít AP

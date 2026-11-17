@@ -48,14 +48,18 @@ def gop(du_doan: np.ndarray, cach: str = "dong_thuan") -> np.ndarray:
     return CACH_GOP[cach](P)
 
 
-def gop_cua_so_truot(
-    du_doan: np.ndarray,
-    cua_so: int = CUA_SO_MAC_DINH,
-    cach: str = "dong_thuan",
-) -> np.ndarray:
-    """Áp dụng cho một chuỗi dự đoán theo thời gian. Mỗi thời điểm gộp `cua_so` dự
-    đoán gần nhất; những dự đoán đầu chuỗi dùng ít mẫu hơn thay vì bị bỏ, để hệ
-    thống có toạ độ ngay từ lần quét đầu.
+def cach_gop(model):
+    """(đầu ra từng lần quét, hàm gộp một cửa sổ đầu ra thành toạ độ). Mô hình có cách gộp
+    riêng thì dùng cách đó (Bộ 3 cộng log xác suất), còn lại gộp toạ độ bằng đồng thuận."""
+    if hasattr(model, "gop"):
+        return model.dau_ra, model.gop
+    return model.predict, gop
+
+
+def gop_cua_so_truot(dau_ra: np.ndarray, ham_gop=gop, cua_so: int = CUA_SO_MAC_DINH) -> np.ndarray:
+    """Áp dụng cho một chuỗi đầu ra theo thời gian. Mỗi thời điểm gộp `cua_so` đầu ra
+    gần nhất; những lần đầu chuỗi dùng ít mẫu hơn thay vì bị bỏ, để hệ thống có toạ
+    độ ngay từ lần quét đầu.
     """
-    P = np.asarray(du_doan, dtype=float)
-    return np.array([gop(P[max(0, i - cua_so + 1) : i + 1], cach) for i in range(len(P))])
+    D = np.asarray(dau_ra, dtype=float)
+    return np.array([ham_gop(D[max(0, i - cua_so + 1) : i + 1]) for i in range(len(D))])

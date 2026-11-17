@@ -85,12 +85,15 @@ VALIDATION_SIZE = 0.15
 RANDOM_STATE = 42
 
 # Mô hình triển khai, chỉ định thay vì lấy mô hình có sai số validation thấp
-# nhất: validation chia ngẫu nhiên theo lần quét nên luôn ưu tiên mô hình nhớ
-# đúng điểm đã khảo sát (k = 1), trong khi người dùng thật còn đứng ở chỗ chưa
-# khảo sát. k động cân bằng hai trường hợp, đánh giá trên 10 lần chia lại, bỏ trọn
-# từng điểm và khác đợt đo, không dùng tập test seed 42.
+# nhất: validation chia ngẫu nhiên theo lần quét nên chỉ phản ánh một trong ba
+# giao thức. Chọn theo sai số trung bình gộp 3 lần quét, không dùng tập test seed 42:
+#                         chia ngẫu nhiên 10 seed   bỏ trọn một điểm   khác đợt đo TB hai chiều
+#   Bộ 3                  0,49 m                    5,37 m             2,75 m
+#   Dynamic-k kNN         1,80 m                    5,14 m             3,73 m
+# Bộ 3 tốt hơn rõ ở hai giao thức và kém 0,23 m ở chỗ chưa khảo sát (bỏ trọn một
+# điểm), vì nó hay trả đúng một điểm đã khảo sát.
 # Đặt None để quay về chọn theo validation.
-MO_HINH_TRIEN_KHAI = "fingerprint_knn_dong"
+MO_HINH_TRIEN_KHAI = "bo_ba"
 
 
 # --- Ghi tệp văn bản ---

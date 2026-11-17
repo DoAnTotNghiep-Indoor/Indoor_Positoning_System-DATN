@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 
@@ -36,8 +37,8 @@ class TheoDoiViTri extends ChangeNotifier {
   Timer? _hen;
 
   bool _cucBo = false;
-  Future<MoHinhKDong>? _moHinh;
-  final _boGop = BoGop();
+  Future<MoHinhBoBa>? _moHinh;
+  final _boGop = BoGop<Float64List>();
   bool _dangBan = false;
   bool _daHuy = false;
   bool _daXinQuyen = false;
@@ -149,16 +150,17 @@ class TheoDoiViTri extends ChangeNotifier {
   /// và để phân tích sau buổi đo; mất mạng thì vị trí trên máy vẫn chạy.
   Future<ViTri> _doanTrenMay(List<DiemTruyCap> quet) async {
     unawaited(_api.duDoan(deviceId: deviceId, quet: quet).then((_) {}, onError: (_) {}));
-    final mo = await (_moHinh ??= MoHinhKDong.napTaiSan());
+    final mo = await (_moHinh ??= MoHinhBoBa.napTaiSan());
     final dongHo = Stopwatch()..start();
-    final (x, y, soKhop) = mo.doan(quet);
-    final (xGop, yGop) = _boGop.them(x, y);
+    final (diem, soKhop) = mo.diem(quet);
+    final (x, y) = mo.gop([diem]);
+    final (xGop, yGop) = mo.gop(_boGop.them(diem));
     return ViTri(
       x: x,
       y: y,
       xGop: xGop,
       yGop: yGop,
-      moHinh: 'fingerprint_knn_dong',
+      moHinh: 'bo_ba',
       soApKhop: soKhop,
       soLanQuetDaGop: _boGop.soMau,
       doTreMs: dongHo.elapsedMicroseconds / 1000,
