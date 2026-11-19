@@ -13,7 +13,7 @@ Hệ thống định vị người dùng trong tầng 1 Thư viện Đại học
 | Ứng dụng Android WiLoc (Flutter) | `mobile/` | Quét WiFi liên tục, định vị qua máy chủ hoặc ngay trên máy, hiện vị trí và nón hướng la bàn trên sơ đồ, tra cứu khu vực, chỉ đường. Song ngữ Việt/Anh, sáng/tối |
 | Backend (FastAPI + SQLite) | `backend/` | Dự đoán toạ độ, gộp các lần quét, lưu lịch sử, phục vụ bản đồ và tìm đường |
 | Web Dashboard | `dashboard/` | Hai trang. Giám sát: sơ đồ với các thiết bị đang định vị và vệt đường, bảng thiết bị, thử chỉ đường, lịch sử. Quản lý (`quan-ly.html`): sơ đồ và số thiết bị đang sử dụng ứng dụng, bảng AP lạ điện thoại bắt được (AP mới lắp hay AP đã biết nhưng bị loại). HTML/CSS/JS thuần, không thư viện ngoài |
-| Máy học | `ml/` | Tiền xử lý 12 bước, huấn luyện và so sánh 6 mô hình (triển khai Bộ 3), đánh giá, vẽ biểu đồ |
+| Máy học | `ml/` | Tiền xử lý 12 bước, huấn luyện và so sánh 5 mô hình, đánh giá, vẽ biểu đồ |
 | Công cụ | `tools/` | Trích hình học từ sơ đồ, vẽ sơ đồ SVG cho app, sinh danh sách khu vực, thu vân tay qua cáp USB, đánh giá chỉ đường |
 
 ## Hoạt động
@@ -24,14 +24,13 @@ Hệ thống định vị người dùng trong tầng 1 Thư viện Đại học
 2. Backend ánh xạ từng BSSID vào đúng cột của vector đặc trưng theo
    `artifacts/feature_list.json` (36 AP). Thứ tự gửi không ảnh hưởng. BSSID lạ bị bỏ qua.
    RSSI ngoài khoảng vật lý cũng bị bỏ. AP vắng mặt điền −100 dBm.
-3. Vector qua scaler rồi vào mô hình **Bộ 3** (HistGB + KAN + Transformer), ra vector điểm
-   cho 40 điểm tham chiếu và toạ độ `(x, y)`.
+3. Vector qua scaler rồi vào mô hình **kNN k động** (Dynamic-k kNN), ra toạ độ `(x, y)`.
 4. Khớp ít hơn 6 AP (ngưỡng đã dùng để loại mẫu huấn luyện) thì trả 422 `khong_du_ap`
    thay vì đoán bừa. Đứng ngoài thư viện sẽ rơi vào trường hợp này.
-5. Vector điểm được gộp với 2 lần quét trước của cùng thiết bị: cộng lại (tức nhân xác suất
-   của các lần quét), rồi lấy trung vị hình học có trọng số trên toạ độ 40 điểm. Một lần quét
-   lạc chỉ góp một phần ba, hai lần quét đồng ý với nhau sẽ áp đảo nó. Im lặng quá 30 giây thì
-   bắt đầu lại.
+5. Toạ độ được gộp với 2 lần quét trước của cùng thiết bị bằng **đồng thuận không gian**:
+   chọn dự đoán có tổng khoảng cách tới các dự đoán còn lại nhỏ nhất. Cách này loại được
+   một lần quét lạc thay vì bị nó kéo lệch như khi lấy trung bình. Im lặng quá 30 giây
+   thì bắt đầu lại.
 6. Ghi toạ độ thô và toạ độ đã gộp vào SQLite (`data/ips.db`), trả kết quả về app.
 
 App gọi quét mỗi 1 giây (lượt trước chưa xong thì bỏ qua). Máy phải tắt điều tiết quét Wi-Fi,
@@ -44,15 +43,13 @@ mỗi 2 giây.
 Bật **Mô hình cục bộ** trong Cài đặt của app thì bước 2–5 chạy ngay trên điện thoại, không
 chờ máy chủ:
 
-- `python -m ml.xuat_mo_hinh` xuất Bộ 3 ra `mobile/assets/model/bo_ba.json` (khoảng 9,5 MB):
-  36 BSSID, tham số chuẩn hoá, 40 toạ độ, 6.000 cây HistGB (khoảng 290 nghìn nút, chiếm gần hết
-  dung lượng), trọng số KAN và Transformer. App đọc và dựng mô hình trên một isolate riêng để
-  không giật giao diện.
-- App (`mobile/lib/services/dinh_vi_tren_may.dart`) làm lại đúng thuật toán bằng Dart, không
-  dùng thư viện học máy: ánh xạ BSSID, chặn khi khớp dưới 6 AP, đi các cây, KAN, Transformer,
-  gộp 3 lần quét bằng cộng vector điểm. `flutter test` đối chiếu với 200 lần quét test do Python
-  đoán: vector điểm lệch dưới 10⁻⁵, toạ độ lệch dưới 10⁻⁴ đơn vị lưới, kể cả khi gộp (Python
-  tính KAN và Transformer bằng float32, Dart bằng float64).
+- `python -m ml.xuat_mo_hinh` xuất mô hình đang triển khai ra `mobile/assets/model/k_dong.json`
+  (khoảng 790 KB): 36 BSSID, tham số chuẩn hoá, 2.668 vân tay, 40 toạ độ, ngưỡng d1 và k lớn.
+  Không có trọng số nào cần học lại; kNN chỉ cần đúng bảng vân tay và các tham số này.
+- App (`mobile/lib/services/dinh_vi_tren_may.dart`) làm lại đúng thuật toán: ánh xạ BSSID,
+  chặn khi khớp dưới 6 AP, khoảng cách Bray-Curtis, chọn k = 1 hoặc k lớn, gộp 3 lần quét.
+  `flutter test` đối chiếu với 200 lần quét test do Python đoán: toạ độ lệch dưới 10⁻⁶
+  đơn vị lưới.
 - App vẫn gửi `POST /predict` nhưng không chờ trả lời, nên máy chủ vẫn ghi lịch sử cho
   Dashboard và để phân tích. Mất mạng thì vị trí trên máy vẫn chạy.
 - Bản đồ (`GET /map`) và chỉ đường (`POST /route`) vẫn cần máy chủ.
@@ -60,35 +57,7 @@ chờ máy chủ:
 Học lại mô hình thì phải chạy lại `ml.xuat_mo_hinh` rồi build lại app;
 `tests/test_xuat_mo_hinh.py` báo lỗi nếu quên.
 
-### Mô hình triển khai: Bộ 3 (HistGB + KAN + Transformer)
-
-Ba bộ phân lớp 40 điểm tham chiếu, khác loại nhau nên thường sai ở những lần quét khác nhau:
-
-- **HistGB**: cây tăng cường (scikit-learn `HistGradientBoostingClassifier`, 150 vòng).
-- **KAN**: mạng Kolmogorov-Arnold 36 → 64 → 40, mỗi cạnh là một hàm B-spline học được.
-- **Transformer trên tập AP**: mỗi AP nghe thấy là một token (nhúng định danh AP + mức RSSI),
-  AP không nghe thấy bị che khỏi attention thay vì coi là một mức RSSI; 2 lớp, 4 đầu, 32 chiều.
-
-Mỗi lần quét cho một vector điểm: trung bình log(p + 0,001) của ba mô hình. Cộng 0,001 để một
-mô hình cho xác suất gần 0 không phủ quyết cả bộ. Toạ độ là trung vị hình học có trọng số trên
-40 điểm: một điểm chiếm từ nửa trọng số trở lên thì kết quả rơi đúng điểm đó, còn lại rơi vào
-giữa các điểm. Cả ba học trên dữ liệu nhân 5 lần (lệch máy ±0,08, nhiễu 0,03, mất 10% AP, trên
-thang min-max).
-
-KAN và Transformer học trên GPU nếu máy có (torch bản CUDA): `ml.train` cả sáu mô hình, trong
-đó Bộ 3 học bảy lần, mất 12 phút trên RTX 3050 Laptop; trên CPU, riêng Transformer khoảng 40
-phút mỗi lần. Học trên GPU cho kết quả khác học trên CPU (dao động như khi đổi seed); hai lần
-`ml.train` trên cùng máy GPU cho cùng sai số.
-
-Lúc đoán, các cây HistGB được nối phẳng để đi đồng thời: cả Bộ 3 trên máy chủ trung vị 5,4 ms
-một lần quét, trong khi gọi HistGB qua scikit-learn riêng phần cây đã mất 40–50 ms vì phải gọi
-riêng 6.000 cây. App đi cây đúng theo dạng nối phẳng này.
-
-Mô hình triển khai đặt bằng `MO_HINH_TRIEN_KHAI` trong `ml/config.py`, chọn theo sai số ba giao
-thức sau khi gộp 3 lần quét (mục Kết quả), không theo validation. `GET /health` cho biết mô hình
-nào đang chạy.
-
-### Mô hình so sánh: kNN k động (Dynamic-k kNN)
+### Mô hình kNN k động (Dynamic-k kNN)
 
 Không có k cố định nào tốt cho mọi chỗ: k = 1 trả đúng toạ độ khi người dùng đứng ở điểm
 đã khảo sát nhưng tệ khi đứng giữa các điểm; k lớn thì ngược lại. Mô hình dựa vào khoảng
@@ -99,7 +68,8 @@ cách Bray-Curtis d1 từ lần quét tới vân tay gần nhất:
 
 Ngưỡng và k lớn tự chọn lúc `fit`, chỉ trên dữ liệu học, bằng hai tình huống giả lập: chia
 ngẫu nhiên 80/20 (đã khảo sát) và bỏ trọn từng điểm (chưa khảo sát). Trên tập test, khoảng
-một nửa số lần quét dùng k = 1.
+một nửa số lần quét dùng k = 1. Mô hình triển khai đặt bằng `MO_HINH_TRIEN_KHAI` trong
+`ml/config.py`. `GET /health` cho biết mô hình nào đang chạy.
 
 ### Bản đồ và toạ độ
 
@@ -143,7 +113,7 @@ gần nhất) tới một điểm hoặc một khu vực:
 - **Sai số quãng đường** (`python -m tools.danh_gia_chi_duong`, so với Dijkstra trên lưới
   mịn): riêng thuật toán, từ 400 điểm xuất phát ngẫu nhiên tới mọi khu vực, lệch trung bình
   0,16 m. Cả hệ thống, quãng đường app báo khi đứng ở vị trí mô hình đoán (tập test, gộp 3 lần
-  quét) so với quãng đường thật từ vị trí thật: lệch trung bình 0,48 m, trung vị 0,06 m, lớn
+  quét) so với quãng đường thật từ vị trí thật: lệch trung bình 1,45 m, trung vị 0,28 m, lớn
   nhất 29 m. Ca lớn là vị trí đoán rơi sang sàn khác mức bên kia lan can, nên tuyến phải vòng
   qua cầu thang.
 
@@ -167,12 +137,9 @@ Mọi bảng trong `reports/tables/` và số in ra từ `ml.*` tính theo đơn
 
 ### Định vị trên thư viện — sai số trung bình, mét
 
-Một lần quét:
-
 | Mô hình | Chia ngẫu nhiên (TB 10 seed) | Bỏ trọn một điểm | Khác đợt đo |
 |---|---:|---:|---:|
-| **Bộ 3** (triển khai) | **1,33 ± 0,18** | 5,87 | **3,35** |
-| kNN k động | 2,30 ± 0,16 | 5,63 | 4,11 |
+| **kNN k động** | **2,30 ± 0,16** | 5,63 | **4,11** |
 | XGBoost | 3,20 ± 0,15 | **5,33** | 5,21 |
 | kNN | 3,32 ± 0,27 | 7,26 | 5,81 |
 | WKNN | 3,32 ± 0,15 | 6,19 | 5,39 |
@@ -182,29 +149,12 @@ Một lần quét:
   Đây là chặn lạc quan.
 - **Bỏ trọn một điểm** (`ml.danh_gia_cheo`): đứng ở chỗ chưa từng đo. Đây là chặn bi quan.
   Mỗi lần gấp làm lại bước 5–10 của tiền xử lý chỉ trên phần học.
-- **Khác đợt đo** (`ml.khac_dot`): học trên một đợt, kiểm trên đợt kia (Bộ 3: A → B 4,33 m,
-  B → A 2,37 m; kNN k động: 4,93 m và 3,29 m; cột là trung bình hai chiều). Đứng ở chỗ đã
-  khảo sát nhưng khác máy, khác thời điểm, gần với lúc dùng thật nhất.
+- **Khác đợt đo** (`ml.khac_dot`): học trên một đợt, kiểm trên đợt kia (A → B 4,93 m,
+  B → A 3,29 m, cột là trung bình hai chiều). Đứng ở chỗ đã khảo sát nhưng khác máy, khác
+  thời điểm, gần với lúc dùng thật nhất.
 
-Gộp 3 lần quét liên tiếp cùng máy, cùng điểm, như máy chủ và app đang chạy:
-
-| Mô hình | Chia ngẫu nhiên (TB 10 seed) | Bỏ trọn một điểm | Khác đợt đo |
-|---|---:|---:|---:|
-| **Bộ 3** (triển khai) | **0,49 ± 0,14** | 5,37 | **2,75** |
-| kNN k động | 1,80 ± 0,14 | 5,14 | 3,73 |
-| XGBoost | 2,74 ± 0,15 | **4,93** | 4,89 |
-
-Bộ 3 dẫn đầu ở cột thứ nhất và cột thứ ba (khác đợt đo: A → B 3,31 m, B → A 2,19 m sau khi
-gộp). Ở cột thứ hai, chỗ chưa từng đo, Bộ 3 kém kNN k động 0,23 m và XGBoost 0,44 m: là bộ
-phân lớp nên nó hay trả đúng một điểm đã khảo sát, mà điểm thật lại không có trong dữ liệu
-học. Thử chuyển sang kNN k động cho các lần quét lạ (d1 lớn) thì mất phần lớn lợi thế ở hai
-cột kia, vì lần quét khác máy, khác đợt cũng lạ như lần quét ở chỗ chưa đo.
-
-Số của Bộ 3 đo trên đúng các lần chia của `ml.on_dinh`, `ml.danh_gia_cheo`, `ml.khac_dot`
-(kNN k động và XGBoost tính lại ra đúng các số ở bảng trên), bằng script đánh giá riêng, học
-trên CPU; script này chưa đưa vào kho.
-
-So với hai mô hình cơ sở kNN và WKNN, kNN k động thấp hơn ở cả ba cột.
+k động dẫn đầu ở cột thứ nhất (cả 10 seed) và cột thứ ba; ở cột thứ hai XGBoost thấp hơn
+0,30 m. So với hai mô hình cơ sở kNN và WKNN, k động thấp hơn ở cả ba cột.
 
 ### k cố định và k động — sai số trung bình, mét
 
@@ -220,7 +170,7 @@ seed 42 (học train + validation như `ml.train`) và trên ba giao thức. Đ�
 | k = 7 | 2,66 | 2,51 | 5,45 | 4,14 | 4,03 |
 | k = 15 | 2,97 | 2,91 | 5,32 | 4,13 | 4,12 |
 | k = 41 | 3,65 | 3,62 | **5,27** | 4,35 | 4,42 |
-| **k động 1 / tự chọn** | 2,32 | 2,30 | 5,63 | **4,11** | **4,01** |
+| **k động 1 / tự chọn** (triển khai) | 2,32 | 2,30 | 5,63 | **4,11** | **4,01** |
 
 - Không k cố định nào tốt nhất ở cả ba giao thức. k động dùng k = 1 cho 50% lần quét khi chia
   ngẫu nhiên, 14% khi bỏ trọn một điểm, 9% khi khác đợt đo, nên gần mức k = 1 ở cột chia ngẫu
@@ -229,7 +179,7 @@ seed 42 (học train + validation như `ml.train`) và trên ba giao thức. Đ�
   lớn mức giảm đến từ khoảng cách Bray-Curtis: cùng k = 1, kNN Manhattan sai 3,32 / 7,26 / 5,81 m.
 - Với kNN và WKNN Manhattan, k động không hơn k = 5 cố định (TB ba giao thức 4,97 và 4,95 m so với
   4,97 và 4,92 m).
-- Các cặp k động khác (2/11, 3/15, 1/7...) chênh cặp 1 / tự chọn dưới 0,03 m, nhỏ hơn độ
+- Các cặp k động khác (2/11, 3/15, 1/7...) chênh mô hình triển khai dưới 0,03 m, nhỏ hơn độ
   lệch chuẩn qua 10 seed (0,15 m).
 
 ### Độ trải so với sai số thật
@@ -285,25 +235,23 @@ toạ độ chỉ từ các láng giềng cùng toà và tầng, còn ở đây 
 - **So với đường ngắn nhất tham chiếu** (Dijkstra trên lưới điểm ảnh, 4.400 cặp điểm): lệch
   trung vị 0,09 m, 90% số cặp lệch dưới 0,34 m (`tools/danh_gia_chi_duong.py`).
 - **Quãng đường hiển thị từ vị trí dự đoán** so với quãng đường thật, trên tập test, cửa
-  sổ gộp 3 (6.622 cặp): lệch trung vị 0,06 m, p90 0,96 m, lớn nhất 29 m.
+  sổ gộp 3 (5.203 cặp): lệch trung vị 0,28 m, p90 3,95 m, lớn nhất 29 m.
 - **So sánh 6 thuật toán** (`tools/so_sanh_tim_duong.py`, 1.892 truy vấn): A* mở trung bình
   15 nút (0,12 ms), Dijkstra 107 nút (0,49 ms), cùng quãng đường. BFS và tham lam chỉ cho
   đường ngắn nhất ở khoảng 36% số truy vấn.
 
 ### Hiệu năng
 
-- Bộ 3 trên máy chủ trung vị 5,4 ms một lần quét, P95 7,9 ms (200 lần quét test, gồm ánh xạ
-  BSSID và chuẩn hoá); năm mô hình so sánh xem `python -m ml.toc_do`. `/route` khoảng 7 ms.
-- Mô hình cục bộ trên Samsung Galaxy Z Fold3 (SM-F926B), bản profile, 200 lần quét test chạy 5
-  lượt: nạp mô hình 270 ms; một lần đoán kể cả gộp 3 lần quét trung vị 4,4 ms, P95 5,3 ms; lệch
-  Python dưới 2·10⁻⁵ đơn vị lưới. Gọi `/predict` qua WiFi nội bộ (vivo X300) khứ hồi trung vị
-  58 ms, phần lớn là mạng.
+- Mô hình dự đoán trung vị 2,5 ms một lần quét (bảng năm mô hình: `python -m ml.toc_do`); cả
+  `/predict` (kèm gộp và ghi CSDL) khoảng 10 ms; `/route` khoảng 7 ms.
+- Đo trên vivo X300, bản release, 200 lần quét test: mô hình cục bộ trung vị 0,72 ms mỗi lần
+  đoán; gọi `/predict` qua WiFi nội bộ khứ hồi trung vị 58 ms, phần lớn là mạng.
 - Máy chủ trên VM Azure Central India, ra ngoài qua Cloudflare Tunnel, đo từ Việt Nam
   (`python -m tools.do_tre_may_chu <địa chỉ>`, 200 lần, trung vị): `/predict` 332 ms, `/route`
   330 ms, P99 ≤ 352 ms. Mô hình trên VM chỉ 1,7 ms; nối thẳng tới VM không qua Cloudflare 136 ms.
   Cloudflare thêm ~200 ms vì vào ở Hồng Kông còn tunnel nối ở Mumbai. Mọi con số này đều nhỏ so
   với nhịp số liệu WiFi mới (2–8 s, mục Hạn chế).
-- APK release chỉ arm64: 24,4 MB (kể cả tệp mô hình cục bộ 9,5 MB).
+- APK release chỉ arm64: 20,5 MB (kể cả mô hình cục bộ).
 
 ## Cài đặt và chạy
 
@@ -358,8 +306,8 @@ laptop `http://<IP>:8000`). Mặc định là PROD.
 ```bash
 python -m ml.pipeline         # tiền xử lý 12 bước -> artifacts/, data/processed/, data/splits/
 python -m ml.audit            # rà rò rỉ dữ liệu, độ ổn định, chất lượng buổi thu
-python -m ml.train            # huấn luyện 6 mô hình (--nhanh: lưới rút gọn) -> artifacts/, reports/tables/
-python -m ml.xuat_mo_hinh     # xuất Bộ 3 cho app -> mobile/assets/model/
+python -m ml.train            # huấn luyện 5 mô hình (--nhanh: lưới rút gọn) -> artifacts/, reports/tables/
+python -m ml.xuat_mo_hinh     # xuất kNN k động cho app -> mobile/assets/model/
 python -m ml.report           # biểu đồ -> reports/figures/
 python -m ml.on_dinh          # chia ngẫu nhiên 10 seed
 python -m ml.danh_gia_cheo    # bỏ trọn một điểm
@@ -371,8 +319,7 @@ python -m tools.so_sanh_tim_duong
 ```
 
 Chạy `ml.pipeline` trước `ml.train`, và `ml.train` trước `ml.report`, `ml.xuat_mo_hinh`.
-Các bước học và đánh giá chạy song song trên mọi lõi CPU; KAN và Transformer của Bộ 3 học trên
-GPU nếu torch cài bản CUDA (xem `requirements.txt`).
+Các bước học và đánh giá chạy song song trên mọi lõi CPU.
 
 ### Ứng dụng
 
@@ -413,10 +360,8 @@ Xem `mobile/README.md`.
   mọi thiết bị qua `GET /predictions`. `ALLOWED_ORIGINS` mặc định là `*`.
 - **Sai số tại chỗ chưa đủ điểm.** Buổi đo 03/10/2026 mới so được 1 chỗ đứng biết toạ độ.
   Góc giữa sơ đồ và hướng bắc (dùng cho nón hướng) đo trên ảnh vệ tinh, chưa so tại chỗ.
-- **Ở giữa các điểm tham chiếu, vị trí hay rơi vào một điểm đã khảo sát.** Bộ 3 là bộ phân
-  lớp: ở chỗ chưa từng đo nó sai 5,37 m (bỏ trọn một điểm, gộp 3 lần quét), kém kNN k động
-  0,23 m. Khi RSSI dao động, điểm trội nhất đổi nên vị trí nhảy giữa các điểm gần nhau (xem
-  Hướng phát triển).
+- **Vị trí nhảy khi ở giữa các điểm tham chiếu.** Gần RP sai khoảng 1–2 m; ở giữa các RP,
+  tập láng giềng đổi theo dao động RSSI nên vị trí nhảy nhiều hướng (xem Hướng phát triển).
 - **Đợt B không có dữ liệu thô**: không có thời điểm quét, tên máy, hướng. Vì vậy đánh giá
   khác máy chỉ làm được ở mức đợt (một máy so với ba máy gộp), chưa tách từng máy hay
   từng buổi.
@@ -435,9 +380,8 @@ Xem `mobile/README.md`.
 
 ### Giảm nhảy vị trí khi người dùng đi
 
-Đo trên 2.045 dự đoán của kNN k động buổi 03/10/2026 (máy vivo X300): chỉ 1,9% lần quét đủ
-gần một vân tay để mô hình dùng k = 1; còn lại lấy trung bình 15 láng giềng. Bước nhảy thô giữa
-hai lần liên
+Đo trên 2.045 dự đoán buổi 03/10/2026 (máy vivo X300): chỉ 1,9% lần quét đủ gần một vân tay
+để mô hình dùng k = 1; còn lại lấy trung bình 15 láng giềng. Bước nhảy thô giữa hai lần liên
 tiếp có trung vị 2,4 m, P90 6,9 m; 41,7% bước dài hơn 3 m, xa hơn quãng đi bộ giữa hai lần
 quét. Ở giữa các RP, lần quét giống vài RP gần ngang nhau, RSSI dao động vài dBm là tập láng
 giềng đổi sang cụm khác.
@@ -452,7 +396,7 @@ quét, hướng la bàn nhiễu 20°), sai số trung bình:
 | Cách | Sai số TB (m) |
 |---|---:|
 | Thô | 3,82 |
-| Gộp 3 lần quét (đồng thuận không gian) | 3,56 |
+| Gộp 3 lần quét (đang dùng) | 3,56 |
 | Chỉ chặn quãng theo thời gian | 3,22 |
 | Chặn quãng + số bước | 3,03 |
 | Chặn quãng + số bước + hướng | 2,90 |

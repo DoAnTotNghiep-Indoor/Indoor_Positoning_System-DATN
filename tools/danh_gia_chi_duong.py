@@ -116,15 +116,14 @@ def dau_cuoi(g: DoThiDiLai, moc: MocDo, nhom: dict, truong: dict) -> pd.DataFram
     ap = json.loads((config.ARTIFACTS_DIR / config.FEATURE_LIST_JSON)
                     .read_text(encoding="utf-8"))["ap_columns"]
     te = pd.read_csv(config.SPLITS_DIR / "test.csv")
-    dau_ra, ham_gop = postprocess.cach_gop(joblib.load(config.ARTIFACTS_DIR / meta["file_active"]))
-    D = dau_ra(te[ap].to_numpy(float))
+    p = joblib.load(config.ARTIFACTS_DIR / meta["file_active"]).predict(te[ap].to_numpy(float))
     y = te[["x", "y"]].to_numpy(float)
 
-    p = postprocess.gop_cua_so_truot(D, ham_gop, cua_so=1)
     vi_tri = [("mot_lan_quet", i, p[i]) for i in range(len(te))]
     for chuoi in evaluate.nhom_theo_thoi_gian(te):
-        gop = postprocess.gop_cua_so_truot(D[chuoi], ham_gop)
-        vi_tri += [("cua_so_truot", i, g) for i, g in zip(chuoi, gop)]
+        for k in range(len(chuoi)):
+            cua_so = p[chuoi[max(0, k - postprocess.CUA_SO_MAC_DINH + 1): k + 1]]
+            vi_tri.append(("cua_so_truot", chuoi[k], postprocess.dong_thuan_khong_gian(cua_so)))
 
     dong = []
     for kieu, i, (px, py) in vi_tri:

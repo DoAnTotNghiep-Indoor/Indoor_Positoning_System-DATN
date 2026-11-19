@@ -95,8 +95,7 @@ def test_gop_cua_so_va_lich_su(client):
     c = du_doan(client, lac, "gop").json()
     # Hai lần quét giống nhau áp đảo lần lạc.
     assert c["scan_count"] == 3
-    gop = (c["x_smooth"], c["y_smooth"])
-    assert math.dist(gop, (a["x"], a["y"])) < math.dist(gop, (c["x"], c["y"]))
+    assert (c["x_smooth"], c["y_smooth"]) == (a["x"], a["y"])
     assert du_doan(client, binh_thuong, "thiet-bi-khac").json()["scan_count"] == 1
 
     ds = client.get("/predictions", params={"device_id": "gop"}).json()

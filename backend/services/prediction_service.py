@@ -7,12 +7,10 @@ import time
 from pathlib import Path
 
 import joblib
-import numpy as np
 
 from backend.config import settings
 from backend.services.preprocessing_service import (FeatureMapper,
                                                     doc_artifact)
-from ml import postprocess
 
 
 class HopDongLech(RuntimeError):
@@ -39,25 +37,23 @@ class Predictor:
 
         self.ten_mo_hinh: str = metadata["mo_hinh_active"]
         self.model = joblib.load(doc_artifact(thu_muc / metadata["file_active"]))
-        self.dau_ra, self.ham_gop = postprocess.cach_gop(self.model)
 
-        # Chạy nóng: lần đầu chậm hơn hẳn các lần sau.
+        # Chạy nóng: lần đầu ~1.400 ms, các lần sau 0,3 ms.
         self.du_doan([])
 
     @property
     def so_ap_toi_thieu(self) -> int:
         return self.mapper.min_ap_per_scan
 
-    def du_doan(self, scan: list[dict]) -> tuple[float, float, np.ndarray, int, float]:
-        """(x, y, đầu ra để `BoGop` gộp, số AP khớp, độ trễ ms). Không tự chặn khi
-        thiếu AP — mô hình vẫn trả toạ độ cho vector toàn giá trị điền, nên
-        `/predict` phải chặn."""
+    def du_doan(self, scan: list[dict]) -> tuple[float, float, int, float]:
+        """(x, y, số AP khớp, độ trễ ms). Không tự chặn khi thiếu AP — mô hình
+        vẫn trả toạ độ cho vector toàn giá trị điền, nên `/predict` phải chặn."""
         bat_dau = time.perf_counter()
 
         vector = self.mapper.map_scan_to_vector(scan)
         so_khop = int((vector != self.mapper.missing_rssi_value).sum())
-        d = self.dau_ra(self.mapper.chuan_hoa(vector))[0]
-        x, y = self.ham_gop(d[None])
+        X = self.mapper.chuan_hoa(vector)
+        x, y = self.model.predict(X)[0]
 
         do_tre = (time.perf_counter() - bat_dau) * 1000
-        return float(x), float(y), d, so_khop, do_tre
+        return float(x), float(y), so_khop, do_tre

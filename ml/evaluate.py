@@ -15,7 +15,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from ml import config, postprocess
+from ml import config
 
 # Các mốc phần trăm dùng cho đường CDF trong báo cáo
 CDF_PERCENTILES = (50, 75, 90)
@@ -156,18 +156,13 @@ def nhom_theo_thoi_gian(tap: pd.DataFrame) -> list[np.ndarray]:
     return [thu_tu[nhom[thu_tu] == g] for g in pd.unique(nhom[thu_tu])]
 
 
-def du_doan_ngoai_phan(module, tham_so: dict, X, Y, nhan, so_phan: int = 5):
-    """(đầu ra từng mẫu, hàm gộp) theo `postprocess.cach_gop`, mỗi mẫu do mô hình chưa
-    thấy nó đoán, để có chuỗi quét dài mà không cần chạm tập test. Phần nào cũng học
-    đủ các điểm tham chiếu nên hàm gộp của phần cuối dùng chung được."""
+def du_doan_ngoai_phan(module, tham_so: dict, X, Y, nhan, so_phan: int = 5) -> np.ndarray:
+    """Mỗi mẫu được dự đoán bởi mô hình chưa thấy nó, để có chuỗi quét dài mà
+    không cần chạm tập test."""
     from sklearn.model_selection import StratifiedKFold
 
     X, Y = np.asarray(X, dtype=float), np.asarray(Y, dtype=float)
-    D = None
+    P = np.zeros_like(Y)
     for hoc, thu in StratifiedKFold(so_phan, shuffle=True, random_state=0).split(X, nhan):
-        dau_ra, ham_gop = postprocess.cach_gop(module.build(**tham_so).fit(X[hoc], Y[hoc]))
-        d = dau_ra(X[thu])
-        if D is None:
-            D = np.zeros((len(X), d.shape[1]))
-        D[thu] = d
-    return D, ham_gop
+        P[thu] = module.build(**tham_so).fit(X[hoc], Y[hoc]).predict(X[thu])
+    return P

@@ -14,13 +14,6 @@ joblib==1.5.3
 # bằng 3.4.1, nạp lại bằng bản 2.x có thể lỗi định dạng.
 xgboost==3.4.1
 
-# Bộ 3 (KAN, Transformer). Máy chủ và máy không GPU dùng bản CPU; trên Linux phải cài
-# `pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu`, không thì pip
-# kéo bản CUDA vài GB. Học trên GPU cần bản CUDA hợp driver: RTX 3050, driver 576 dùng torch
-# 2.14.1+cu126 (--index-url https://download.pytorch.org/whl/cu126); mô hình học ở đó nạp được
-# ở bản này.
-torch==2.15.0
-
 # Vẽ biểu đồ báo cáo (ml/report.py). Không dùng seaborn.
 matplotlib==3.11.1
 

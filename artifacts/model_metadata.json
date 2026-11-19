@@ -1,7 +1,7 @@
 {
-  "huan_luyen_luc": "2026-11-17T07:15:48",
-  "mo_hinh_active": "bo_ba",
-  "file_active": "model_bo_ba.pkl",
+  "huan_luyen_luc": "2026-11-08T13:49:09",
+  "mo_hinh_active": "fingerprint_knn_dong",
+  "file_active": "model_fingerprint_knn_dong.pkl",
   "hop_dong_du_lieu": {
     "missing_rssi_value": -100.0,
     "feature_count": 36,
@@ -22,8 +22,8 @@
         "metric": "manhattan"
       },
       "loi_validation": 9.550472853048428,
-      "giay_quet_luoi": 7.19,
-      "giay_huan_luyen": 0.009,
+      "giay_quet_luoi": 3.74,
+      "giay_huan_luyen": 0.01,
       "mo_hinh": "kNN",
       "so_mau": 473,
       "loi_trung_binh": 9.883384261275298,
@@ -42,7 +42,7 @@
       "cdf_50": 0.0,
       "cdf_75": 15.0,
       "cdf_90": 30.242318893347026,
-      "thoi_gian_du_doan_ms": 0.22717999992892146
+      "thoi_gian_du_doan_ms": 0.25711199967190623
     },
     "wknn": {
       "ten": "WKNN",
@@ -51,8 +51,8 @@
         "metric": "manhattan"
       },
       "loi_validation": 10.040226003389726,
-      "giay_quet_luoi": 0.13,
-      "giay_huan_luyen": 0.002,
+      "giay_quet_luoi": 1.6,
+      "giay_huan_luyen": 0.001,
       "mo_hinh": "WKNN",
       "so_mau": 473,
       "loi_trung_binh": 9.688428342265492,
@@ -71,7 +71,7 @@
       "cdf_50": 6.771314736314234,
       "cdf_75": 14.31738005303903,
       "cdf_90": 23.87105924236652,
-      "thoi_gian_du_doan_ms": 0.38466199999675155
+      "thoi_gian_du_doan_ms": 0.292261999566108
     },
     "random_forest": {
       "ten": "Random Forest",
@@ -80,8 +80,8 @@
         "max_depth": null
       },
       "loi_validation": 9.69597849584891,
-      "giay_quet_luoi": 5.51,
-      "giay_huan_luyen": 1.648,
+      "giay_quet_luoi": 3.88,
+      "giay_huan_luyen": 1.134,
       "mo_hinh": "Random Forest",
       "so_mau": 473,
       "loi_trung_binh": 9.595030693877288,
@@ -100,7 +100,7 @@
       "cdf_50": 6.7207725746375315,
       "cdf_75": 12.663558109788893,
       "cdf_90": 20.85713563842303,
-      "thoi_gian_du_doan_ms": 62.95141199952922
+      "thoi_gian_du_doan_ms": 69.43489799974486
     },
     "xgboost_model": {
       "ten": "XGBoost",
@@ -113,8 +113,8 @@
         "reg_lambda": 1
       },
       "loi_validation": 8.83637385031682,
-      "giay_quet_luoi": 93.04,
-      "giay_huan_luyen": 2.386,
+      "giay_quet_luoi": 94.52,
+      "giay_huan_luyen": 2.186,
       "mo_hinh": "XGBoost",
       "so_mau": 473,
       "loi_trung_binh": 9.01230974075682,
@@ -133,7 +133,7 @@
       "cdf_50": 6.583728762680338,
       "cdf_75": 11.555030019986015,
       "cdf_90": 19.619148918008456,
-      "thoi_gian_du_doan_ms": 0.9328160004224628
+      "thoi_gian_du_doan_ms": 0.8250740001676604
     },
     "fingerprint_knn_dong": {
       "ten": "kNN k động",
@@ -141,83 +141,57 @@
         "beta": 3.5
       },
       "loi_validation": 6.280232106951057,
-      "giay_quet_luoi": 2.26,
-      "giay_huan_luyen": 1.973,
+      "giay_quet_luoi": 1.87,
+      "giay_huan_luyen": 1.437,
       "mo_hinh": "kNN k động",
       "so_mau": 473,
-      "loi_trung_binh": 6.625816932016668,
+      "loi_trung_binh": 6.625816932016666,
       "loi_trung_vi": 2.227405327783835,
       "loi_nho_nhat": 0.0,
       "loi_lon_nhat": 82.0,
-      "loi_do_lech_chuan": 9.987988397807802,
+      "loi_do_lech_chuan": 9.987988397807804,
       "mae_x": 4.608221204590551,
       "mae_y": 3.6803307186249454,
       "rmse_x": 9.695625813605155,
       "rmse_y": 7.0467157125781235,
-      "rmse": 11.985881788643756,
+      "rmse": 11.985881788643757,
       "ti_le_duoi_2m": 63.213530655391125,
       "ti_le_duoi_3m": 71.45877378435517,
       "ti_le_duoi_5m": 82.02959830866807,
       "cdf_50": 2.227405327783835,
-      "cdf_75": 10.275127923645712,
-      "cdf_90": 19.23559868311424,
-      "thoi_gian_du_doan_ms": 2.151032000547275
-    },
-    "bo_ba": {
-      "ten": "Bộ 3 (HistGB + KAN + Transformer)",
-      "tham_so": {},
-      "loi_validation": 4.422423507737354,
-      "giay_quet_luoi": 93.71,
-      "giay_huan_luyen": 94.875,
-      "mo_hinh": "Bộ 3 (HistGB + KAN + Transformer)",
-      "so_mau": 473,
-      "loi_trung_binh": 4.164236083369333,
-      "loi_trung_vi": 5.2002280797039107e-11,
-      "loi_nho_nhat": 1.4071980273599236e-12,
-      "loi_lon_nhat": 81.99999999997172,
-      "loi_do_lech_chuan": 9.483909816565486,
-      "mae_x": 3.124797222902222,
-      "mae_y": 1.9201727189402966,
-      "rmse_x": 8.865793875406686,
-      "rmse_y": 5.355661166054444,
-      "rmse": 10.357866940967254,
-      "ti_le_duoi_2m": 77.58985200845666,
-      "ti_le_duoi_3m": 81.18393234672304,
-      "ti_le_duoi_5m": 87.10359408033827,
-      "cdf_50": 5.2002280797039107e-11,
-      "cdf_75": 0.0007442135039537283,
-      "cdf_90": 16.124515496743225,
-      "thoi_gian_du_doan_ms": 5.615086000179872
+      "cdf_75": 10.275127923645714,
+      "cdf_90": 19.235598683114237,
+      "thoi_gian_du_doan_ms": 1.9695660000434143
     }
   },
   "hau_xu_ly_gop": {
-    "cach_gop": "nhan_xac_suat",
+    "cach_gop": "dong_thuan",
     "cua_so": 3,
     "so_lan_quet": 6,
     "dung_yen": {
       "so_vi_tri": 78,
-      "so_vi_tri_sai": 2,
-      "loi_trung_binh": 0.41449125570072215,
-      "loi_trung_vi": 7.976922803941507e-28,
-      "loi_lon_nhat": 17.464249196175007
+      "so_vi_tri_sai": 25,
+      "loi_trung_binh": 2.171279839289236,
+      "loi_trung_vi": 0.0,
+      "loi_lon_nhat": 16.480714392182815
     },
     "cua_so_truot": {
       "so_mau": 473,
-      "khong_gop": 4.164236083369333,
-      "so_mau_sai_khong_gop": 115,
-      "loi_trung_binh": 1.6848876969755053,
-      "loi_trung_vi": 5.790051399229584e-13,
-      "loi_lon_nhat": 81.99998633175404,
-      "so_mau_sai": 49
+      "khong_gop": 6.625816932016666,
+      "so_mau_sai_khong_gop": 250,
+      "loi_trung_binh": 5.147004556095863,
+      "loi_trung_vi": 0.0,
+      "loi_lon_nhat": 82.0,
+      "so_mau_sai": 230
     },
     "chuoi_dai": {
       "so_mau": 2668,
-      "khong_gop": 3.6945863974619133,
-      "so_mau_sai_khong_gop": 641,
-      "loi_trung_binh": 0.7338980053140105,
-      "loi_trung_vi": 3.6230712748823524e-14,
-      "loi_lon_nhat": 38.99999999998382,
-      "so_mau_sai": 175
+      "khong_gop": 6.3912284334331595,
+      "so_mau_sai_khong_gop": 1383,
+      "loi_trung_binh": 4.30961586678899,
+      "loi_trung_vi": 0.0,
+      "loi_lon_nhat": 54.12947441089743,
+      "so_mau_sai": 1218
     }
   }
 }

@@ -1,5 +1,5 @@
-"""Đối tượng dùng chung, dựng một lần lúc khởi động: Predictor tốn ~3 s nạp torch, Bộ 3
-và chạy nóng, BoGop phải nhớ các lần quét trước."""
+"""Đối tượng dùng chung, dựng một lần lúc khởi động: Predictor tốn ~1.400 ms
+chạy nóng, BoGop phải nhớ các lần quét trước."""
 
 from __future__ import annotations
 
@@ -25,7 +25,6 @@ def khoi_dong() -> None:
     _bo_gop = BoGop(
         cua_so=settings.cua_so_gop,
         reset_sau_giay=settings.reset_after_seconds,
-        ham_gop=_predictor.ham_gop,
     )
 
 

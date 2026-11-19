@@ -34,7 +34,7 @@ async def predict(yeu_cau: schemas.YeuCauDuDoan) -> schemas.KetQuaDuDoan:
         log.info("DEMO %s: phát lại lần quét ở %s", device_id, rp_demo)
 
     # Threadpool: gọi thẳng thì chặn vòng lặp sự kiện, đuôi 1.243 ms với 40 request.
-    x, y, dau_ra, so_ap, do_tre = await run_in_threadpool(predictor.du_doan, scan)
+    x, y, so_ap, do_tre = await run_in_threadpool(predictor.du_doan, scan)
 
     # Tra `database.TaoSession` lúc gọi để test trỏ được sang CSDL tạm. AP lạ và vị trí chung
     # một giao dịch: mỗi request một lần commit.
@@ -46,7 +46,7 @@ async def predict(yeu_cau: schemas.YeuCauDuDoan) -> schemas.KetQuaDuDoan:
             await session.commit()
             raise HTTPException(422, {"loi": "khong_du_ap", "so_ap": so_ap,
                                       "toi_thieu": predictor.so_ap_toi_thieu})
-        x_gop, y_gop = bo_gop.them(device_id, dau_ra)
+        x_gop, y_gop = bo_gop.them(device_id, x, y)
         await repository.ghi_du_doan(
             session, device_id=device_id, x=x, y=y, x_gop=x_gop, y_gop=y_gop,
             so_ap=so_ap, mo_hinh=predictor.ten_mo_hinh, do_tre_ms=do_tre)

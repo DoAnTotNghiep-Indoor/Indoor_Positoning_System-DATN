@@ -1,5 +1,5 @@
-"""Gộp vài lần quét gần nhau trước khi trả toạ độ, bằng đúng hàm gộp của mô hình
-(`ml.postprocess.cach_gop`) để backend và báo cáo dùng chung thuật toán.
+"""Gộp vài lần quét gần nhau trước khi trả toạ độ. Gọi thẳng `ml.postprocess.gop`
+để backend và báo cáo dùng chung thuật toán.
 """
 
 from __future__ import annotations
@@ -13,30 +13,29 @@ from ml import postprocess
 
 
 class BoGop:
-    def __init__(self, cua_so: int = 3, reset_sau_giay: float = 30.0, ham_gop=postprocess.gop):
+    def __init__(self, cua_so: int = 3, reset_sau_giay: float = 30.0):
         self.cua_so = cua_so
         self.reset_sau_giay = reset_sau_giay
-        self.ham_gop = ham_gop
 
         # dict thường: defaultdict tạo khoá mới ngay cả khi chỉ đọc.
         self._lich_su: dict[str, deque] = {}
         self._lan_cuoi: dict[str, float] = {}
 
-    def them(self, device_id: str, dau_ra) -> tuple[float, float]:
-        """Thêm đầu ra một lần quét, trả về toạ độ đã gộp của thiết bị đó."""
+    def them(self, device_id: str, x: float, y: float) -> tuple[float, float]:
+        """Thêm một dự đoán, trả về toạ độ đã gộp của thiết bị đó."""
         bay_gio = time.monotonic()
 
-        # Im lặng quá lâu là đã đi chỗ khác; gộp với lần quét cũ sẽ kéo lệch.
+        # Im lặng quá lâu là đã đi chỗ khác; gộp với toạ độ cũ sẽ kéo lệch.
         truoc = self._lan_cuoi.get(device_id)
         if truoc is not None and bay_gio - truoc > self.reset_sau_giay:
             self.quen(device_id)
 
         self._lan_cuoi[device_id] = bay_gio
         lich = self._lich_su.setdefault(device_id, deque(maxlen=self.cua_so))
-        lich.append(np.asarray(dau_ra, dtype=float))
+        lich.append((x, y))
 
-        x, y = self.ham_gop(np.array(lich))
-        return float(x), float(y)
+        gop = postprocess.gop(np.array(lich, dtype=float))
+        return float(gop[0]), float(gop[1])
 
     def so_mau_dang_giu(self, device_id: str) -> int:
         return len(self._lich_su.get(device_id, ()))

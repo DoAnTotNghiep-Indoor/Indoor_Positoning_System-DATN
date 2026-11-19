@@ -147,7 +147,7 @@ def cdf(cac_khung: dict[str, dict], ten_file: str) -> str:
 
 
 def hieu_qua_gop(meta: dict, te: pd.DataFrame, ap: list[str], du_doan: dict) -> str:
-    """Các cách gộp của mô hình đang triển khai (thêm nhân xác suất nếu mô hình có), theo hai chế độ.
+    """Bốn cách gộp của mô hình đang triển khai, theo hai chế độ.
 
     `đứng yên` gộp mọi lần quét của một điểm test — chặn dưới lý tưởng. `cửa sổ
     trượt` chạy như `BoGop` trên chuỗi dài của train+val theo thời gian, dự đoán
@@ -155,23 +155,21 @@ def hieu_qua_gop(meta: dict, te: pd.DataFrame, ap: list[str], du_doan: dict) -> 
     """
     khoa = meta["mo_hinh_active"]
     tt = meta["cac_mo_hinh"][khoa]
-    met = config.MET_MOI_DON_VI
     p, y = du_doan[tt["ten"]], te[["x", "y"]].to_numpy(float)
     hoc = pd.concat([pd.read_csv(config.SPLITS_DIR / f"{t}.csv") for t in ("train", "validation")],
                     ignore_index=True)
-    yh = hoc[["x", "y"]].to_numpy(float) * met
-    Dh, ham_gop = evaluate.du_doan_ngoai_phan(importlib.import_module(f"ml.models.{khoa}"), tt["tham_so"],
-                                              hoc[ap].to_numpy(float), hoc[["x", "y"]].to_numpy(float),
-                                              hoc["rp_id"])
-    q = postprocess.gop_cua_so_truot(Dh, ham_gop, cua_so=1) * met
+    yh = hoc[["x", "y"]].to_numpy(float)
+    q = evaluate.du_doan_ngoai_phan(importlib.import_module(f"ml.models.{khoa}"), tt["tham_so"],
+                                    hoc[ap].to_numpy(float), yh, hoc["rp_id"])
+    yh, q = yh * config.MET_MOI_DON_VI, q * config.MET_MOI_DON_VI
     w = postprocess.CUA_SO_MAC_DINH
 
-    def dung_yen(fn, A):
-        return np.array([np.linalg.norm(fn(A[i]) - y[i[0]]) for i in evaluate.nhom_theo_thoi_gian(te)])
+    def dung_yen(fn):
+        return np.array([np.linalg.norm(fn(p[i]) - y[i[0]]) for i in evaluate.nhom_theo_thoi_gian(te)])
 
-    def truot(fn, A):
+    def truot(fn):
         return np.concatenate([
-            np.linalg.norm(np.array([fn(A[i][max(0, k - w + 1): k + 1]) for k in range(len(i))])
+            np.linalg.norm(np.array([fn(q[i][max(0, k - w + 1): k + 1]) for k in range(len(i))])
                            - yh[i], axis=1)
             for i in evaluate.nhom_theo_thoi_gian(hoc)])
 
@@ -179,17 +177,13 @@ def hieu_qua_gop(meta: dict, te: pd.DataFrame, ap: list[str], du_doan: dict) -> 
         u, c = np.unique(P, axis=0, return_counts=True)
         return u[c.argmax()]
 
-    # (hàm gộp, đầu ra test, đầu ra train+val ngoài phần)
-    fn = {"Bình chọn đa số": (binh_chon, p, q),
-          "Trung vị toạ độ": (postprocess.trung_vi_toa_do, p, q),
-          "Đồng thuận không gian": (postprocess.dong_thuan_khong_gian, p, q)}
-    if ham_gop is not postprocess.gop:
-        dau_ra, _ = postprocess.cach_gop(joblib.load(config.ARTIFACTS_DIR / f"model_{khoa}.pkl"))
-        fn["Nhân xác suất"] = (lambda A: ham_gop(A) * met, dau_ra(te[ap].to_numpy(float)), Dh)
+    fn = {"Bình chọn đa số": binh_chon,
+          "Trung vị toạ độ": postprocess.trung_vi_toa_do,
+          "Đồng thuận không gian": postprocess.dong_thuan_khong_gian}
 
     ten = ["Một lần quét", *fn]
-    dy = [np.linalg.norm(p - y, axis=1)] + [dung_yen(f, A) for f, A, _ in fn.values()]
-    ct = [np.linalg.norm(q - yh, axis=1)] + [truot(f, B) for f, _, B in fn.values()]
+    dy = [np.linalg.norm(p - y, axis=1)] + [dung_yen(f) for f in fn.values()]
+    ct = [np.linalg.norm(q - yh, axis=1)] + [truot(f) for f in fn.values()]
 
     vt = np.arange(len(ten))
     rong = 0.38

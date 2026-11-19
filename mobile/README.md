@@ -69,7 +69,7 @@ lib/
 ├── theme/                    màu sáng/tối, cấu hình kính, tuỳ chọn người dùng
 ├── services/
 │   ├── theo_doi_vi_tri.dart  vòng quét liên tục, trạng thái định vị và tuyến
-│   ├── dinh_vi_tren_may.dart Bộ 3 (HistGB + KAN + Transformer) và bộ gộp chạy trên máy (Mô hình cục bộ)
+│   ├── dinh_vi_tren_may.dart kNN k động và bộ gộp chạy trên máy (Mô hình cục bộ)
 │   ├── api_dinh_vi.dart      gọi API, phân loại lỗi
 │   ├── quet_wifi.dart        quét WiFi
 │   ├── quyen_truy_cap.dart   quyền vị trí / thiết bị WiFi lân cận
@@ -78,7 +78,7 @@ lib/
 ├── widgets/                  sơ đồ, popup khu vực, thành phần dùng chung
 ├── screens/                  Trang chủ, Bản đồ, Tìm kiếm, Cài đặt
 └── l10n/                     chuỗi tiếng Việt/Anh (.arb) và mã sinh tự động
-assets/                       font Inter, SVG sơ đồ, ảnh khu vực, mô hình (model/bo_ba.json)
+assets/                       font Inter, SVG sơ đồ, ảnh khu vực, mô hình (model/k_dong.json)
 ```
 
 `data/khu_vuc_thu_vien.dart` được sinh tự động, **không sửa tay**. Sinh lại bằng
@@ -89,14 +89,11 @@ assets/                       font Inter, SVG sơ đồ, ảnh khu vực, mô h�
 - **Nhịp quét**: app gọi quét mỗi 1 giây, nhưng firmware có thể trả lại bộ đệm cũ. Trên vivo
   X300 (đã tắt điều tiết quét): số liệu mới ~7,6 s một lần khi đang nối WiFi, 2 s khi không nối
   mạng nào. Đếm bằng cách so RSSI với lần trước (`TheoDoiViTri.nhipSoLieuMoiGiay`).
-- **Mô hình cục bộ**: `assets/model/bo_ba.json` (khoảng 9,5 MB) sinh bằng `python -m
-  ml.xuat_mo_hinh` ở thư mục gốc, chạy lại sau mỗi lần `ml.train` rồi build lại app
-  (`tests/test_xuat_mo_hinh.py` báo lỗi nếu quên). `test/dinh_vi_tren_may_test.dart` kiểm bản
-  Dart đoán trùng Python trên 200 lần quét test, cả một lần quét lẫn gộp 3 lần
-  (`test/du_lieu/doi_chieu_bo_ba.json`, cùng lệnh sinh ra). HistGB, KAN và Transformer viết lại
-  bằng Dart thuần, không cần LiteRT hay NPU: mạng nhỏ (KAN khoảng 44 nghìn, Transformer khoảng
-  20 nghìn tham số). Trên Galaxy Z Fold3 bản profile: nạp mô hình 270 ms, một lần đoán kể cả
-  gộp trung vị 4,4 ms.
+- **Mô hình cục bộ**: `assets/model/k_dong.json` sinh bằng `python -m ml.xuat_mo_hinh` ở thư
+  mục gốc, chạy lại sau mỗi lần `ml.train` rồi build lại app (`tests/test_xuat_mo_hinh.py`
+  báo lỗi nếu quên). `test/dinh_vi_tren_may_test.dart` kiểm bản Dart đoán trùng Python trên
+  200 lần quét test (`test/du_lieu/doi_chieu_k_dong.json`, cùng lệnh sinh ra). Một lần đoán
+  trên X300 khoảng 0,7 ms; không cần LiteRT hay NPU vì kNN chỉ là tính khoảng cách.
 - **Hệ toạ độ**: phép đổi trong `lib/data/floor_map.dart` dùng chung bộ hằng số
   với backend và Dashboard, lấy từ `data/reference/ban_do_tang1.json`.
 - **Không đủ AP thì không đoán**: máy chủ trả 422 (mô hình cục bộ báo cùng lỗi), app báo

@@ -44,9 +44,8 @@ Tổng quan hệ thống ở `README.md`, thiết kế ở `docs/thiet_ke_he_tho
 
 - **Đơn vị**: toạ độ và mọi bảng trong `reports/tables/` theo đơn vị lưới; 1 đơn vị = 0,3508 m. Tài liệu và
   slide luôn quy ra mét.
-- **Mô hình triển khai**: Bộ 3 (HistGB + KAN + Transformer), định danh code `bo_ba`, chỉ định bằng
-  `MO_HINH_TRIEN_KHAI` trong `ml/config.py`; chạy cả ở máy chủ lẫn trên app (Mô hình cục bộ). KAN và
-  Transformer học trên GPU nếu máy có. Dynamic-k kNN (kNN k động, `fingerprint_knn_dong`) là mô hình so sánh.
+- **Mô hình triển khai**: Dynamic-k kNN (tiếng Việt: kNN k động), định danh code `fingerprint_knn_dong`,
+  chỉ định bằng `MO_HINH_TRIEN_KHAI` trong `ml/config.py`.
 - **Dữ liệu**: đợt A (802 lần quét, 1 máy) + đợt B (2.349, 3 máy) của CTK45. Dữ liệu Redmi của nhóm
   (`data/raw/nhom15_2026/`) chưa dùng.
 - **Ba giao thức đánh giá**: chia ngẫu nhiên 10 seed, bỏ trọn một điểm, khác đợt đo. Luôn nêu giao thức đi
