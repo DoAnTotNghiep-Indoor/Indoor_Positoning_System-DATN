@@ -113,7 +113,7 @@ def so_sanh_mo_hinh(loi: dict, thu_tu: list[str]) -> str:
     ax.invert_yaxis()
     ax.set_xlabel("Sai số khoảng cách (m)", color=MUC_PHU, fontsize=9.5)
     ax.set_xlim(0, max(p90) * 1.16)
-    ax.set_title("Sai số định vị trên tập test, một lần quét",
+    ax.set_title("Sai số định vị trên tập kiểm thử, một lần quét",
                  color=MUC_CHINH, fontsize=11.5, fontweight="bold", loc="left", pad=30)
     # Đặt chú giải ngoài vùng vẽ: cột dài nhất chạm sát mép phải nên mọi vị trí
     # bên trong đều đè lên dữ liệu hoặc nhãn giá trị.
@@ -193,8 +193,8 @@ def hieu_qua_gop(meta: dict, te: pd.DataFrame, ap: list[str], du_doan: dict) -> 
                           (ax2, lambda a: a.max(), "Sai số lớn nhất (m)")):
         _khung(ax)
         a, b = [lay(v) for v in dy], [lay(v) for v in ct]
-        ax.bar(vt - rong / 2, a, rong, color=SERIES[0], label="đứng yên (test)", zorder=3)
-        ax.bar(vt + rong / 2, b, rong, color=SERIES[1], label="cửa sổ trượt (train+val, ngoài phần)", zorder=3)
+        ax.bar(vt - rong / 2, a, rong, color=SERIES[0], label="đứng yên (tập kiểm thử)", zorder=3)
+        ax.bar(vt + rong / 2, b, rong, color=SERIES[1], label="cửa sổ trượt (tập học, ngoài phần)", zorder=3)
         cao = max(max(a), max(b))
         for i in vt:
             for x, v in ((i - rong / 2, a[i]), (i + rong / 2, b[i])):
@@ -271,7 +271,7 @@ def do_quan_trong(ap: list[str]) -> str | None:
                        fontsize=8, fontfamily="monospace")
     ax.invert_yaxis()
     ax.set_xlabel("Độ quan trọng", color=MUC_PHU, fontsize=9.5)
-    ax.set_title("15 access point đóng góp nhiều nhất — XGBoost",
+    ax.set_title("15 AP đóng góp nhiều nhất — XGBoost",
                  color=MUC_CHINH, fontsize=11.5, fontweight="bold", loc="left", pad=12)
     ax.legend(frameon=False, fontsize=9, labelcolor=MUC_PHU)
     return _luu(fig, "feature_importance.png")
@@ -326,12 +326,12 @@ def ti_le_xuat_hien_ap() -> str | None:
     ax.axhline(nguong, color=MUC_CHINH, linestyle="--", linewidth=1.2, zorder=4)
     ax.text(0, nguong + 2.5, f"ngưỡng {nguong:.0f}%", color=MUC_CHINH, fontsize=9)
 
-    ax.set_xlabel("Access point, xếp theo tỉ lệ xuất hiện trên tập train",
+    ax.set_xlabel("AP, xếp theo tỉ lệ xuất hiện trên tập huấn luyện",
                   color=MUC_PHU, fontsize=9.5)
-    ax.set_ylabel("Tỉ lệ xuất hiện trên tập train (%)", color=MUC_PHU, fontsize=9.5)
+    ax.set_ylabel("Tỉ lệ xuất hiện trên tập huấn luyện (%)", color=MUC_PHU, fontsize=9.5)
     ax.set_xlim(-1, len(ty_le))
     ax.set_ylim(0, 104)
-    ax.set_title("Tỉ lệ xuất hiện của access point trên tập train — cơ sở chọn ngưỡng",
+    ax.set_title("Tỉ lệ xuất hiện của AP trên tập huấn luyện — cơ sở chọn ngưỡng",
                  color=MUC_CHINH, fontsize=11.5, fontweight="bold", loc="left", pad=12)
     ax.legend(frameon=False, fontsize=9, labelcolor=MUC_PHU, loc="upper left")
     return _luu(fig, "ap_appearance_rate.png")
@@ -358,7 +358,7 @@ def chay(cho_phep_luoi_rut_gon: bool = False) -> None:
     # không lấy mô hình tốt nhất trên test.
     ket_qua = [
         so_sanh_mo_hinh(loi, thu_tu),
-        cdf({"Chia ngẫu nhiên (seed 42, 473 lần quét test)": loi}, "cdf_error.png"),
+        cdf({"Chia ngẫu nhiên (seed 42, 473 lần quét kiểm thử)": loi}, "cdf_error.png"),
         hieu_qua_gop(meta, te, ap, du_doan),
         ban_do_loi(meta, te, du_doan),
         do_quan_trong(ap),

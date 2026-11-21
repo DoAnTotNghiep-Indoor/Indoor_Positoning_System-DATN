@@ -26,7 +26,7 @@ from sklearn.base import BaseEstimator, RegressorMixin
 
 from ml.models.fingerprint_knn import DinhViPhanLop, bieu_dien_powed
 
-TEN = "kNN k động"
+TEN = "Dynamic-k kNN"
 
 CAC_K_LON = (15, 21, 31, 41)
 CAC_PHAN_VI = tuple(range(5, 100, 5))

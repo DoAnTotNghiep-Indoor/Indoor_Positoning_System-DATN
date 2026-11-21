@@ -187,6 +187,14 @@ trung vị và CDF tại 50/75/90%. Ba giao thức:
 Mỗi điểm tham chiếu chỉ được đo trong một phiên, nên chia ngẫu nhiên có rò rỉ: lần quét học
 và kiểm cùng phiên. Đó là chặn lạc quan; bỏ trọn một điểm là chặn bi quan.
 
+Ngoài ba giao thức trên dữ liệu có sẵn, còn **đo tại chỗ**: đứng ở một chỗ biết toạ độ (đếm gạch
+từ mốc đã đo như giữa mép trước quầy, cột, đầu kệ) 45 giây, ghi lần quét thô rồi chạy cả năm mô
+hình trên cùng các lần quét đó. Máy đo khác máy của dữ liệu học, thời điểm khác, nên đây là phép
+thử gần với lúc dùng thật nhất. Lần quét thô lấy theo hai đường: máy tính đọc kết quả quét của
+điện thoại qua adb (`tools.ghi_lien_tuc`, cáp hoặc mạng riêng ảo Tailscale), hoặc app gửi
+`POST /predict` như bình thường và máy chủ ghi lại lần quét (mục 5). Người đo ghi phiếu giờ bắt
+đầu, chỗ đứng, hướng máy; sau buổi cắt theo giờ. Kết quả buổi 18/11/2026 ở README, mục Kết quả.
+
 ### 4.4. Chỉ báo độ tin cậy (đã thử, không dùng)
 
 Lúc chạy không có toạ độ thật nên không tính được sai số. Đã thử **độ trải**, độ lệch chuẩn có
@@ -254,6 +262,10 @@ quét; `counters` giữ tổng số lần quét làm mẫu số cho tỉ lệ. M
 đếm, và ghi chung giao dịch với vị trí nên mỗi request vẫn chỉ một lần commit. Không đếm số thiết bị: mã thiết bị đổi mỗi lần mở ứng dụng nên con số chỉ là số lần mở. Mô hình không dùng các AP này; muốn dùng phải có vân tay
 chứa chúng rồi huấn luyện lại.
 
+CSDL không giữ lần quét. Để đánh giá tại chỗ, `POST /predict` (trừ chế độ DEMO) ghi thêm mỗi lần
+quét nhận được, kể cả lần bị từ chối vì thiếu AP, thành một dòng JSON `{luc, device_id, scan}` vào
+`data/raw/quet_app/<ngày>.jsonl`, giờ máy chủ theo giờ địa phương.
+
 ## 6. Dữ liệu không gian
 
 ### 6.1. Nguồn hình học
@@ -291,10 +303,11 @@ cùng bộ hằng số.
 ## 7. Chỉ đường
 
 **Đồ thị.** Đường ngắn nhất trong mặt bằng có vật cản chỉ bẻ hướng ở góc lồi của vật cản. Vì
-vậy nút của đồ thị là 167 góc lồi của mặt nạ đi được cộng 44 điểm tham chiếu, 3.599 cạnh nối
+vậy nút của đồ thị là 195 góc lồi của mặt nạ đi được cộng 44 điểm tham chiếu, 3.964 cạnh nối
 mọi cặp nút nhìn thấy nhau. Mặt nạ cho đi trong vỏ toà, phòng, sàn, cầu thang; chặn bởi tường,
 lan can, mép sàn khác mức, giếng, quầy, cột, kệ; cầu thang chỉ lên xuống ở hai đầu; cửa mở khe
-qua tường. Chỉ giữ mảng sàn liền với sảnh cửa chính.
+qua tường. Khe hẹp dưới 3 điểm ảnh (khoảng 26 cm) chỗ các nét chặn giao nhau không khít bị xoá
+bằng phép mở hình thái. Chỉ giữ mảng sàn liền với sảnh cửa chính.
 
 **Truy vấn.** Vị trí người dùng được thêm vào đồ thị như một nút tạm; nếu rơi vào tường hay
 kệ thì kéo về ô đi được gần nhất. Sau đó chạy:
@@ -322,9 +335,9 @@ là `bat_dau` vì chưa biết người dùng quay mặt hướng nào. Các ch�
 chặng dưới 0,5 m dồn vào chặng kề. API trả mã hướng; ứng dụng dịch sang tiếng Việt hoặc Anh.
 
 **Kết quả.** Trên 1.892 truy vấn giữa các điểm tham chiếu, A* mở trung bình 15 nút, Dijkstra
-107, cùng quãng đường. So với đường ngắn nhất trên lưới mịn, riêng thuật toán lệch trung bình
-0,16 m; quãng đường báo khi đứng ở vị trí mô hình đoán so với từ vị trí thật lệch trung bình 1,45 m,
-lớn nhất 29 m khi vị trí đoán rơi sang sàn khác mức bên kia lan can.
+112, cùng quãng đường. So với đường ngắn nhất trên lưới mịn, riêng thuật toán lệch trung bình
+0,11 m; quãng đường báo khi đứng ở vị trí mô hình đoán so với từ vị trí thật lệch trung bình 1,43 m,
+lớn nhất 29,8 m khi vị trí đoán rơi sang sàn khác mức bên kia lan can.
 
 ## 8. API
 
@@ -375,13 +388,26 @@ Lỗi: 404 khi điểm hoặc khu vực không tồn tại, 409 khi không có �
 
 | Màn | Nội dung |
 |---|---|
-| Trang chủ | Khu vực đang đứng, danh sách khu vực gần nhất |
+| Trang chủ | Khu vực đang đứng, thẻ gợi ý ảnh 360° khi tới gần chỗ có ảnh, danh sách khu vực gần nhất |
 | Bản đồ | Sơ đồ tầng 1, chấm vị trí kèm nón hướng la bàn, nhãn địa điểm, tuyến đường, lọc theo nhóm khu vực |
 | Tìm kiếm | Tìm khu vực và địa điểm theo tên hoặc nhóm, không phân biệt dấu |
 | Cài đặt | Mô hình cục bộ, máy chủ (PROD, DEMO, tuỳ chỉnh), nhịp số liệu WiFi mới, ngôn ngữ, chế độ sáng/tối, quyền truy cập |
 
 Chạm một khu vực mở popup có ảnh, giới thiệu và nút Chỉ đường. Định vị chạy liên tục khi ứng
 dụng mở và dừng khi chạy nền.
+
+Năm chỗ có ảnh toàn cảnh 360° ngang chụp bằng Google Camera: sảnh cửa chính, khu tự học hai bên,
+trước quầy thủ thư, trước phòng học nhóm. Popup của các khu này có nút Xem 360° cùng hàng với
+nút Chỉ đường. Trình xem mặc định kéo ngón tay và mở đúng hướng người dùng đang nhìn (theo la
+bàn); chế độ xoay máy đọc từ kế và dời ảnh một góc bằng phương vị của tâm ảnh (hướng sơ đồ cộng
+248,5°) để cảnh trên màn khớp cảnh trước mặt. Đè lên ảnh là nhân vật hướng dẫn với bong bóng lời
+giới thiệu và cách dùng khu. Ảnh toàn cảnh giữ độ phân giải gốc (9.216–10.240 px ngang), dạng
+WebP vì bộ giải mã AV1 của máy thử từ chối ảnh AVIF rộng quá 8.192 px; ảnh khu vực trong popup
+là AVIF. Khi vị trí đã gộp nằm trong 4,9 m (14 đơn vị) quanh một
+chỗ chụp đủ 3 lần cập nhật liên tiếp, dưới nhãn vị trí hiện một thẻ gợi ý nhỏ, chạm để mở ảnh;
+ra xa quá 8,1 m mới tính là đã rời đi, mỗi lượt vào chỉ gợi ý một lần, không gợi ý khi đang chỉ
+đường, thẻ tự ẩn sau 20 giây. Ngưỡng rộng và có trễ vì sai số đo tại chỗ khoảng 5–6 m; tự mở toàn
+màn hình sẽ bật nhầm khu và che bản đồ.
 
 Nhãn trên sơ đồ theo kiểu Google Maps: biểu tượng trắng trên nền tròn màu theo loại, tên bên
 phải. Nhãn đặt theo toạ độ màn hình nên không xoay, không phóng theo sơ đồ; nhãn phụ chỉ hiện

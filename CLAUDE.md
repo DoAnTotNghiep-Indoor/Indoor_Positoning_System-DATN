@@ -35,8 +35,10 @@ Tổng quan hệ thống ở `README.md`, thiết kế ở `docs/thiet_ke_he_tho
 - Báo cáo và slide viết trên Google Docs/Slides, thư mục Drive "WiLoc":
   https://drive.google.com/drive/folders/1fmShLsEUcS6nmvG0US4xwAecbjUZQ3KS. Không tạo .docx/.pptx cục bộ.
 - Viết theo hệ thống có gì, làm được gì, hoạt động thế nào, kết quả và hạn chế.
-- Không viết theo kiểu "theo đề cương...", không kể lại trạng thái hay quá trình, không so sánh với đồ án cũ
-  CTK45 (chỉ một mục nhỏ "cải tiến" khi cần).
+- Không viết theo kiểu "theo đề cương...", không kể lại trạng thái hay quá trình.
+- So sánh với đồ án CTK45 gom vào một mục riêng, giọng trung tính, theo từng mặt (dữ liệu, cách đánh giá, sơ
+  đồ, hệ thống). GVHD muốn ít so sánh, GV phản biện (GVHD của CTK45) muốn có, nên giữ cân bằng: không rải
+  so sánh khắp bài, không chê.
 - Tiếng Việt, câu ngắn, số kèm đơn vị.
 - Tài liệu cũ còn giá trị để viết báo cáo thì chuyển vào `deprecated/`, ghi vào `deprecated/README.md`.
 

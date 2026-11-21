@@ -275,7 +275,7 @@ toạ độ chỉ từ các láng giềng cùng toà và tầng, còn ở đây 
   330 ms, P99 ≤ 352 ms. Mô hình trên VM chỉ 1,7 ms; nối thẳng tới VM không qua Cloudflare 136 ms.
   Cloudflare thêm ~200 ms vì vào ở Hồng Kông còn tunnel nối ở Mumbai. Mọi con số này đều nhỏ so
   với nhịp số liệu WiFi mới (2–8 s, mục Hạn chế).
-- APK release chỉ arm64: 20,5 MB (kể cả mô hình cục bộ).
+- APK release chỉ arm64: khoảng 41 MB (kể cả mô hình cục bộ và năm ảnh 360°).
 
 ## Cài đặt và chạy
 
@@ -450,10 +450,16 @@ Cũng đã thử và **không** dùng (khác đợt đo, so với kNN k động)
   khoảng 0,7 dB và Bray-Curtis đã khử phần lệch đơn giản, còn RSSI ở chính cửa chính đổi −6 /
   +5 dB giữa hai đợt do người qua lại, cửa đóng mở.
 
-Hai hướng khác cùng giải quyết chuyện nhảy, không cần thu thêm vân tay: bộ lọc hạt có mô hình
-bước chân và ràng buộc tường, giếng, lan can lấy từ `data/reference/mat_bang_tang1.yaml`; và
-làm dày bản đồ vô tuyến bằng nội suy (Gaussian process) giữa các RP, đánh giá bằng giao thức
-bỏ trọn một điểm.
+- **Bản đồ RSSI bằng hồi quy Gauss** (thử 18–19/11, mã ngoài repo): mỗi AP một bản đồ gồm mô
+  hình suy hao log khoảng cách cộng phần lệch học bằng GP, kèm xác suất bắt được AP; định vị bằng
+  độ khớp trên lưới ô. Một lần quét / gộp 3 lần quét, ba giao thức: bản đồ GP 3,23 / 2,34 ·
+  4,83 / 4,40 · 3,98 / 3,53 m; ghép với kNN k động (lần quét lạ nhân độ khớp với Gauss quanh toạ
+  độ kNN k động) 2,11 / 1,55 · 5,15 / 4,67 · 3,80 / 3,44 m; suy hao đơn 8–9 m. Tốt nhất khi bỏ
+  trọn một điểm, nhưng cần GPU để học và chưa thử tại chỗ nên không triển khai. Sinh vân tay giả
+  từ bản đồ cho Dynamic-k kNN không lợi (chênh dưới 0,06 m).
+
+Một hướng khác giải quyết chuyện nhảy, không cần thu thêm vân tay: bộ lọc hạt có mô hình bước
+chân và ràng buộc tường, giếng, lan can lấy từ `data/reference/mat_bang_tang1.yaml`.
 
 ## Tài liệu
 

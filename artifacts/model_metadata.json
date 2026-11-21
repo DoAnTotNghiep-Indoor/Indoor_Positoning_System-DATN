@@ -1,5 +1,5 @@
 {
-  "huan_luyen_luc": "2026-11-08T13:49:09",
+  "huan_luyen_luc": "2026-11-11T23:49:03",
   "mo_hinh_active": "fingerprint_knn_dong",
   "file_active": "model_fingerprint_knn_dong.pkl",
   "hop_dong_du_lieu": {
@@ -22,8 +22,8 @@
         "metric": "manhattan"
       },
       "loi_validation": 9.550472853048428,
-      "giay_quet_luoi": 3.74,
-      "giay_huan_luyen": 0.01,
+      "giay_quet_luoi": 4.0,
+      "giay_huan_luyen": 0.012,
       "mo_hinh": "kNN",
       "so_mau": 473,
       "loi_trung_binh": 9.883384261275298,
@@ -42,7 +42,7 @@
       "cdf_50": 0.0,
       "cdf_75": 15.0,
       "cdf_90": 30.242318893347026,
-      "thoi_gian_du_doan_ms": 0.25711199967190623
+      "thoi_gian_du_doan_ms": 0.25011200006701984
     },
     "wknn": {
       "ten": "WKNN",
@@ -51,7 +51,7 @@
         "metric": "manhattan"
       },
       "loi_validation": 10.040226003389726,
-      "giay_quet_luoi": 1.6,
+      "giay_quet_luoi": 1.73,
       "giay_huan_luyen": 0.001,
       "mo_hinh": "WKNN",
       "so_mau": 473,
@@ -71,7 +71,7 @@
       "cdf_50": 6.771314736314234,
       "cdf_75": 14.31738005303903,
       "cdf_90": 23.87105924236652,
-      "thoi_gian_du_doan_ms": 0.292261999566108
+      "thoi_gian_du_doan_ms": 0.3399540000100387
     },
     "random_forest": {
       "ten": "Random Forest",
@@ -80,8 +80,8 @@
         "max_depth": null
       },
       "loi_validation": 9.69597849584891,
-      "giay_quet_luoi": 3.88,
-      "giay_huan_luyen": 1.134,
+      "giay_quet_luoi": 4.2,
+      "giay_huan_luyen": 1.178,
       "mo_hinh": "Random Forest",
       "so_mau": 473,
       "loi_trung_binh": 9.595030693877288,
@@ -100,7 +100,7 @@
       "cdf_50": 6.7207725746375315,
       "cdf_75": 12.663558109788893,
       "cdf_90": 20.85713563842303,
-      "thoi_gian_du_doan_ms": 69.43489799974486
+      "thoi_gian_du_doan_ms": 74.95230000000447
     },
     "xgboost_model": {
       "ten": "XGBoost",
@@ -113,8 +113,8 @@
         "reg_lambda": 1
       },
       "loi_validation": 8.83637385031682,
-      "giay_quet_luoi": 94.52,
-      "giay_huan_luyen": 2.186,
+      "giay_quet_luoi": 108.11,
+      "giay_huan_luyen": 2.559,
       "mo_hinh": "XGBoost",
       "so_mau": 473,
       "loi_trung_binh": 9.01230974075682,
@@ -133,17 +133,17 @@
       "cdf_50": 6.583728762680338,
       "cdf_75": 11.555030019986015,
       "cdf_90": 19.619148918008456,
-      "thoi_gian_du_doan_ms": 0.8250740001676604
+      "thoi_gian_du_doan_ms": 0.9848899999633431
     },
     "fingerprint_knn_dong": {
-      "ten": "kNN k động",
+      "ten": "Dynamic-k kNN",
       "tham_so": {
         "beta": 3.5
       },
       "loi_validation": 6.280232106951057,
-      "giay_quet_luoi": 1.87,
-      "giay_huan_luyen": 1.437,
-      "mo_hinh": "kNN k động",
+      "giay_quet_luoi": 2.51,
+      "giay_huan_luyen": 1.89,
+      "mo_hinh": "Dynamic-k kNN",
       "so_mau": 473,
       "loi_trung_binh": 6.625816932016666,
       "loi_trung_vi": 2.227405327783835,
@@ -161,7 +161,7 @@
       "cdf_50": 2.227405327783835,
       "cdf_75": 10.275127923645714,
       "cdf_90": 19.235598683114237,
-      "thoi_gian_du_doan_ms": 1.9695660000434143
+      "thoi_gian_du_doan_ms": 2.4987880000117
     }
   },
   "hau_xu_ly_gop": {
