@@ -33,6 +33,9 @@ def client(tmp_path_factory):
         database.engine, class_=database.AsyncSession, expire_on_commit=False)
 
     from backend.main import app
+    from backend.routers import predict
+
+    predict.QUET_THO = tmp_path_factory.mktemp("quet_tho")
 
     with TestClient(app) as c:
         yield c

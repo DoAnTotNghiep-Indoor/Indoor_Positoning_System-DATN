@@ -1,7 +1,10 @@
 # Dữ liệu khảo sát nhóm 15 — 2026
 
-Dữ liệu nhóm tự thu ngày 06/09/2026 bằng **Redmi K40 Pro (M2012K11C)** tại 7 điểm mới ở hành
-lang phía nam (RP46–RP52). Chưa dùng để huấn luyện.
+Hai buổi, không buổi nào dùng để huấn luyện:
+
+- **06/09/2026**: Redmi K40 Pro (M2012K11C), 7 điểm mới ở hành lang phía nam (RP46–RP52). Mục
+  dưới đây.
+- **18/11/2026**: đo sai số tại chỗ ở 7 chỗ biết toạ độ, hai máy. Mục cuối.
 
 ## Cách thu
 
@@ -50,3 +53,30 @@ cùng AP.
 ```bash
 python -c "import pandas as pd,glob; pd.concat([pd.read_csv(f) for f in sorted(glob.glob('data/raw/nhom15_2026/2026-09-06/RP*.csv'))]).to_csv('data/raw/nhom15_2026/2026-09-06/tong_hop.csv', index=False)"
 ```
+
+## Buổi 18/11/2026: đo sai số tại chỗ
+
+Mục đích là kiểm thử, không phải thu vân tay: đứng ở chỗ biết toạ độ, ghi lần quét thô, rồi chạy
+cả năm mô hình đang triển khai trên cùng các lần quét. GVHD hạn chế tự thu thêm dữ liệu học nên
+các lần quét này không đưa vào huấn luyện.
+
+| Tệp | Nội dung |
+|---|---|
+| `2026-11-18/lien_tuc_V2515_0933.csv` | vivo X300 (V2515), 1.636 lần quét liên tục 09:33–11:02, khoảng 3 s một lần, 20 cột như `combined_data.csv`, cột điểm để trống |
+| `2026-11-18/phieu.csv` | Phiếu của vivo: mã chỗ đứng, giờ bắt đầu, số giây, toạ độ (đơn vị lưới), hướng máy, cách đặt máy |
+| `../quet_app/2026-11-18.jsonl` | Máy thứ hai (`device_id` `dlu-mwludjtc-28f4`), lần quét app gửi lên máy chủ 15:11–15:24 |
+| `2026-11-18/phieu_dlu-mwludjtc-28f4.csv` | Phiếu của máy thứ hai, cùng 7 chỗ |
+
+Cách thu: vivo không cắm cáp; máy tính ở nhà đọc kết quả quét qua `adb` trên Tailscale
+(`python -m tools.ghi_lien_tuc --nguoi-thu <MSSV>`), điện thoại dùng 4G, Wi-Fi bật nhưng không
+nối mạng, đã tắt điều tiết quét. Máy thứ hai chỉ cài app, gửi `POST /predict` tới máy chủ chạy ở
+nhà qua Cloudflare quick tunnel; máy chủ ghi lần quét thô. Người đo nhắn giờ bắt đầu mỗi chỗ,
+lấy 45 giây sau đó. Chỉ đo một hướng: cầm phẳng, đỉnh máy hướng ra cửa chính (cột tròn, RP36)
+hoặc về quầy (cột vuông); ở đầu kệ máy đặt ở tầng giữa, đỉnh máy hướng vào tường bên.
+
+Toạ độ đếm gạch từ giữa mép trước quầy (y = 52,75) hoặc từ cửa chính. Cột tròn trước quầy đo
+được ở y ≈ 44,25, khác sơ đồ (38,8). Toạ độ hai đầu kệ (±44,9; 24,5) suy từ kệ chắn lối xuống WC
+trên sơ đồ, sai được khoảng 2 viên. Lần đo cột tròn lúc 09:36 bỏ vì máy bị xê dịch.
+
+Kết quả (sai số trung bình, mét) ở README gốc, mục "Đo tại chỗ". Script tính tạm:
+`tmp/so_hai_may.py` (ngoài git).
