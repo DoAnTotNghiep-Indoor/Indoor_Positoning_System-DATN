@@ -115,6 +115,23 @@
   "placeRouting": "Đang tìm đường…",
   "placeRouteFailed": "Không tìm được đường đi tới địa điểm này",
   "placeHere": "Bạn đang ở đây",
+  "pano360": "Xem 360°",
+  "panoNearby": "Bạn đang ở gần {noi}",
+  "@panoNearby": {
+    "placeholders": {
+      "noi": {
+        "type": "String"
+      }
+    }
+  },
+  "panoOpen": "Chạm để xem ảnh 360° và lời giới thiệu",
+  "panoTips": "Xem hướng dẫn",
+  "panoIntro": "Xem giới thiệu",
+  "panoDismiss": "Bỏ qua",
+  "panoClose": "Đóng",
+  "panoSensor": "Xoay máy để nhìn quanh",
+  "panoDrag": "Kéo để nhìn quanh",
+  "panoLoadFailed": "Không mở được ảnh 360°",
   "distanceMeters": "{met} m",
   "@distanceMeters": {
     "placeholders": {

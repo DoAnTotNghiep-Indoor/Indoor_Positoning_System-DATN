@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 
 import '../data/floor_map.dart';
 import '../data/khu_vuc.dart';
+import '../data/toan_canh.dart';
 import 'api_dinh_vi.dart';
 import 'dinh_vi_tren_may.dart';
 import 'quet_wifi.dart';
@@ -56,6 +57,8 @@ class TheoDoiViTri extends ChangeNotifier {
   List<NhanSoDo> _nhan = const [];
   List<KhuVuc> _khuVuc = sapTheoKhoangCach(KhuVuc.tuDiem(const []), null);
   DiemThamChieu? _diemGan;
+  final _goiY = GoiYToanCanh();
+  ToanCanh? _deXuat;
 
   KetQuaChiDuong? _tuyen;
   KhuVuc? _dich;
@@ -117,6 +120,19 @@ class TheoDoiViTri extends ChangeNotifier {
       if (k.nhom == nhom) return k;
     }
     return null;
+  }
+
+  /// Ảnh 360° đang gợi ý; null khi không có, người dùng đã bỏ qua, đang chỉ
+  /// đường hoặc đã đi ra khỏi vùng — thẻ không được nói "đang ở gần" một chỗ đã xa.
+  ToanCanh? get goiYToanCanh {
+    final t = _deXuat, vt = _viTri;
+    if (t == null || vt == null || _dich != null) return null;
+    return t.khoangCach(vt.xGop, vt.yGop) <= GoiYToanCanh.banKinhRa ? t : null;
+  }
+
+  void boQuaGoiY() {
+    _deXuat = null;
+    _bao();
   }
 
   KetQuaChiDuong? get tuyen => _tuyen;
@@ -298,6 +314,8 @@ class TheoDoiViTri extends ChangeNotifier {
       _loi = null;
       _capNhatDanXuat();
       _bamTuyen();
+      _deXuat =
+          _goiY.capNhat(vt.xGop, vt.yGop, dangChiDuong: _dich != null) ?? _deXuat;
     } on NgoaiLeQuet catch (e) {
       if (luot != _luot) return;
       _loi = e;

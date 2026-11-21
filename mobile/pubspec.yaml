@@ -28,6 +28,8 @@ dependencies:
   shared_preferences: ^2.3.2
   flutter_compass: ^0.8.1
   flutter_svg: ^2.3.0
+  # Xem ảnh 360°; ghim cứng như liquid_glass_widgets để tái lập được.
+  panorama_viewer: 3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -63,10 +65,10 @@ flutter:
     # kNN k động cho tuỳ chọn "Mô hình cục bộ"; sinh bằng `python -m ml.xuat_mo_hinh`.
     - assets/model/k_dong.json
 
-    # Ảnh thật của 12 khu vực: 11 thư mục đầu do nhóm CTK45 chụp, `wc/` do nhóm
-    # 15 chụp ngày 07/09/2026. Đều thu về cạnh dài 1024 px chất lượng 80 — thừa
-    # nét cho màn điện thoại mà không phình kho mã. Xem assets/images/NGUON.md.
-    # Flutter không nhận mẫu lồng nhau nên phải liệt kê từng thư mục.
+    # Ảnh thật của từng khu vực, của nhóm CTK45 và nhóm 15, AVIF. Xem
+    # assets/images/NGUON.md. Flutter không nhận mẫu lồng nhau nên phải liệt kê
+    # từng thư mục.
+    - assets/images/huong_dan.svg
     - assets/images/ban_cong/
     - assets/images/ban_thu_thu/
     - assets/images/can_tin/
@@ -83,3 +85,12 @@ flutter:
     - assets/images/tv3_4/
     - assets/images/wc_phai/
     - assets/images/wc_trai/
+    - assets/images/hoc_nhom/
+    - assets/images/nghiep_vu_1/
+    - assets/images/thang_may/
+    - assets/images/xuong_tv1_2/
+    - assets/images/nha_sach/
+
+    # Ảnh toàn cảnh 360° ngang của 5 chỗ, nhóm 15 chụp 18/11/2026; sinh bằng
+    # `python -m tools.anh_app`, toạ độ và hướng ở lib/data/toan_canh.dart.
+    - assets/panorama/

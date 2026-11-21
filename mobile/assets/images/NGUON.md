@@ -2,10 +2,22 @@
 
 Hai nguồn, ghi tách bạch vì một bên là dữ liệu kế thừa:
 
-| Thư mục | Số ảnh | Nguồn |
-|---|---:|---|
-| 14 thư mục còn lại | 37 | **Nhóm CTK45** chụp tại Thư viện ĐH Đà Lạt, lấy từ nhánh `Backup` của kho `github.com/NgocSongNe/IPS` |
-| `wc_trai/`, `wc_phai/` | 2 | **Nhóm 15** chụp ngày 07/09/2026 |
+| Ảnh | Nguồn |
+|---|---|
+| Mọi ảnh không nêu dưới đây | **Nhóm CTK45** chụp tại Thư viện ĐH Đà Lạt, lấy từ nhánh `Backup` của kho `github.com/NgocSongNe/IPS` |
+| `wc_trai/1`, `wc_phai/1` | **Nhóm 15**, 07/09/2026 |
+| `wc_trai/2`, `wc_phai/2`, `tv3_4/1–2`, `can_tin/3`, `ban_thu_thu/4`, `cua_chinh/3`, toàn bộ `hoc_nhom/`, `nghiep_vu_1/`, `thang_may/`, `xuong_tv1_2/`, `nha_sach/` | **Nhóm 15**, vivo X300, 18/11/2026 |
+| `../panorama/` (5 ảnh toàn cảnh 360° ngang) | **Nhóm 15**, chụp bằng Google Camera, 18/11/2026 |
+
+Ngày 18/11/2026 cũng bỏ `khu_vuc_tu_hoc/5` (trùng khít `khu_vuc_doc/3`) và hai ảnh sự kiện đông
+người, thấy rõ mặt, của `hoi_truong_thu_vien`. Ảnh gốc của nhóm 15 có toạ độ GPS trong EXIF;
+`python -m tools.anh_app` ghi lại không metadata (đã kiểm: không tệp nào còn EXIF).
+
+Cũng từ 18/11/2026 mọi ảnh là **AVIF chất lượng 80** (`tools/anh_app.py`): ảnh nhóm 15 mã hoá lại từ
+bản gốc, cạnh dài 2048 px; ảnh CTK45 đổi thẳng từ WebP, giữ 768×1024 vì không còn bản gốc. Riêng
+ảnh toàn cảnh là WebP chất lượng 90 ở độ phân giải gốc (9216–10240 px ngang): bộ giải mã AV1 của
+vivo X300 từ chối ảnh rộng quá 8192 px. Đề tài ưu tiên chất lượng trên máy đời mới; AVIF cần Android 12 trở lên. Bản gốc
+để trên Drive WiLoc, không đưa vào kho mã.
 
 `trai`/`phai` theo sơ đồ (cửa chính ở dưới): bên trái là phía TV3,4 và lối ra cửa sau, bên phải
 là phía căn tin và phòng tạp chí.
@@ -15,7 +27,7 @@ Ngày 07/10/2026 chia lại ảnh CTK45 theo đúng chỗ chụp, vì bản gố
 `cau_thang_tang_2_trai` và `cau_thang_tang_2_phai`; ba ảnh sofa trong `khu_vuc_doc` là ban
 công nên chuyển sang `ban_cong`; ảnh góc trưng bày cờ và tranh trong `khu_vuc_doc` là ở quầy nên
 chuyển sang `ban_thu_thu`. Ảnh `hanh_lang` thực ra chụp dãy kệ sách chắn lối xuống WC, giữ tạm
-tới đợt chụp lại.
+tới đợt chụp lại. `huong_dan.svg` là hình nhân vật hướng dẫn do nhóm 15 vẽ.
 
 Tên thư mục khớp đúng cột `thu_muc_anh` trong
 `data/reference/reference_points.csv` (địa điểm chỉ có trên sơ đồ như ban công thì khớp khoá

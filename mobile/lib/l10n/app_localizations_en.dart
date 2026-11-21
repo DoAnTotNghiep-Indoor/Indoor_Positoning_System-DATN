@@ -157,6 +157,38 @@ class LEn extends L {
   String get placeHere => 'You are here';
 
   @override
+  String get pano360 => 'View 360°';
+
+  @override
+  String panoNearby(String noi) {
+    return 'You are near $noi';
+  }
+
+  @override
+  String get panoOpen => 'Tap for a 360° view and an introduction';
+
+  @override
+  String get panoTips => 'Show tips';
+
+  @override
+  String get panoIntro => 'Show introduction';
+
+  @override
+  String get panoDismiss => 'Dismiss';
+
+  @override
+  String get panoClose => 'Close';
+
+  @override
+  String get panoSensor => 'Turn your phone to look around';
+
+  @override
+  String get panoDrag => 'Drag to look around';
+
+  @override
+  String get panoLoadFailed => 'Could not open the 360° image';
+
+  @override
   String distanceMeters(int met) {
     return '$met m';
   }

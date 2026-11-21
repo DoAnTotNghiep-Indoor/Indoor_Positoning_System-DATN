@@ -157,6 +157,38 @@ class LVi extends L {
   String get placeHere => 'Bạn đang ở đây';
 
   @override
+  String get pano360 => 'Xem 360°';
+
+  @override
+  String panoNearby(String noi) {
+    return 'Bạn đang ở gần $noi';
+  }
+
+  @override
+  String get panoOpen => 'Chạm để xem ảnh 360° và lời giới thiệu';
+
+  @override
+  String get panoTips => 'Xem hướng dẫn';
+
+  @override
+  String get panoIntro => 'Xem giới thiệu';
+
+  @override
+  String get panoDismiss => 'Bỏ qua';
+
+  @override
+  String get panoClose => 'Đóng';
+
+  @override
+  String get panoSensor => 'Xoay máy để nhìn quanh';
+
+  @override
+  String get panoDrag => 'Kéo để nhìn quanh';
+
+  @override
+  String get panoLoadFailed => 'Không mở được ảnh 360°';
+
+  @override
   String distanceMeters(int met) {
     return '$met m';
   }

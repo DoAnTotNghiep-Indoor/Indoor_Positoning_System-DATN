@@ -14,6 +14,7 @@ Thiết kế giao diện: [Figma](https://www.figma.com/design/3dzSOBhBIhb3e9zku
 - **Bản đồ**: sơ đồ tầng 1 (sáng/tối), chấm vị trí kèm nón hướng theo la bàn. Nhãn địa điểm
   kiểu Google Maps, chạm được.
 - **Tra cứu**: tìm khu vực và địa điểm theo tên hoặc nhóm, popup có ảnh và giới thiệu.
+- **Ảnh 360°**: năm chỗ có ảnh toàn cảnh xoay theo hướng máy, kèm nhân vật hướng dẫn; tới gần thì hiện thẻ gợi ý, popup khu vực có nút Xem 360°.
 - **Chỉ đường**: vẽ tuyến từ vị trí hiện tại tới khu vực đã chọn. Mở từ danh sách thì tới chỗ
   gần nhất của khu vực; chạm nhãn trên sơ đồ thì tới đúng chỗ của nhãn đó.
 - **Mô hình cục bộ**: tuỳ chọn trong Cài đặt, mặc định tắt. Bật thì app tự chạy kNN k
@@ -78,7 +79,7 @@ lib/
 ├── widgets/                  sơ đồ, popup khu vực, thành phần dùng chung
 ├── screens/                  Trang chủ, Bản đồ, Tìm kiếm, Cài đặt
 └── l10n/                     chuỗi tiếng Việt/Anh (.arb) và mã sinh tự động
-assets/                       font Inter, SVG sơ đồ, ảnh khu vực, mô hình (model/k_dong.json)
+assets/                       font Inter, SVG sơ đồ, ảnh khu vực, ảnh 360° (panorama/), mô hình (model/k_dong.json)
 ```
 
 `data/khu_vuc_thu_vien.dart` được sinh tự động, **không sửa tay**. Sinh lại bằng

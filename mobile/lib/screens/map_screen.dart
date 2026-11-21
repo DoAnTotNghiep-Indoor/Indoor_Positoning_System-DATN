@@ -11,6 +11,7 @@ import '../services/api_dinh_vi.dart';
 import '../services/theo_doi_vi_tri.dart';
 import '../theme/app_theme.dart';
 import '../widgets/chung.dart';
+import '../widgets/the_goi_y_toan_canh.dart';
 import '../widgets/nhan_noi.dart';
 import '../widgets/so_do_that.dart';
 import '../widgets/the_khu_vuc.dart';
@@ -301,6 +302,10 @@ class _MapScreenState extends State<MapScreen>
                       ],
                     ),
                   ],
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TheGoiYToanCanh(theoDoi: theoDoi),
                 ),
                 if (theoDoi.tuyen != null && theoDoi.dichTuyen != null)
                   Padding(

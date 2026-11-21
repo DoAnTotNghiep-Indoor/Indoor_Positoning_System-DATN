@@ -239,7 +239,7 @@ class _OMayChuState extends State<_OMayChu> {
               fillColor: m.nhanNhat,
               hintText: t.settingsServerHint,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(999),
                 borderSide: BorderSide.none,
               ),
             ),

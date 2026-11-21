@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import '../data/anh_khu_vuc.dart';
 import '../data/floor_map.dart';
 import '../data/khu_vuc.dart';
+import '../data/toan_canh.dart';
 import '../l10n/app_localizations.dart';
+import '../screens/toan_canh_screen.dart';
 import '../services/api_dinh_vi.dart';
 import '../services/theo_doi_vi_tri.dart';
 import '../theme/app_theme.dart';
@@ -70,6 +72,8 @@ class _TheKhuVucState extends State<_TheKhuVuc> {
         ? theoDoi.diemGanNhat?.rpId == widget.rpId
         : theoDoi.khuHienTai?.nhom == k.nhom;
 
+    final toanCanh = ToanCanh.cuaKhu(k.nhom);
+
     final String nhanNut;
     VoidCallback? bam;
     if (_dangTim) {
@@ -122,27 +126,54 @@ class _TheKhuVucState extends State<_TheKhuVuc> {
             style: tt.bodyLarge?.copyWith(color: m.chuPhu, fontSize: 15),
           ),
           const SizedBox(height: 22),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: FilledButton.icon(
-              onPressed: bam,
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                textStyle:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                disabledBackgroundColor: m.nhanNhat,
-                disabledForegroundColor: m.chuPhu,
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 52,
+                  child: FilledButton.icon(
+                    onPressed: bam,
+                    style: FilledButton.styleFrom(
+                      shape: const StadiumBorder(),
+                      textStyle: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
+                      disabledBackgroundColor: m.nhanNhat,
+                      disabledForegroundColor: m.chuPhu,
+                    ),
+                    icon: _dangTim
+                        ? SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: m.chuPhu))
+                        : Icon(oDay ? Icons.place : Icons.directions, size: 20),
+                    label: Text(nhanNut,
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                ),
               ),
-              icon: _dangTim
-                  ? SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: m.chuPhu))
-                  : Icon(oDay ? Icons.place : Icons.directions, size: 20),
-              label: Text(nhanNut),
-            ),
+              if (toanCanh.isNotEmpty) ...[
+                const SizedBox(width: 10),
+                SizedBox(
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    // Khu tự học có hai ảnh: mở ảnh gần người dùng hơn.
+                    onPressed: () => moToanCanh(
+                        context,
+                        vt == null
+                            ? toanCanh.first
+                            : ToanCanh.ganNhatTrong(
+                                toanCanh, vt.xGop, vt.yGop)),
+                    style: OutlinedButton.styleFrom(
+                      shape: const StadiumBorder(),
+                      textStyle: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    icon: const Icon(Icons.threesixty, size: 20),
+                    label: Text(t.pano360),
+                  ),
+                ),
+              ],
+            ],
           ),
           if (_loi) ...[
             const SizedBox(height: 10),
@@ -169,7 +200,8 @@ class _DaiAnhState extends State<_DaiAnh> {
   @override
   Widget build(BuildContext context) {
     final anh = AnhKhuVuc.duongDan(widget.khuVuc.thuMucAnh);
-    const cao = 200.0;
+    // Ảnh dọc 3:4 và ngang 4:3 lẫn lộn; khung thấp quá thì cắt mất nửa ảnh dọc.
+    final cao = math.min(MediaQuery.sizeOf(context).width * 0.85, 360.0);
 
     if (anh.isEmpty) {
       final (nen, chu) = mauLoai(context, loaiCua(widget.khuVuc.nhom));
@@ -181,7 +213,7 @@ class _DaiAnhState extends State<_DaiAnh> {
       );
     }
 
-    // Giải mã đúng bề rộng hiển thị thay vì nguyên ảnh 1024 px.
+    // Giải mã đúng bề rộng hiển thị thay vì nguyên ảnh 2048 px.
     final rongPx = (MediaQuery.sizeOf(context).width *
             MediaQuery.devicePixelRatioOf(context))
         .round();
@@ -199,7 +231,7 @@ class _DaiAnhState extends State<_DaiAnh> {
                 itemBuilder: (_, i) => Image.asset(
                   anh[i],
                   fit: BoxFit.cover,
-                  cacheWidth: math.min(rongPx, 1024),
+                  cacheWidth: math.min(rongPx, 2048),
                 ),
               ),
             ),

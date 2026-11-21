@@ -361,6 +361,66 @@ abstract class L {
   /// **'Bạn đang ở đây'**
   String get placeHere;
 
+  /// No description provided for @pano360.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem 360°'**
+  String get pano360;
+
+  /// No description provided for @panoNearby.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn đang ở gần {noi}'**
+  String panoNearby(String noi);
+
+  /// No description provided for @panoOpen.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chạm để xem ảnh 360° và lời giới thiệu'**
+  String get panoOpen;
+
+  /// No description provided for @panoTips.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem hướng dẫn'**
+  String get panoTips;
+
+  /// No description provided for @panoIntro.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem giới thiệu'**
+  String get panoIntro;
+
+  /// No description provided for @panoDismiss.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bỏ qua'**
+  String get panoDismiss;
+
+  /// No description provided for @panoClose.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đóng'**
+  String get panoClose;
+
+  /// No description provided for @panoSensor.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xoay máy để nhìn quanh'**
+  String get panoSensor;
+
+  /// No description provided for @panoDrag.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kéo để nhìn quanh'**
+  String get panoDrag;
+
+  /// No description provided for @panoLoadFailed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không mở được ảnh 360°'**
+  String get panoLoadFailed;
+
   /// No description provided for @distanceMeters.
   ///
   /// In vi, this message translates to:

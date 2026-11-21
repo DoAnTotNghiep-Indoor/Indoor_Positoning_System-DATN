@@ -9,6 +9,7 @@ import '../services/theo_doi_vi_tri.dart';
 import '../theme/app_settings.dart';
 import '../theme/app_theme.dart';
 import '../widgets/chung.dart';
+import '../widgets/the_goi_y_toan_canh.dart';
 import '../widgets/tap_feedback.dart';
 import '../widgets/the_khu_vuc.dart';
 
@@ -43,6 +44,8 @@ class HomeScreen extends StatelessWidget {
               EdgeInsets.fromLTRB(20, tren + 72, 20, chuaThanhTab(context)),
           children: [
             _KhoiViTri(theoDoi: theoDoi),
+            // Trong luồng nội dung chứ không nổi: nổi thì che dòng vị trí bên dưới.
+            TheGoiYToanCanh(theoDoi: theoDoi),
             TieuDeMuc(t.homeQuickAccess),
             SizedBox(
               height: MediaQuery.textScalerOf(context).scale(112),
@@ -164,7 +167,7 @@ class _TrangThai extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: m.loi.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
             children: [
