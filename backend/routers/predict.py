@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timezone
 
@@ -10,12 +11,14 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend import database, repository, schemas
+from backend.config import ROOT_DIR
 from backend.database import lay_session
 from backend.dependencies import lay_bo_gop, lay_phat_lai, lay_predictor
 
 router = APIRouter(tags=["predict"])
 MAC_CUC_BO = frozenset("2367abef")
 log = logging.getLogger(__name__)
+QUET_THO = ROOT_DIR / "data" / "raw" / "quet_app"
 
 
 @router.post("/predict", response_model=schemas.KetQuaDuDoan, responses={
@@ -32,6 +35,13 @@ async def predict(yeu_cau: schemas.YeuCauDuDoan) -> schemas.KetQuaDuDoan:
     if phat_lai is not None:
         rp_demo, scan = phat_lai.quet_tiep(device_id)
         log.info("DEMO %s: phát lại lần quét ở %s", device_id, rp_demo)
+    else:
+        # Giữ lần quét thô để sau buổi đo chạy lại mọi mô hình trên cùng dữ liệu.
+        luc = datetime.now()
+        QUET_THO.mkdir(parents=True, exist_ok=True)
+        with (QUET_THO / f"{luc:%Y-%m-%d}.jsonl").open("a", encoding="utf-8") as f:
+            f.write(json.dumps({"luc": luc.isoformat(timespec="milliseconds"),
+                                "device_id": device_id, "scan": scan}) + "\n")
 
     # Threadpool: gọi thẳng thì chặn vòng lặp sự kiện, đuôi 1.243 ms với 40 request.
     x, y, so_ap, do_tre = await run_in_threadpool(predictor.du_doan, scan)

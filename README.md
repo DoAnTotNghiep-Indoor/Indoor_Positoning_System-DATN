@@ -10,11 +10,11 @@ Hệ thống định vị người dùng trong tầng 1 Thư viện Đại học
 
 | Thành phần | Thư mục | Làm gì |
 |---|---|---|
-| Ứng dụng Android WiLoc (Flutter) | `mobile/` | Quét WiFi liên tục, định vị qua máy chủ hoặc ngay trên máy, hiện vị trí và nón hướng la bàn trên sơ đồ, tra cứu khu vực, chỉ đường. Song ngữ Việt/Anh, sáng/tối |
+| Ứng dụng Android WiLoc (Flutter) | `mobile/` | Quét WiFi liên tục, định vị qua máy chủ hoặc ngay trên máy, hiện vị trí và nón hướng la bàn trên sơ đồ, tra cứu khu vực, chỉ đường, ảnh 360° có nhân vật hướng dẫn. Song ngữ Việt/Anh, sáng/tối |
 | Backend (FastAPI + SQLite) | `backend/` | Dự đoán toạ độ, gộp các lần quét, lưu lịch sử, phục vụ bản đồ và tìm đường |
 | Web Dashboard | `dashboard/` | Hai trang. Giám sát: sơ đồ với các thiết bị đang định vị và vệt đường, bảng thiết bị, thử chỉ đường, lịch sử. Quản lý (`quan-ly.html`): sơ đồ và số thiết bị đang sử dụng ứng dụng, bảng AP lạ điện thoại bắt được (AP mới lắp hay AP đã biết nhưng bị loại). HTML/CSS/JS thuần, không thư viện ngoài |
 | Máy học | `ml/` | Tiền xử lý 12 bước, huấn luyện và so sánh 5 mô hình, đánh giá, vẽ biểu đồ |
-| Công cụ | `tools/` | Trích hình học từ sơ đồ, vẽ sơ đồ SVG cho app, sinh danh sách khu vực, thu vân tay qua cáp USB, đánh giá chỉ đường |
+| Công cụ | `tools/` | Trích hình học từ sơ đồ, vẽ sơ đồ SVG cho app, sinh danh sách khu vực, thu vân tay qua adb, ghi quét liên tục, đưa ảnh vào app, đánh giá chỉ đường |
 
 ## Hoạt động
 
@@ -94,7 +94,7 @@ gần nhất) tới một điểm hoặc một khu vực:
   thang; chặn bởi tường, lan can, mép sàn khác mức, giếng, quầy, cột, kệ. Cầu thang chỉ lên
   xuống ở hai đầu; cửa mở khe qua tường. Phòng không có cửa thì không vào được: chỉ đường dừng
   ở lối vào khai trong YAML hoặc điểm đi được gần nhất.
-- **Đồ thị**: nút là 167 góc lồi của vật cản cộng 44 điểm tham chiếu, 3.599 cạnh nối các cặp
+- **Đồ thị**: nút là 195 góc lồi của vật cản cộng 44 điểm tham chiếu, 3.964 cạnh nối các cặp
   nhìn thấy nhau. Đường ngắn nhất trong mặt bằng có vật cản chỉ bẻ hướng ở góc lồi, nên đồ thị
   này cho đúng đường ngắn nhất.
 - **Thuật toán**: A* (mặc định, heuristic là khoảng cách thẳng tới đích gần nhất) hoặc
@@ -112,9 +112,9 @@ gần nhất) tới một điểm hoặc một khu vực:
   thẳng liên tiếp được gộp lại, chặng ngắn dưới 0,5 m dồn vào chặng kề.
 - **Sai số quãng đường** (`python -m tools.danh_gia_chi_duong`, so với Dijkstra trên lưới
   mịn): riêng thuật toán, từ 400 điểm xuất phát ngẫu nhiên tới mọi khu vực, lệch trung bình
-  0,16 m. Cả hệ thống, quãng đường app báo khi đứng ở vị trí mô hình đoán (tập test, gộp 3 lần
-  quét) so với quãng đường thật từ vị trí thật: lệch trung bình 1,45 m, trung vị 0,28 m, lớn
-  nhất 29 m. Ca lớn là vị trí đoán rơi sang sàn khác mức bên kia lan can, nên tuyến phải vòng
+  0,11 m. Cả hệ thống, quãng đường app báo khi đứng ở vị trí mô hình đoán (tập test, gộp 3 lần
+  quét) so với quãng đường thật từ vị trí thật: lệch trung bình 1,43 m, trung vị 0,25 m, lớn
+  nhất 29,8 m. Ca lớn là vị trí đoán rơi sang sàn khác mức bên kia lan can, nên tuyến phải vòng
   qua cầu thang.
 
 ## Dữ liệu
@@ -182,6 +182,29 @@ seed 42 (học train + validation như `ml.train`) và trên ba giao thức. Đ�
 - Các cặp k động khác (2/11, 3/15, 1/7...) chênh mô hình triển khai dưới 0,03 m, nhỏ hơn độ
   lệch chuẩn qua 10 seed (0,15 m).
 
+### Đo tại chỗ (18/11/2026) — sai số trung bình, mét
+
+Đứng ở 7 chỗ biết toạ độ (hai cột tròn trước quầy, hai cột vuông cạnh cửa chính, RP36, hai đầu
+kệ sát tường khu tự học), 45 giây mỗi chỗ, 14–16 lần quét; chạy cả năm mô hình học trên đợt A + B
+trên cùng các lần quét đó. Hai máy khác máy của dữ liệu học, đo khác buổi.
+
+| Mô hình | vivo X300 (sáng) | Máy thứ hai (chiều) |
+|---|---:|---:|
+| **kNN k động** | **6,67** | **7,59** |
+| kNN k động, gộp 3 lần quét như app | 6,30 | 7,50 |
+| XGBoost | 6,82 | 8,28 |
+| Random Forest | 7,25 | 7,99 |
+| WKNN | 8,69 | 9,44 |
+| kNN | 10,27 | 11,03 |
+
+Thứ hạng giữ nguyên trên hai máy và cùng khoảng với giao thức bỏ trọn một điểm. Hai cột cạnh
+cửa chính sai 2,5–3,3 m với vivo; khu quầy và sát tường sai 5–11 m. Hai hiện tượng: ở hai cột
+tròn trước quầy, cả năm mô hình đoán sang bên đối xứng của toà nhà; chỗ sát tường bị kéo vào
+giữa nhà khoảng 15 viên gạch theo chiều ngang, kể cả đầu kệ ngay cạnh RP16. Giả thuyết là máy đo
+đọc RSSI lệch so với máy của dữ liệu học, nhánh k = 1 không bật, trung bình 15 láng giềng rải
+rộng kéo vị trí về giữa. Lần quét thô và phiếu ở `data/raw/nhom15_2026/2026-11-18/` và
+`data/raw/quet_app/`.
+
 ### Độ trải so với sai số thật
 
 Đã thử và **không** dùng: chỉ báo độ tin cậy cho mỗi lần định vị. **Độ trải** là độ lệch chuẩn
@@ -232,13 +255,14 @@ toạ độ chỉ từ các láng giềng cùng toà và tầng, còn ở đây 
 
 ### Chỉ đường
 
-- **So với đường ngắn nhất tham chiếu** (Dijkstra trên lưới điểm ảnh, 4.400 cặp điểm): lệch
-  trung vị 0,09 m, 90% số cặp lệch dưới 0,34 m (`tools/danh_gia_chi_duong.py`).
+- **So với đường ngắn nhất tham chiếu** (Dijkstra trên lưới điểm ảnh, 5.600 cặp điểm): lệch
+  trung vị 0,09 m, 90% số cặp lệch dưới 0,25 m (`tools/danh_gia_chi_duong.py`).
 - **Quãng đường hiển thị từ vị trí dự đoán** so với quãng đường thật, trên tập test, cửa
-  sổ gộp 3 (5.203 cặp): lệch trung vị 0,28 m, p90 3,95 m, lớn nhất 29 m.
+  sổ gộp 3 (6.622 cặp): lệch trung vị 0,25 m, p90 3,95 m, lớn nhất 29,8 m.
 - **So sánh 6 thuật toán** (`tools/so_sanh_tim_duong.py`, 1.892 truy vấn): A* mở trung bình
-  15 nút (0,12 ms), Dijkstra 107 nút (0,49 ms), cùng quãng đường. BFS và tham lam chỉ cho
-  đường ngắn nhất ở khoảng 36% số truy vấn.
+  15 nút (0,09 ms), Dijkstra 112 nút (0,37 ms), cùng quãng đường. BFS và tham lam chỉ cho
+  đường ngắn nhất ở khoảng 36–38% số truy vấn. Hình minh hoạ các bước dựng đồ thị và một lần
+  chạy A* có ghi từng bước: `python -m tools.minh_hoa_chi_duong`.
 
 ### Hiệu năng
 
@@ -358,8 +382,10 @@ Xem `mobile/README.md`.
   WiFi mới mỗi … s").
 - **Không có xác thực.** Ai vào được mạng LAN cũng xem được Dashboard và lịch sử vị trí của
   mọi thiết bị qua `GET /predictions`. `ALLOWED_ORIGINS` mặc định là `*`.
-- **Sai số tại chỗ chưa đủ điểm.** Buổi đo 03/10/2026 mới so được 1 chỗ đứng biết toạ độ.
-  Góc giữa sơ đồ và hướng bắc (dùng cho nón hướng) đo trên ảnh vệ tinh, chưa so tại chỗ.
+- **Sai số tại chỗ lớn hơn số trên dữ liệu có sẵn.** Đo 7 chỗ với 2 máy (18/11/2026): khoảng
+  6,7–7,6 m, có chỗ bị đoán sang bên đối xứng của toà nhà. Mới đo một hướng máy, hai máy khác
+  buổi nên chênh lệch giữa hai máy còn lẫn yếu tố thời điểm. Góc giữa sơ đồ và hướng bắc (dùng
+  cho nón hướng và ảnh 360°) đo trên ảnh vệ tinh, chưa so tại chỗ.
 - **Vị trí nhảy khi ở giữa các điểm tham chiếu.** Gần RP sai khoảng 1–2 m; ở giữa các RP,
   tập láng giềng đổi theo dao động RSSI nên vị trí nhảy nhiều hướng (xem Hướng phát triển).
 - **Đợt B không có dữ liệu thô**: không có thời điểm quét, tên máy, hướng. Vì vậy đánh giá
