@@ -89,7 +89,9 @@ def ve_mat_na() -> np.ndarray:
             vd.line(ps, fill=1, width=NET_CUA)
             vc.line(ps, fill=0, width=NET_CUA)
 
-    o = np.array(di) & ~np.array(chan)
+    # Mở hình thái 3×3 xoá khe một hai điểm ảnh (dưới ~26 cm) chỗ các nét chặn giao nhau không khít, ví dụ đầu
+    # cầu thang lên tầng 2 chạm mép khối kín sau quầy; không người nào đi lọt khe đó.
+    o = ndimage.binary_opening(np.array(di) & ~np.array(chan), np.ones((3, 3), bool))
     nhan, _ = ndimage.label(o)
     c, r = map(round, px(*SANH))
     return nhan == nhan[r, c]

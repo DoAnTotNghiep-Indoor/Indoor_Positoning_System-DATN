@@ -10,7 +10,7 @@ import yaml
 
 YAML = Path(__file__).parents[1] / 'data/reference/mat_bang_tang1.yaml'
 DIEM_DON = ('tam', 'tai', 'loi_vao')
-CAP = ('ten', 'nhom', 'mo_ta')
+CAP = ('ten', 'nhom', 'mo_ta', 'anh')
 
 
 def doc_mat_bang() -> list[dict]:

@@ -71,14 +71,14 @@ phan_tu:
   # cửa đôi ngoài và cửa trong song song, cách 8 ô (người dùng kể, ảnh).
   # Toà nghiệp vụ 1: đọc từ ảnh vệ tinh (như hai toà chéo), thẳng theo lưới nhà, mép giáp khối giữa ở tường bên.
   - {loai: phong, ten: Phòng nghiệp vụ 1, en: Technical Dept. 1, mau: nghiep_vu, co: 20, cap: 1, nguon: ve_tinh,
-     hcn: [-112, 39, -tuong_ben, 105], mo_ta: 'Toà nghiệp vụ của cán bộ thư viện, cửa ở cuối hành lang sau Lối ra.',
+     hcn: [-112, 39, -tuong_ben, 105], mo_ta: 'Toà nghiệp vụ của cán bộ thư viện, cửa ở cuối hành lang sau Lối ra.', anh: nghiep_vu_1,
      loi_vao: [-47.5, chu_t + 18]}
   - {loai: cua, diem: [[-tuong_ben, chu_t + 16.5], [-tuong_ben, chu_t + 19.5]], mo: 1}
   - {loai: phong, ten: Phòng học nhóm, en: Group Study, mau: hoc_tap, co: 13, nguon: doan,
-     mo_ta: Phòng học và thảo luận theo nhóm., loi_vao: [-22, chu_t + 18], hcn: [-24, tuong_sau, -4, tuong_sau + 8]}
+     mo_ta: Phòng học và thảo luận theo nhóm., anh: hoc_nhom, loi_vao: [-22, chu_t + 18], hcn: [-24, tuong_sau, -4, tuong_sau + 8]}
   - {loai: cua, diem: [[-23.75, tuong_sau], [-20.25, tuong_sau]], mo: -1, doi: true}   # cửa đôi 17a sát mép trái phòng (ảnh)
   - {loai: phong, ten: Thang máy, en: Elevator, icon: thang, mau: nghiep_vu, co: 11, nguon: doan, hcn: [-tuong_ben, chu_t + 13.5, -43, chu_t + 16],
-     mo_ta: Thang máy lên các tầng trên., loi_vao: [-44.25, chu_t + 18]}
+     mo_ta: Thang máy lên các tầng trên., anh: thang_may, loi_vao: [-44.25, chu_t + 18]}
   - {loai: cua, diem: [[-45, chu_t + 16], [-43.5, chu_t + 16]], mo: 1}
   # Khối kín quanh chữ T, chưa rõ là gì: dưới thanh ngang bên trái chân T, sau quầy bên phải chân T.
   - {loai: phong, mau: nghiep_vu, nguon: doan,
@@ -97,7 +97,7 @@ phan_tu:
   - {loai: phong, ten: Hành lang tạp chí, en: Periodicals, nhom: Phòng tạp chí, mau: hoc_tap, co: 12, hcn: [17, mep_quay, thang_t2, mep_quay + sau_quay], nguon: anh}
   - {loai: cua, diem: [[21.5, mep_quay + sau_quay], [26, mep_quay + sau_quay]], mo: 1, doi: true}
   - {loai: phong, ten: Nhà sách, en: Bookstore, mau: hoc_tap, co: 13, nguon: doan,
-     mo_ta: 'Nhà sách, vào qua hành lang tạp chí cạnh thang lên tầng 2.', loi_vao: [23.75, mep_quay + sau_quay + 2],
+     mo_ta: 'Nhà sách, vào qua hành lang tạp chí cạnh thang lên tầng 2.', anh: nha_sach, loi_vao: [23.75, mep_quay + sau_quay + 2],
      diem: [[17, mep_quay + sau_quay], [thang_t2, mep_quay + sau_quay], [thang_t2, 57], [tuong_ben, 57], [tuong_ben, tuong_sau],
             [17, tuong_sau]]}
   - {loai: tuong, diem: [[-thang_t2, mep_quay], [-thang_t2, 57]], nguon: doan}
@@ -109,7 +109,7 @@ phan_tu:
      hcn: [mep_san_duoi, 0, dinh_thang_len, sau_thang_len]}
   # Giếng chữ U xuống tầng 0: đợt đầu ~6 bậc từ x 14, rồi sàn lửng; đầu xa ước ngang đỉnh thang lên.
   - {loai: gieng, ten: ["Xuống TV1, TV2", Xuống căn tin], nhom: [null, Căn tin], doi_xung: true, hcn: [14, sau_thang_len, 29, 13.5],
-     mo_ta: [Cầu thang xuống phòng máy TV1 và TV2 ở tầng dưới., null], loi_vao: [15, 11]}
+     mo_ta: [Cầu thang xuống phòng máy TV1 và TV2 ở tầng dưới., null], anh: [xuong_tv1_2, null], loi_vao: [15, 11]}
   - {loai: cau_thang, doi_xung: true, huong: -x, hcn: [14, sau_thang_len, 19.5, 13.5]}
   # Lan can dọc mép sảnh chờ: nhìn xuống giếng và sàn trống trước WC (thấp hơn).
   - {loai: lan_can, doi_xung: true, diem: [[14, sau_thang_len], [tuong_ben, sau_thang_len]]}
