@@ -1,6 +1,8 @@
 import numpy as np
+import pytest
 
-from ml.models.Gauss_NghichSuy import build
+pytest.importorskip("torch")
+from ml.models.Gauss_NghichSuy import build  # noqa: E402
 
 
 def test_tim_lai_diem_da_hoc_trong_phong_gia_lap():
